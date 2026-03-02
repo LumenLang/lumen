@@ -9,7 +9,6 @@ import net.vansencool.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import net.vansencool.lumen.api.pattern.Categories;
 import net.vansencool.lumen.api.type.RefTypeHandle;
 import net.vansencool.lumen.api.type.RefTypes;
-import net.vansencool.lumen.pipeline.java.compiled.NullGuard;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -156,8 +155,6 @@ public final class MapExpressions {
             throw new RuntimeException("Scope variable '" + scopeVarName
                     + "' has no ref type. Expected a typed variable like a player or entity.");
         }
-        String guardedVar = NullGuard.codegen(scopeRef.java());
-        String scopeKeyPart = refType.keyExpression(guardedVar);
-        return "\"" + info.className() + "." + varName + ".\" + " + scopeKeyPart;
+        return "\"" + info.className() + "." + varName + ".\" + " + refType.keyExpression(scopeRef.java());
     }
 }

@@ -6,7 +6,6 @@ import net.vansencool.lumen.api.emit.StatementFormHandler;
 import net.vansencool.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import net.vansencool.lumen.pipeline.codegen.BindingContext;
 import net.vansencool.lumen.pipeline.codegen.TypeEnv;
-import net.vansencool.lumen.pipeline.java.compiled.NullGuard;
 import net.vansencool.lumen.pipeline.language.emit.EmitContextImpl;
 import net.vansencool.lumen.pipeline.language.exceptions.LumenScriptException;
 import net.vansencool.lumen.pipeline.language.pattern.PatternRegistry;
@@ -146,8 +145,7 @@ public final class StoreVarStatementForm implements StatementFormHandler {
             }
             String scopeKeyPart;
             if (scopeRef.refType() != null) {
-                String guardedVar = NullGuard.codegen(scopeRef.java());
-                scopeKeyPart = scopeRef.refType().keyExpression(guardedVar);
+                scopeKeyPart = scopeRef.refType().keyExpression(scopeRef.java());
             } else {
                 scopeKeyPart = "String.valueOf(" + scopeRef.java() + ")";
             }

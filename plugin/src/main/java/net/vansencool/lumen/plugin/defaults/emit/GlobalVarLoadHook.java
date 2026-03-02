@@ -4,7 +4,6 @@ import net.vansencool.lumen.api.codegen.EnvironmentAccess;
 import net.vansencool.lumen.api.emit.BlockEnterHook;
 import net.vansencool.lumen.api.emit.EmitContext;
 import net.vansencool.lumen.pipeline.codegen.TypeEnv;
-import net.vansencool.lumen.pipeline.java.compiled.NullGuard;
 import net.vansencool.lumen.pipeline.persist.GlobalVars;
 import net.vansencool.lumen.pipeline.persist.PersistentVars;
 import net.vansencool.lumen.pipeline.var.RefType;
@@ -59,8 +58,7 @@ public final class GlobalVarLoadHook implements BlockEnterHook {
                     continue;
                 }
                 scopeVarName = scopeRef.java();
-                String guardedVar = NullGuard.codegen(scopeRef.java());
-                String scopeKeyPart = refType.keyExpression(guardedVar);
+                String scopeKeyPart = refType.keyExpression(scopeRef.java());
                 keyExpr = "\"" + className + "." + name + ".\" + " + scopeKeyPart;
             } else {
                 keyExpr = "\"" + className + "." + name + "\"";

@@ -179,6 +179,47 @@ public final class CompiledClassCache {
     }
 
     /**
+     * Persists the generated Java source for a script alongside its compiled
+     * bytecodes so that {@link net.vansencool.lumen.pipeline.java.compiled.ScriptSourceMap}
+     * can be restored when the script is loaded from cache on subsequent server
+     * starts.
+     *
+     * <p>
+     * Failures are logged at debug level and silently ignored.
+     *
+     * @param scriptName the file name of the script (e.g. {@code "hello.luma"})
+     * @param javaSource the generated Java source produced by the code emitter
+     */
+    public static void saveJavaSource(@NotNull String scriptName, @NotNull String javaSource) {
+        Path dir = cacheDir(scriptName);
+        try {
+            Files.createDirectories(dir);
+            Files.writeString(dir.resolve("sourcemap.java"), javaSource);
+        } catch (IOException e) {
+            LumenLogger.debug("CompiledClassCache", "Failed to save java source for " + scriptName + ": " + e.getMessage());
+        }
+    }
+
+    /**
+     * Loads the previously saved generated Java source for a script.
+     *
+     * @param scriptName the file name of the script (e.g. {@code "hello.luma"})
+     * @return the generated Java source, or {@code null} if not present or unreadable
+     */
+    public static @Nullable String loadJavaSource(@NotNull String scriptName) {
+        Path file = cacheDir(scriptName).resolve("sourcemap.java");
+        if (!Files.isRegularFile(file)) {
+            return null;
+        }
+        try {
+            return Files.readString(file);
+        } catch (IOException e) {
+            LumenLogger.debug("CompiledClassCache", "Failed to read java source for " + scriptName + ": " + e.getMessage());
+            return null;
+        }
+    }
+
+    /**
      * Deletes the cache directory for the given script, if it exists.
      *
      * @param scriptName the file name of the script
@@ -245,7 +286,7 @@ public final class CompiledClassCache {
         try (Stream<Path> entries = Files.list(dir)) {
             for (Path entry : entries.toList()) {
                 String fileName = entry.getFileName().toString();
-                if (fileName.endsWith(".class") || fileName.equals("metadata.txt")) {
+                if (fileName.endsWith(".class") || fileName.equals("metadata.txt") || fileName.equals("sourcemap.java")) {
                     Files.deleteIfExists(entry);
                 }
             }

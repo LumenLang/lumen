@@ -5,6 +5,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Runtime registry of generated Java source code for loaded scripts.
@@ -23,6 +25,11 @@ public final class ScriptSourceMap {
 
     private static final String COMPILED_PREFIX = "net.vansencool.lumen.java.compiled.";
     private static final String MARKER_PREFIX = "// @lumen:";
+
+    private static final Pattern NPE_INVOKE =
+            Pattern.compile("Cannot invoke \"([^\"]+)\" because \"([^\"]+)\" is null");
+    private static final Pattern NPE_READ_FIELD =
+            Pattern.compile("Cannot read field \"([^\"]+)\" because \"([^\"]+)\" is null");
 
     private static final Map<String, String> SOURCES = new ConcurrentHashMap<>();
 
@@ -56,6 +63,42 @@ public final class ScriptSourceMap {
     public static void unregisterByClassName(@NotNull String normalizedClassName) {
         String prefix = COMPILED_PREFIX + normalizedClassName;
         SOURCES.keySet().removeIf(k -> k.equals(prefix) || k.startsWith(prefix + "$"));
+    }
+
+    /**
+     * Formats a human-readable hint from a {@link NullPointerException} thrown inside
+     * generated script code. Parses Java 17 helpful NPE messages to extract the null
+     * variable name and the method or field that was called on it.
+     *
+     * @param npe the null pointer exception to describe
+     * @return a hint string suitable for a script error log message
+     */
+    public static @NotNull String formatNpeHint(@NotNull NullPointerException npe) {
+        String msg = npe.getMessage();
+        if (msg == null || msg.isBlank()) {
+            return "A variable was null. Use 'if <var> is set:' to guard it before use.";
+        }
+
+        Matcher invoke = NPE_INVOKE.matcher(msg);
+        if (invoke.find()) {
+            String fqMethod = invoke.group(1);
+            String varName = invoke.group(2);
+            String simpleMethod = fqMethod.contains(".")
+                    ? fqMethod.substring(fqMethod.lastIndexOf('.') + 1)
+                    : fqMethod;
+            return "'" + varName + "' was null (tried to call " + simpleMethod
+                    + "). Use 'if " + varName + " is set:' to guard it.";
+        }
+
+        Matcher readField = NPE_READ_FIELD.matcher(msg);
+        if (readField.find()) {
+            String field = readField.group(1);
+            String varName = readField.group(2);
+            return "'" + varName + "' was null (tried to read field " + field
+                    + "). Use 'if " + varName + " is set:' to guard it.";
+        }
+
+        return msg;
     }
 
     /**

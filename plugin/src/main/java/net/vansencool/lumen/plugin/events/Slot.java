@@ -1,5 +1,6 @@
 package net.vansencool.lumen.plugin.events;
 
+import net.vansencool.lumen.pipeline.java.compiled.LumenNullException;
 import net.vansencool.lumen.pipeline.java.compiled.LumenRuntimeException;
 import net.vansencool.lumen.pipeline.java.compiled.ScriptSourceMap;
 import net.vansencool.lumen.pipeline.logger.LumenLogger;
@@ -9,6 +10,7 @@ import org.bukkit.event.Event;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.invoke.MethodHandle;
 
@@ -98,17 +100,17 @@ public final class Slot {
                 } else {
                     String scriptClass = e.target().getClass().getSimpleName();
                     ScriptSourceMap.ScriptLineMapping mapping = ScriptSourceMap.findFromException(cause);
-                    String locationInfo = mapping != null
-                            ? " (script line " + mapping.scriptLine() + ": " + mapping.scriptSource()
-                              + " | java line " + mapping.javaLine() + ")"
-                            : "";
-                    if (cause instanceof NullPointerException) {
-                        LumenLogger.severe("[Script " + scriptClass + "] NullPointerException in events handler"
-                                + locationInfo
-                                + ". A variable is likely null, use 'if <var> is set:' to check before using it.");
+                    if (cause instanceof LumenNullException lne) {
+                        LumenLogger.severe("[Script " + scriptClass + "] NullPointerException in events handler");
+                        logSourceMapping(mapping);
+                        LumenLogger.severe("  -> '" + lne.scriptVarName() + "' was null. Use 'if " + lne.scriptVarName() + " is set:' to guard it.");
+                    } else if (cause instanceof NullPointerException npe) {
+                        LumenLogger.severe("[Script " + scriptClass + "] NullPointerException in events handler");
+                        logSourceMapping(mapping);
+                        LumenLogger.severe("  -> " + ScriptSourceMap.formatNpeHint(npe));
                     } else {
-                        LumenLogger.severe("[Script " + scriptClass + "] Runtime error in events handler"
-                                + locationInfo + ": " + cause.getMessage());
+                        LumenLogger.severe("[Script " + scriptClass + "] Runtime error in events handler: " + cause.getMessage());
+                        logSourceMapping(mapping);
                     }
                 }
             }
@@ -116,16 +118,17 @@ public final class Slot {
     }
 
     private static void logLumenException(LumenRuntimeException lre, Object target) {
-        if (lre.scriptLine() > 0) {
-            LumenLogger.severe("[Script] " + lre.getMessage());
-            return;
-        }
-        ScriptSourceMap.ScriptLineMapping mapping = ScriptSourceMap.findFromException(lre);
-        if (mapping != null) {
-            LumenLogger.severe("[Script " + target.getClass().getSimpleName() + "] " + lre.getMessage()
-                    + " (script line " + mapping.scriptLine() + ": " + mapping.scriptSource() + ")");
-        } else {
-            LumenLogger.severe("[Script] " + lre.getMessage());
-        }
+        String scriptClass = target.getClass().getSimpleName();
+        ScriptSourceMap.ScriptLineMapping mapping = lre.scriptLine() > 0
+                ? null
+                : ScriptSourceMap.findFromException(lre);
+        LumenLogger.severe("[Script " + scriptClass + "] " + lre.getMessage());
+        logSourceMapping(mapping);
+    }
+
+    private static void logSourceMapping(@Nullable ScriptSourceMap.ScriptLineMapping mapping) {
+        if (mapping == null) return;
+        LumenLogger.severe("  Script line " + mapping.scriptLine() + ": " + mapping.scriptSource());
+        LumenLogger.severe("  Java line: " + mapping.javaLine());
     }
 }

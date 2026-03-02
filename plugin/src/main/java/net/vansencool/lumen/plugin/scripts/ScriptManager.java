@@ -28,9 +28,11 @@ import org.bukkit.Bukkit;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -195,6 +197,10 @@ public final class ScriptManager {
                         if (cached != null) {
                             String fqcn = "net.vansencool.lumen.java.compiled." +
                                     ScriptRuntime.normalize(new CodegenContext(name).className());
+                            String cachedJavaSource = CompiledClassCache.loadJavaSource(name);
+                            if (cachedJavaSource != null) {
+                                ScriptSourceMap.register(fqcn, cachedJavaSource);
+                            }
                             allPrepared.add(new PreparedScript(name, fqcn, cached,
                                     new CompileTimings(0L, 0L)));
                             cacheHits++;
@@ -279,7 +285,11 @@ public final class ScriptManager {
                 if (cacheEnabled) {
                     Map<String, byte[]> cached = CompiledClassCache.load(name, src);
                     if (cached != null) {
-                        String fqcn = "net.vansencool.lumen.java.compiled." + new CodegenContext(name).className();
+                        String fqcn = "net.vansencool.lumen.java.compiled." + ScriptRuntime.normalize(new CodegenContext(name).className());
+                        String cachedJavaSource = CompiledClassCache.loadJavaSource(name);
+                        if (cachedJavaSource != null) {
+                            ScriptSourceMap.register(fqcn, cachedJavaSource);
+                        }
                         allPrepared.add(new PreparedScript(name, fqcn, cached, new CompileTimings(0L, 0L)));
                         cacheHits++;
                         continue;
@@ -340,20 +350,33 @@ public final class ScriptManager {
      * <p>If the bundled script cannot be found (e.g. it was stripped from the jar),
      * a warning is logged and the method falls back to a compiler-only warmup.
      */
-    public static void fullWarmup() {
+    public static void warmup() {
         try (var in = ScriptManager.class.getClassLoader()
                 .getResourceAsStream("examples/economy.luma")) {
             if (in == null) {
                 LumenLogger.warning("Full warmup script (examples/economy.luma) not found in jar, falling back to compiler warmup.");
-                SystemCompiler.warmup();
                 return;
             }
-            String source = new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+            String source = new String(in.readAllBytes(), StandardCharsets.UTF_8);
             prepareScript("__warmup__.luma", source);
-            CompiledClassCache.invalidate("__warmup__.luma");
+            deleteWarmupDir();
         } catch (Exception e) {
-            LumenLogger.warning("Full warmup failed, falling back to compiler warmup: " + e.getMessage());
-            SystemCompiler.warmup();
+            LumenLogger.warning("Full warmup failed! Error: " + e.getMessage() + ".");
+        }
+    }
+
+    private static void deleteWarmupDir() {
+        Path warmupDir = CompiledClassCache.compiledRoot().resolve("__warmup__.luma");
+        if (!Files.isDirectory(warmupDir)) return;
+        try (var stream = Files.walk(warmupDir)) {
+            stream.sorted(Comparator.reverseOrder()).forEach(p -> {
+                try {
+                    Files.delete(p);
+                } catch (IOException ignored) {
+                }
+            });
+        } catch (IOException e) {
+            LumenLogger.warning("Could not fully clean up warmup directory: " + e.getMessage());
         }
     }
 
@@ -384,7 +407,7 @@ public final class ScriptManager {
         long compileStart = System.nanoTime();
         dumpIfEnabled(generated);
         Map<String, byte[]> bytecodes = compile(generated);
-        cacheIfEnabled(name, source, bytecodes);
+        cacheIfEnabled(name, source, generated.javaSource(), bytecodes);
         long compileTime = System.nanoTime() - compileStart;
 
         if (LumenConfiguration.DEBUG.LOG_COMPILATION) {
@@ -453,7 +476,7 @@ public final class ScriptManager {
         for (GeneratedSource gs : generated) {
             try {
                 Map<String, byte[]> bytecodes = compile(gs);
-                cacheIfEnabled(gs.scriptName(), gs.originalSource(), bytecodes);
+                cacheIfEnabled(gs.scriptName(), gs.originalSource(), gs.javaSource(), bytecodes);
                 result.add(new PreparedScript(gs.scriptName(), gs.fqcn(), bytecodes,
                         new CompileTimings(0L, 0L)));
             } catch (RuntimeException ignored) {
@@ -530,7 +553,7 @@ public final class ScriptManager {
                 LumenLogger.info(
                         "[Compilation] Extracted " + bytecodes.size() + " bytecode classes for " + s.scriptName());
             }
-            cacheIfEnabled(s.scriptName(), s.originalSource(), bytecodes);
+            cacheIfEnabled(s.scriptName(), s.originalSource(), s.javaSource(), bytecodes);
             result.add(new PreparedScript(s.scriptName(), s.fqcn(), bytecodes,
                     new CompileTimings(parsePerScript, compilePerScript)));
         }
@@ -577,9 +600,11 @@ public final class ScriptManager {
 
     private static void cacheIfEnabled(@NotNull String scriptName,
             @NotNull String originalSource,
+            @NotNull String javaSource,
             @NotNull Map<String, byte[]> bytecodes) {
         if (LumenConfiguration.PERFORMANCE.CACHE_COMPILED_CLASSES) {
             CompiledClassCache.save(scriptName, originalSource, bytecodes);
+            CompiledClassCache.saveJavaSource(scriptName, javaSource);
         }
     }
 
@@ -597,8 +622,6 @@ public final class ScriptManager {
 
             Files.writeString(dumpDir.resolve(baseName + "-raw.java"), raw);
             Files.writeString(dumpDir.resolve(baseName + "-formatted.java"),
-                    MiniJavaFormatter.formatOnly(raw));
-            Files.writeString(dumpDir.resolve(baseName + "-cleaned.java"),
                     MiniJavaFormatter.format(raw));
             Files.writeString(dumpDir.resolve(baseName + "-readable.java"),
                     MiniJavaFormatter.formatReadable(raw));

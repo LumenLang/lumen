@@ -76,17 +76,12 @@ performance:
   # When enabled, scripts load even later (binding still happens on the main thread).
   load-scripts-async-on-startup: false
 
-  # Warm up the Java compiler asynchronously after Lumen starts.
-  # Pre-initializes the compiler so the first script compilation is faster.
-  # On machines with a decent number of threads this is a clear win,
-  # but on single-core or heavily loaded servers it may slightly slow startup.
-  warmup-compiler-on-startup: true
-
   # Run a full warmup on startup by parsing and compiling a bundled example
   # script. This warms up the entire pipeline (parser, code emitter, compiler)
-  # so that the first real script load has no cold-start penalty.
-  # Overrides warmup-compiler-on-startup when enabled.
-  full-warmup-on-startup: true
+  # so that the real scripts load faster when they are loaded later in the startup process.
+  # This is done asynchronously to avoid blocking the main thread, but it may be worse overall startup for bad CPUs or limited resources.
+  # Note, JIT takes time to optimize, running a warmup way earlier in the startup process results much better compile times (40 avg to 20 avg ms on 9900x3d).
+  warmup-on-startup: false
 
   # Only include the server jar and plugin jar on the compiler classpath
   # instead of every jar found in the classloader chain.

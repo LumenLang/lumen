@@ -150,10 +150,7 @@ public final class PlaceholderExpander {
             if (template == null) {
                 return "String.valueOf(" + fullRef.java() + ")";
             }
-            String guardedVar = fullRef.hasMeta("nullable")
-                    ? fullRef.java()
-                    : "NullGuard.of(" + fullRef.java() + ", \"" + placeholder + "\")";
-            return PlaceholderRegistry.expand(template, guardedVar);
+            return PlaceholderRegistry.expand(template, fullRef.java());
         }
 
         int underscore = placeholder.indexOf('_');
@@ -182,9 +179,7 @@ public final class PlaceholderExpander {
             return null;
         }
 
-        String guardedVar = ref.hasMeta("nullable")
-                ? ref.java()
-                : "NullGuard.of(" + ref.java() + ", \"" + varName + "\")";
+        String guardedVar = ref.java();
         return PlaceholderRegistry.expand(template, guardedVar);
     }
 

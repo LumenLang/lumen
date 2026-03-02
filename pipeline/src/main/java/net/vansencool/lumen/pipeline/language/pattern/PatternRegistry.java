@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Consumer;
@@ -109,8 +110,8 @@ public final class PatternRegistry {
     private final ConditionRegistry conditionRegistry;
     private final LoopRegistry loopRegistry;
     private final TypeRegistry types;
-    private volatile boolean statementsSorted;
-    private volatile boolean expressionsSorted;
+    private volatile List<RegisteredPattern> sortedStatements;
+    private volatile List<RegisteredExpression> sortedExpressions;
 
     public PatternRegistry(@NotNull TypeRegistry types) {
         this.types = types;
@@ -520,8 +521,7 @@ public final class PatternRegistry {
      * @return a RegisteredPatternMatch if successful, null otherwise
      */
     public RegisteredPatternMatch matchStatement(List<Token> tokens, TypeEnv env) {
-        ensureStatementsSorted();
-        for (RegisteredPattern rp : statements) {
+        for (RegisteredPattern rp : ensureStatementsSorted()) {
             Match m = PatternMatcher.match(tokens, rp.pattern(), types, env);
             if (m != null) return new RegisteredPatternMatch(rp, m);
         }
@@ -537,25 +537,26 @@ public final class PatternRegistry {
      * @return a RegisteredPatternMatch if successful, null otherwise
      */
     public @Nullable RegisteredPatternMatch matchStatementSlow(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
-        ensureStatementsSorted();
         InlineExprValidator validator = (toks, e) -> matchExpressionFast(toks, e) != null;
-        for (RegisteredPattern rp : statements) {
+        for (RegisteredPattern rp : ensureStatementsSorted()) {
             Match m = PatternMatcher.match(tokens, rp.pattern(), types, env, validator);
             if (m != null) return new RegisteredPatternMatch(rp, m);
         }
         return null;
     }
 
-    private void ensureStatementsSorted() {
-        if (!statementsSorted) {
+    private @NotNull List<RegisteredPattern> ensureStatementsSorted() {
+        if (sortedStatements == null) {
             synchronized (statements) {
-                if (!statementsSorted) {
-                    statements.sort(Comparator.comparingInt(
+                if (sortedStatements == null) {
+                    List<RegisteredPattern> copy = new ArrayList<>(statements);
+                    copy.sort(Comparator.comparingInt(
                             (RegisteredPattern rp) -> specificity(rp.pattern())).reversed());
-                    statementsSorted = true;
+                    sortedStatements = Collections.unmodifiableList(copy);
                 }
             }
         }
+        return sortedStatements;
     }
 
     /**
@@ -572,8 +573,7 @@ public final class PatternRegistry {
      * @return a RegisteredExpressionMatch if successful, null otherwise
      */
     public @Nullable RegisteredExpressionMatch matchExpression(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
-        ensureExpressionsSorted();
-        for (RegisteredExpression re : expressions) {
+        for (RegisteredExpression re : ensureExpressionsSorted()) {
             Match m = PatternMatcher.match(tokens, re.pattern(), types, env);
             if (m != null) return new RegisteredExpressionMatch(re, m);
         }
@@ -589,25 +589,26 @@ public final class PatternRegistry {
      * @return a RegisteredExpressionMatch if successful, null otherwise
      */
     public @Nullable RegisteredExpressionMatch matchExpressionSlow(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
-        ensureExpressionsSorted();
         InlineExprValidator validator = (toks, e) -> matchExpressionFast(toks, e) != null;
-        for (RegisteredExpression re : expressions) {
+        for (RegisteredExpression re : ensureExpressionsSorted()) {
             Match m = PatternMatcher.match(tokens, re.pattern(), types, env, validator);
             if (m != null) return new RegisteredExpressionMatch(re, m);
         }
         return null;
     }
 
-    private void ensureExpressionsSorted() {
-        if (!expressionsSorted) {
+    private @NotNull List<RegisteredExpression> ensureExpressionsSorted() {
+        if (sortedExpressions == null) {
             synchronized (expressions) {
-                if (!expressionsSorted) {
-                    expressions.sort(Comparator.comparingInt(
+                if (sortedExpressions == null) {
+                    List<RegisteredExpression> copy = new ArrayList<>(expressions);
+                    copy.sort(Comparator.comparingInt(
                             (RegisteredExpression re) -> specificity(re.pattern())).reversed());
-                    expressionsSorted = true;
+                    sortedExpressions = Collections.unmodifiableList(copy);
                 }
             }
         }
+        return sortedExpressions;
     }
 
     /**
@@ -620,16 +621,7 @@ public final class PatternRegistry {
      */
     private @Nullable RegisteredExpressionMatch matchExpressionFast(
             @NotNull List<Token> tokens, @NotNull TypeEnv env) {
-        if (!expressionsSorted) {
-            synchronized (expressions) {
-                if (!expressionsSorted) {
-                    expressions.sort(Comparator.comparingInt(
-                            (RegisteredExpression re) -> specificity(re.pattern())).reversed());
-                    expressionsSorted = true;
-                }
-            }
-        }
-        for (RegisteredExpression re : expressions) {
+        for (RegisteredExpression re : ensureExpressionsSorted()) {
             Match m = PatternMatcher.match(tokens, re.pattern(), types, env);
             if (m != null)
                 return new RegisteredExpressionMatch(re, m);

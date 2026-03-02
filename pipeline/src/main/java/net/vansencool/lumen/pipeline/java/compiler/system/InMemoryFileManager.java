@@ -42,12 +42,4 @@ public final class InMemoryFileManager extends ForwardingJavaFileManager<Standar
     ) {
         return new ClassFile(className, classes);
     }
-
-    /**
-     * No-op override. The delegate file manager is cached and shared across compilations,
-     * so it must not be closed by individual compilation consumers.
-     */
-    @Override
-    public void close() {
-    }
 }

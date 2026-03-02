@@ -21,7 +21,6 @@ import java.util.Set;
 public final class SystemCompiler {
 
     private static volatile JavaCompiler cachedCompiler;
-    private static volatile StandardJavaFileManager cachedFileManager;
     private static volatile boolean reduceClasspath;
 
     private static final Set<String> EXCLUDED_PACKAGES = Set.of(
@@ -66,15 +65,6 @@ public final class SystemCompiler {
     }
 
     /**
-     * Pre-initializes the Java compiler and file manager on the current thread.
-     * Useful for warming up the compiler ahead of the first real compilation.
-     */
-    public static void warmup() {
-        compiler();
-        fileManager();
-    }
-
-    /**
      * Compiles the given Java source files in memory and returns a file manager containing the compiled classes.
      *
      * @param parent the parent class loader to use for resolving dependencies during compilation
@@ -85,7 +75,8 @@ public final class SystemCompiler {
      */
     public static @NotNull InMemoryFileManager compileAll(@NotNull ClassLoader parent, @NotNull List<SourceFile> files) {
         JavaCompiler compiler = compiler();
-        InMemoryFileManager fm = new InMemoryFileManager(fileManager());
+        StandardJavaFileManager standardFm = compiler.getStandardFileManager(null, null, null);
+        InMemoryFileManager fm = new InMemoryFileManager(standardFm);
 
         List<String> options = List.of(
                 "-g",
@@ -93,7 +84,15 @@ public final class SystemCompiler {
         );
 
         DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
-        Boolean ok = compiler.getTask(null, fm, diagnostics, options, null, files).call();
+        Boolean ok;
+        try {
+            ok = compiler.getTask(null, fm, diagnostics, options, null, files).call();
+        } finally {
+            try {
+                fm.close();
+            } catch (Exception ignored) {
+            }
+        }
 
         if (ok == null || !ok) {
             List<CompilationFailedException.CompileError> errors = new ArrayList<>();
@@ -124,20 +123,6 @@ public final class SystemCompiler {
             }
         }
         return c;
-    }
-
-    private static @NotNull StandardJavaFileManager fileManager() {
-        StandardJavaFileManager fm = cachedFileManager;
-        if (fm == null) {
-            synchronized (SystemCompiler.class) {
-                fm = cachedFileManager;
-                if (fm == null) {
-                    fm = compiler().getStandardFileManager(null, null, null);
-                    cachedFileManager = fm;
-                }
-            }
-        }
-        return fm;
     }
 
     private static @NotNull String extractFqcn(@Nullable JavaFileObject source) {

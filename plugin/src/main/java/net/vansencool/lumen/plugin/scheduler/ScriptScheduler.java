@@ -1,5 +1,6 @@
 package net.vansencool.lumen.plugin.scheduler;
 
+import net.vansencool.lumen.pipeline.java.compiled.LumenNullException;
 import net.vansencool.lumen.pipeline.java.compiled.LumenRuntimeException;
 import net.vansencool.lumen.pipeline.java.compiled.ScriptSourceMap;
 import net.vansencool.lumen.pipeline.logger.LumenLogger;
@@ -7,6 +8,7 @@ import net.vansencool.lumen.plugin.Lumen;
 import org.bukkit.Bukkit;
 import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -436,36 +438,37 @@ public final class ScriptScheduler {
                         ? scriptClassName.substring(scriptClassName.lastIndexOf('.') + 1)
                         : scriptClassName;
                 ScriptSourceMap.ScriptLineMapping mapping = ScriptSourceMap.findFromException(cause);
-                String locationInfo = mapping != null
-                        ? " (script line " + mapping.scriptLine() + ": " + mapping.scriptSource() + ")"
-                        : "";
-                if (cause instanceof NullPointerException) {
-                    LumenLogger.severe("[Script " + simpleName + "] NullPointerException in scheduled task"
-                            + locationInfo
-                            + ". A variable is likely null, use 'if <var> is set:' to check before using it.");
+                if (cause instanceof LumenNullException lne) {
+                    LumenLogger.severe("[Script " + simpleName + "] NullPointerException in scheduled task");
+                    logSourceMapping(mapping);
+                    LumenLogger.severe("  -> '" + lne.scriptVarName() + "' was null. Use 'if " + lne.scriptVarName() + " is set:' to guard it.");
+                } else if (cause instanceof NullPointerException npe) {
+                    LumenLogger.severe("[Script " + simpleName + "] NullPointerException in scheduled task");
+                    logSourceMapping(mapping);
+                    LumenLogger.severe("  -> " + ScriptSourceMap.formatNpeHint(npe));
                 } else {
-                    LumenLogger.severe("[Script " + simpleName + "] Runtime error in scheduled task"
-                            + locationInfo + ": " + cause.getMessage());
+                    LumenLogger.severe("[Script " + simpleName + "] Runtime error in scheduled task: " + cause.getMessage());
+                    logSourceMapping(mapping);
                 }
             }
         }
     }
 
     private static void logSchedulerException(@NotNull String scriptClassName, @NotNull LumenRuntimeException lre) {
-        if (lre.scriptLine() > 0) {
-            LumenLogger.severe("[Script] " + lre.getMessage());
-            return;
-        }
         String simpleName = scriptClassName.contains(".")
                 ? scriptClassName.substring(scriptClassName.lastIndexOf('.') + 1)
                 : scriptClassName;
-        ScriptSourceMap.ScriptLineMapping mapping = ScriptSourceMap.findFromException(lre);
-        if (mapping != null) {
-            LumenLogger.severe("[Script " + simpleName + "] " + lre.getMessage()
-                    + " (script line " + mapping.scriptLine() + ": " + mapping.scriptSource() + ")");
-        } else {
-            LumenLogger.severe("[Script] " + lre.getMessage());
-        }
+        ScriptSourceMap.ScriptLineMapping mapping = lre.scriptLine() > 0
+                ? null
+                : ScriptSourceMap.findFromException(lre);
+        LumenLogger.severe("[Script " + simpleName + "] " + lre.getMessage());
+        logSourceMapping(mapping);
+    }
+
+    private static void logSourceMapping(@Nullable ScriptSourceMap.ScriptLineMapping mapping) {
+        if (mapping == null) return;
+        LumenLogger.severe("  Script line " + mapping.scriptLine() + ": " + mapping.scriptSource());
+        LumenLogger.severe("  Java line: " + mapping.javaLine());
     }
 
     /**

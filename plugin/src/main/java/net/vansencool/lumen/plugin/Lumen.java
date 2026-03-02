@@ -204,12 +204,8 @@ public final class Lumen extends JavaPlugin {
 
     private void setupSystemCompiler() {
         SystemCompiler.setReduceClasspath(LumenConfiguration.PERFORMANCE.REDUCE_CLASSPATH);
-        if (LumenConfiguration.PERFORMANCE.FULL_WARMUP_ON_STARTUP) {
-            Thread warmup = new Thread(ScriptManager::fullWarmup, "Lumen-FullWarmup");
-            warmup.setDaemon(true);
-            warmup.start();
-        } else if (LumenConfiguration.PERFORMANCE.WARMUP_COMPILER_ON_STARTUP) {
-            Thread warmup = new Thread(SystemCompiler::warmup, "Lumen-CompilerWarmup");
+        if (LumenConfiguration.PERFORMANCE.WARMUP_ON_STARTUP) {
+            Thread warmup = new Thread(ScriptManager::warmup, "Lumen-Warmup");
             warmup.setDaemon(true);
             warmup.start();
         }

@@ -1,7 +1,9 @@
 package net.vansencool.lumen.plugin.scripts;
 
+import net.vansencool.lumen.pipeline.logger.LumenLogger;
 import net.vansencool.lumen.plugin.Lumen;
 import net.vansencool.lumen.plugin.configuration.LumenConfiguration;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -34,11 +36,36 @@ public final class ScriptSourceLoader {
             return stream
                     .filter(p -> p.getFileName().toString().endsWith(LumenConfiguration.SCRIPTS.EXTENSION))
                     .filter(p -> !p.getFileName().toString().startsWith("-"))
+                    .filter(p -> {
+                        String name = p.getFileName().toString();
+                        if (isReservedScriptName(name)) {
+                            LumenLogger.warning("Skipping reserved script name '" + name
+                                    + "'. Names whose base is surrounded by __ are reserved for internal use.");
+                            return false;
+                        }
+                        return true;
+                    })
                     .map(p -> p.getFileName().toString())
                     .sorted()
                     .toList();
         } catch (IOException e) {
             return List.of();
         }
+    }
+
+    /**
+     * Returns true if the script file name uses a reserved naming convention.
+     *
+     * <p>A name is considered reserved when its base part (the file name without
+     * extension) starts and ends with double underscores, for example
+     * {@code __warmup__.luma} or {@code __internal__.luma}.
+     *
+     * @param fileName the script file name including its extension
+     * @return true if the name is reserved
+     */
+    private static boolean isReservedScriptName(@NotNull String fileName) {
+        int dot = fileName.lastIndexOf('.');
+        String base = dot >= 0 ? fileName.substring(0, dot) : fileName;
+        return base.startsWith("__") && base.endsWith("__");
     }
 }

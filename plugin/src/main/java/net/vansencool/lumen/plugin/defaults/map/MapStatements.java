@@ -9,7 +9,6 @@ import net.vansencool.lumen.api.codegen.EnvironmentAccess;
 import net.vansencool.lumen.api.codegen.JavaOutput;
 import net.vansencool.lumen.api.pattern.Categories;
 import net.vansencool.lumen.api.type.RefTypeHandle;
-import net.vansencool.lumen.pipeline.java.compiled.NullGuard;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -174,8 +173,7 @@ public final class MapStatements {
             throw new RuntimeException("Scope variable '" + scopeVarName
                     + "' has no ref type. Expected a typed variable like a player or entity.");
         }
-        String guardedVar = NullGuard.codegen(scopeRef.java());
-        String scopeKeyPart = refType.keyExpression(guardedVar);
+        String scopeKeyPart = refType.keyExpression(scopeRef.java());
         return "\"" + info.className() + "." + varName + ".\" + " + scopeKeyPart;
     }
 }

@@ -109,11 +109,8 @@ public final class LumenConfiguration {
         @Key("load-scripts-async-on-startup")
         public boolean LOAD_SCRIPTS_ASYNC_ON_STARTUP = false;
 
-        @Key("warmup-compiler-on-startup")
-        public boolean WARMUP_COMPILER_ON_STARTUP = true;
-
-        @Key("full-warmup-on-startup")
-        public boolean FULL_WARMUP_ON_STARTUP = true;
+        @Key("warmup-on-startup")
+        public boolean WARMUP_ON_STARTUP = true;
 
         @Key("reduce-classpath")
         public boolean REDUCE_CLASSPATH = false;

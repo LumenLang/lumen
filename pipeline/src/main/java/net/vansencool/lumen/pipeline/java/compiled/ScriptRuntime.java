@@ -41,7 +41,6 @@ public final class ScriptRuntime {
         ctx.addImport("net.vansencool.lumen.pipeline.annotations.LumenInventory");
         ctx.addImport("net.vansencool.lumen.pipeline.annotations.LumenPreload");
         ctx.addImport("net.vansencool.lumen.pipeline.annotations.LumenLoad");
-        ctx.addImport("net.vansencool.lumen.pipeline.java.compiled.NullGuard");
         writeFormattedImports(sb, ctx.importLines());
 
         StringBuilder classDecl = new StringBuilder();

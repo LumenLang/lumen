@@ -3,6 +3,7 @@ package net.vansencool.lumen.plugin.text;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.TextComponent;
+import net.vansencool.lumen.pipeline.java.compiled.LumenNullException;
 import net.vansencool.lumen.pipeline.minicolorize.MiniColorize;
 import net.vansencool.lumen.plugin.configuration.LumenConfiguration;
 import net.vansencool.lumen.plugin.minicolorize.BukkitMiniColorizeSerializer;
@@ -49,7 +50,13 @@ public final class LumenText {
      * @param sender the recipient
      * @param text   the raw text, potentially containing color codes or MiniColorize tags
      */
-    public static void send(@NotNull CommandSender sender, @NotNull String text) {
+    public static void send(@Nullable CommandSender sender, @Nullable String text) {
+        if (sender == null) {
+            throw new LumenNullException("sender", "Cannot send text to null sender");
+        }
+        if (text == null) {
+            throw new LumenNullException("text", "Cannot send null text to " + sender.getName());
+        }
         BaseComponent[] components = toComponents(text);
         sender.spigot().sendMessage(components);
     }
@@ -59,7 +66,10 @@ public final class LumenText {
      *
      * @param text the raw text, potentially containing color codes or MiniColorize tags
      */
-    public static void broadcast(@NotNull String text) {
+    public static void broadcast(@Nullable String text) {
+        if (text == null) {
+            throw new LumenNullException("text", "Cannot broadcast null text");
+        }
         BaseComponent[] components = toComponents(text);
         for (Player player : Bukkit.getOnlinePlayers()) {
             player.spigot().sendMessage(components);
@@ -77,7 +87,10 @@ public final class LumenText {
      * @param text the raw text containing color codes or MiniColorize tags
      * @return the translated string with section-sign color codes
      */
-    public static @NotNull String colorize(@NotNull String text) {
+    public static @NotNull String colorize(@Nullable String text) {
+        if (text == null) {
+            throw new LumenNullException("text", "Cannot colorize null text");
+        }
         BaseComponent[] components = toComponents(text);
         return TextComponent.toLegacyText(components);
     }
@@ -96,8 +109,14 @@ public final class LumenText {
      * @param stay     stay duration in ticks
      * @param fadeOut  fade-out duration in ticks
      */
-    public static void sendTitle(@NotNull Player player, @NotNull String title,
+    public static void sendTitle(@Nullable Player player, @Nullable String title,
                                  @Nullable String subtitle, int fadeIn, int stay, int fadeOut) {
+        if (player == null) {
+            throw new LumenNullException("player", "Cannot send title to null player");
+        }
+        if (title == null) {
+            throw new LumenNullException("title", "Cannot send null title to " + player.getName());
+        }
         String titleLegacy = colorize(title);
         String subtitleLegacy = subtitle != null ? colorize(subtitle) : "";
         player.sendTitle(titleLegacy, subtitleLegacy, fadeIn, stay, fadeOut);
@@ -112,7 +131,13 @@ public final class LumenText {
      * @param player the player to display the action bar to
      * @param text   the action bar text
      */
-    public static void sendActionBar(@NotNull Player player, @NotNull String text) {
+    public static void sendActionBar(@Nullable Player player, @Nullable String text) {
+        if (player == null) {
+            throw new LumenNullException("player", "Cannot send action bar to null player");
+        }
+        if (text == null) {
+            throw new LumenNullException("text", "Cannot send null action bar text to " + player.getName());
+        }
         BaseComponent[] components = toComponents(text);
         player.spigot().sendMessage(ChatMessageType.ACTION_BAR, components);
     }
@@ -124,7 +149,10 @@ public final class LumenText {
      * @param text the raw text
      * @return the serialized components
      */
-    public static @NotNull BaseComponent[] toComponents(@NotNull String text) {
+    public static @NotNull BaseComponent[] toComponents(@Nullable String text) {
+        if (text == null) {
+            throw new LumenNullException("text", "Cannot process null text");
+        }
         String processed = text;
         if (LumenConfiguration.FEATURES.USE_LEGACY_COLORS) {
             processed = legacyToMini(ChatColor.translateAlternateColorCodes('&', processed));

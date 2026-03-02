@@ -8,13 +8,12 @@ import net.vansencool.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import net.vansencool.lumen.api.type.RefTypes;
 import net.vansencool.lumen.plugin.util.InventoryHelper;
 import net.vansencool.lumen.plugin.util.InventoryRegistry;
+import net.vansencool.lumen.plugin.util.LumenInventoryHelper;
 import net.vansencool.lumen.plugin.util.LumenInventoryHolder;
 import org.bukkit.Material;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.function.Supplier;
 
 /**
  * Registers patterns for creating and manipulating custom inventories (GUIs).
@@ -58,18 +57,12 @@ public final class InventoryPatterns {
                         "var gui = new inventory \"main_menu\" with size 27 titled \"&6My Shop\"",
                         ctx -> {
                             ctx.codegen().addImport(INVENTORY);
-                            ctx.codegen().addImport(LumenInventoryHolder.class.getName());
-                            ctx.codegen().addImport(Supplier.class.getName());
+                            ctx.codegen().addImport(LumenInventoryHelper.class.getName());
                             String name = ctx.java("name");
                             String size = ctx.java("size");
                             String title = ctx.java("title");
                             return new ExpressionResult(
-                                    "((Supplier<Inventory>) () -> {"
-                                            + " LumenInventoryHolder __lh = new LumenInventoryHolder(" + name + ");"
-                                            + " Inventory __inv = Bukkit.createInventory(__lh, " + size + ", LumenText.colorize(" + title + "));"
-                                            + " __lh.setInventory(__inv);"
-                                            + " return __inv;"
-                                            + " }).get()",
+                                    "LumenInventoryHelper.create(" + name + ", " + size + ", " + title + ")",
                                     null);
                         })
                 .expression(
@@ -78,17 +71,11 @@ public final class InventoryPatterns {
                         "var gui = new inventory \"shop\" with size 54",
                         ctx -> {
                             ctx.codegen().addImport(INVENTORY);
-                            ctx.codegen().addImport(LumenInventoryHolder.class.getName());
-                            ctx.codegen().addImport(Supplier.class.getName());
+                            ctx.codegen().addImport(LumenInventoryHelper.class.getName());
                             String name = ctx.java("name");
                             String size = ctx.java("size");
                             return new ExpressionResult(
-                                    "((Supplier<Inventory>) () -> {"
-                                            + " LumenInventoryHolder __lh = new LumenInventoryHolder(" + name + ");"
-                                            + " Inventory __inv = Bukkit.createInventory(__lh, " + size + ");"
-                                            + " __lh.setInventory(__inv);"
-                                            + " return __inv;"
-                                            + " }).get()",
+                                    "LumenInventoryHelper.create(" + name + ", " + size + ")",
                                     null);
                         })
                 .expression(
@@ -98,21 +85,12 @@ public final class InventoryPatterns {
                         "var gui = new inventory \"main_menu\" with rows 3 titled \"&6My Shop\"",
                         ctx -> {
                             ctx.codegen().addImport(INVENTORY);
-                            ctx.codegen().addImport(LumenInventoryHolder.class.getName());
-                            ctx.codegen().addImport(Supplier.class.getName());
+                            ctx.codegen().addImport(LumenInventoryHelper.class.getName());
                             String name = ctx.java("name");
                             String rows = ctx.java("rows");
                             String title = ctx.java("title");
                             return new ExpressionResult(
-                                    "((Supplier<Inventory>) () -> {"
-                                            + " int __rows = " + rows + ";"
-                                            + " if (__rows < 1 || __rows > 6)"
-                                            + " throw new RuntimeException(\"Rows must be between 1 and 6, got \" + __rows);"
-                                            + " LumenInventoryHolder __lh = new LumenInventoryHolder(" + name + ");"
-                                            + " Inventory __inv = Bukkit.createInventory(__lh, __rows * 9, LumenText.colorize(" + title + "));"
-                                            + " __lh.setInventory(__inv);"
-                                            + " return __inv;"
-                                            + " }).get()",
+                                    "LumenInventoryHelper.createWithRows(" + name + ", " + rows + ", " + title + ")",
                                     null);
                         })
                 .expression(
@@ -122,20 +100,11 @@ public final class InventoryPatterns {
                         "var gui = new inventory \"shop\" with rows 6",
                         ctx -> {
                             ctx.codegen().addImport(INVENTORY);
-                            ctx.codegen().addImport(LumenInventoryHolder.class.getName());
-                            ctx.codegen().addImport(Supplier.class.getName());
+                            ctx.codegen().addImport(LumenInventoryHelper.class.getName());
                             String name = ctx.java("name");
                             String rows = ctx.java("rows");
                             return new ExpressionResult(
-                                    "((Supplier<Inventory>) () -> {"
-                                            + " int __rows = " + rows + ";"
-                                            + " if (__rows < 1 || __rows > 6)"
-                                            + " throw new RuntimeException(\"Rows must be between 1 and 6, got \" + __rows);"
-                                            + " LumenInventoryHolder __lh = new LumenInventoryHolder(" + name + ");"
-                                            + " Inventory __inv = Bukkit.createInventory(__lh, __rows * 9);"
-                                            + " __lh.setInventory(__inv);"
-                                            + " return __inv;"
-                                            + " }).get()",
+                                    "LumenInventoryHelper.createWithRows(" + name + ", " + rows + ")",
                                     null);
                         });
     }

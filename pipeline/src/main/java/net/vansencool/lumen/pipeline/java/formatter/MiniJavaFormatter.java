@@ -12,8 +12,7 @@ import java.util.regex.Pattern;
  * A lightweight Java code formatter providing multiple levels of source transformation.
  *
  * <ul>
- *   <li>{@link #formatOnly} - indentation and brace normalization only, nothing stripped</li>
- *   <li>{@link #format} - formatted, with NullGuard calls unwrapped and identical branches merged</li>
+ *   <li>{@link #format} - formatted, with identical branches merged</li>
  *   <li>{@link #formatReadable} - same as {@link #format} but also strips all cast expressions,
  *       producing output that may not compile but is easier to read quickly</li>
  * </ul>
@@ -22,20 +21,7 @@ import java.util.regex.Pattern;
 public final class MiniJavaFormatter {
 
     /**
-     * Applies only indentation and brace normalization to the source. No NullGuard stripping,
-     * no branch merging, and no cast removal are performed. The output is valid Java.
-     *
-     * @param source raw Java source
-     * @return indentation-normalized Java source
-     */
-    public static @NotNull String formatOnly(@NotNull String source) {
-        return applyIndentation(source,
-                "// Formatted by MiniJavaFormatter (indentation only).\n");
-    }
-
-    /**
-     * Formats the source and additionally unwraps all {@code NullGuard.of(value, "name")} calls
-     * and merges consecutive identical if-blocks. The result is still valid Java.
+     * Formats the source and merges consecutive identical if-blocks. The result is still valid Java.
      *
      * @param source raw Java source
      * @return formatted and cleaned Java source
@@ -43,15 +29,14 @@ public final class MiniJavaFormatter {
     public static @NotNull String format(@NotNull String source) {
         String indented = applyIndentation(source,
                 """
-                        // Formatted by MiniJavaFormatter (cleaned: NullGuard stripped, branches merged).
-                        // It may not function the exact same as the original source, but should be easier to read.
+                        // Formatted by MiniJavaFormatter (branches merged).
                         """);
-        return mergeIdenticalBranches(stripNullGuards(indented));
+        return mergeIdenticalBranches(indented);
     }
 
     /**
-     * Formats the source, strips NullGuard calls, merges identical branches, and additionally
-     * removes all cast expressions such as {@code (long)}, {@code (Object)}, {@code (Player)}, etc.
+     * Formats the source, merges identical branches, and additionally removes all cast expressions
+     * such as {@code (long)}, {@code (Object)}, {@code (Player)}, etc.
      * The resulting source is intended for human reading only and may not compile.
      *
      * @param source raw Java source
@@ -60,10 +45,10 @@ public final class MiniJavaFormatter {
     public static @NotNull String formatReadable(@NotNull String source) {
         String indented = applyIndentation(source,
                 """
-                        // Formatted by MiniJavaFormatter (readable: NullGuard stripped, branches merged, casts removed).
+                        // Formatted by MiniJavaFormatter (readable: branches merged, casts removed, no String.valueOf or .toString).
                         // This file is for reading only - it may not compile.
                         """);
-        String merged = mergeIdenticalBranches(stripNullGuards(indented));
+        String merged = mergeIdenticalBranches(indented);
         return stripCasts(stripToString(stripStringValueOf(merged)));
     }
 
@@ -260,18 +245,18 @@ public final class MiniJavaFormatter {
      * <p>For example:</p>
      * <pre>
      * // @lumen:6: set entity powered to true
-     * if (NullGuard.of(entity, "entity") instanceof Creeper _cr) {
+     * if (entity instanceof Creeper _cr) {
      *     _cr.setPowered(true);
      * }
      * // @lumen:7: set entity explosion radius to 6
-     * if (NullGuard.of(entity, "entity") instanceof Creeper _cr) {
+     * if (entity instanceof Creeper _cr) {
      *     _cr.setExplosionRadius(6);
      * }
      * </pre>
      * <p>Becomes:</p>
      * <pre>
      * // @lumen:6: set entity powered to true
-     * if (NullGuard.of(entity, "entity") instanceof Creeper _cr) {
+     * if (entity instanceof Creeper _cr) {
      *     _cr.setPowered(true);
      *     // @lumen:7: set entity explosion radius to 6
      *     _cr.setExplosionRadius(6);
@@ -373,24 +358,8 @@ public final class MiniJavaFormatter {
         return line.substring(0, idx);
     }
 
-    private static final Pattern NULL_GUARD_PATTERN =
-            Pattern.compile("NullGuard\\.of\\((.+?),\\s*\"[^\"]*\"\\)");
-
     private static final Pattern CAST_PATTERN =
             Pattern.compile("\\((?:int|long|double|float|short|byte|char|boolean|[A-Z]\\w*(?:\\.\\w+)*(?:<[^)]*>)?(?:\\[])*)\\)");
-
-    /**
-     * Strips all {@code NullGuard.of(value, "name")} calls from the source,
-     * replacing them with just the first argument (the actual value).
-     * This simplifies the viewed output since NullGuard is only a runtime safety wrapper.
-     *
-     * @param source formatted source
-     * @return source with NullGuard calls unwrapped
-     */
-    private static @NotNull String stripNullGuards(@NotNull String source) {
-        Matcher matcher = NULL_GUARD_PATTERN.matcher(source);
-        return matcher.replaceAll("$1");
-    }
 
     /**
      * Replaces all {@code String.valueOf(expr)} calls with just {@code expr}.
@@ -769,38 +738,5 @@ public final class MiniJavaFormatter {
             }
         }
         return count;
-    }
-
-    /**
-     * Null-safe wrapper around {@link #formatOnly}.
-     *
-     * @param source raw Java source, or null
-     * @return formatted source, or null if input was null
-     */
-    public static @Nullable String tryFormatOnly(@Nullable String source) {
-        if (source == null) return null;
-        return formatOnly(source);
-    }
-
-    /**
-     * Null-safe wrapper around {@link #format}.
-     *
-     * @param source raw Java source, or null
-     * @return cleaned source, or null if input was null
-     */
-    public static @Nullable String tryFormat(@Nullable String source) {
-        if (source == null) return null;
-        return format(source);
-    }
-
-    /**
-     * Null-safe wrapper around {@link #formatReadable}.
-     *
-     * @param source raw Java source, or null
-     * @return readable source, or null if input was null
-     */
-    public static @Nullable String tryFormatReadable(@Nullable String source) {
-        if (source == null) return null;
-        return formatReadable(source);
     }
 }

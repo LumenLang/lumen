@@ -15,7 +15,6 @@ import net.vansencool.lumen.api.type.RegistryTypeBinding;
 import net.vansencool.lumen.api.type.TypeBindingMeta;
 import net.vansencool.lumen.api.version.MinecraftVersion;
 import net.vansencool.lumen.pipeline.java.compiled.DataInstance;
-import net.vansencool.lumen.pipeline.java.compiled.NullGuard;
 import net.vansencool.lumen.pipeline.logger.LumenLogger;
 import org.bukkit.DyeColor;
 import org.bukkit.GameMode;
@@ -517,7 +516,7 @@ public final class DefaultTypeBindings {
                     @NotNull EnvironmentAccess env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null player reference");
-                return NullGuard.codegenOrRaw((VarHandle) v);
+                return ((VarHandle) v).java();
             }
 
             private boolean isPlayer(@NotNull VarHandle ref) {
@@ -595,7 +594,7 @@ public final class DefaultTypeBindings {
                     @NotNull EnvironmentAccess env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null player reference");
-                return NullGuard.codegenOrRaw((VarHandle) v);
+                return ((VarHandle) v).java();
             }
 
             private boolean isPlayer(@NotNull VarHandle ref) {
@@ -672,7 +671,7 @@ public final class DefaultTypeBindings {
                     @NotNull EnvironmentAccess env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null offline player reference");
-                return NullGuard.codegenOrRaw((VarHandle) v);
+                return ((VarHandle) v).java();
             }
 
             private boolean isOfflinePlayer(@NotNull VarHandle ref) {
@@ -750,7 +749,7 @@ public final class DefaultTypeBindings {
                     @NotNull EnvironmentAccess env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null offline player reference");
-                return NullGuard.codegenOrRaw((VarHandle) v);
+                return ((VarHandle) v).java();
             }
 
             private boolean isOfflinePlayer(@NotNull VarHandle ref) {
@@ -970,7 +969,7 @@ public final class DefaultTypeBindings {
                     @NotNull EnvironmentAccess env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null entity reference");
-                return NullGuard.codegenOrRaw((VarHandle) v);
+                return ((VarHandle) v).java();
             }
 
             private boolean isEntity(@NotNull VarHandle ref) {
@@ -1051,7 +1050,7 @@ public final class DefaultTypeBindings {
                     @NotNull EnvironmentAccess env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null entity reference");
-                return NullGuard.codegenOrRaw((VarHandle) v);
+                return ((VarHandle) v).java();
             }
 
             private boolean isEntity(@NotNull VarHandle ref) {
@@ -1267,7 +1266,7 @@ public final class DefaultTypeBindings {
                     @NotNull EnvironmentAccess env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null item stack reference");
-                return NullGuard.codegenOrRaw((VarHandle) v);
+                return ((VarHandle) v).java();
             }
 
             private boolean isItemStack(@NotNull VarHandle ref) {
@@ -1337,7 +1336,7 @@ public final class DefaultTypeBindings {
                     @NotNull EnvironmentAccess env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null item stack reference");
-                return NullGuard.codegenOrRaw((VarHandle) v);
+                return ((VarHandle) v).java();
             }
 
             private boolean isItemStack(@NotNull VarHandle ref) {
@@ -1400,7 +1399,7 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx,
                     @NotNull EnvironmentAccess env) {
-                return NullGuard.codegenOrRaw((VarHandle) v);
+                return ((VarHandle) v).java();
             }
 
             private boolean isWorld(@NotNull VarHandle ref) {
@@ -1465,7 +1464,7 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx,
                     @NotNull EnvironmentAccess env) {
-                return NullGuard.codegenOrRaw((VarHandle) v);
+                return ((VarHandle) v).java();
             }
 
             private boolean isLocation(@NotNull VarHandle ref) {
@@ -1521,7 +1520,7 @@ public final class DefaultTypeBindings {
                     @NotNull EnvironmentAccess env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null list reference");
-                return NullGuard.codegenOrRaw((VarHandle) v);
+                return ((VarHandle) v).java();
             }
 
             private boolean isList(@NotNull VarHandle ref) {
@@ -1577,7 +1576,7 @@ public final class DefaultTypeBindings {
                     @NotNull EnvironmentAccess env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null map reference");
-                return NullGuard.codegenOrRaw((VarHandle) v);
+                return ((VarHandle) v).java();
             }
 
             private boolean isMap(@NotNull VarHandle ref) {
@@ -1633,7 +1632,7 @@ public final class DefaultTypeBindings {
                     @NotNull EnvironmentAccess env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null data reference");
-                return NullGuard.codegenOrRaw((VarHandle) v);
+                return ((VarHandle) v).java();
             }
 
             private boolean isData(@NotNull VarHandle ref) {
@@ -1698,7 +1697,7 @@ public final class DefaultTypeBindings {
                     @NotNull EnvironmentAccess env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null block reference");
-                return NullGuard.codegenOrRaw((VarHandle) v);
+                return ((VarHandle) v).java();
             }
 
             private boolean isBlock(@NotNull VarHandle ref) {
