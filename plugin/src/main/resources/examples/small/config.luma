@@ -1,0 +1,25 @@
+# Config Example
+# Shows how to use the config block for customizable settings.
+# Config values become variables accessible from any block.
+
+config:
+    prefix: &6[Server]&r
+    maxLevel: 30
+
+on join:
+    broadcast "{prefix} &a{player_name} joined!"
+    message player "{prefix} &eWelcome back!"
+
+    var lv = get player's xp level
+    if lv > maxLevel:
+        set player's xp level to maxLevel
+        message player "{prefix} &7Level capped to {maxLevel}."
+
+on quit:
+    broadcast "{prefix} &c{player_name} left."
+
+command serverinfo:
+    description "Show server configuration"
+
+    message player "{prefix} &6Server Settings:"
+    message player "  &7Max level: &f{maxLevel}"

@@ -1,0 +1,32 @@
+# Daily Mining Quest
+# Tracks how many stone blocks each player has mined today.
+# Awards prizes at milestones. Progress resets every 24000 ticks (20 minutes).
+# In a real server you would use a longer interval or a time-of-day check.
+
+on block_break:
+    if block type is stone:
+        store mined for player default 0
+        add 1 to mined
+
+        if mined == 10:
+            message player "&a&lQuest Milestone! &eMined 10 stone blocks!"
+            give player diamond 1
+            send title "&6Quest Progress" with subtitle "&e10 stone mined!" to player
+
+        else if mined == 25:
+            message player "&a&lQuest Milestone! &eMined 25 stone blocks!"
+            give player diamond 3
+            send title "&6Quest Progress" with subtitle "&e25 stone mined!" to player
+
+        else if mined == 50:
+            message player "&a&lQuest Complete! &eMined 50 stone blocks!"
+            give player emerald 1
+            send title "&6&lQuest Complete!" with subtitle "&a50 stone mined! Well done!" to player
+            apply "regeneration" 2 to player for 200 ticks
+
+        send actionbar "&7Blocks mined: &f{mined}" to player
+
+# Reset all stored mining progress periodically
+every 24000 ticks as "quest_reset":
+    broadcast "&e&lDaily quests have been reset!"
+    delete stored mined

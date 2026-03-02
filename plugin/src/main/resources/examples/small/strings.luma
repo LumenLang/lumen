@@ -1,0 +1,54 @@
+# String Operations
+# Text processing and formatting commands.
+#
+# Commands:
+#   /shout <text>      Broadcast a message in uppercase
+#   /textinfo <text>   Show string length, case conversions
+#   /tag <name|off>    Set or remove your join tag
+
+global stored var tag for ref type player default "none"
+
+command shout:
+    description "Shout in uppercase"
+
+    if args size < 1:
+        message player "&cUsage: /shout <text>"
+    else:
+        var text = args joined with " "
+        var upper = text to uppercase
+        broadcast "&c&l{player_name}: &f{upper}"
+
+command textinfo:
+    description "Analyze a string"
+
+    if args size < 1:
+        message player "&cUsage: /textinfo <text>"
+    else:
+        var text = get args at index 0
+        var len = length of text
+        var upper = text to uppercase
+        var lower = text to lowercase
+        message player "&6String Info:"
+        message player "  &7Original: &f{text}"
+        message player "  &7Length: &f{len}"
+        message player "  &7Upper: &f{upper}"
+        message player "  &7Lower: &f{lower}"
+
+command tag:
+    description "Set your chat tag"
+
+    if args size < 1:
+        message player "&eYour tag: &f{tag}"
+        message player "&7Use /tag <name> to set, /tag off to remove."
+    else:
+        var name = get args at index 0
+        if name is "off":
+            set tag to "none"
+            message player "&eTag removed."
+        else:
+            set tag to name
+            message player "&eTag set to &f[{name}]"
+
+on join:
+    if tag is not "none":
+        broadcast "&7[{tag}] &e{player_name} &7joined!"

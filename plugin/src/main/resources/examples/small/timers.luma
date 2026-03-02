@@ -1,0 +1,56 @@
+# Timed Announcements
+# Demonstrates delayed and repeating schedules.
+# Shows named schedules, delays, and cancellation.
+#
+# Commands:
+#   /boost          Get a 10 second speed boost
+#   /tips start     Start broadcasting tips on a timer
+#   /tips stop      Stop the tip broadcast
+
+global var tips_active default 0
+global var tip_index default 0
+global var tips default new list
+
+load:
+    clear tips
+    add "Use /boost for a speed boost!" to tips
+    add "Check out /stats to see your progress." to tips
+    add "Explore the world and discover new areas!" to tips
+
+every 1200 ticks as "tips" restarting:
+    if tips_active == 1:
+        var count = tips size
+        if count > 0:
+            var tip = get tips at index tip_index
+            broadcast "&e&lTip: &f{tip}"
+            add 1 to tip_index
+            if tip_index >= count:
+                set tip_index to 0
+
+command boost:
+    description "Temporary speed boost"
+
+    apply "speed" 2 to player for 200 ticks
+    message player "&aSpeed boost for 10 seconds!"
+    send title "&b&lSpeed Boost!" to player
+
+    after 200 ticks:
+        message player "&7Your speed boost wore off."
+
+command tips:
+    description "Control timed tip broadcasts"
+    permission "lumen.tips"
+
+    if args size < 1:
+        message player "&cUsage: /tips <start|stop>"
+    else:
+        var action = get args at index 0
+
+        if action is "start":
+            set tips_active to 1
+            message player "&aTip broadcasts started! (every 60 seconds)"
+
+        else if action is "stop":
+            set tips_active to 0
+            set tip_index to 0
+            message player "&cTip broadcasts stopped."

@@ -1,0 +1,92 @@
+# Schedules
+# Demonstrates every scheduling pattern available in Lumen:
+# anonymous delays, named delays, repeating, named repeating,
+# restarting, cancelling, and the cancel statement.
+#
+# Schedule Types:
+#   wait / after / in      One-shot delayed execution
+#   every                  Repeating at a fixed interval
+#
+# Named Schedule Modifiers:
+#   as "name"              Gives the schedule a name (supports hot-reload by default)
+#   as "name" restarting   On reload, cancel the old schedule and start fresh
+#   as "name" cancelling   On reload or unload, cancel the schedule entirely
+#
+# Cancellation:
+#   cancel                 Cancel the current schedule from inside its body
+#   cancel schedule "name" Cancel a named schedule by name
+#
+# Time Units: ticks, seconds, minutes, hours, days
+#   (20 ticks = 1 second)
+#
+# Commands:
+#   /schedules demo        Run example demos
+#   /schedules stop        Cancel all named demos
+#   /schedules countdown   Start a self-cancelling countdown
+
+# A simple repeating broadcast that runs every 5 minutes.
+# "restarting" means on reload it resets the timer from scratch.
+every 5 minutes as "periodic_reminder" restarting:
+    broadcast "&e&lReminder: &fDon't forget to check /rules!"
+
+# A repeating task that is cancelled entirely when the script reloads or unloads.
+# Useful for temporary tasks that should not survive a reload.
+every 30 seconds as "temp_task" cancelling:
+    broadcast "&7[Debug] Script is still loaded."
+
+# A named repeating task with default hot-reload behavior.
+# On reload, the code is swapped but the timer keeps its current phase.
+global var heartbeat_count default 0
+global var countdown default 5
+
+every 1 minute as "heartbeat":
+    add 1 to heartbeat_count
+
+command schedules:
+    description "Schedule demonstration commands"
+
+    if args size < 1:
+        message player "&cUsage: /schedules <demo|stop|countdown>"
+    else:
+        var action = get args at index 0
+
+        if action is "demo":
+            message player "&aStarting schedule demos..."
+
+            # Anonymous one-shot delay (no name, cancelled on reload)
+            wait 40 ticks:
+                message player "&e[2s] Anonymous delay fired!"
+
+            # Same thing using "after" syntax
+            after 3 seconds:
+                message player "&e[3s] 'after' delay fired!"
+
+            # Same thing using "in" syntax
+            in 4 seconds:
+                message player "&e[4s] 'in' delay fired!"
+
+            # Named one-shot delay (hot-reloadable by default)
+            wait 5 seconds as "demo_delayed":
+                message player "&b[5s] Named delay 'demo_delayed' fired!"
+
+            # Anonymous repeating task inside a command
+            every 2 seconds:
+                message player "&d[repeating] This repeats every 2 seconds until reload."
+
+            message player "&7All demos scheduled. Use /schedules stop to cancel named ones."
+
+        else if action is "stop":
+            cancel schedule "demo_delayed"
+            message player "&cCancelled all named demo schedules."
+
+        else if action is "countdown":
+            message player "&aStarting a 5-step countdown..."
+
+            set countdown to 5
+            every 20 ticks as "countdown_task" restarting:
+                if countdown > 0:
+                    message player "&e{countdown}..."
+                    subtract 1 from countdown
+                else:
+                    message player "&a&lGo!"
+                    cancel

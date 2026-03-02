@@ -1,0 +1,146 @@
+# Script discovery and loading behavior
+scripts:
+  # Directory where script files are loaded from.
+  # This path is relative to the plugin data folder.
+  folder: "scripts"
+
+  # File extension treated as a script.
+  # Example: example.luma
+  extension: ".luma"
+
+  # Compile and load all scripts during server startup.
+  # When combined with cached compiled classes, startup can be nearly instant.
+  load-all-on-startup: true
+
+  # When enabled, Lumen initialises its full API (patterns, type bindings, emitters)
+  # during onLoad rather than onEnable. This allows other plugins that depend on
+  # Lumen to register their own patterns and type bindings from their own onLoad.
+  # Scripts are then compiled and loaded immediately in onEnable instead of being
+  # deferred to the first tick.
+  # Disabled by default because most setups do not need early-load behaviour.
+  enable-all-scripts-immediately-on-startup: false
+
+  # Reload scripts automatically when files change on disk.
+  # Useful for development.
+  reload-on-save: true
+
+  # Compile and load new scripts immediately when they are created.
+  # Useful for development, but be cautious if allowing untrusted script sources.
+  load-on-create: true
+
+  # Unload and remove compiled classes when script files are deleted.
+  # Prevents memory leaks and stale classes when scripts are removed.
+  unload-on-delete: true
+
+  # Debounce delay (in milliseconds) for the script file watcher.
+  # Lower values react faster but may cause duplicate events from editors
+  # that write files in multiple steps.
+  watcher-debounce-ms: 200
+
+# Debugging and diagnostics output
+debug:
+  # Log warnings about potential issues in scripts, such as deprecated features,
+  # unsupported language features, or other non-fatal problems.
+  log-warnings: true
+
+  # Log informational messages from Lumen.
+  # Disable this to silence all informational output.
+  log-info: true
+
+  # Log compilation timings and internal steps.
+  # Helpful when diagnosing slow startups or reloads.
+  log-compilation: false
+
+  # Write generated Java source files to disk.
+  # Useful for debugging the compiler or reporting issues.
+  dump-generated-java: false
+
+  # Enable verbose debug logging of the compilation process.
+  # Logs detailed information about pattern matching, token consumption,
+  # type binding resolution, and Java code generation.
+  # Only enable this when debugging issues with pattern matching or compilation.
+  full-debug: false
+
+# Compilation strategy and performance
+performance:
+  # Cache compiled classes between reloads and restarts.
+  #
+  # If scripts have not changed, classes will be loaded almost instantly
+  # without recompilation, making startup effectively immediate.
+  #
+  # When a script changes, only that script is recompiled.
+  cache-compiled-classes: true
+
+  # Compile and load scripts asynchronously during server startup.
+  # Not usually recommended since cached compiled classes already load nearly instantly.
+  # When enabled, scripts load even later (binding still happens on the main thread).
+  load-scripts-async-on-startup: false
+
+  # Warm up the Java compiler asynchronously after Lumen starts.
+  # Pre-initializes the compiler so the first script compilation is faster.
+  # On machines with a decent number of threads this is a clear win,
+  # but on single-core or heavily loaded servers it may slightly slow startup.
+  warmup-compiler-on-startup: true
+
+  # Run a full warmup on startup by parsing and compiling a bundled example
+  # script. This warms up the entire pipeline (parser, code emitter, compiler)
+  # so that the first real script load has no cold-start penalty.
+  # Overrides warmup-compiler-on-startup when enabled.
+  full-warmup-on-startup: true
+
+  # Only include the server jar and plugin jar on the compiler classpath
+  # instead of every jar found in the classloader chain.
+  # This can speed up compilation slightly and reduce memory usage,
+  # but may break scripts that reference classes from other plugins.
+  reduce-classpath: false
+
+# Language-level behavior and experimental features
+language:
+  experimental:
+    # Allow raw Java code inside scripts.
+    #
+    # This gives scripts direct access to the JVM and server internals.
+    # Scripts can do anything Java can do.
+    #
+    # Example:
+    # java {
+    #   System.out.println("Hello from Java");
+    # }
+    #
+    # Only enable this if you fully trust the script source.
+    # Always read scripts before running them when this is enabled.
+    raw-java: false
+
+# Optional platform integrations
+features:
+  # Use MiniMessage formatting for all text output.
+  #
+  # This applies to chat messages, action bars, titles, and other text.
+  # Allows consistent formatting using MiniMessage syntax everywhere.
+  use-minimessage: true
+
+  # Translate legacy & color codes (e.g. &a, &7, &l) into colored text.
+  # Works alongside MiniMessage when both are enabled.
+  use-legacy-colors: true
+
+  # Enable <#RRGGBB> hex color syntax in legacy mode.
+  # When disabled, only standard & codes are translated.
+  # MiniMessage has its own hex support via <color:#hex> regardless of this setting.
+  use-hex-colors: false
+
+  # Enable Paper-only APIs and optimizations.
+  # Disables compatibility with Spigot.
+  paper-only-features: true
+
+# Miscellaneous settings that don't fit into other categories
+extra:
+  # Weather to enable the file watcher for the confguration file.
+  # When enabled, changes to the config.yml file will be detected and applied without restarting or doing the /lumen reload command.
+  enable-config-file-watcher: true
+
+  # When enabled, Lumen will dump all registered patterns, expressions,
+  # conditions, blocks, and type bindings to a JSON file after all
+  # registrations are complete. The file is written to
+  # plugins/Lumen/documentation.json and can be consumed by external
+  # tools to generate documentation for the Lumen language.
+  enable-documentation-tool: false

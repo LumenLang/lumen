@@ -1,0 +1,122 @@
+# Paginated Shop
+# A multi-page shop GUI with buy/sell functionality and page navigation.
+# Items are stored in a global list and displayed with navigation controls.
+# Change items_per_page in the config to control how many items appear per page.
+#
+# Usage:
+#   /shop          Opens the shop at the player's current page
+#   /shop clear    Removes all shop items
+#   open inventory named "shop" for player   (from any script)
+
+config:
+    shop_prefix: "&6[Shop]&r"
+    items_per_page: 9
+
+data shop_item:
+    material string
+    price integer
+    display_name string
+
+global var shop_items default new list of shop_item
+global var shop_page for ref type player default 0
+
+load:
+    add new shop_item with material "diamond_sword" price 100 display_name "&bDiamond Sword" to shop_items
+    add new shop_item with material "diamond_pickaxe" price 80 display_name "&bDiamond Pickaxe" to shop_items
+    add new shop_item with material "diamond_chestplate" price 200 display_name "&bDiamond Chestplate" to shop_items
+    add new shop_item with material "golden_apple" price 50 display_name "&6Golden Apple" to shop_items
+    add new shop_item with material "ender_pearl" price 30 display_name "&5Ender Pearl" to shop_items
+    add new shop_item with material "arrow" price 5 display_name "&7Arrow" to shop_items
+    add new shop_item with material "bread" price 3 display_name "&eBread" to shop_items
+    add new shop_item with material "iron_ingot" price 15 display_name "&fIron Ingot" to shop_items
+    add new shop_item with material "gold_ingot" price 25 display_name "&6Gold Ingot" to shop_items
+    add new shop_item with material "emerald" price 40 display_name "&aEmerald" to shop_items
+    add new shop_item with material "diamond" price 60 display_name "&bDiamond" to shop_items
+    add new shop_item with material "lapis_lazuli" price 20 display_name "&9Lapis Lazuli" to shop_items
+
+register inventory "shop":
+    var total = shop_items size
+    var per_page = items_per_page
+    var page = shop_page
+
+    var max_page = (total - 1) / per_page
+    if page > max_page:
+        set shop_page to 0 for player
+
+    var current_page = shop_page
+    var display_page = current_page + 1
+    var gui = new inventory "shop" with rows 6 titled "&6&lShop &7(Page {display_page})"
+
+    var filler = new item gray_stained_glass_pane
+    set filler's display name to " "
+    fill slots 45 to 53 of gui with filler
+
+    if current_page > 0:
+        var prev = new item arrow
+        set prev's display name to "&ePrevious Page"
+        set prev's lore to "&7Click to go back"
+        set slot 45 of gui to prev
+
+    var last_page = (total - 1) / per_page
+    if current_page < last_page:
+        var next = new item arrow
+        set next's display name to "&eNext Page"
+        set next's lore to "&7Click to go forward"
+        set slot 53 of gui to next
+
+    var close_btn = new item barrier
+    set close_btn's display name to "&c&lClose"
+    set slot 49 of gui to close_btn
+
+    var start = current_page * per_page
+    var idx = 0
+    repeat per_page times:
+        var item_pos = start + idx
+        if item_pos < total:
+            var entry = get shop_items at item_pos
+            var dn = get field "display_name" of entry
+            var pr = get field "price" of entry
+            var mat = get field "material" of entry
+            var display = new item mat
+            set display's display name to dn
+            set display's lore to "&7Price: &a{pr} coins|&eClick to buy"
+            set slot idx of gui to display
+        add 1 to idx
+
+    open gui for player
+
+command shop:
+    description "Opens the item shop"
+
+    if args size == 0:
+        open inventory named "shop" for player
+
+    else if get args at index 0 is "clear":
+        clear shop_items
+        message player "{shop_prefix} Cleared all shop items."
+
+slot 49 click in "shop":
+    close player's inventory
+
+slot 53 click in "shop":
+    var total = shop_items size
+    var max_page = (total - 1) / items_per_page
+    if shop_page < max_page:
+        add 1 to shop_page for player
+        open inventory named "shop" for player
+
+slot 45 click in "shop":
+    if shop_page > 0:
+        subtract 1 from shop_page for player
+        open inventory named "shop" for player
+
+click in "shop":
+    if slot < 45:
+        if item is set:
+            var item_idx = shop_page * items_per_page + slot
+            if item_idx < shop_items size:
+                var entry = get shop_items at item_idx
+                var pr = get field "price" of entry
+                var dn = get field "display_name" of entry
+                message player "{shop_prefix} You bought {dn} for &a{pr} coins!"
+                give player get field "material" of entry 1

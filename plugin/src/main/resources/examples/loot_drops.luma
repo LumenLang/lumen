@@ -1,0 +1,417 @@
+# Loot Drops
+# A fully featured loot drop system with weighted multi-tier loot tables,
+# falling block gravity, and real chest inventories.
+#
+# Chests spawn at a height above the drop zone, fall one block at a time
+# until they land on solid ground. When a chest lands, its inventory is
+# filled with random loot from the tier's pool. Players open them like
+# normal chests and take items freely. Once a chest's inventory is empty,
+# it vanishes on its own.
+#
+# Loot pools are flat lists where materials can appear multiple times to
+# increase their selection weight. Admins can view, add to, and clear
+# loot pools at runtime via commands.
+#
+# Commands:
+#   /lootdrop pos1                   Set drop zone corner 1
+#   /lootdrop pos2                   Set drop zone corner 2
+#   /lootdrop info                   Show zone settings and active chests
+#   /lootdrop clear                  Remove all active chests
+#   /lootdrop loot                   View all tier loot pools
+#   /lootdrop addloot <tier> <mat>   Add a material to a tier pool
+#   /lootdrop clearloot <tier>       Clear a tier's loot pool
+#   /lootdrop toggle                 Enable or disable drops
+
+data loot_chest:
+    cx integer
+    cy integer
+    cz integer
+    life integer
+    tier string
+    landed integer
+
+config:
+    prefix: &6[LootDrop]&r
+    spawn_interval: 100
+    fall_speed: 4
+    despawn_ticks: 6000
+    spawn_height: 20
+    max_active: 30
+    legendary_chance: 5
+    epic_chance: 10
+    rare_chance: 20
+    uncommon_chance: 30
+
+global stored var drop_pos1 default no location
+global stored var drop_pos2 default no location
+global var active_chests default new list of loot_chest
+global var drops_enabled default 1
+
+global var legendary_pool default new list
+global var epic_pool default new list
+global var rare_pool default new list
+global var uncommon_pool default new list
+global var common_pool default new list
+
+global var tier_labels default new map
+global var tier_blocks default new map
+global var total_spawned default 0
+global var total_despawned default 0
+
+load:
+    add "netherite_ingot" to legendary_pool
+    add "diamond_block" to legendary_pool
+    add "gold_block" to legendary_pool
+    add "enchanted_golden_apple" to legendary_pool
+    add "totem_of_undying" to legendary_pool
+
+    add "diamond" to epic_pool
+    add "diamond" to epic_pool
+    add "emerald" to epic_pool
+    add "golden_apple" to epic_pool
+    add "ender_pearl" to epic_pool
+    add "ender_pearl" to epic_pool
+    add "blaze_rod" to epic_pool
+
+    add "iron_ingot" to rare_pool
+    add "iron_ingot" to rare_pool
+    add "iron_ingot" to rare_pool
+    add "gold_ingot" to rare_pool
+    add "gold_ingot" to rare_pool
+    add "lapis_lazuli" to rare_pool
+    add "experience_bottle" to rare_pool
+    add "experience_bottle" to rare_pool
+
+    add "coal" to uncommon_pool
+    add "coal" to uncommon_pool
+    add "redstone" to uncommon_pool
+    add "redstone" to uncommon_pool
+    add "bread" to uncommon_pool
+    add "bread" to uncommon_pool
+    add "arrow" to uncommon_pool
+    add "arrow" to uncommon_pool
+    add "arrow" to uncommon_pool
+    add "bone" to uncommon_pool
+
+    add "cobblestone" to common_pool
+    add "cobblestone" to common_pool
+    add "cobblestone" to common_pool
+    add "oak_log" to common_pool
+    add "oak_log" to common_pool
+    add "wheat" to common_pool
+    add "stick" to common_pool
+    add "stick" to common_pool
+    add "dirt" to common_pool
+    add "rotten_flesh" to common_pool
+
+    set tier_labels at key "legendary" to "&6&lLEGENDARY"
+    set tier_labels at key "epic" to "&5&lEPIC"
+    set tier_labels at key "rare" to "&9&lRARE"
+    set tier_labels at key "uncommon" to "&a&lUNCOMMON"
+    set tier_labels at key "common" to "&7&lCOMMON"
+
+    set tier_blocks at key "legendary" to "dropper"
+    set tier_blocks at key "epic" to "dispenser"
+    set tier_blocks at key "rare" to "barrel"
+    set tier_blocks at key "uncommon" to "trapped_chest"
+    set tier_blocks at key "common" to "chest"
+
+every spawn_interval ticks as "loot_spawner":
+    if drops_enabled == 1:
+        if drop_pos1 is set:
+            if drop_pos2 is set:
+                var count = active_chests size
+                if count < max_active:
+                    var tier = "common"
+                    if chance legendary_chance:
+                        set tier to "legendary"
+                    else if chance epic_chance:
+                        set tier to "epic"
+                    else if chance rare_chance:
+                        set tier to "rare"
+                    else if chance uncommon_chance:
+                        set tier to "uncommon"
+
+                    var p1x = drop_pos1 x
+                    var p2x = drop_pos2 x
+                    var p1z = drop_pos1 z
+                    var p2z = drop_pos2 z
+                    var p1y = drop_pos1 y
+                    var p2y = drop_pos2 y
+                    var lo_x = min of p1x and p2x
+                    var hi_x = max of p1x and p2x
+                    var lo_z = min of p1z and p2z
+                    var hi_z = max of p1z and p2z
+                    var spawn_y = max of p1y and p2y
+                    add spawn_height to spawn_y
+                    var rx = random between lo_x and hi_x
+                    var rz = random between lo_z and hi_z
+                    var w = drop_pos1 world
+
+                    var block_type = get tier_blocks at key tier
+                    var loc = new location in w at rx spawn_y rz
+                    var b = block at loc
+                    set b type to block_type
+
+                    var entry = new loot_chest with cx rx cy spawn_y cz rz life 0 tier tier landed 0
+                    add entry to active_chests
+                    add 1 to total_spawned
+
+                    var label = get tier_labels at key tier
+                    if tier is "legendary":
+                        broadcast "{prefix} {label} &fcrate spawned at &e{rx}&7, &e{spawn_y}&7, &e{rz}&f!"
+                    else if tier is "epic":
+                        broadcast "{prefix} {label} &fcrate spotted!"
+
+every fall_speed ticks as "loot_gravity":
+    if drop_pos1 is set:
+        if active_chests is not empty:
+            var w = drop_pos1 world
+            var to_remove = new list
+            loop lc in active_chests:
+                var cx = get field "cx" of lc
+                var cy = get field "cy" of lc
+                var cz = get field "cz" of lc
+                var life = get field "life" of lc
+                var tier = get field "tier" of lc
+                var is_landed = get field "landed" of lc
+                add fall_speed to life
+                set field "life" of lc to life
+                if is_landed == 1:
+                    if life >= despawn_ticks:
+                        var loc = new location in w at cx cy cz
+                        var bl = block at loc
+                        if bl inventory is empty:
+                            var block_type = get tier_blocks at key tier
+                            if bl type is block_type:
+                                set bl type to air
+                            add lc to to_remove
+                            add 1 to total_despawned
+                else:
+                    var below_y = cy - 1
+                    var below_loc = new location in w at cx below_y cz
+                    var below_block = block at below_loc
+                    if below_block is air:
+                        var current_loc = new location in w at cx cy cz
+                        var current_block = block at current_loc
+                        var block_type = get tier_blocks at key tier
+                        if current_block type is block_type:
+                            set current_block type to air
+                        set field "cy" of lc to below_y
+                        var new_b = block at below_loc
+                        set new_b type to block_type
+                    else:
+                        set field "landed" of lc to 1
+                        var land_loc = new location in w at cx cy cz
+                        var chest_block = block at land_loc
+                        var loot_pool = common_pool
+                        var loot_count = 4
+                        if tier is "legendary":
+                            set loot_pool to legendary_pool
+                            set loot_count to 2
+                        else if tier is "epic":
+                            set loot_pool to epic_pool
+                            set loot_count to 3
+                        else if tier is "rare":
+                            set loot_pool to rare_pool
+                            set loot_count to 3
+                        else if tier is "uncommon":
+                            set loot_pool to uncommon_pool
+                            set loot_count to 3
+                        var loot_size = loot_pool size
+                        if loot_size > 0:
+                            var max_i = loot_size - 1
+                            repeat loot_count times:
+                                var idx = random between 0 and max_i
+                                var mat = get loot_pool at index idx
+                                add mat 1 to chest_block inventory
+            loop dead in to_remove:
+                remove dead from active_chests
+
+every 20 ticks as "loot_cleanup":
+    if drop_pos1 is set:
+        if active_chests is not empty:
+            var w = drop_pos1 world
+            var to_remove = new list
+            loop lc in active_chests:
+                var is_landed = get field "landed" of lc
+                if is_landed == 1:
+                    var cx = get field "cx" of lc
+                    var cy = get field "cy" of lc
+                    var cz = get field "cz" of lc
+                    var tier = get field "tier" of lc
+                    var loc = new location in w at cx cy cz
+                    var bl = block at loc
+                    var block_type = get tier_blocks at key tier
+                    if bl type is block_type:
+                        if bl inventory is empty:
+                            set bl type to air
+                            add lc to to_remove
+                            add 1 to total_despawned
+                    else:
+                        add lc to to_remove
+            loop dead in to_remove:
+                remove dead from active_chests
+
+on interact:
+    if action is "RIGHT_CLICK_BLOCK":
+        if block is set:
+            if active_chests is not empty:
+                var bx = block x
+                var by = block y
+                var bz = block z
+                loop lc in active_chests:
+                    var cx = get field "cx" of lc
+                    var cy = get field "cy" of lc
+                    var cz = get field "cz" of lc
+                    if bx == cx:
+                        if by == cy:
+                            if bz == cz:
+                                var is_landed = get field "landed" of lc
+                                if is_landed == 0:
+                                    cancel event
+
+command lootdrop:
+    permission "lootdrop.admin"
+    description "Configure and manage the loot drop system"
+    aliases ld
+    var argc = args size
+    if argc < 1:
+        message player "{prefix} &eLoot Drop Commands:"
+        message player "  &f/ld pos1 &7Set drop zone corner 1"
+        message player "  &f/ld pos2 &7Set drop zone corner 2"
+        message player "  &f/ld info &7Show zone settings and stats"
+        message player "  &f/ld clear &7Remove all active chests"
+        message player "  &f/ld toggle &7Enable or disable drops"
+        message player "  &f/ld loot &7View loot tables"
+        message player "  &f/ld addloot <tier> <material> &7Add material to tier"
+        message player "  &f/ld clearloot <tier> &7Clear a tier's pool"
+    else:
+        var action = get args at index 0
+        if action is "pos1":
+            set drop_pos1 to get player's location
+            message player "{prefix} &aPosition 1 set!"
+        else if action is "pos2":
+            set drop_pos2 to get player's location
+            message player "{prefix} &aPosition 2 set!"
+        else if action is "toggle":
+            if drops_enabled == 1:
+                set drops_enabled to 0
+                message player "{prefix} &cDrops disabled."
+            else:
+                set drops_enabled to 1
+                message player "{prefix} &aDrops enabled!"
+        else if action is "clear":
+            if drop_pos1 is set:
+                var w = drop_pos1 world
+                loop lc in active_chests:
+                    var cx = get field "cx" of lc
+                    var cy = get field "cy" of lc
+                    var cz = get field "cz" of lc
+                    var tier = get field "tier" of lc
+                    var block_type = get tier_blocks at key tier
+                    var loc = new location in w at cx cy cz
+                    var bl = block at loc
+                    if bl type is block_type:
+                        if bl is a container:
+                            clear bl inventory
+                        set bl type to air
+            clear active_chests
+            message player "{prefix} &aAll active chests removed!"
+        else if action is "loot":
+            message player "{prefix} &eLoot Tables:"
+            var leg_size = legendary_pool size
+            var epic_size = epic_pool size
+            var rare_size = rare_pool size
+            var unc_size = uncommon_pool size
+            var com_size = common_pool size
+            message player "  &6&lLEGENDARY &7({legendary_chance}% chance, {leg_size} entries)"
+            loop mat in legendary_pool:
+                message player "    &7- &f{mat}"
+            message player "  &5&lEPIC &7({epic_chance}% chance, {epic_size} entries)"
+            loop mat in epic_pool:
+                message player "    &7- &f{mat}"
+            message player "  &9&lRARE &7({rare_chance}% chance, {rare_size} entries)"
+            loop mat in rare_pool:
+                message player "    &7- &f{mat}"
+            message player "  &a&lUNCOMMON &7({uncommon_chance}% chance, {unc_size} entries)"
+            loop mat in uncommon_pool:
+                message player "    &7- &f{mat}"
+            var common_chance = 100 - legendary_chance - epic_chance - rare_chance - uncommon_chance
+            message player "  &7&lCOMMON &7({common_chance}% chance, {com_size} entries)"
+            loop mat in common_pool:
+                message player "    &7- &f{mat}"
+        else if action is "addloot":
+            if argc < 3:
+                message player "{prefix} &cUsage: /ld addloot <tier> <material>"
+            else:
+                var tier = get args at index 1
+                var mat = get args at index 2
+                if tier is "legendary":
+                    add mat to legendary_pool
+                    message player "{prefix} &aAdded &f{mat} &ato &6legendary &apool!"
+                else if tier is "epic":
+                    add mat to epic_pool
+                    message player "{prefix} &aAdded &f{mat} &ato &5epic &apool!"
+                else if tier is "rare":
+                    add mat to rare_pool
+                    message player "{prefix} &aAdded &f{mat} &ato &9rare &apool!"
+                else if tier is "uncommon":
+                    add mat to uncommon_pool
+                    message player "{prefix} &aAdded &f{mat} &ato &auncommon &apool!"
+                else if tier is "common":
+                    add mat to common_pool
+                    message player "{prefix} &aAdded &f{mat} &ato &7common &apool!"
+                else:
+                    message player "{prefix} &cUnknown tier. Use: legendary, epic, rare, uncommon, common"
+        else if action is "clearloot":
+            if argc < 2:
+                message player "{prefix} &cUsage: /ld clearloot <tier>"
+            else:
+                var tier = get args at index 1
+                if tier is "legendary":
+                    clear legendary_pool
+                    message player "{prefix} &6Legendary &apool cleared!"
+                else if tier is "epic":
+                    clear epic_pool
+                    message player "{prefix} &5Epic &apool cleared!"
+                else if tier is "rare":
+                    clear rare_pool
+                    message player "{prefix} &9Rare &apool cleared!"
+                else if tier is "uncommon":
+                    clear uncommon_pool
+                    message player "{prefix} &aUncommon pool cleared!"
+                else if tier is "common":
+                    clear common_pool
+                    message player "{prefix} &7Common &apool cleared!"
+                else:
+                    message player "{prefix} &cUnknown tier. Use: legendary, epic, rare, uncommon, common"
+        else if action is "info":
+            if drop_pos1 is not set:
+                message player "{prefix} &cPosition 1 not set."
+            else if drop_pos2 is not set:
+                message player "{prefix} &cPosition 2 not set."
+            else:
+                var count = active_chests size
+                var state = "enabled"
+                if drops_enabled == 0:
+                    set state to "disabled"
+                message player "{prefix} &eDrop Zone Info:"
+                message player "  &fStatus: &e{state}"
+                message player "  &fSpawn interval: &e{spawn_interval} ticks"
+                message player "  &fFall speed: &e{fall_speed} ticks per block"
+                message player "  &fDespawn time: &e{despawn_ticks} ticks"
+                message player "  &fSpawn height offset: &e{spawn_height} blocks"
+                message player "  &fMax active chests: &e{max_active}"
+                message player "  &fActive chests: &e{count}"
+                message player "  &fTotal spawned: &e{total_spawned}"
+                message player "  &fTotal despawned: &e{total_despawned}"
+                message player "  &fTier chances:"
+                var common_chance = 100 - legendary_chance - epic_chance - rare_chance - uncommon_chance
+                message player "    &6Legendary: &e{legendary_chance}%"
+                message player "    &5Epic: &e{epic_chance}%"
+                message player "    &9Rare: &e{rare_chance}%"
+                message player "    &aUncommon: &e{uncommon_chance}%"
+                message player "    &7Common: &e{common_chance}%"
+        else:
+            message player "{prefix} &cUnknown command. Use /lootdrop for help."

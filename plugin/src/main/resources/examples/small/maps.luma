@@ -1,0 +1,41 @@
+# Player Stats
+# Tracks kills and deaths per player using maps.
+# Maps are key-value stores, ideal for named counters.
+#
+# Commands:
+#   /stats          View your kill and death counts
+#   /stats reset    Reset all your stats
+
+global stored var stats for ref type player default new map
+
+on entity_death:
+    if killer is set:
+        var kills = get stats at key "kills" for killer
+        if kills is not set:
+            set kills to 0
+        add 1 to kills
+        set stats at key "kills" to kills for killer
+        message killer "&a+1 Kill &7(Total: {kills})"
+
+on player_death:
+    var deaths = get stats at key "deaths"
+    if deaths is not set:
+        set deaths to 0
+    add 1 to deaths
+    set stats at key "deaths" to deaths
+
+command stats:
+    description "View your kill and death stats"
+
+    if args size >= 1:
+        var sub = get args at index 0
+        if sub is "reset":
+            clear stats
+            message player "&eStats reset!"
+    else:
+        message player "&6&lYour Stats:"
+        if stats is empty:
+            message player "  &7No stats yet. Go get some kills!"
+        else:
+            loop key val in stats:
+                message player "  &f{key}: &e{val}"

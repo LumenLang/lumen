@@ -1,0 +1,46 @@
+# Custom GUI Menu
+# Simple example that creates a main menu GUI with clickable items.
+# Players open the menu with /menu and interact by clicking items.
+#
+# Commands:
+#   /menu   Opens the main menu GUI for the player
+
+command menu:
+    description "Opens the main menu"
+
+    var gui = new inventory "main_menu" with rows 3 titled "&6&lMain Menu"
+
+    var filler = new item gray_stained_glass_pane
+    set filler's display name to " "
+    fill slots 0 to 8 of gui with filler
+    fill slots 18 to 26 of gui with filler
+
+    var info = new item book
+    set info's display name to "&e&lServer Info"
+    set info's lore to "&7Click to view server info"
+    set slot 11 of gui to info
+
+    var shop = new item emerald
+    set shop's display name to "&a&lShop"
+    set shop's lore to "&7Click to open the shop"
+    set slot 13 of gui to shop
+
+    var settings = new item comparator
+    set settings's display name to "&b&lSettings"
+    set settings's lore to "&7Click to view your settings"
+    set slot 15 of gui to settings
+
+    open gui for player
+
+slot 11 click in "main_menu":
+    close player's inventory
+    message player "&6Server Info"
+    message player "&7Welcome to our server!"
+
+slot 13 click in "main_menu":
+    close player's inventory
+    open inventory named "shop" for player
+
+slot 15 click in "main_menu":
+    close player's inventory
+    message player "&bSettings coming soon!"

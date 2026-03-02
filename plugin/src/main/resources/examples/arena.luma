@@ -1,0 +1,120 @@
+# Multi Arena System
+# Supports multiple PvP arenas, each with a name and 3D bounds.
+# Uses data classes for type-safe arena storage.
+#
+# Commands:
+#   /arena create <name> <x1> <y1> <z1> <x2> <y2> <z2>
+#   /arena delete <name>
+#   /arena list
+#
+# When a player enters an arena they receive a title and speed boost.
+# When they leave, their effects are cleared.
+
+data arena:
+    name text
+    x1 number
+    y1 number
+    z1 number
+    x2 number
+    y2 number
+    z2 number
+
+global stored var arenas default new list of arena
+
+command arena:
+    permission "lumen.arena"
+    description "Manage PvP arenas"
+
+    var argc = args size
+    if argc < 1:
+        message player "&cUsage: /arena <create|delete|list>"
+        message player "&7  /arena create <name> <x1> <y1> <z1> <x2> <y2> <z2>"
+        message player "&7  /arena delete <name>"
+        message player "&7  /arena list"
+
+    else:
+        var action = get args at index 0
+        if action is "create":
+            if argc < 8:
+                message player "&cUsage: /arena create <name> <x1> <y1> <z1> <x2> <y2> <z2>"
+            else:
+                var name = get args at index 1
+                var x1 = get args at index 2
+                var y1 = get args at index 3
+                var z1 = get args at index 4
+                var x2 = get args at index 5
+                var y2 = get args at index 6
+                var z2 = get args at index 7
+                var entry = new arena with name name x1 x1 y1 y1 z1 z1 x2 x2 y2 y2 z2 z2
+                add entry to arenas
+                message player "&aArena &f{name} &acreated!"
+                message player "&7Bounds: ({x1}, {y1}, {z1}) to ({x2}, {y2}, {z2})"
+
+        else if action is "delete":
+            if argc < 2:
+                message player "&cUsage: /arena delete <name>"
+            else:
+                var target = get args at index 1
+                var found = 0
+                loop entry in arenas:
+                    var arenaname = get field "name" of entry
+                    if arenaname is target:
+                        remove entry from arenas
+                        set found to 1
+                        message player "&aArena &f{target} &adeleted!"
+                if found == 0:
+                    message player "&cArena &f{target} &cnot found."
+
+        else if action is "list":
+            if arenas is empty:
+                message player "&7No arenas defined."
+            else:
+                message player "&6&lArenas:"
+                loop entry in arenas:
+                    var arenaname = get field "name" of entry
+                    var x1 = get field "x1" of entry
+                    var y1 = get field "y1" of entry
+                    var z1 = get field "z1" of entry
+                    var x2 = get field "x2" of entry
+                    var y2 = get field "y2" of entry
+                    var z2 = get field "z2" of entry
+                    message player "&e  {arenaname} &7({x1}, {y1}, {z1}) to ({x2}, {y2}, {z2})"
+
+        else:
+            message player "&cUnknown subcommand. Use /arena for help."
+
+on move:
+    var px = to x
+    var py = to y
+    var pz = to z
+    var fx = from x
+    var fy = from y
+    var fz = from z
+
+    loop entry in arenas:
+        var arenaname = get field "name" of entry
+        var ax1 = get field "x1" of entry
+        var ay1 = get field "y1" of entry
+        var az1 = get field "z1" of entry
+        var ax2 = get field "x2" of entry
+        var ay2 = get field "y2" of entry
+        var az2 = get field "z2" of entry
+
+        var now_inside = 0
+        if px >= ax1 and px <= ax2 and py >= ay1 and py <= ay2 and pz >= az1 and pz <= az2:
+            set now_inside to 1
+
+        var was_inside = 0
+        if fx >= ax1 and fx <= ax2 and fy >= ay1 and fy <= ay2 and fz >= az1 and fz <= az2:
+            set was_inside to 1
+
+        if now_inside == 1:
+            if was_inside == 0:
+                send title "&c&lPvP Arena" with subtitle "&7{arenaname}" to player
+                apply "speed" 1 to player for 6000 ticks
+                message player "&eYou have entered the &f{arenaname} &earena!"
+
+        if now_inside == 0:
+            if was_inside == 1:
+                clear all effects from player
+                send actionbar "&aYou have left the &f{arenaname} &aarena." to player

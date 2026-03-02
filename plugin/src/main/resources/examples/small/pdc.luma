@@ -1,0 +1,34 @@
+# Persistent Data Containers
+# Store and retrieve custom data on players using PDC.
+#
+# Commands:
+#   /setrank <rank>  Store a rank tag on the player
+#   /rank            Show your current rank
+#   /clearrank       Remove your rank tag
+
+command setrank:
+    description "Set your rank tag"
+    if args size < 1:
+        message player "&cUsage: /setrank <rank>"
+    else:
+        var rank = get args at index 0
+        set pdc "rank" of player to rank
+        message player "&aYour rank has been set to &e{rank}&a."
+
+command rank:
+    description "Show your rank"
+
+    if player has pdc "rank":
+        var r = get pdc "rank" of player
+        message player "&6Your rank: &f{r}"
+    else:
+        message player "&7You do not have a rank set. Use /setrank to set one."
+
+command clearrank:
+    description "Clear your rank tag"
+
+    if player has pdc "rank":
+        remove pdc "rank" from player
+        message player "&aYour rank has been cleared."
+    else:
+        message player "&7You do not have a rank to clear."

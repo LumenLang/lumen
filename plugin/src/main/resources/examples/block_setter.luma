@@ -1,0 +1,57 @@
+# Simple Block Setter
+# A selection wand for filling cuboid regions with blocks.
+# Left click a block with a golden axe to set position 1.
+# Right click a block with a golden axe to set position 2.
+# Uses PDC to tag the wand so only tagged axes work.
+#
+# Commands:
+#   /wand               Gives the player a golden axe selection wand
+#   /fill <material>    Fills the selected region with the given block type
+
+global var pos1 for ref type player default no location
+global var pos2 for ref type player default no location
+
+command wand:
+    permission "lumen.wand"
+    description "Gives you a selection wand"
+
+    var axe = new item golden_axe
+    set axe's display name to "&6&lSelection Wand"
+    set axe's lore to "&7Left click to set pos 1|&7Right click to set pos 2"
+    set pdc "wand_type" of axe to "block_setter"
+    give player axe
+    message player "&6&lSelection Wand &egiven!"
+    message player "&7Left click a block to set position 1"
+    message player "&7Right click a block to set position 2"
+
+on interact:
+    if item is set:
+        if item has pdc "wand_type":
+            if block is set:
+                if action is "LEFT_CLICK_BLOCK":
+                    cancel event
+                    var loc = block location
+                    set pos1 to loc
+                    message player "&ePosition 1 &fset to ({loc_x}, {loc_y}, {loc_z})"
+
+                else if action is "RIGHT_CLICK_BLOCK":
+                    cancel event
+                    var loc = block location
+                    set pos2 to loc
+                    message player "&ePosition 2 &fset to ({loc_x}, {loc_y}, {loc_z})"
+
+command fill:
+    permission "lumen.fill"
+    description "Fill the selected region with a block type"
+
+    if args size < 1:
+        message player "&cUsage: /fill <material>"
+    else:
+        if pos1 is not set:
+            message player "&cPosition 1 not set! Left click a block with a golden axe."
+        else if pos2 is not set:
+            message player "&cPosition 2 not set! Right click a block with a golden axe."
+        else:
+            var mat = get args at index 0
+            fill from pos1 to pos2 with mat
+            message player "&aRegion filled with {mat}!"

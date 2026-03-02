@@ -1,0 +1,31 @@
+# Effect Showcase
+# Titles, action bars, sounds, and potion effects.
+#
+# Commands:
+#   /welcome    Show a welcome title sequence
+#   /buff       Apply speed, regen, and night vision for 30 seconds
+#   /ping       Play a notification sound
+
+command welcome:
+    description "Welcome title sequence"
+
+    send title "&6&lWelcome!" with subtitle "&eEnjoy your stay" to player with fade in 10 stay 40 fade out 10
+    play sound "entity_player_levelup" to player
+
+    after 60 ticks:
+        send title "&a&lHave Fun!" with subtitle "&7Try /buff and /ping" to player with fade in 5 stay 30 fade out 10
+
+command buff:
+    description "Apply potion buffs"
+
+    apply "speed" 1 to player for 600 ticks
+    apply "regeneration" 1 to player for 600 ticks
+    apply "night_vision" 1 to player for 600 ticks
+    message player "&aBuffs applied for 30 seconds!"
+    send actionbar "&a+Speed +Regen +NightVision" to player
+
+command ping:
+    description "Play a notification"
+
+    play sound "block_note_block_pling" to player
+    send actionbar "&bPong! &7Notification received." to player

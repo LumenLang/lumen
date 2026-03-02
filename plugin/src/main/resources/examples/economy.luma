@@ -1,0 +1,214 @@
+# Economy System
+# A fully dynamic multi-currency economy with per-player balances stored in maps.
+#
+# Balances are stored per-player as a map of currency name to amount.
+# All data is persistent across restarts.
+#
+# Commands:
+#   /balance                                    View your balances
+#   /pay <player> <currency> <amount>           Send currency to another player
+#   /eco register <name>                        Admin: register a new currency
+#   /eco unregister <name>                      Admin: remove a currency
+#   /eco give <player> <currency> <amount>      Admin: give currency
+#   /eco take <player> <currency> <amount>      Admin: remove currency
+#   /eco set <player> <currency> <amount>       Admin: set balance
+#   /eco reset <player> <currency>              Admin: reset one balance
+#   /eco resetall <currency>                    Admin: wipe all balances for a currency
+
+config:
+    prefix: &6[Economy]&r
+
+global stored var currencies default new list
+global stored var balances for ref type player default new map
+
+on join:
+    message player "{prefix} &eWelcome back! Your balances:"
+    if currencies is empty:
+        message player "  &7No currencies registered yet."
+    else:
+        loop currency in currencies:
+            var bal = get balances at key currency
+            if bal is not set:
+                set balances at key currency to 0
+                message player "  &f{currency}: &a0"
+            else:
+                message player "  &f{currency}: &a{bal}"
+
+command balance:
+    description "View your economy balances"
+    aliases bal
+    if currencies is empty:
+        message player "{prefix} &7No currencies registered."
+    else:
+        message player "{prefix} &eYour balances:"
+        loop currency in currencies:
+            var bal = get balances at key currency
+            if bal is not set:
+                set balances at key currency to 0
+                message player "  &f{currency}: &a0"
+            else:
+                message player "  &f{currency}: &a{bal}"
+
+command pay:
+    description "Send currency to another player"
+    var argc = args size
+    if argc < 3:
+        message player "{prefix} &cUsage: /pay <player> <currency> <amount>"
+    else:
+        var target = get args at index 0
+        var currency = get args at index 1
+        var amount = get args at index 2
+        if target is "{player_name}":
+            message player "{prefix} &cYou cannot pay yourself!"
+        else if currencies does not contain currency:
+            message player "{prefix} &cUnknown currency: {currency}"
+        else:
+            var my_bal = get balances at key currency
+            if my_bal is not set:
+                set my_bal to 0
+            if my_bal < amount:
+                message player "{prefix} &cInsufficient {currency}!"
+            else:
+                var p = get player by name target
+                if p is not set:
+                    message player "{prefix} &cPlayer {target} is not online!"
+                else:
+                    subtract amount from my_bal
+                    set balances at key currency to my_bal
+                    var p_bal = get balances at key currency for p
+                    if p_bal is not set:
+                        set p_bal to 0
+                    add amount to p_bal
+                    set balances at key currency to p_bal for p
+                    message p "{prefix} &a{player_name} sent you {amount} {currency}!"
+                    message player "{prefix} &aSent {amount} {currency} to {target}!"
+
+command eco:
+    permission "economy.admin"
+    description "Economy administration"
+    aliases economy
+    var argc = args size
+    if argc < 1:
+        message player "{prefix} &eEconomy Admin Commands:"
+        message player "  &f/eco register &7<name>"
+        message player "  &f/eco unregister &7<name>"
+        message player "  &f/eco give &7<player> <currency> <amount>"
+        message player "  &f/eco take &7<player> <currency> <amount>"
+        message player "  &f/eco set &7<player> <currency> <amount>"
+        message player "  &f/eco reset &7<player> <currency>"
+        message player "  &f/eco resetall &7<currency>"
+    else:
+        var action = get args at index 0
+
+        if action is "register":
+            if argc < 2:
+                message player "{prefix} &cUsage: /eco register <name>"
+            else:
+                var name = get args at index 1
+                if currencies contains name:
+                    message player "{prefix} &cCurrency '{name}' already exists!"
+                else:
+                    add name to currencies
+                    message player "{prefix} &aRegistered new currency: {name}"
+
+        else if action is "unregister":
+            if argc < 2:
+                message player "{prefix} &cUsage: /eco unregister <name>"
+            else:
+                var name = get args at index 1
+                if currencies does not contain name:
+                    message player "{prefix} &cCurrency '{name}' does not exist!"
+                else:
+                    remove name from currencies
+                    message player "{prefix} &aRemoved currency: {name}"
+
+        else if action is "give":
+            if argc < 4:
+                message player "{prefix} &cUsage: /eco give <player> <currency> <amount>"
+            else:
+                var target = get args at index 1
+                var currency = get args at index 2
+                var amount = get args at index 3
+                if currencies does not contain currency:
+                    message player "{prefix} &cUnknown currency: {currency}"
+                else:
+                    var p = get player by name target
+                    if p is not set:
+                        message player "{prefix} &cPlayer {target} is not online!"
+                    else:
+                        var p_bal = get balances at key currency for p
+                        if p_bal is not set:
+                            set p_bal to 0
+                        add amount to p_bal
+                        set balances at key currency to p_bal for p
+                        message p "{prefix} &aReceived {amount} {currency} from an admin!"
+                        message player "{prefix} &aGave {amount} {currency} to {target}!"
+
+        else if action is "take":
+            if argc < 4:
+                message player "{prefix} &cUsage: /eco take <player> <currency> <amount>"
+            else:
+                var target = get args at index 1
+                var currency = get args at index 2
+                var amount = get args at index 3
+                if currencies does not contain currency:
+                    message player "{prefix} &cUnknown currency: {currency}"
+                else:
+                    var p = get player by name target
+                    if p is not set:
+                        message player "{prefix} &cPlayer {target} is not online!"
+                    else:
+                        var p_bal = get balances at key currency for p
+                        if p_bal is not set:
+                            set p_bal to 0
+                        subtract amount from p_bal
+                        set balances at key currency to p_bal for p
+                        message p "{prefix} &c{amount} {currency} was removed by an admin."
+                        message player "{prefix} &aTook {amount} {currency} from {target}!"
+
+        else if action is "set":
+            if argc < 4:
+                message player "{prefix} &cUsage: /eco set <player> <currency> <amount>"
+            else:
+                var target = get args at index 1
+                var currency = get args at index 2
+                var amount = get args at index 3
+                if currencies does not contain currency:
+                    message player "{prefix} &cUnknown currency: {currency}"
+                else:
+                    var p = get player by name target
+                    if p is not set:
+                        message player "{prefix} &cPlayer {target} is not online!"
+                    else:
+                        set balances at key currency to amount for p
+                        message player "{prefix} &aSet {target}'s {currency} to {amount}!"
+
+        else if action is "reset":
+            if argc < 3:
+                message player "{prefix} &cUsage: /eco reset <player> <currency>"
+            else:
+                var target = get args at index 1
+                var currency = get args at index 2
+                if currencies does not contain currency:
+                    message player "{prefix} &cUnknown currency: {currency}"
+                else:
+                    var p = get player by name target
+                    if p is not set:
+                        message player "{prefix} &cPlayer {target} is not online!"
+                    else:
+                        set balances at key currency to 0 for p
+                        message player "{prefix} &aReset {target}'s {currency} balance!"
+
+        else if action is "resetall":
+            if argc < 2:
+                message player "{prefix} &cUsage: /eco resetall <currency>"
+            else:
+                var currency = get args at index 1
+                if currencies does not contain currency:
+                    message player "{prefix} &cUnknown currency: {currency}"
+                else:
+                    delete stored balances
+                    broadcast "{prefix} &cAll {currency} balances have been reset!"
+
+        else:
+            message player "{prefix} &cUnknown action. Use /eco for help."

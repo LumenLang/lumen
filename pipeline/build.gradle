@@ -1,0 +1,8 @@
+dependencies {
+    implementation project(':api')
+}
+
+jar {
+    archiveVersion.set('')
+    archiveBaseName.set(rootProject.name + "-pipeline" + (version.isEmpty() ? "" : "-${version}"))
+}

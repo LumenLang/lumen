@@ -1,0 +1,466 @@
+package net.vansencool.lumen.plugin.defaults.expression;
+
+import net.vansencool.lumen.api.LumenAPI;
+import net.vansencool.lumen.api.annotations.Call;
+import net.vansencool.lumen.api.annotations.Description;
+import net.vansencool.lumen.api.annotations.Registration;
+import net.vansencool.lumen.api.handler.ExpressionHandler.ExpressionResult;
+import net.vansencool.lumen.api.pattern.Categories;
+import net.vansencool.lumen.api.type.RefTypes;
+import org.bukkit.Location;
+import org.bukkit.OfflinePlayer;
+import org.bukkit.World;
+import org.bukkit.block.Block;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Map;
+import java.util.UUID;
+
+/**
+ * Registers built-in expression patterns.
+ */
+@Registration
+@Description("Registers expression patterns: get player, get world, get location, player location, player world, offline player lookups")
+@SuppressWarnings("unused")
+public final class DefaultExpressions {
+
+    /**
+     * Maps an {@code EntityType} constant to its corresponding Bukkit entity
+     * class name and returns it as a metadata map with a {@code "javaClass"}
+     * key. Falls back to {@code LivingEntity} when the concrete class cannot
+     * be resolved.
+     *
+     * @param typeEnum the Java expression for the EntityType constant
+     *                 (e.g. {@code "org.bukkit.entity.EntityType.ZOMBIE"})
+     * @return metadata map containing the javaClass, or empty if unresolvable
+     */
+    private static @NotNull Map<String, Object> resolveEntityMeta(@NotNull String typeEnum) {
+        String name = typeEnum.replace("EntityType.", "");
+        try {
+            EntityType et = EntityType.valueOf(name);
+            Class<?> cls = et.getEntityClass();
+            if (cls != null) {
+                return Map.of("javaClass", cls.getName());
+            }
+        } catch (IllegalArgumentException ignored) {
+        }
+        return Map.of();
+    }
+
+    @Call
+    public void register(@NotNull LumenAPI api) {
+        registerLocation(api);
+        registerSpawn(api);
+
+        api.patterns().expression(b -> b
+                .by("Lumen")
+                .pattern("none")
+                .description("Represents a null (absent) value. Useful as a default for global vars that hold optional objects like locations or players.")
+                .examples("global var pos1 for ref type player default none", "var result = none")
+                .since("1.0.0")
+                .category(Categories.VARIABLE)
+                .handler(ctx -> new ExpressionResult("(Object) null", null)));
+
+        registerTypedNulls(api);
+
+        api.patterns().expression(b -> b
+                .by("Lumen")
+                .pattern("get location %who:PLAYER%")
+                .description("Returns the current location of a player.")
+                .example("var loc = get location player")
+                .since("1.0.0")
+                .category(Categories.PLAYER)
+                .handler(ctx -> new ExpressionResult(ctx.java("who") + ".getLocation()",
+                        RefTypes.LOCATION.id())));
+
+        api.patterns().expression(b -> b
+                .by("Lumen")
+                .pattern("get %who:PLAYER_POSSESSIVE% location")
+                .description("Returns the current location of a player.")
+                .example("var loc = get player's location")
+                .since("1.0.0")
+                .category(Categories.PLAYER)
+                .handler(ctx -> new ExpressionResult(ctx.java("who") + ".getLocation()",
+                        RefTypes.LOCATION.id())));
+
+        api.patterns().expression(b -> b
+                .by("Lumen")
+                .pattern("get %who:PLAYER_POSSESSIVE% world")
+                .description("Returns the world a player is currently in.")
+                .example("var w = get player's world")
+                .since("1.0.0")
+                .category(Categories.PLAYER)
+                .handler(ctx -> new ExpressionResult(ctx.java("who") + ".getWorld()",
+                        RefTypes.WORLD.id())));
+
+        api.patterns().expression(b -> b
+                .by("Lumen")
+                .pattern("get player by (name|username) %name:STRING%")
+                .description("Looks up an online player by name.")
+                .example("var p = get player by name \"Notch\"")
+                .since("1.0.0")
+                .category(Categories.PLAYER)
+                .handler(ctx -> new ExpressionResult(
+                        "Bukkit.getPlayer(" + ctx.java("name") + ")",
+                        RefTypes.PLAYER.id())));
+
+        api.patterns().expression(b -> b
+                .by("Lumen")
+                .pattern("get player by (name|username) %name:EXPR%")
+                .description("Looks up an online player by a name expression (variable or value).")
+                .example("var p = get player by name target_name")
+                .since("1.0.0")
+                .category(Categories.PLAYER)
+                .handler(ctx -> new ExpressionResult(
+                        "Bukkit.getPlayer(String.valueOf(" + ctx.java("name") + "))",
+                        RefTypes.PLAYER.id())));
+
+        api.patterns().expression(b -> b
+                .by("Lumen")
+                .pattern("get player by (uuid|unique id) %uuid:STRING%")
+                .description("Looks up an online player by UUID string.")
+                .example("var p = get player by uuid \"069a79f4-44e9-4726-a5be-fca90e38aaf5\"")
+                .since("1.0.0")
+                .category(Categories.PLAYER)
+                .handler(ctx -> {
+                    ctx.codegen().addImport(UUID.class.getName());
+                    return new ExpressionResult(
+                            "Bukkit.getPlayer(UUID.fromString(" + ctx.java("uuid") + "))",
+                            RefTypes.PLAYER.id());
+                }));
+
+        api.patterns().expression(b -> b
+                .by("Lumen")
+                .pattern("get world %name:STRING%")
+                .description("Looks up a world by name.")
+                .example("var w = get world \"world_nether\"")
+                .since("1.0.0")
+                .category(Categories.WORLD)
+                .handler(ctx -> new ExpressionResult(
+                        "Bukkit.getWorld(" + ctx.java("name") + ")",
+                        RefTypes.WORLD.id())));
+
+        api.patterns().expression(b -> b
+                .by("Lumen")
+                .pattern("get offline player by (name|username) %name:STRING%")
+                .description("Looks up an offline player by name.")
+                .example("var op = get offline player by name \"Notch\"")
+                .since("1.0.0")
+                .category(Categories.OFFLINE_PLAYER)
+                .handler(ctx -> {
+                    String nameJava = ctx.java("name");
+                    ctx.codegen().addImport(OfflinePlayer.class.getName());
+                    return new ExpressionResult(
+                            "Bukkit.getOfflinePlayer(" + nameJava + ")",
+                            RefTypes.OFFLINE_PLAYER.id());
+                }));
+
+        api.patterns().expression(b -> b
+                .by("Lumen")
+                .pattern("get offline player by (uuid|unique id) %uuid:STRING%")
+                .description("Looks up an offline player by UUID string.")
+                .example("var op = get offline player by uuid \"069a79f4-44e9-4726-a5be-fca90e38aaf5\"")
+                .since("1.0.0")
+                .category(Categories.OFFLINE_PLAYER)
+                .handler(ctx -> {
+                    String uuidJava = ctx.java("uuid");
+                    ctx.codegen().addImport(OfflinePlayer.class.getName());
+                    ctx.codegen().addImport(UUID.class.getName());
+                    return new ExpressionResult(
+                            "Bukkit.getOfflinePlayer(UUID.fromString("
+                                    + uuidJava + "))",
+                            RefTypes.OFFLINE_PLAYER.id());
+                }));
+
+        api.patterns().expression(b -> b
+                .by("Lumen")
+                .pattern("get %op:PLAYER_POSSESSIVE% name")
+                .description("Returns an online player's display name.")
+                .example("var name = get player's name")
+                .since("1.0.0")
+                .category(Categories.PLAYER)
+                .handler(ctx -> new ExpressionResult(ctx.java("op") + ".getName()", null)));
+
+        api.patterns().expression(b -> b
+                .by("Lumen")
+                .pattern("get %op:OFFLINE_PLAYER_POSSESSIVE% name")
+                .description("Returns an offline player's name.")
+                .example("var name = get offlinePlayer's name")
+                .since("1.0.0")
+                .category(Categories.OFFLINE_PLAYER)
+                .handler(ctx -> new ExpressionResult(ctx.java("op") + ".getName()", null)));
+
+        api.patterns().expression(b -> b
+                .by("Lumen")
+                .pattern("get %op:OFFLINE_PLAYER_POSSESSIVE% uuid")
+                .description("Returns an offline player's UUID as a string.")
+                .example("var id = get offlinePlayer's uuid")
+                .since("1.0.0")
+                .category(Categories.OFFLINE_PLAYER)
+                .handler(ctx -> new ExpressionResult(ctx.java("op") + ".getUniqueId().toString()",
+                        null)));
+
+        api.patterns().expression(b -> b
+                .by("Lumen")
+                .pattern("get %op:OFFLINE_PLAYER_POSSESSIVE% first played")
+                .description("Returns the timestamp of when the offline player first joined.")
+                .example("var time = get offlinePlayer's first played")
+                .since("1.0.0")
+                .category(Categories.OFFLINE_PLAYER)
+                .handler(ctx -> new ExpressionResult(ctx.java("op") + ".getFirstPlayed()", null)));
+
+        api.patterns().expression(b -> b
+                .by("Lumen")
+                .pattern("get %op:OFFLINE_PLAYER_POSSESSIVE% last played")
+                .description("Returns the timestamp of when the offline player last joined.")
+                .example("var time = get offlinePlayer's last played")
+                .since("1.0.0")
+                .category(Categories.OFFLINE_PLAYER)
+                .handler(ctx -> new ExpressionResult(ctx.java("op") + ".getLastPlayed()", null)));
+
+        api.patterns().expression(b -> b
+                .by("Lumen")
+                .pattern("get %op:OFFLINE_PLAYER_POSSESSIVE% bed spawn location")
+                .description("Returns the offline player's bed spawn location, or null if not set.")
+                .example("var loc = get offlinePlayer's bed spawn location")
+                .since("1.0.0")
+                .category(Categories.OFFLINE_PLAYER)
+                .handler(ctx -> new ExpressionResult(ctx.java("op") + ".getBedSpawnLocation()",
+                        RefTypes.LOCATION.id())));
+
+        api.patterns().expression(b -> b
+                .by("Lumen")
+                .pattern("get %who:PLAYER_POSSESSIVE% x")
+                .description("Returns the player's current X coordinate as a double.")
+                .example("var px = get player's x")
+                .since("1.0.0")
+                .category(Categories.PLAYER)
+                .handler(ctx -> new ExpressionResult(ctx.java("who") + ".getLocation().getX()", null)));
+
+        api.patterns().expression(b -> b
+                .by("Lumen")
+                .pattern("get %who:PLAYER_POSSESSIVE% y")
+                .description("Returns the player's current Y coordinate as a double.")
+                .example("var py = get player's y")
+                .since("1.0.0")
+                .category(Categories.PLAYER)
+                .handler(ctx -> new ExpressionResult(ctx.java("who") + ".getLocation().getY()", null)));
+
+        api.patterns().expression(b -> b
+                .by("Lumen")
+                .pattern("get %who:PLAYER_POSSESSIVE% z")
+                .description("Returns the player's current Z coordinate as a double.")
+                .example("var pz = get player's z")
+                .since("1.0.0")
+                .category(Categories.PLAYER)
+                .handler(ctx -> new ExpressionResult(ctx.java("who") + ".getLocation().getZ()", null)));
+
+        api.patterns().expression(b -> b
+                .by("Lumen")
+                .pattern("get %who:PLAYER_POSSESSIVE% uuid")
+                .description("Returns the player's UUID as a string.")
+                .example("var id = get player's uuid")
+                .since("1.0.0")
+                .category(Categories.PLAYER)
+                .handler(ctx -> new ExpressionResult(ctx.java("who") + ".getUniqueId().toString()",
+                        null)));
+
+        api.patterns().expression(b -> b
+                .by("Lumen")
+                .pattern("get %who:PLAYER_POSSESSIVE% (xp level|level)")
+                .description("Returns a player's experience level as an integer.")
+                .example("var lv = get player's xp level")
+                .since("1.0.0")
+                .category(Categories.PLAYER)
+                .handler(ctx -> new ExpressionResult(ctx.java("who") + ".getLevel()",
+                        null)));
+    }
+
+    /**
+     * Registers location constructor expressions.
+     *
+     * <p>
+     * Allows creating {@code Location} objects from coordinates:
+     *
+     * <pre>{@code
+     * var loc = new location in myWorld at 100 64 -200
+     * }</pre>
+     */
+    private void registerLocation(@NotNull LumenAPI api) {
+        api.patterns().expression(b -> b
+                .by("Lumen")
+                .pattern("new location in %w:WORLD% at %x:INT% %y:INT% %z:INT%")
+                .description("Creates a new Location from a world and XYZ coordinates.")
+                .example("var loc = new location in myWorld at 100 64 -200")
+                .since("1.0.0")
+                .category(Categories.LOCATION)
+                .handler(ctx -> {
+                    ctx.codegen().addImport(Location.class.getName());
+                    return new ExpressionResult(
+                            "new Location(" + ctx.java("w") + ", " + ctx.java("x") + ", "
+                                    + ctx.java("y") + ", " + ctx.java("z") + ")",
+                            RefTypes.LOCATION.id());
+                }));
+
+        api.patterns().expression(b -> b
+                .by("Lumen")
+                .pattern("new location at %x:INT% %y:INT% %z:INT% in %w:WORLD%")
+                .description("Creates a new Location from XYZ coordinates and a world.")
+                .example("var loc = new location at 100 64 -200 in myWorld")
+                .since("1.0.0")
+                .category(Categories.LOCATION)
+                .handler(ctx -> {
+                    ctx.codegen().addImport(Location.class.getName());
+                    return new ExpressionResult(
+                            "new Location(" + ctx.java("w") + ", " + ctx.java("x") + ", "
+                                    + ctx.java("y") + ", " + ctx.java("z") + ")",
+                            RefTypes.LOCATION.id());
+                }));
+    }
+
+    /**
+     * Registers spawn as an expression so it can be used in variable assignment.
+     *
+     * <p>
+     * This makes {@code var mob = spawn zombie at loc} work, returning the
+     * spawned entity as an {@code ENTITY}-typed variable.
+     */
+    private void registerSpawn(@NotNull LumenAPI api) {
+        api.patterns().expression(b -> b
+                .by("Lumen")
+                .pattern("spawn %type:ENTITY_TYPE% at %who:PLAYER%")
+                .description("Spawns an entity at a player's location and returns it.")
+                .example("var mob = spawn zombie at player")
+                .since("1.0.0")
+                .category(Categories.ENTITY)
+                .handler(ctx -> {
+                    ctx.codegen().addImport(Entity.class.getName());
+                    String typeEnum = ctx.java("type");
+                    String playerJava = ctx.java("who");
+                    Map<String, Object> meta = resolveEntityMeta(typeEnum);
+                    return new ExpressionResult(
+                            playerJava + ".getLocation().getWorld().spawnEntity("
+                                    + playerJava + ".getLocation(), " + typeEnum
+                                    + ")",
+                            RefTypes.ENTITY.id(),
+                            meta);
+                }));
+
+        api.patterns().expression(b -> b
+                .by("Lumen")
+                .pattern("spawn %type:ENTITY_TYPE% [at] %loc:LOCATION%")
+                .description("Spawns an entity at a location and returns it.")
+                .example("var mob = spawn zombie at myLoc")
+                .since("1.0.0")
+                .category(Categories.ENTITY)
+                .handler(ctx -> {
+                    ctx.codegen().addImport(Entity.class.getName());
+                    String typeEnum = ctx.java("type");
+                    Map<String, Object> meta = resolveEntityMeta(typeEnum);
+                    return new ExpressionResult(
+                            ctx.java("loc") + ".getWorld().spawnEntity(" + ctx.java("loc")
+                                    + ", " + typeEnum + ")",
+                            RefTypes.ENTITY.id(),
+                            meta);
+                }));
+
+        api.patterns().expression(b -> b
+                .by("Lumen")
+                .pattern("spawn %type:ENTITY_TYPE% at %loc:EXPR%")
+                .description("Spawns an entity at an expression that resolves to a location and returns it.")
+                .example("var mob = spawn zombie at get player's location")
+                .since("1.0.0")
+                .category(Categories.ENTITY)
+                .handler(ctx -> {
+                    ctx.codegen().addImport(Entity.class.getName());
+                    String typeEnum = ctx.java("type");
+                    String locJava = ctx.java("loc");
+                    Map<String, Object> meta = resolveEntityMeta(typeEnum);
+                    return new ExpressionResult(
+                            locJava + ".getWorld().spawnEntity(" + locJava
+                                    + ", " + typeEnum + ")",
+                            RefTypes.ENTITY.id(),
+                            meta);
+                }));
+    }
+
+    /**
+     * Registers typed null expressions ({@code no location}, {@code no player},
+     * etc.)
+     * that produce a {@code null} value tagged with the corresponding ref type.
+     *
+     * <p>
+     * These allow global or persistent vars to carry compile-time type information
+     * even when their initial value is absent:
+     *
+     * <pre>{@code
+     * global var pos1 for ref type player default no location
+     * }</pre>
+     *
+     * @param api the Lumen API to register expressions on
+     */
+    private void registerTypedNulls(@NotNull LumenAPI api) {
+        api.patterns().expression(b -> b
+                .by("Lumen")
+                .pattern("no location")
+                .description("Represents a null location value. The variable will carry the LOCATION ref type at compile time.")
+                .example("global var pos1 for ref type player default no location")
+                .since("1.0.0")
+                .category(Categories.VARIABLE)
+                .handler(ctx -> {
+                    ctx.codegen().addImport(Location.class.getName());
+                    return new ExpressionResult("(Location) null",
+                            RefTypes.LOCATION.id());
+                }));
+
+        api.patterns().expression(b -> b
+                .by("Lumen")
+                .pattern("no player")
+                .description("Represents a null player value. The variable will carry the PLAYER ref type at compile time.")
+                .example("global var target for ref type player default no player")
+                .since("1.0.0")
+                .category(Categories.VARIABLE)
+                .handler(ctx -> new ExpressionResult("(Player) null",
+                        RefTypes.PLAYER.id())));
+
+        api.patterns().expression(b -> b
+                .by("Lumen")
+                .pattern("no entity")
+                .description("Represents a null entity value. The variable will carry the ENTITY ref type at compile time.")
+                .example("global var target for ref type player default no entity")
+                .since("1.0.0")
+                .category(Categories.VARIABLE)
+                .handler(ctx -> {
+                    ctx.codegen().addImport(Entity.class.getName());
+                    return new ExpressionResult("(Entity) null",
+                            RefTypes.ENTITY.id());
+                }));
+
+        api.patterns().expression(b -> b
+                .by("Lumen")
+                .pattern("no world")
+                .description("Represents a null world value. The variable will carry the WORLD ref type at compile time.")
+                .example("global var w for ref type player default no world")
+                .since("1.0.0")
+                .category(Categories.VARIABLE)
+                .handler(ctx -> {
+                    ctx.codegen().addImport(World.class.getName());
+                    return new ExpressionResult("(World) null", RefTypes.WORLD.id());
+                }));
+
+        api.patterns().expression(b -> b
+                .by("Lumen")
+                .pattern("no block")
+                .description("Represents a null block value. The variable will carry the BLOCK ref type at compile time.")
+                .example("global var target_block for ref type player default no block")
+                .since("1.0.0")
+                .category(Categories.VARIABLE)
+                .handler(ctx -> {
+                    ctx.codegen().addImport(Block.class.getName());
+                    return new ExpressionResult("(Block) null",
+                            RefTypes.BLOCK.id());
+                }));
+    }
+}

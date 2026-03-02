@@ -1,0 +1,42 @@
+# Item Manipulation
+# Creating items, setting display names, lore, PDC, and checking conditions.
+#
+# Commands:
+#   /customsword    Give yourself a named, lored, PDC-tagged diamond sword
+#   /iteminfo       Show info about the item in your hand (via interact)
+
+command customsword:
+    description "Give yourself a custom diamond sword"
+
+    var sword = new item diamond_sword
+    set sword's display name to "&6&lLegendary Blade"
+    set sword's lore to "&7A powerful weapon|&eForged in ancient fire|&aUnbreakable"
+    make sword unbreakable
+    set sword's custom model data to 1001
+    set pdc "custom_id" of sword to "legendary_blade"
+    give player sword
+    message player "&aYou received the Legendary Blade!"
+
+on interact:
+    if item is set:
+        if action is "RIGHT_CLICK_AIR":
+            var name = get item's display name
+            var type = get item's type
+            var amt = get item's amount
+            message player "&6Item Info:"
+            message player "  &7Type: &f{type}"
+            message player "  &7Amount: &f{amt}"
+            message player "  &7Name: &f{name}"
+
+            if item has lore:
+                message player "  &7Has lore: &aYes"
+
+            if item has enchantments:
+                message player "  &7Enchanted: &aYes"
+
+            if item is unbreakable:
+                message player "  &7Unbreakable: &aYes"
+
+            if item has pdc "custom_id":
+                var tag = get pdc "custom_id" of item
+                message player "  &7PDC Tag: &f{tag}"

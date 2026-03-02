@@ -1,0 +1,59 @@
+# Math and Randomness
+# Random numbers, math functions, and a loot crate system.
+#
+# Commands:
+#   /roll     Roll a random number from 1 to 100
+#   /crate    Open a random reward crate
+#   /math     Demonstrate all math functions
+
+command roll:
+    description "Roll a random number"
+
+    var result = random between 1 and 100
+    var n = round result
+    broadcast "&e{player_name} &frolled &6{n}&f!"
+
+    if n >= 90:
+        send title "&6Critical Roll!" with subtitle "&e{n}" to player
+
+command crate:
+    description "Open a random reward crate"
+
+    message player "&6&lOpening crate..."
+
+    after 20 ticks:
+        if chance 10:
+            message player "&d&lLEGENDARY! &fDiamond x3"
+            give player diamond 3
+            play sound "entity_player_levelup" to player
+        else if chance 40:
+            message player "&9&lRare! &fGold x5"
+            give player gold_ingot 5
+            play sound "entity_experience_orb_pickup" to player
+        else:
+            message player "&fCommon: Iron x3"
+            give player iron_ingot 3
+
+command math:
+    description "Math functions demo"
+
+    var a = 42
+    var b = 8
+    var sum = a + b
+    var diff = a - b
+    var product = a * b
+    var quotient = a / b
+    var minimum = min of a and b
+    var maximum = max of a and b
+    var neg = 0 - 15
+    var absolute = abs of neg
+    var clamped = clamp 150 between 0 and 100
+    message player "&6&lMath Demo &7(a=42, b=8):"
+    message player "  &fa + b = &e{sum}"
+    message player "  &fa - b = &e{diff}"
+    message player "  &fa * b = &e{product}"
+    message player "  &fa / b = &e{quotient}"
+    message player "  &fmin(a,b) = &e{minimum}"
+    message player "  &fmax(a,b) = &e{maximum}"
+    message player "  &fabs(-15) = &e{absolute}"
+    message player "  &fclamp(150, 0..100) = &e{clamped}"

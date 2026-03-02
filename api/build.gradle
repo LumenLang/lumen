@@ -1,0 +1,7 @@
+dependencies {
+}
+
+jar {
+    archiveVersion.set('')
+    archiveBaseName.set(rootProject.name + "-API" + (version.isEmpty() ? "" : "-${version}"))
+}

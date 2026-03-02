@@ -1,0 +1,28 @@
+# Kill Streak Tracker
+# Tracks consecutive kills per player, resets on death,
+# broadcasts milestones, and rewards effects at thresholds.
+
+global stored var streak for ref type player default 0
+
+on entity_death:
+    if killer is set:
+        add 1 to streak for killer
+
+        message killer "&aKill streak: &e{streak}"
+
+        if streak >= 10:
+            broadcast "&c&l{killer_name} &6is on a &c{streak} &6kill streak!"
+            apply "strength" 1 to killer for 200 ticks
+
+        else if streak >= 5:
+            broadcast "&e{killer_name} &6is on a &e{streak} &6kill streak!"
+            apply "speed" 2 to killer for 200 ticks
+
+        else if streak >= 3:
+            apply "speed" 1 to killer for 100 ticks
+
+on player_death:
+    if streak >= 3:
+        message player "&cYour kill streak of &e{streak} &chas been ended!"
+
+    set streak to 0 for player
