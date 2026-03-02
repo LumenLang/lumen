@@ -104,12 +104,16 @@ public final class VarStatementForm implements StatementFormHandler {
                     }
                     resolvedMetadata = exprResult.metadata();
                 } else {
-                    String resolved = ExprResolver.resolve(
+                    ExpressionResult resolvedResult = ExprResolver.resolveWithType(
                             raw.tokens(),
                             ((EmitContextImpl) ctx).codegenContext(),
                             env);
-                    if (resolved != null) {
-                        java = resolved;
+                    if (resolvedResult != null) {
+                        java = resolvedResult.java();
+                        if (resolvedResult.refTypeId() != null) {
+                            resolvedRefType = RefType.byId(resolvedResult.refTypeId());
+                        }
+                        resolvedMetadata = resolvedResult.metadata();
                     } else {
                         return false;
                     }
@@ -157,6 +161,9 @@ public final class VarStatementForm implements StatementFormHandler {
             return null;
         }
         RegisteredExpressionMatch match = reg.matchExpression(tokens, env);
+        if (match == null) {
+            match = reg.matchExpressionSlow(tokens, env);
+        }
         if (match == null) {
             return null;
         }

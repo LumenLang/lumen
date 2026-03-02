@@ -21,9 +21,11 @@ import net.vansencool.lumen.pipeline.language.parse.LumenParser;
 import net.vansencool.lumen.pipeline.language.pattern.PatternRegistry;
 import net.vansencool.lumen.pipeline.language.pattern.RegisteredBlockMatch;
 import net.vansencool.lumen.pipeline.language.pattern.RegisteredPatternMatch;
+import net.vansencool.lumen.pipeline.language.resolve.ExprResolver;
 import net.vansencool.lumen.pipeline.language.tokenization.Line;
 import net.vansencool.lumen.pipeline.language.tokenization.Token;
 import net.vansencool.lumen.pipeline.language.tokenization.Tokenizer;
+import net.vansencool.lumen.pipeline.language.typed.Expr;
 import net.vansencool.lumen.pipeline.language.typed.StatementClassifier;
 import net.vansencool.lumen.pipeline.language.typed.TypedStatement;
 import net.vansencool.lumen.pipeline.logger.LumenLogger;
@@ -359,8 +361,22 @@ public final class CodeEmitter {
         }
 
         if (ts instanceof TypedStatement.VarStmt vs) {
+            String exprText;
+            List<Token> errorTokens = null;
+            if (vs.expr() instanceof Expr.RawExpr raw) {
+                exprText = ExprResolver.joinTokens(raw.tokens());
+                errorTokens = raw.tokens();
+            } else {
+                exprText = vs.expr().toString();
+            }
+            if (errorTokens != null && !errorTokens.isEmpty()) {
+                throw new LumenScriptException(st.line(), st.raw(),
+                        "Could not resolve expression: '" + exprText + "'. "
+                                + "No registered expression pattern matched the right-hand side of this variable assignment",
+                        errorTokens);
+            }
             throw new LumenScriptException(st.line(), st.raw(),
-                    "Could not resolve expression: '" + vs.expr() + "'. "
+                    "Could not resolve expression: '" + exprText + "'. "
                             + "No registered expression pattern matched the right-hand side of this variable assignment");
         }
 

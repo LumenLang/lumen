@@ -138,12 +138,29 @@ public final class CommandRegistry {
         ScriptCommand cmd = new ScriptCommand(name, description, aliases, instance, mh);
         if (permission != null) cmd.setPermission(permission);
 
-        removeFromMap(name);
         String ns = namespace != null ? namespace : "lumen";
+
+        Command existing = knownCommands.get(name);
+        if (existing != null) {
+            for (String oldAlias : existing.getAliases()) {
+                removeFromMap(oldAlias, ns);
+            }
+        }
+        removeFromMap(name, ns);
+        if (aliases != null) {
+            for (String alias : aliases) {
+                removeFromMap(alias, ns);
+            }
+        }
+
         commandMap.register(ns, cmd);
         syncCommands();
 
-        scriptCommands.computeIfAbsent(scriptName, k -> new ArrayList<>()).add(name);
+        List<String> tracked = scriptCommands.computeIfAbsent(scriptName, k -> new ArrayList<>());
+        tracked.add(name);
+        if (aliases != null) {
+            tracked.addAll(aliases);
+        }
         LumenLogger.debug("CommandRegistry", "Registered command: /" + name + " (script: " + scriptName + ")");
     }
 
@@ -166,9 +183,9 @@ public final class CommandRegistry {
                                              @Nullable TabCompleter completer) {
         ensureCommandMap();
         PluginCmd cmd = new PluginCmd(name, aliases, executor, completer);
-        removeFromMap(name);
+        removeFromMap(name, "lumen");
         for (String alias : aliases) {
-            removeFromMap(alias);
+            removeFromMap(alias, "lumen");
         }
         commandMap.register("lumen", cmd);
         pluginCommands.add(name);
@@ -187,14 +204,14 @@ public final class CommandRegistry {
         Command existing = knownCommands.get(name);
         if (existing != null) {
             List<String> aliases = existing.getAliases();
-            removeFromMap(name);
+            removeFromMap(name, "lumen");
             for (String alias : aliases) {
-                removeFromMap(alias);
+                removeFromMap(alias, "lumen");
             }
             pluginCommands.remove(name);
             pluginCommands.removeAll(aliases);
         } else {
-            removeFromMap(name);
+            removeFromMap(name, "lumen");
             pluginCommands.remove(name);
         }
         syncCommands();
@@ -206,15 +223,21 @@ public final class CommandRegistry {
      * @param scriptName the script file name
      */
     public static void unregisterScript(@NotNull String scriptName) {
-        List<String> commands = scriptCommands.remove(scriptName);
-        if (commands == null) return;
+        List<String> tracked = scriptCommands.remove(scriptName);
+        if (tracked == null) return;
 
         ensureCommandMap();
-        for (String name : commands) {
-            removeFromMap(name);
+        for (String name : tracked) {
+            Command existing = knownCommands.get(name);
+            if (existing != null) {
+                for (String alias : existing.getAliases()) {
+                    removeFromMap(alias, null);
+                }
+            }
+            removeFromMap(name, null);
         }
         syncCommands();
-        LumenLogger.debug("CommandRegistry", "Unregistered " + commands.size() + " command(s) for script: " + scriptName);
+        LumenLogger.debug("CommandRegistry", "Unregistered " + tracked.size() + " command(s) for script: " + scriptName);
     }
 
     /**
@@ -222,22 +245,42 @@ public final class CommandRegistry {
      */
     public static void unregisterAll() {
         if (knownCommands == null) return;
-        for (List<String> commands : scriptCommands.values()) {
-            for (String name : commands) {
-                removeFromMap(name);
+        for (List<String> tracked : scriptCommands.values()) {
+            for (String name : tracked) {
+                Command existing = knownCommands.get(name);
+                if (existing != null) {
+                    for (String alias : existing.getAliases()) {
+                        removeFromMap(alias, null);
+                    }
+                }
+                removeFromMap(name, null);
             }
         }
         scriptCommands.clear();
         for (String name : pluginCommands) {
-            removeFromMap(name);
+            removeFromMap(name, "lumen");
         }
         pluginCommands.clear();
     }
 
-    private static void removeFromMap(@NotNull String name) {
+    /**
+     * Removes a command entry from the known commands map.
+     * When a namespace is provided, the namespaced entry is also removed.
+     * When namespace is null, all common namespace prefixes are tried.
+     *
+     * @param name      the command name to remove
+     * @param namespace the namespace prefix, or null to remove all known variants
+     */
+    private static void removeFromMap(@NotNull String name, @Nullable String namespace) {
         if (knownCommands == null) return;
         knownCommands.remove(name);
-        knownCommands.remove("lumen:" + name);
+        if (namespace != null) {
+            knownCommands.remove(namespace + ":" + name);
+        } else {
+            knownCommands.remove("lumen:" + name);
+            knownCommands.entrySet().removeIf(entry ->
+                    entry.getKey().endsWith(":" + name) && entry.getValue().getName().equalsIgnoreCase(name));
+        }
     }
 
     private static class ScriptCommand extends Command {

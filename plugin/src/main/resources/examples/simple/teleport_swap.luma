@@ -1,0 +1,71 @@
+# Teleport Swap
+# Right click on another player to swap positions with them!
+# Toggle the ability on and off with /swap, and set a cooldown.
+#
+# Commands:
+#   /swap            Toggle swap mode on or off
+#   /swap cooldown   View remaining cooldown
+#
+# When swap mode is active, right clicking a player swaps your location
+# with theirs. Both players receive a notification and particle effects.
+
+config:
+    prefix: &5[Swap]&r
+    cooldown_ticks: 100
+
+global stored var swap_enabled for ref type player default 0
+global var swap_cooldown for ref type player default 0
+
+command swap:
+    permission "lumen.swap"
+    description "Toggle teleport swap mode"
+
+    if args size >= 1:
+        var sub = get args at index 0
+        if sub is "cooldown":
+            var cd = swap_cooldown
+            if cd > 0:
+                message player "{prefix} &7Cooldown remaining: &f{cd} ticks"
+            else:
+                message player "{prefix} &aReady to swap!"
+        else:
+            message player "{prefix} &cUsage: /swap or /swap cooldown"
+    else:
+        if swap_enabled == 0:
+            set swap_enabled to 1
+            message player "{prefix} &aSwap mode &f&lENABLED!"
+            message player "&7Right click a player to swap positions."
+        else:
+            set swap_enabled to 0
+            message player "{prefix} &cSwap mode &f&lDISABLED."
+
+on entity_interact:
+    if swap_enabled == 1:
+        if entity is a player:
+            if swap_cooldown <= 0:
+                var my_loc = get player's location
+                var their_loc = get entity's location
+                var target_name = get entity's name
+                var target = get player by name target_name
+
+                teleport player to their_loc
+                teleport entity to my_loc
+
+                message player "{prefix} &aSwapped positions with &f{target_name}&a!"
+                if target is set:
+                    message target "{prefix} &f{player_name} &aswapped positions with you!"
+                    send title "&5&lSwap!" with subtitle "&7Positions exchanged" to target with fade in 5 stay 20 fade out 10
+                    play sound "entity_enderman_teleport" to target
+
+                send title "&5&lSwap!" with subtitle "&7Positions exchanged" to player with fade in 5 stay 20 fade out 10
+                play sound "entity_enderman_teleport" to player
+
+                set swap_cooldown to cooldown_ticks
+
+                send actionbar "{prefix} &7Cooldown: {cooldown_ticks} ticks" to player
+
+                after cooldown_ticks ticks:
+                    set swap_cooldown to 0
+            else:
+                var cd = swap_cooldown
+                message player "{prefix} &cOn cooldown! &7{cd} ticks remaining."

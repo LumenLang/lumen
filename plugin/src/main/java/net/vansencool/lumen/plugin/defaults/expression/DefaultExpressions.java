@@ -13,6 +13,7 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Projectile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -53,6 +54,7 @@ public final class DefaultExpressions {
     public void register(@NotNull LumenAPI api) {
         registerLocation(api);
         registerSpawn(api);
+        registerProjectile(api);
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -276,6 +278,46 @@ public final class DefaultExpressions {
                 .category(Categories.PLAYER)
                 .handler(ctx -> new ExpressionResult(ctx.java("who") + ".getLevel()",
                         null)));
+
+        api.patterns().expression(b -> b
+                .by("Lumen")
+                .pattern("get %who:PLAYER_POSSESSIVE% eye location")
+                .description("Returns the location of a player's eyes.")
+                .example("var loc = get player's eye location")
+                .since("1.0.0")
+                .category(Categories.PLAYER)
+                .handler(ctx -> new ExpressionResult(ctx.java("who") + ".getEyeLocation()",
+                        RefTypes.LOCATION.id())));
+
+        api.patterns().expression(b -> b
+                .by("Lumen")
+                .pattern("get %who:PLAYER_POSSESSIVE% direction x")
+                .description("Returns the X component of the direction a player is looking.")
+                .example("var dx = get player's direction x")
+                .since("1.0.0")
+                .category(Categories.PLAYER)
+                .handler(ctx -> new ExpressionResult(
+                        ctx.java("who") + ".getLocation().getDirection().getX()", null)));
+
+        api.patterns().expression(b -> b
+                .by("Lumen")
+                .pattern("get %who:PLAYER_POSSESSIVE% direction y")
+                .description("Returns the Y component of the direction a player is looking.")
+                .example("var dy = get player's direction y")
+                .since("1.0.0")
+                .category(Categories.PLAYER)
+                .handler(ctx -> new ExpressionResult(
+                        ctx.java("who") + ".getLocation().getDirection().getY()", null)));
+
+        api.patterns().expression(b -> b
+                .by("Lumen")
+                .pattern("get %who:PLAYER_POSSESSIVE% direction z")
+                .description("Returns the Z component of the direction a player is looking.")
+                .example("var dz = get player's direction z")
+                .since("1.0.0")
+                .category(Categories.PLAYER)
+                .handler(ctx -> new ExpressionResult(
+                        ctx.java("who") + ".getLocation().getDirection().getZ()", null)));
     }
 
     /**
@@ -387,6 +429,53 @@ public final class DefaultExpressions {
     }
 
     /**
+     * Registers projectile launch expressions.
+     *
+     * <p>
+     * Allows launching a projectile from a player in the direction they are looking:
+     *
+     * <pre>{@code
+     * var proj = launch snowball from player
+     * }</pre>
+     *
+     * @param api the Lumen API to register expressions on
+     */
+    private void registerProjectile(@NotNull LumenAPI api) {
+        api.patterns().expression(b -> b
+                .by("Lumen")
+                .pattern("launch %type:ENTITY_TYPE% from %who:PLAYER%")
+                .description("Launches a projectile from a player in the direction they are looking and returns it.")
+                .example("var proj = launch snowball from player")
+                .since("1.0.0")
+                .category(Categories.ENTITY)
+                .handler(ctx -> {
+                    ctx.codegen().addImport(Entity.class.getName());
+                    ctx.codegen().addImport(Projectile.class.getName());
+                    String type = ctx.java("type");
+                    String player = ctx.java("who");
+                    return new ExpressionResult(
+                            "(Entity) " + player + ".launchProjectile((Class) " + type + ".getEntityClass())",
+                            RefTypes.ENTITY.id());
+                }));
+
+        api.patterns().expression(b -> b
+                .by("Lumen")
+                .pattern("launch %type:ENTITY_TYPE% from %loc:LOCATION%")
+                .description("Spawns a projectile at a location and returns it. The projectile spawns with no initial velocity.")
+                .example("var proj = launch snowball from myLoc")
+                .since("1.0.0")
+                .category(Categories.ENTITY)
+                .handler(ctx -> {
+                    ctx.codegen().addImport(Entity.class.getName());
+                    String type = ctx.java("type");
+                    String loc = ctx.java("loc");
+                    return new ExpressionResult(
+                            loc + ".getWorld().spawnEntity(" + loc + ", " + type + ")",
+                            RefTypes.ENTITY.id());
+                }));
+    }
+
+    /**
      * Registers typed null expressions ({@code no location}, {@code no player},
      * etc.)
      * that produce a {@code null} value tagged with the corresponding ref type.
@@ -411,8 +500,7 @@ public final class DefaultExpressions {
                 .category(Categories.VARIABLE)
                 .handler(ctx -> {
                     ctx.codegen().addImport(Location.class.getName());
-                    return new ExpressionResult("(Location) null",
-                            RefTypes.LOCATION.id());
+                    return new ExpressionResult("(Location) null", RefTypes.LOCATION.id());
                 }));
 
         api.patterns().expression(b -> b
@@ -422,8 +510,7 @@ public final class DefaultExpressions {
                 .example("global var target for ref type player default no player")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
-                .handler(ctx -> new ExpressionResult("(Player) null",
-                        RefTypes.PLAYER.id())));
+                .handler(ctx -> new ExpressionResult("(Player) null", RefTypes.PLAYER.id())));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -434,8 +521,7 @@ public final class DefaultExpressions {
                 .category(Categories.VARIABLE)
                 .handler(ctx -> {
                     ctx.codegen().addImport(Entity.class.getName());
-                    return new ExpressionResult("(Entity) null",
-                            RefTypes.ENTITY.id());
+                    return new ExpressionResult("(Entity) null", RefTypes.ENTITY.id());
                 }));
 
         api.patterns().expression(b -> b
@@ -459,8 +545,7 @@ public final class DefaultExpressions {
                 .category(Categories.VARIABLE)
                 .handler(ctx -> {
                     ctx.codegen().addImport(Block.class.getName());
-                    return new ExpressionResult("(Block) null",
-                            RefTypes.BLOCK.id());
+                    return new ExpressionResult("(Block) null", RefTypes.BLOCK.id());
                 }));
     }
 }

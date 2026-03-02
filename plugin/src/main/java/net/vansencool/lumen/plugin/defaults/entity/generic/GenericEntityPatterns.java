@@ -148,6 +148,82 @@ public final class GenericEntityPatterns {
                 .category(Categories.ENTITY)
                 .handler((line, ctx, out) -> out.line(
                         ctx.java("e") + ".setGlowing(" + ctx.java("val") + ");")));
+
+        api.patterns().statement(b -> b
+                .by("Lumen").pattern("set %e:ENTITY_POSSESSIVE% velocity [to] %x:INT% %y:INT% %z:INT%")
+                .description("Sets an entity's velocity to the specified x, y, z components.")
+                .example("set mob's velocity to 0 1 0")
+                .since("1.0.0")
+                .category(Categories.ENTITY)
+                .handler((line, ctx, out) -> {
+                    ctx.codegen().addImport("org.bukkit.util.Vector");
+                    out.line(ctx.java("e") + ".setVelocity(new Vector("
+                            + ctx.java("x") + ", " + ctx.java("y") + ", " + ctx.java("z") + "));");
+                }));
+
+        api.patterns().statement(b -> b
+                .by("Lumen").pattern("launch %e:ENTITY% toward %loc:LOCATION% with speed %s:INT%")
+                .description("Launches an entity toward a location with a given speed multiplier.")
+                .example("launch mob toward loc with speed 2")
+                .since("1.0.0")
+                .category(Categories.ENTITY)
+                .handler((line, ctx, out) -> {
+                    ctx.codegen().addImport("org.bukkit.util.Vector");
+                    out.line("{");
+                    out.line("    Vector __dir = " + ctx.java("loc") + ".toVector().subtract("
+                            + ctx.java("e") + ".getLocation().toVector());");
+                    out.line("    if (__dir.lengthSquared() > 0) __dir.normalize().multiply((double) " + ctx.java("s") + ");");
+                    out.line("    " + ctx.java("e") + ".setVelocity(__dir);");
+                    out.line("}");
+                }));
+
+        api.patterns().statement(b -> b
+                .by("Lumen").pattern("launch %e:ENTITY% toward %loc:LOCATION%")
+                .description("Launches an entity toward a location with default speed.")
+                .example("launch mob toward loc")
+                .since("1.0.0")
+                .category(Categories.ENTITY)
+                .handler((line, ctx, out) -> {
+                    ctx.codegen().addImport("org.bukkit.util.Vector");
+                    out.line("{");
+                    out.line("    Vector __dir = " + ctx.java("loc") + ".toVector().subtract("
+                            + ctx.java("e") + ".getLocation().toVector());");
+                    out.line("    if (__dir.lengthSquared() > 0) __dir.normalize();");
+                    out.line("    " + ctx.java("e") + ".setVelocity(__dir);");
+                    out.line("}");
+                }));
+
+        api.patterns().statement(b -> b
+                .by("Lumen").pattern("launch %who:PLAYER% toward %loc:LOCATION% with speed %s:INT%")
+                .description("Launches a player toward a location with a given speed multiplier.")
+                .example("launch player toward hook_loc with speed 2")
+                .since("1.0.0")
+                .category(Categories.ENTITY)
+                .handler((line, ctx, out) -> {
+                    ctx.codegen().addImport("org.bukkit.util.Vector");
+                    out.line("{");
+                    out.line("    Vector __dir = " + ctx.java("loc") + ".toVector().subtract("
+                            + ctx.java("who") + ".getLocation().toVector());");
+                    out.line("    if (__dir.lengthSquared() > 0) __dir.normalize().multiply((double) " + ctx.java("s") + ");");
+                    out.line("    " + ctx.java("who") + ".setVelocity(__dir);");
+                    out.line("}");
+                }));
+
+        api.patterns().statement(b -> b
+                .by("Lumen").pattern("launch %who:PLAYER% toward %loc:LOCATION%")
+                .description("Launches a player toward a location with default speed.")
+                .example("launch player toward hook_loc")
+                .since("1.0.0")
+                .category(Categories.ENTITY)
+                .handler((line, ctx, out) -> {
+                    ctx.codegen().addImport("org.bukkit.util.Vector");
+                    out.line("{");
+                    out.line("    Vector __dir = " + ctx.java("loc") + ".toVector().subtract("
+                            + ctx.java("who") + ".getLocation().toVector());");
+                    out.line("    if (__dir.lengthSquared() > 0) __dir.normalize();");
+                    out.line("    " + ctx.java("who") + ".setVelocity(__dir);");
+                    out.line("}");
+                }));
     }
 
     private void registerConditions(@NotNull LumenAPI api) {

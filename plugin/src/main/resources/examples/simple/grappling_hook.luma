@@ -1,0 +1,60 @@
+# Grappling Hook
+# Turn any fishing rod into a grappling hook!
+# Cast your rod, and when you reel it in, you get launched toward the hook.
+# Give yourself a custom grappling hook item with /grapplinghook.
+#
+# Commands:
+#   /grapplinghook          Give yourself a grappling hook
+#   /grapple speed <value>  Set your grapple launch speed (default 2)
+
+config:
+    prefix: &6[Grapple]&r
+    default_speed: 2
+
+global stored var grapple_speed for ref type player default 2
+
+command grapplinghook:
+    permission "lumen.grapple"
+    description "Gives you a grappling hook fishing rod"
+    aliases grapple, ghook
+
+    if args size >= 1:
+        var sub = get args at index 0
+        if sub is "speed":
+            if args size < 2:
+                message player "{prefix} &cUsage: /grapple speed <number>"
+            else:
+                var spd = get args at index 1
+                set grapple_speed to spd
+                message player "{prefix} &aGrapple speed set to &f{spd}!"
+    else:
+        var rod = new item fishing_rod
+        set rod's display name to "&6&lGrappling Hook"
+        set rod's lore to "&7Cast and reel to launch yourself!|&eRight click to use"
+        set pdc "grapple" of rod to "true"
+        make rod unbreakable
+        give player rod
+        message player "{prefix} &aGrappling Hook received!"
+        message player "&7Cast the rod, then reel in to grapple!"
+        message player "&7Use /grapple speed <number> to adjust launch power."
+
+on fish:
+    if player is holding fishing_rod:
+        if state is "FISHING":
+            send actionbar "&7Hook cast..." to player
+
+        else if state is "BITE":
+            send actionbar "&eSomething is nibbling!" to player
+
+        else if state is "CAUGHT_FISH":
+            send actionbar "&aCaught a fish!" to player
+
+        else if state is "CAUGHT_ENTITY":
+            send actionbar "&bCaught an entity!" to player
+
+        else:
+            var hook_loc = get hook's location
+            var spd = grapple_speed
+            launch player toward hook_loc with speed spd
+            play sound "entity_fishing_bobber_retrieve" to player
+            send actionbar "&6&lGrapple!" to player

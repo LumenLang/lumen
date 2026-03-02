@@ -7,6 +7,7 @@ import net.vansencool.lumen.api.annotations.Registration;
 import net.vansencool.lumen.api.type.JavaTypes;
 import net.vansencool.lumen.api.type.RefTypes;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.BlockBreakEvent;
@@ -16,10 +17,14 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.entity.ProjectileHitEvent;
+import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.event.player.PlayerFishEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -392,6 +397,85 @@ public final class DefaultEvents {
                                 }""")
                 .withMeta("nullable", true)
                 .addVar("title", "String", "event.getView().getTitle()")
+                .build());
+
+        api.events().register(api.events().builder("chat").by("Lumen")
+                .className(AsyncPlayerChatEvent.class.getName())
+                .description("Fires when a player sends a chat message. Runs asynchronously, so use 'after 1 ticks:' to schedule world-modifying actions on the main thread.")
+                .example("on chat:")
+                .since("1.0.0")
+                .category("Player")
+                .addVar("player", RefTypes.PLAYER, "event.getPlayer()")
+                .addVar("text", "String", "event.getMessage()")
+                .build());
+
+        api.events().register(api.events().builder("fish").by("Lumen")
+                .className(PlayerFishEvent.class.getName())
+                .description("Fires when a player uses a fishing rod. The 'state' variable contains the fishing state as a string: FISHING, CAUGHT_FISH, CAUGHT_ENTITY, IN_GROUND, FAILED_ATTEMPT, REEL_IN, BITE, or LURED.")
+                .example("on fish:")
+                .since("1.0.0")
+                .category("Player")
+                .addVar("player", RefTypes.PLAYER, "event.getPlayer()")
+                .addVar("entity", RefTypes.ENTITY, Entity.class.getName(),
+                        """
+                                if (event.getCaught() != null) {
+                                    entity = event.getCaught();
+                                } else {
+                                    entity = null;
+                                }""")
+                .withMeta("nullable", true)
+                .addVar("hook", RefTypes.ENTITY, "event.getHook()")
+                .addVar("state", "String", "event.getState().name()")
+                .build());
+
+        api.events().register(api.events().builder("projectile_launch").by("Lumen")
+                .className(ProjectileLaunchEvent.class.getName())
+                .description("Fires when a projectile is launched (arrows, snowballs, eggs, etc.).")
+                .example("on projectile_launch:")
+                .since("1.0.0")
+                .category("Entity")
+                .addVar("entity", RefTypes.ENTITY, "event.getEntity()")
+                .addVar("shooter", RefTypes.PLAYER, Player.class.getName(),
+                        """
+                                if (event.getEntity().getShooter() instanceof Player __sp) {
+                                    shooter = __sp;
+                                } else {
+                                    shooter = null;
+                                }""")
+                .withMeta("nullable", true)
+                .build());
+
+        api.events().register(api.events().builder("projectile_hit").by("Lumen")
+                .className(ProjectileHitEvent.class.getName())
+                .description("Fires when a projectile hits a block or entity.")
+                .example("on projectile_hit:")
+                .since("1.0.0")
+                .category("Entity")
+                .addVar("entity", RefTypes.ENTITY, "event.getEntity()")
+                .addVar("shooter", RefTypes.PLAYER, Player.class.getName(),
+                        """
+                                if (event.getEntity().getShooter() instanceof Player __sp) {
+                                    shooter = __sp;
+                                } else {
+                                    shooter = null;
+                                }""")
+                .withMeta("nullable", true)
+                .addVar("hit_entity", RefTypes.ENTITY, Entity.class.getName(),
+                        """
+                                if (event.getHitEntity() != null) {
+                                    hit_entity = event.getHitEntity();
+                                } else {
+                                    hit_entity = null;
+                                }""")
+                .withMeta("nullable", true)
+                .addVar("hit_block", RefTypes.BLOCK, Block.class.getName(),
+                        """
+                                if (event.getHitBlock() != null) {
+                                    hit_block = event.getHitBlock();
+                                } else {
+                                    hit_block = null;
+                                }""")
+                .withMeta("nullable", true)
                 .build());
     }
 }

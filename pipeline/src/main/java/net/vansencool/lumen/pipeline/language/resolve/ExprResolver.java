@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Resolves token lists into Java expressions by trying, in order:
@@ -30,7 +31,7 @@ public final class ExprResolver {
     }
 
     /**
-     * Resolves a list of tokens into a Java expression.
+     * Resolves a list of tokens into a Java expression string.
      *
      * @param tokens the tokens to resolve
      * @param ctx    the code generation context
@@ -38,6 +39,23 @@ public final class ExprResolver {
      * @return the generated Java source expression, or null if not resolvable
      */
     public static @Nullable String resolve(
+            @NotNull List<Token> tokens,
+            @NotNull CodegenContext ctx,
+            @NotNull TypeEnv env) {
+        ExpressionResult result = resolveRecursive(tokens, ctx, env, 0);
+        return result != null ? result.java() : null;
+    }
+
+    /**
+     * Resolves a list of tokens into a full {@link ExpressionResult},
+     * preserving the result type and metadata.
+     *
+     * @param tokens the tokens to resolve
+     * @param ctx    the code generation context
+     * @param env    the type environment
+     * @return the full expression result with type info, or null if not resolvable
+     */
+    public static @Nullable ExpressionResult resolveWithType(
             @NotNull List<Token> tokens,
             @NotNull CodegenContext ctx,
             @NotNull TypeEnv env) {
@@ -69,9 +87,9 @@ public final class ExprResolver {
      * @param ctx    the code generation context
      * @param env    the type environment
      * @param depth  the current recursion depth (capped at {@link #MAX_RESOLVE_DEPTH})
-     * @return the generated Java source expression, or null if not resolvable
+     * @return the full expression result, or null if not resolvable
      */
-    private static @Nullable String resolveRecursive(
+    private static @Nullable ExpressionResult resolveRecursive(
             @NotNull List<Token> tokens,
             @NotNull CodegenContext ctx,
             @NotNull TypeEnv env,
@@ -99,13 +117,12 @@ public final class ExprResolver {
             try {
                 BlockContext block = env.blockContext();
                 BindingContext bc = new BindingContext(match.match(), env, ctx, block);
-                ExpressionResult result = match.reg().handler().handle(bc);
-                return result.java();
+                return match.reg().handler().handle(bc);
             } catch (RuntimeException ignored) {
             }
         }
 
-        String nested = tryNestedSubExpressions(tokens, ctx, env, reg, depth);
+        ExpressionResult nested = tryNestedSubExpressions(tokens, ctx, env, reg, depth);
         if (nested != null) return nested;
 
         return tryMathSplit(tokens, ctx, env, depth);
@@ -121,9 +138,9 @@ public final class ExprResolver {
      * @param env    the type environment
      * @param reg    the pattern registry
      * @param depth  the current recursion depth
-     * @return the resolved Java expression, or null
+     * @return the resolved expression result, or null
      */
-    private static @Nullable String tryNestedSubExpressions(
+    private static @Nullable ExpressionResult tryNestedSubExpressions(
             @NotNull List<Token> tokens,
             @NotNull CodegenContext ctx,
             @NotNull TypeEnv env,
@@ -162,7 +179,7 @@ public final class ExprResolver {
                             sub.get(0).line(), sub.get(0).start(), sub.get(0).end()));
                     newTokens.addAll(tokens.subList(end, tokens.size()));
 
-                    String resolved = resolveRecursive(newTokens, ctx, env, depth + 1);
+                    ExpressionResult resolved = resolveRecursive(newTokens, ctx, env, depth + 1);
                     if (resolved != null) return resolved;
                 } finally {
                     env.leaveBlock();
@@ -183,7 +200,7 @@ public final class ExprResolver {
      * @param depth  the current recursion depth
      * @return the compiled Java math expression, or null if not resolvable
      */
-    private static @Nullable String tryMathSplit(
+    private static @Nullable ExpressionResult tryMathSplit(
             @NotNull List<Token> tokens,
             @NotNull CodegenContext ctx,
             @NotNull TypeEnv env,
@@ -220,7 +237,7 @@ public final class ExprResolver {
             if (resolved == null) return null;
             sb.append(resolved);
         }
-        return sb.toString();
+        return new ExpressionResult(sb.toString(), null, Map.of());
     }
 
     /**
@@ -254,12 +271,13 @@ public final class ExprResolver {
                 && tokens.get(tokens.size() - 1).kind() == TokenKind.SYMBOL
                 && tokens.get(tokens.size() - 1).text().equals(")")) {
             List<Token> inner = tokens.subList(1, tokens.size() - 1);
-            String innerResolved = resolveRecursive(inner, ctx, env, depth + 1);
-            if (innerResolved != null) return "(" + innerResolved + ")";
+            ExpressionResult innerResolved = resolveRecursive(inner, ctx, env, depth + 1);
+            if (innerResolved != null) return "(" + innerResolved.java() + ")";
             return null;
         }
 
-        return resolveRecursive(tokens, ctx, env, depth + 1);
+        ExpressionResult result = resolveRecursive(tokens, ctx, env, depth + 1);
+        return result != null ? result.java() : null;
     }
 
     private static boolean isArithmeticOp(@NotNull String s) {
