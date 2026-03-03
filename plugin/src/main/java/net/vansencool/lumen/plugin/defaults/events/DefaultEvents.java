@@ -4,8 +4,12 @@ import net.vansencool.lumen.api.LumenAPI;
 import net.vansencool.lumen.api.annotations.Call;
 import net.vansencool.lumen.api.annotations.Description;
 import net.vansencool.lumen.api.annotations.Registration;
+import net.vansencool.lumen.api.codegen.BindingAccess;
+import net.vansencool.lumen.api.codegen.JavaOutput;
+import net.vansencool.lumen.api.handler.BlockHandler;
 import net.vansencool.lumen.api.type.JavaTypes;
 import net.vansencool.lumen.api.type.RefTypes;
+import net.vansencool.lumen.plugin.Lumen;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
@@ -399,10 +403,40 @@ public final class DefaultEvents {
                 .addVar("title", "String", "event.getView().getTitle()")
                 .build());
 
-        api.events().register(api.events().builder("chat").by("Lumen")
-                .className(AsyncPlayerChatEvent.class.getName())
-                .description("Fires when a player sends a chat message. Runs asynchronously, so use 'after 1 ticks:' to schedule world-modifying actions on the main thread.")
+        api.events().advanced(b -> b
+                .name("chat")
+                .by("Lumen")
+                .description("Fires when a player sends a chat message. The handler body runs on the main server thread, so world-modifying actions are safe. Use 'async_chat' if you need the raw async event.")
                 .example("on chat:")
+                .since("1.0.0")
+                .category("Player")
+                .addImport(AsyncPlayerChatEvent.class.getName())
+                .addImport(Lumen.class.getName())
+                .addVar("player", RefTypes.PLAYER, "player")
+                .addVar("text", "String", "text")
+                .handler(new BlockHandler() {
+                    @Override
+                    public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
+                        out.line("@LumenEvent(AsyncPlayerChatEvent.class)");
+                        out.line("public void __lumen_evt_chat_" + out.lineNum() + "(AsyncPlayerChatEvent event) {");
+                        out.line("final Player __chat_player = event.getPlayer();");
+                        out.line("final String __chat_text = event.getMessage();");
+                        out.line("Bukkit.getScheduler().runTask(Lumen.instance(), () -> {");
+                        out.line("Player player = __chat_player;");
+                        out.line("String text = __chat_text;");
+                    }
+
+                    @Override
+                    public void end(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
+                        out.line("});");
+                        out.line("}");
+                    }
+                }));
+
+        api.events().register(api.events().builder("async_chat").by("Lumen")
+                .className(AsyncPlayerChatEvent.class.getName())
+                .description("Fires when a player sends a chat message. Runs asynchronously on the chat thread. Use 'after 1 ticks:' to schedule world-modifying actions, or prefer 'chat' for main-thread safety.")
+                .example("on async_chat:")
                 .since("1.0.0")
                 .category("Player")
                 .addVar("player", RefTypes.PLAYER, "event.getPlayer()")

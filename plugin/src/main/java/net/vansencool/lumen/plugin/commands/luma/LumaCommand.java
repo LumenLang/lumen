@@ -115,6 +115,8 @@ public final class LumaCommand implements CommandExecutor, TabCompleter {
                             LumenLogger.severe("Reload failed", t);
                             return null;
                         });
+            } catch (IllegalArgumentException e) {
+                LumenText.send(sender, RED + e.getMessage());
             } catch (Throwable t) {
                 LumenText.send(sender, RED + "Reload failed: " + t.getMessage());
                 LumenLogger.severe("Reload failed", t);

@@ -118,6 +118,5 @@ click in "shop":
                 var entry = get shop_items at item_idx
                 var pr = get field "price" of entry
                 var dn = get field "display_name" of entry
-                var give_mat = get field "material" of entry
                 message player "{shop_prefix} You bought {dn} for &a{pr} coins!"
-                give player give_mat 1
+                give player get field "material" of entry 1

@@ -42,4 +42,12 @@ public final class InMemoryFileManager extends ForwardingJavaFileManager<Standar
     ) {
         return new ClassFile(className, classes);
     }
+
+    /**
+     * No-op: the delegated {@link StandardJavaFileManager} is managed externally
+     * (cached per thread) and must not be closed here.
+     */
+    @Override
+    public void close() {
+    }
 }

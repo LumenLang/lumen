@@ -221,7 +221,8 @@ public final class PatternMatcher {
             LumenLogger.debug("PatternMatcher.match", "  consumeCount=" + consumeCount);
 
             if (consumeCount == CONSUME_REJECTED) {
-                return -1;
+                if (validator == null) return -1;
+                LumenLogger.debug("PatternMatcher.match", "  consumeCount rejected but validator present, falling through to inline backtracking");
             }
 
             if (consumeCount >= 0) {
@@ -247,7 +248,7 @@ public final class PatternMatcher {
                     maxEnd = litIdx;
             }
 
-            boolean allowInlineExpr = validator != null && consumeCount >= 0;
+            boolean allowInlineExpr = validator != null;
             for (int end = maxEnd; end > ti; end--) {
                 List<Token> slice = tokens.subList(ti, end);
                 Object value = safeParse(binding, slice, env);

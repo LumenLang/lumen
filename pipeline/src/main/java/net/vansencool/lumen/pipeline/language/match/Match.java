@@ -3,6 +3,7 @@ package net.vansencool.lumen.pipeline.language.match;
 import net.vansencool.lumen.api.codegen.CodegenAccess;
 import net.vansencool.lumen.api.codegen.EnvironmentAccess;
 import net.vansencool.lumen.api.handler.ConditionHandler;
+import net.vansencool.lumen.api.type.RefTypeHandle;
 import net.vansencool.lumen.pipeline.codegen.CodegenContext;
 import net.vansencool.lumen.pipeline.codegen.TypeEnv;
 import net.vansencool.lumen.pipeline.language.exceptions.TokenCarryingException;
@@ -173,7 +174,12 @@ public record Match(
         }
         if (bv.value() instanceof InlineExpr ie) {
             String inlined = ExprResolver.resolve(ie.tokens(), ctx, env);
-            if (inlined != null) return inlined;
+            if (inlined != null) {
+                if (!bv.binding().id().equals("EXPR")) {
+                    return bv.binding().toJava(new InlineVarRef(inlined), ctx, env);
+                }
+                return inlined;
+            }
             throw new TokenCarryingException(
                     "Could not resolve inline expression: '"
                             + ExprResolver.joinTokens(ie.tokens()) + "'",
@@ -214,5 +220,39 @@ public record Match(
             @NotNull CodegenAccess ctx,
             @NotNull EnvironmentAccess env) {
         return javaAt(index, (CodegenContext) ctx, (TypeEnv) env);
+    }
+
+    /**
+     * Synthetic {@link EnvironmentAccess.VarHandle} wrapping a resolved inline expression's
+     * Java code. This allows typed bindings (e.g. MATERIAL, ENTITY_TYPE) to apply their
+     * coercion logic (such as {@code Material.valueOf(...)}) when the slot was filled by
+     * an inline expression rather than a direct variable reference.
+     */
+    private record InlineVarRef(@NotNull String javaExpr) implements EnvironmentAccess.VarHandle {
+
+        @Override
+        public @Nullable RefTypeHandle type() {
+            return null;
+        }
+
+        @Override
+        public @NotNull String java() {
+            return javaExpr;
+        }
+
+        @Override
+        public @Nullable Object meta(@NotNull String key) {
+            return null;
+        }
+
+        @Override
+        public boolean hasMeta(@NotNull String key) {
+            return false;
+        }
+
+        @Override
+        public @NotNull Map<String, Object> metadata() {
+            return Map.of();
+        }
     }
 }

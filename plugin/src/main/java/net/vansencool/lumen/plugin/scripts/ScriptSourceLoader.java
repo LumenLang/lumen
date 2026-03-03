@@ -21,6 +21,9 @@ public final class ScriptSourceLoader {
 
     public static String load(String fileName) {
         Path p = scriptsDir().resolve(fileName);
+        if (!Files.exists(p)) {
+            throw new IllegalArgumentException("Script file " + fileName + " does not exist");
+        }
         try {
             return Files.readString(p);
         } catch (IOException e) {

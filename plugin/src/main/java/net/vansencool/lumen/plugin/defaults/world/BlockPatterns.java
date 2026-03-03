@@ -7,9 +7,8 @@ import net.vansencool.lumen.api.annotations.Registration;
 import net.vansencool.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import net.vansencool.lumen.api.pattern.Categories;
 import net.vansencool.lumen.api.type.RefTypes;
+import net.vansencool.lumen.plugin.util.BlockFillHelper;
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.World;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,6 +24,7 @@ public final class BlockPatterns {
         registerStatements(api);
         registerConditions(api);
         registerExpressions(api);
+        registerExplosions(api);
     }
 
     private void registerStatements(@NotNull LumenAPI api) {
@@ -57,27 +57,9 @@ public final class BlockPatterns {
                 .description("Fills all blocks in a cuboid region between two locations with the given material.")
                 .example("fill from loc1 to loc2 with stone").since("1.0.0").category(Categories.BLOCK)
                 .handler((line, ctx, out) -> {
-                    String a = ctx.java("a");
-                    String b2 = ctx.java("b");
-                    String mat = ctx.java("mat");
-                    ctx.codegen().addImport(Location.class.getName());
-                    ctx.codegen().addImport(World.class.getName());
-                    out.line("{");
-                    out.line("Location __fa = " + a + ";");
-                    out.line("Location __fb = " + b2 + ";");
-                    out.line("int __x1 = Math.min(__fa.getBlockX(), __fb.getBlockX());");
-                    out.line("int __x2 = Math.max(__fa.getBlockX(), __fb.getBlockX());");
-                    out.line("int __y1 = Math.min(__fa.getBlockY(), __fb.getBlockY());");
-                    out.line("int __y2 = Math.max(__fa.getBlockY(), __fb.getBlockY());");
-                    out.line("int __z1 = Math.min(__fa.getBlockZ(), __fb.getBlockZ());");
-                    out.line("int __z2 = Math.max(__fa.getBlockZ(), __fb.getBlockZ());");
-                    out.line("World __fw = __fa.getWorld();");
-                    out.line("for (int __fx = __x1; __fx <= __x2; __fx++) {");
-                    out.line("for (int __fy = __y1; __fy <= __y2; __fy++) {");
-                    out.line("for (int __fz = __z1; __fz <= __z2; __fz++) {");
-                    out.line("__fw.getBlockAt(__fx, __fy, __fz).setType(" + mat + ");");
-                    out.line("}}}");
-                    out.line("}");
+                    ctx.codegen().addImport(BlockFillHelper.class.getName());
+                    out.line("BlockFillHelper.fill(" + ctx.java("a") + ", " + ctx.java("b")
+                            + ", " + ctx.java("mat") + ");");
                 }));
     }
 
@@ -186,5 +168,28 @@ public final class BlockPatterns {
                 .handler(ctx -> new ExpressionResult(
                         ctx.java("b") + ".getBlockData().getAsString()",
                         null)));
+    }
+
+    private void registerExplosions(@NotNull LumenAPI api) {
+        api.patterns().statement(b -> b
+                .by("Lumen")
+                .pattern("create explosion at %loc:LOCATION%")
+                .description("Creates an explosion with default power (4.0) at the given location.")
+                .example("create explosion at player's location")
+                .since("1.0.0")
+                .category(Categories.WORLD)
+                .handler((line, ctx, out) ->
+                        out.line(ctx.java("loc") + ".getWorld().createExplosion(" + ctx.java("loc") + ", 4.0F);")));
+
+        api.patterns().statement(b -> b
+                .by("Lumen")
+                .pattern("create explosion at %loc:LOCATION% with (power|radius|strength) %power:NUMBER%")
+                .description("Creates an explosion with a specified power at the given location.")
+                .example("create explosion at player's location with power 5")
+                .since("1.0.0")
+                .category(Categories.WORLD)
+                .handler((line, ctx, out) ->
+                        out.line(ctx.java("loc") + ".getWorld().createExplosion(" + ctx.java("loc")
+                                + ", (float) " + ctx.java("power") + ");")));
     }
 }

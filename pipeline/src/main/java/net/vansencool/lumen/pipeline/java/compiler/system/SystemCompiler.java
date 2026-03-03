@@ -23,6 +23,14 @@ public final class SystemCompiler {
     private static volatile JavaCompiler cachedCompiler;
     private static volatile boolean reduceClasspath;
 
+    private static final ThreadLocal<StandardJavaFileManager> THREAD_FM = ThreadLocal.withInitial(() -> {
+        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+        if (compiler == null) {
+            throw new RuntimeException("No system Java compiler available");
+        }
+        return compiler.getStandardFileManager(null, null, null);
+    });
+
     private static final Set<String> EXCLUDED_PACKAGES = Set.of(
             "/io/netty/",
             "/com/velocitypowered/",
@@ -75,8 +83,7 @@ public final class SystemCompiler {
      */
     public static @NotNull InMemoryFileManager compileAll(@NotNull ClassLoader parent, @NotNull List<SourceFile> files) {
         JavaCompiler compiler = compiler();
-        StandardJavaFileManager standardFm = compiler.getStandardFileManager(null, null, null);
-        InMemoryFileManager fm = new InMemoryFileManager(standardFm);
+        InMemoryFileManager fm = new InMemoryFileManager(THREAD_FM.get());
 
         List<String> options = List.of(
                 "-g",
@@ -84,15 +91,7 @@ public final class SystemCompiler {
         );
 
         DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
-        Boolean ok;
-        try {
-            ok = compiler.getTask(null, fm, diagnostics, options, null, files).call();
-        } finally {
-            try {
-                fm.close();
-            } catch (Exception ignored) {
-            }
-        }
+        Boolean ok = compiler.getTask(null, fm, diagnostics, options, null, files).call();
 
         if (ok == null || !ok) {
             List<CompilationFailedException.CompileError> errors = new ArrayList<>();

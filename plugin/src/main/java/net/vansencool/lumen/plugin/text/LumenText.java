@@ -40,13 +40,6 @@ public final class LumenText {
     /**
      * Sends a colorized message to a {@link CommandSender}.
      *
-     * <p>Processing order:
-     * <ol>
-     *   <li>If legacy colors enabled, translate {@code &x} codes to MiniColorize tags</li>
-     *   <li>Parse and serialize through MiniColorize</li>
-     *   <li>Send as {@link BaseComponent} array via Spigot API</li>
-     * </ol>
-     *
      * @param sender the recipient
      * @param text   the raw text, potentially containing color codes or MiniColorize tags
      */
@@ -98,10 +91,6 @@ public final class LumenText {
     /**
      * Sends a title and optional subtitle to a player.
      *
-     * <p>Text is processed through MiniColorize and converted to legacy strings
-     * for Bukkit's title API. The fade-in, stay, and fade-out durations are
-     * measured in ticks (20 ticks = 1 second).
-     *
      * @param player   the player to display the title to
      * @param title    the main title text
      * @param subtitle the subtitle text, or null for no subtitle
@@ -124,9 +113,6 @@ public final class LumenText {
 
     /**
      * Sends an action bar message to a player.
-     *
-     * <p>Text is processed through MiniColorize and sent as a
-     * {@link BaseComponent} array via the Spigot action bar API.
      *
      * @param player the player to display the action bar to
      * @param text   the action bar text

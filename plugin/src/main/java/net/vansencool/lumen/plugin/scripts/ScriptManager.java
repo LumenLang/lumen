@@ -539,6 +539,7 @@ public final class ScriptManager {
             return individualFallback(generated);
         } catch (Exception e) {
             LumenLogger.severe("Batch compilation failed (" + e.getMessage() + "), falling back to individual compilation...");
+            LumenLogger.severe("-------------------------------");
             return individualFallback(generated);
         }
 
@@ -571,10 +572,6 @@ public final class ScriptManager {
                 "Compiled " + generated.size() + " scripts in " +
                         String.format("%.6f", compileTotal / 1_000_000.0) +
                         " ms | compile(avg)=" + String.format("%.6f", compileAvgMs) + " ms");
-        try {
-            fm.close();
-        } catch (Throwable ignored) {
-        }
 
         return result;
     }
