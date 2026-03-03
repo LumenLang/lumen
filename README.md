@@ -65,7 +65,7 @@ The core system is stable, but there are still edge cases where a script may fai
 
 If you encounter compilation failures, incorrect behavior, patterns not working as expected, or any unexpected issues, please report them through the issue tracker. Even if the script can be manually fixed, those cases are still valuable to report.
 
-Beta feedback is focused on improving parser accuracy, error handling, and overall reliability.
+We also appreciate any feedback on the syntax, features, or anything else related to the project. The goal is to make Lumen as user-friendly and powerful as possible, and your input is crucial in achieving that.
 
 ---
 
