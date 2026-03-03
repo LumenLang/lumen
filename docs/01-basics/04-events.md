@@ -69,37 +69,9 @@ on interact:
 
 Actions: `RIGHT_CLICK_AIR`, `RIGHT_CLICK_BLOCK`, `LEFT_CLICK_AIR`, `LEFT_CLICK_BLOCK`.
 
-### Move
-
-```luma
-on move:
-    var px = to x
-    var py = to y
-    var pz = to z
-```
-
 :::alert info
-This event fires very frequently. Avoid doing heavy work inside it.
+All of the events, including their variables, can be found at the [reference documentation](https://lumenlang.dev/events).
 :::
-
-### Entity Interact
-
-```luma
-on entity_interact:
-    if entity is a player:
-        var target_name = get entity's name
-        message player "&7You interacted with {target_name}!"
-```
-
-### Fish
-
-```luma
-on fish:
-    if state is "CAUGHT_FISH":
-        message player "&aNice catch!"
-```
-
-States include `FISHING`, `BITE`, `CAUGHT_FISH`, `CAUGHT_ENTITY`, and others.
 
 ## Cancelling Events
 
@@ -110,26 +82,4 @@ on interact:
     if action is "LEFT_CLICK_BLOCK":
         cancel event
         message player "&cBlocked!"
-```
-
-## Mixing Events and Commands
-
-A single script can have any number of events and commands. They all work independently and share the same global variables.
-
-```luma
-global stored var tag for ref type player default "none"
-
-command tag:
-    description "Set your chat tag"
-
-    if args size < 1:
-        message player "&7Use /tag <name> to set a tag."
-    else:
-        var name = get args at index 0
-        set tag to name
-        message player "&eTag set to [{name}]"
-
-on join:
-    if tag is not "none":
-        broadcast "&7[{tag}] &e{player_name} &7joined!"
 ```

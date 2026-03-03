@@ -113,15 +113,6 @@ if px >= ax1 and px <= ax2 and py >= ay1 and py <= ay2:
     message player "&eYou are inside the zone!"
 ```
 
-### Negation
-
-You can negate conditions with `not`:
-
-```luma
-if currencies does not contain "gold":
-    message player "&7Gold is not registered."
-```
-
 ## Control Flow
 
 ### If / Else If / Else
@@ -135,29 +126,4 @@ else if streak >= 5:
     broadcast "&e{player_name} is on a 5+ kill streak!"
 else:
     message player "&7Keep going."
-```
-
-### Repeat
-
-Run a block of code a fixed number of times:
-
-```luma
-repeat 5 times:
-    message player "&ePing!"
-```
-
-### Loop
-
-Iterate over all items in a list:
-
-```luma
-loop item in todos:
-    message player "&e- {item}"
-```
-
-You can also loop with key-value pairs over a map:
-
-```luma
-loop key val in stats:
-    message player "&f{key}: &e{val}"
 ```

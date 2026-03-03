@@ -62,18 +62,3 @@ load:
 ```
 
 There is also a `preload` block that runs even earlier in the loading process, before events and commands are fully registered. Most scripts will not need `preload`.
-
-## File Structure
-
-A typical script file can contain any combination of these top-level elements:
-
-- `config:` block for settings
-- `global var` or `global stored var` declarations
-- `data` type definitions
-- `command` blocks
-- `on <event>:` blocks
-- `every` / `wait` / `after` / `in` schedule blocks
-- `load:` and `preload:` lifecycle blocks
-- `import` / `use` statements
-
-They can appear in any order.

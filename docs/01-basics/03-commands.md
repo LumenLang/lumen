@@ -4,10 +4,6 @@ description: "How to create custom commands with arguments, permissions, aliases
 
 # Commands
 
-:::alert note
-Make sure you understand blocks and indentation from the Scripts page before reading this.
-:::
-
 Commands let you define custom slash commands that players can use in game.
 
 ## Defining a Command

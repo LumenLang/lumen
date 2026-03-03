@@ -1,5 +1,6 @@
 ---
 description: "Rich text formatting with tags for colors, gradients, rainbows, click events, hover tooltips, and more."
+tags: "formatting"
 ---
 
 # MiniColorize

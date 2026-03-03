@@ -129,5 +129,5 @@ var part = substring of text from 0 to 5
 Replace occurrences of one string with another:
 
 ```luma
-var result = text replaced "world" with "everyone"
+var result = "hello world" replaced "world" with "everyone" # Result: "hello everyone"
 ```

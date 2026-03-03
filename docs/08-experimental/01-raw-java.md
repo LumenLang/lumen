@@ -22,9 +22,7 @@ language:
 ```
 
 :::alert warning
-Only enable this if you fully trust the scripts running on your server. Raw Java can do anything that normal Java code can do.
-
-Always review scripts containing raw Java before running them. A `java:` block has the same power as a compiled plugin.
+Always review scripts containing raw Java before running them. A `java:` block has the same power as a plugin.
 :::
 
 ## Writing a Raw Java Block

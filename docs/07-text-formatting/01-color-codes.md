@@ -1,5 +1,6 @@
 ---
 description: "The & color code format for colors and text styling."
+tags: "formatting"
 ---
 
 # Color Codes

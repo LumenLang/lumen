@@ -127,8 +127,8 @@ loop entry in arenas:
 
 Lists can hold custom data types. When defining a list for a specific type, use `new list of <type>`:
 
-:::alert info
-In most cases you do not need to specify the type. Lumen figures it out automatically from the values you add, but it is usually recommended to do it.
+:::alert warning
+Typed lists are usually recommended over untyped lists for safety, support for untyped lists may be removed in the future.
 :::
 
 ```luma
