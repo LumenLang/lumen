@@ -190,6 +190,9 @@ public final class Lumen extends JavaPlugin {
     }
 
     private void platformCheck() {
+        if (ServerPlatform.isFolia()) {
+            this.getLogger().warning("Folia detected. Folia is currently not officially supported, features such as entity, schedules, and additional issues may occur. Use at your own risk.");
+        }
         if (!ServerPlatform.isPaper() && LumenConfiguration.FEATURES.PAPER_ONLY_FEATURES) {
             this.getLogger().warning(
                     "Paper-only features are enabled in the configuration, but you're not running Paper. To prevent issues, we are automatically setting the 'paper-only-features' config option to false.");

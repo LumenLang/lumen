@@ -4,23 +4,26 @@ import org.bukkit.Bukkit;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Utility class for detecting the server platform (Paper, Spigot, or CraftBukkit) at runtime.
+ * Utility class for detecting the server platform (Folia, Paper, Spigot, or CraftBukkit) at runtime.
  */
 @SuppressWarnings("unused")
 public final class ServerPlatform {
 
+    private static final boolean FOLIA;
     private static final boolean PAPER;
     private static final boolean SPIGOT;
     private static final boolean CRAFTBUKKIT;
 
     static {
+        boolean folia = hasClass("io.papermc.paper.threadedregions.RegionizedServer");
         boolean paper = hasClass("com.destroystokyo.paper.PaperConfig") || hasClass("io.papermc.paper.configuration.Configuration");
 
         boolean spigot = !paper && hasClass("org.spigotmc.SpigotConfig");
 
-        PAPER = paper;
+        FOLIA = folia;
+        PAPER = folia || paper;
         SPIGOT = spigot;
-        CRAFTBUKKIT = !paper && !spigot;
+        CRAFTBUKKIT = !folia && !paper && !spigot;
     }
 
     private static boolean hasClass(@NotNull String name) {
@@ -30,6 +33,15 @@ public final class ServerPlatform {
         } catch (Throwable ignored) {
             return false;
         }
+    }
+
+    /**
+     * Checks if the server is running Folia, or a fork of Folia that includes the RegionizedServer class.
+     *
+     * @return true if Folia is detected, false otherwise
+     */
+    public static boolean isFolia() {
+        return FOLIA;
     }
 
     /**
