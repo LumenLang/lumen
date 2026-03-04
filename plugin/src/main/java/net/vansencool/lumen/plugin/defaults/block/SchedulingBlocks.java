@@ -2,7 +2,6 @@ package net.vansencool.lumen.plugin.defaults.block;
 
 import net.vansencool.lumen.api.LumenAPI;
 import net.vansencool.lumen.api.annotations.Call;
-import net.vansencool.lumen.api.annotations.Description;
 import net.vansencool.lumen.api.annotations.Registration;
 import net.vansencool.lumen.api.codegen.BindingAccess;
 import net.vansencool.lumen.api.codegen.JavaOutput;
@@ -24,7 +23,6 @@ import static net.vansencool.lumen.api.pattern.LumaExample.top;
  * via the {@code cancel} statement, which stops the schedule immediately.
  */
 @Registration
-@Description("Registers scheduling blocks: every, main thread, async, after (in)")
 @SuppressWarnings({"unused", "DataFlowIssue"})
 public class SchedulingBlocks {
 

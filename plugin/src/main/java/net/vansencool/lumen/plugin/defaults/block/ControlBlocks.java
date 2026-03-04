@@ -2,7 +2,6 @@ package net.vansencool.lumen.plugin.defaults.block;
 
 import net.vansencool.lumen.api.LumenAPI;
 import net.vansencool.lumen.api.annotations.Call;
-import net.vansencool.lumen.api.annotations.Description;
 import net.vansencool.lumen.api.annotations.Registration;
 import net.vansencool.lumen.api.codegen.BindingAccess;
 import net.vansencool.lumen.api.codegen.JavaOutput;
@@ -19,7 +18,6 @@ import static net.vansencool.lumen.api.pattern.LumaExample.top;
  * Registers control flow block handlers.
  */
 @Registration
-@Description("Registers control flow blocks: if, else if, else, repeat, wait, loop")
 @SuppressWarnings("unused")
 public final class ControlBlocks {
 

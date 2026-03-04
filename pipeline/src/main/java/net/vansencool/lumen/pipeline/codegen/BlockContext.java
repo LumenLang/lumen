@@ -153,8 +153,31 @@ public final class BlockContext implements BlockAccess {
      *
      * @return {@code true} if there is a next sibling
      */
+    @Override
     public boolean hasNext() {
         return index + 1 < siblings.size();
+    }
+
+    /**
+     * Returns {@code true} if this is the last node among its siblings.
+     *
+     * @return {@code true} if there is no following sibling
+     */
+    @Override
+    public boolean isLast() {
+        return index + 1 >= siblings.size();
+    }
+
+    @Override
+    public int nextLine() {
+        Node n = next();
+        return n != null ? n.line() : -1;
+    }
+
+    @Override
+    public @NotNull String nextRaw() {
+        Node n = next();
+        return n != null ? n.raw() : "";
     }
 
     /**

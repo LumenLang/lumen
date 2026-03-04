@@ -1,6 +1,7 @@
 package net.vansencool.lumen.api;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Entry point for a Lumen addon.
@@ -23,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
  * <h2>Lifecycle</h2>
  * <ol>
  *   <li>Lumen discovers (jar-based) or receives (plugin-based) the addon.</li>
+ *   <li>{@link #onLoad()} is called immediately after the addon is registered, before any API setup.</li>
  *   <li>{@link #onEnable(LumenAPI)} is called with a fully populated {@link LumenAPI} handle.</li>
  *   <li>The addon registers its patterns, conditions, events, etc.</li>
  *   <li>Scripts are loaded; definitions contributed by the addon are available to all scripts.</li>
@@ -33,14 +35,21 @@ import org.jetbrains.annotations.NotNull;
  * <pre>{@code
  * public class MyAddon implements LumenAddon {
  *
- *     public @NotNull String name()        { return "MyAddon"; }
- *     public @NotNull String description() { return "Adds cool stuff"; }
- *     public @NotNull String version()     { return "1.0.0"; }
+ *     public @NotNull String name() {
+ *         return "MyAddon";
+ *     }
+ *
+ *     public @NotNull String description() {
+ *         return "Adds cool stuff";
+ *     }
+ *
+ *     public @NotNull String version() {
+ *         return "1.0.0";
+ *     }
  *
  *     public void onEnable(LumenAPI api) {
  *         api.patterns().statement("explode %who:PLAYER%", (line, ctx, out) ->
- *             out.line(ctx.java("who") + ".getWorld().createExplosion(" +
- *                      ctx.java("who") + ".getLocation(), 4F);")
+ *             out.line(ctx.java("who") + ".getWorld().createExplosion(" + ctx.java("who") + ".getLocation(), 4F);")
  *         );
  *     }
  * }
@@ -72,6 +81,17 @@ public interface LumenAddon {
     @NotNull String version();
 
     /**
+     * Called right after this addon is discovered or registered, before {@link #onEnable(LumenAPI)}.
+     *
+     * <p>Use this to perform early initialization that must happen before the API is fully
+     * populated, such as setting up internal state that other hooks depend on.
+     *
+     * <p>The default implementation does nothing.
+     */
+    default void onLoad() {
+    }
+
+    /**
      * Called when Lumen enables this addon.
      *
      * <p>Use the supplied {@link LumenAPI} handle to register patterns, conditions,
@@ -88,5 +108,48 @@ public interface LumenAddon {
      * implementation does nothing.
      */
     default void onDisable() {
+    }
+
+    /**
+     * Returns a {@link DisableSetting} describing why this addon requires {@code paper-only-features}
+     * to be disabled, or {@code null} to leave the setting unchanged.
+     *
+     * <p>When non-null, Lumen logs the addon name, version, and reason, then disables the
+     * {@code paper-only-features} configuration option before platform checks run.
+     * If {@link DisableSetting#permanent()} is {@code true}, the change is written to disk.
+     *
+     * @return the disable setting, or {@code null}
+     */
+    default @Nullable DisableSetting disablePaperOnlyFeatures() {
+        return null;
+    }
+
+    /**
+     * Returns a {@link DisableSetting} describing why this addon requires {@code reduce-classpath}
+     * to be disabled, or {@code null} to leave the setting unchanged.
+     *
+     * <p>When non-null, Lumen logs the addon name, version, and reason, then disables the
+     * {@code reduce-classpath} performance option before the compiler is configured.
+     * If {@link DisableSetting#permanent()} is {@code true}, the change is written to disk.
+     *
+     * @return the disable setting, or {@code null}
+     */
+    default @Nullable DisableSetting disableReduceClasspath() {
+        return null;
+    }
+
+    /**
+     * Returns a {@link DisableSetting} describing why this addon requires
+     * {@code enable-all-scripts-immediately-on-startup} to be disabled, or {@code null} to leave
+     * the setting unchanged.
+     *
+     * <p>When non-null, Lumen logs the addon name, version, and reason, then forces the flag
+     * off before scripts are scheduled.
+     * If {@link DisableSetting#permanent()} is {@code true}, the change is written to disk.
+     *
+     * @return the disable setting, or {@code null}
+     */
+    default @Nullable DisableSetting disableEnableAllScriptsImmediately() {
+        return null;
     }
 }

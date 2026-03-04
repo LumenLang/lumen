@@ -2,7 +2,6 @@ package net.vansencool.lumen.plugin.defaults.type;
 
 import net.vansencool.lumen.api.LumenAPI;
 import net.vansencool.lumen.api.annotations.Call;
-import net.vansencool.lumen.api.annotations.Description;
 import net.vansencool.lumen.api.annotations.Registration;
 import net.vansencool.lumen.api.codegen.CodegenAccess;
 import net.vansencool.lumen.api.codegen.EnvironmentAccess;
@@ -42,7 +41,6 @@ import java.util.Set;
  * Registers all built-in type bindings for the default Lumen language.
  */
 @Registration(order = -1000)
-@Description("Registers all built-in type bindings for the default Lumen language")
 @SuppressWarnings({ "unused", "DataFlowIssue" })
 public final class DefaultTypeBindings {
 

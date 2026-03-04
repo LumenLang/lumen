@@ -2,7 +2,6 @@ package net.vansencool.lumen.plugin.defaults.expression;
 
 import net.vansencool.lumen.api.LumenAPI;
 import net.vansencool.lumen.api.annotations.Call;
-import net.vansencool.lumen.api.annotations.Description;
 import net.vansencool.lumen.api.annotations.Registration;
 import net.vansencool.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import net.vansencool.lumen.api.pattern.Categories;
@@ -23,7 +22,6 @@ import java.util.UUID;
  * Registers built-in expression patterns.
  */
 @Registration
-@Description("Registers expression patterns: get player, get world, get location, player location, player world, offline player lookups")
 @SuppressWarnings("unused")
 public final class DefaultExpressions {
 

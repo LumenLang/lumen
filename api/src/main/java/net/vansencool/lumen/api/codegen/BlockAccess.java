@@ -113,4 +113,37 @@ public interface BlockAccess {
      * @return the value from the nearest matching scope within the depth limit, or {@code null}
      */
     @Nullable <T> T getEnvUpTo(@NotNull String key, int maxDepth);
+
+    /**
+     * Returns {@code true} if this node has a following sibling at the same indentation level.
+     *
+     * <p>Statement handlers can use this to enforce structural constraints, such as
+     * preventing unreachable code after a terminal statement.
+     *
+     * @return {@code true} if there is a next sibling
+     */
+    boolean hasNext();
+
+    /**
+     * Returns {@code true} if this is the last node among its siblings.
+     *
+     * @return {@code true} if there is no following sibling
+     */
+    boolean isLast();
+
+    /**
+     * Returns the source line number of the next sibling node, or {@code -1} if
+     * this is the last sibling.
+     *
+     * @return the 1-based line number of the next sibling, or {@code -1}
+     */
+    int nextLine();
+
+    /**
+     * Returns the raw source text of the next sibling node, or an empty string
+     * if this is the last sibling.
+     *
+     * @return the raw source of the next sibling
+     */
+    @NotNull String nextRaw();
 }

@@ -1,6 +1,7 @@
 package net.vansencool.lumen.api.event;
 
 import net.vansencool.lumen.api.handler.BlockHandler;
+import net.vansencool.lumen.api.pattern.Category;
 import net.vansencool.lumen.api.type.RefTypeHandle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,6 +67,7 @@ public final class AdvancedEventBuilder {
     private final List<String> examples = new ArrayList<>();
     private @Nullable String since;
     private @Nullable String category;
+    private boolean cancellable;
     private boolean deprecated;
     private final List<String> interfaces = new ArrayList<>();
     private final List<String> fields = new ArrayList<>();
@@ -153,6 +155,29 @@ public final class AdvancedEventBuilder {
      */
     public @NotNull AdvancedEventBuilder category(@NotNull String category) {
         this.category = category;
+        return this;
+    }
+
+    /**
+     * Sets the documentation category for this event using a {@link Category} constant.
+     *
+     * @param category the category
+     * @return this builder
+     */
+    public @NotNull AdvancedEventBuilder category(@NotNull Category category) {
+        this.category = category.name();
+        return this;
+    }
+
+    /**
+     * Marks this event as cancellable, meaning the underlying Bukkit event
+     * implements {@code Cancellable} and can be cancelled via {@code cancel event}.
+     *
+     * @param cancellable whether the event is cancellable
+     * @return this builder
+     */
+    public @NotNull AdvancedEventBuilder cancellable(boolean cancellable) {
+        this.cancellable = cancellable;
         return this;
     }
 
@@ -306,7 +331,7 @@ public final class AdvancedEventBuilder {
             throw new IllegalStateException("handler must be set before building");
         }
         return new AdvancedEventDefinition(
-                name, by, description, List.copyOf(examples), since, category, deprecated,
+                name, by, description, List.copyOf(examples), since, category, cancellable, deprecated,
                 List.copyOf(interfaces), List.copyOf(fields), List.copyOf(imports),
                 new LinkedHashMap<>(vars), handler);
     }

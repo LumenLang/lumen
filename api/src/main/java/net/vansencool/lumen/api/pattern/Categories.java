@@ -45,6 +45,7 @@ public final class Categories {
     public static final Category BLOCK = createOrGet("Block");
     public static final Category ATTRIBUTE = createOrGet("Attribute");
     public static final Category ITEM = createOrGet("Item");
+    public static final Category DATA = createOrGet("Data");
 
     private Categories() {
     }

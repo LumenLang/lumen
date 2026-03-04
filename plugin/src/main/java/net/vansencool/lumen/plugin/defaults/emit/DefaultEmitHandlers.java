@@ -2,7 +2,6 @@ package net.vansencool.lumen.plugin.defaults.emit;
 
 import net.vansencool.lumen.api.LumenAPI;
 import net.vansencool.lumen.api.annotations.Call;
-import net.vansencool.lumen.api.annotations.Description;
 import net.vansencool.lumen.api.annotations.Registration;
 import net.vansencool.lumen.api.emit.EmitRegistrar;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +17,6 @@ import org.jetbrains.annotations.NotNull;
  * before any pattern or type registrations that might depend on them.
  */
 @Registration(order = -2000)
-@Description("Registers built-in emit handlers: config blocks, data blocks, global vars, stored vars, plain vars, and global var loading")
 @SuppressWarnings("unused")
 public final class DefaultEmitHandlers {
 

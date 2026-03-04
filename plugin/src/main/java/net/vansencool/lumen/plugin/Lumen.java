@@ -3,7 +3,9 @@ package net.vansencool.lumen.plugin;
 import net.vansencool.lsyaml.binding.watcher.ConfigWatcher;
 import net.vansencool.lsyaml.logger.JulLogAdapter;
 import net.vansencool.lsyaml.logger.LSYAMLLogger;
+import net.vansencool.lumen.api.DisableSetting;
 import net.vansencool.lumen.api.LumenAPI;
+import net.vansencool.lumen.api.LumenAddon;
 import net.vansencool.lumen.api.LumenProvider;
 import net.vansencool.lumen.api.scanner.RegistrationScanner;
 import net.vansencool.lumen.api.version.MinecraftVersion;
@@ -92,6 +94,7 @@ public final class Lumen extends JavaPlugin {
         if (lumenApi == null) {
             initApi();
         }
+        applyAddonSettings();
         platformCheck();
         ExampleCopier.copyExamples(ScriptSourceLoader.scriptsDir());
         setupSystemCompiler();
@@ -185,6 +188,38 @@ public final class Lumen extends JavaPlugin {
                 LumenLogger.info("Loaded all scripts in " + durationMs + "ms");
             } catch (Throwable t) {
                 LumenLogger.severe("Failed to load scripts on startup: " + t.getMessage());
+            }
+        }
+    }
+
+    private void applyAddonSettings() {
+        for (LumenAddon addon : addonManager.addons()) {
+            DisableSetting paper = addon.disablePaperOnlyFeatures();
+            if (paper != null) {
+                LumenLogger.info("Addon " + addon.name() + " v" + addon.version() + " is disabling paper-only-features: " + paper.reason());
+                if (paper.permanent()) {
+                    LumenConfiguration.disablePaperOnlyFeatures();
+                } else {
+                    LumenConfiguration.FEATURES.PAPER_ONLY_FEATURES = false;
+                }
+            }
+            DisableSetting cp = addon.disableReduceClasspath();
+            if (cp != null) {
+                LumenLogger.info("Addon " + addon.name() + " v" + addon.version() + " is disabling reduce-classpath: " + cp.reason());
+                if (cp.permanent()) {
+                    LumenConfiguration.disableReduceClasspath();
+                } else {
+                    LumenConfiguration.PERFORMANCE.REDUCE_CLASSPATH = false;
+                }
+            }
+            DisableSetting early = addon.disableEnableAllScriptsImmediately();
+            if (early != null) {
+                LumenLogger.info("Addon " + addon.name() + " v" + addon.version() + " is disabling enable-all-scripts-immediately-on-startup: " + early.reason());
+                if (early.permanent()) {
+                    LumenConfiguration.disableEnableAllScriptsImmediately();
+                } else {
+                    LumenConfiguration.SCRIPTS.ENABLE_ALL_SCRIPTS_IMMEDIATELY_ON_STARTUP = false;
+                }
             }
         }
     }

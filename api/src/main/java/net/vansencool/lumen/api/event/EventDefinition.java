@@ -26,6 +26,7 @@ public final class EventDefinition {
     private final @NotNull List<String> examples;
     private final @Nullable String since;
     private final @Nullable String category;
+    private final boolean cancellable;
     private final boolean deprecated;
 
     EventDefinition(@NotNull String name,
@@ -36,6 +37,7 @@ public final class EventDefinition {
                     @NotNull List<String> examples,
                     @Nullable String since,
                     @Nullable String category,
+                    boolean cancellable,
                     boolean deprecated) {
         this.name = name;
         this.by = by;
@@ -45,6 +47,7 @@ public final class EventDefinition {
         this.examples = List.copyOf(examples);
         this.since = since;
         this.category = category;
+        this.cancellable = cancellable;
         this.deprecated = deprecated;
     }
 
@@ -118,6 +121,18 @@ public final class EventDefinition {
      */
     public @Nullable String category() {
         return category;
+    }
+
+    /**
+     * Returns whether this event is cancellable.
+     *
+     * <p>A cancellable event means the underlying Bukkit event implements
+     * {@code Cancellable} and can be cancelled via the {@code cancel event} statement.
+     *
+     * @return {@code true} if the event is cancellable
+     */
+    public boolean cancellable() {
+        return cancellable;
     }
 
     /**
