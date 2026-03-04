@@ -139,6 +139,18 @@ public final class GenericEntityStatements {
 
         api.patterns().statement(b -> b
                 .by("Lumen")
+                .pattern("launch %e:ENTITY% toward %loc:LOCATION%")
+                .description("Launches an entity toward a location with the speed of 1.")
+                .example("launch player toward hook_loc")
+                .since("1.0.0")
+                .category(Categories.ENTITY)
+                .handler((line, ctx, out) -> {
+                    ctx.codegen().addImport(LaunchHelper.class.getName());
+                    out.line("LaunchHelper.launch(" + ctx.java("e") + ", " + ctx.java("loc") + ", 1);");
+                }));
+
+        api.patterns().statement(b -> b
+                .by("Lumen")
                 .pattern("launch %e:ENTITY% toward %loc:LOCATION% with speed %spd:EXPR%")
                 .description("Launches an entity toward a location with the given speed.")
                 .example("launch player toward hook_loc with speed 2")
