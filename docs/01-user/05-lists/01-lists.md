@@ -98,23 +98,7 @@ clear todos
 
 ## Looping
 
-Iterate over every item:
-
-```luma
-loop item in todos:
-    message player "&e- {item}"
-```
-
-With a counter for numbered output:
-
-```luma
-var i = 1
-loop item in todos:
-    message player "  &e{i}. &f{item}"
-    add 1 to i
-```
-
-You can also remove items during a loop:
+You can loop over a list and remove items during iteration:
 
 ```luma
 loop entry in arenas:
@@ -122,6 +106,8 @@ loop entry in arenas:
     if name is target:
         remove entry from arenas
 ```
+
+For more on looping syntax, including loop sources and maps, see the [Loops](../01-basics/05-loops.md) page.
 
 ## Typed Lists
 

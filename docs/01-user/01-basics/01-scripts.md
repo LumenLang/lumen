@@ -43,13 +43,14 @@ If you want to clean up inconsistent indentation, you can use the formatting too
 
 ## Comments
 
-Lines starting with `#` are comments. The compiler ignores them entirely.
+Lines starting with `#` and `//` are comments. The compiler ignores them entirely.
 
 ```luma
 # This is a comment
 command test:
     # This is also a comment
-    message player "&aHello!"
+    // Another comment style
+    message player "&aHello!" // This is a comment too
 ```
 
 ## Script Lifecycle
