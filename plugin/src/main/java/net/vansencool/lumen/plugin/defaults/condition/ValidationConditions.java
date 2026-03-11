@@ -63,7 +63,7 @@ public final class ValidationConditions {
                 .category(Categories.createOrGet("Validation"))
                 .handler((match, env, ctx) -> {
                     ctx.addImport(EnumValidation.class.getName());
-                    return "EnumValidation.isValidEntityType(String.valueOf(" + match.java("val", ctx, env) + "))"; 
+                    return "EnumValidation.isValidEntityType(String.valueOf(" + match.java("val", ctx, env) + "))";
                 }));
 
         api.patterns().condition(b -> b
@@ -75,7 +75,7 @@ public final class ValidationConditions {
                 .category(Categories.createOrGet("Validation"))
                 .handler((match, env, ctx) -> {
                     ctx.addImport(EnumValidation.class.getName());
-                    return "!EnumValidation.isValidEntityType(String.valueOf(" + match.java("val", ctx, env) + "))"; 
+                    return "!EnumValidation.isValidEntityType(String.valueOf(" + match.java("val", ctx, env) + "))";
                 }));
     }
 
@@ -89,7 +89,7 @@ public final class ValidationConditions {
                 .category(Categories.createOrGet("Validation"))
                 .handler((match, env, ctx) -> {
                     ctx.addImport(EnumValidation.class.getName());
-                    return "EnumValidation.isValidAttribute(String.valueOf(" + match.java("val", ctx, env) + "))"; 
+                    return "EnumValidation.isValidAttribute(String.valueOf(" + match.java("val", ctx, env) + "))";
                 }));
 
         api.patterns().condition(b -> b
@@ -101,7 +101,7 @@ public final class ValidationConditions {
                 .category(Categories.createOrGet("Validation"))
                 .handler((match, env, ctx) -> {
                     ctx.addImport(EnumValidation.class.getName());
-                    return "!EnumValidation.isValidAttribute(String.valueOf(" + match.java("val", ctx, env) + "))"; 
+                    return "!EnumValidation.isValidAttribute(String.valueOf(" + match.java("val", ctx, env) + "))";
                 }));
     }
 }

@@ -28,19 +28,6 @@ public final class BuiltinTypeBindings {
     }
 
     /**
-     * A thin wrapper around a list of tokens that provides a human-readable
-     * {@link #toString()} returning the joined raw text of its tokens.
-     *
-     * @param tokens the original tokens
-     */
-    record TokenList(@NotNull List<Token> tokens) {
-        @Override
-        public @NotNull String toString() {
-            return tokens.stream().map(Token::text).collect(Collectors.joining(" "));
-        }
-    }
-
-    /**
      * Registers the EXPR, STRING, and QSTRING type bindings on the given registry.
      *
      * @param types the type registry to populate
@@ -183,5 +170,18 @@ public final class BuiltinTypeBindings {
                 .replace("\n", "\\n")
                 .replace("\r", "\\r")
                 .replace("\t", "\\t");
+    }
+
+    /**
+     * A thin wrapper around a list of tokens that provides a human-readable
+     * {@link #toString()} returning the joined raw text of its tokens.
+     *
+     * @param tokens the original tokens
+     */
+    record TokenList(@NotNull List<Token> tokens) {
+        @Override
+        public @NotNull String toString() {
+            return tokens.stream().map(Token::text).collect(Collectors.joining(" "));
+        }
     }
 }

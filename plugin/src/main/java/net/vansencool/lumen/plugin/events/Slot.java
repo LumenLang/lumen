@@ -36,6 +36,21 @@ public final class Slot {
         this.event = event;
     }
 
+    private static void logLumenException(LumenRuntimeException lre, Object target) {
+        String scriptClass = target.getClass().getSimpleName();
+        ScriptSourceMap.ScriptLineMapping mapping = lre.scriptLine() > 0
+                ? null
+                : ScriptSourceMap.findFromException(lre);
+        LumenLogger.severe("[Script " + scriptClass + "] " + lre.getMessage());
+        logSourceMapping(mapping);
+    }
+
+    private static void logSourceMapping(@Nullable ScriptSourceMap.ScriptLineMapping mapping) {
+        if (mapping == null) return;
+        LumenLogger.severe("  Script line " + mapping.scriptLine() + ": " + mapping.scriptSource());
+        LumenLogger.severe("  Java line: " + mapping.javaLine());
+    }
+
     /**
      * Registers this slot as a Bukkit event listener so that {@link #dispatch(Event)}
      * is called whenever the event fires.
@@ -115,20 +130,5 @@ public final class Slot {
                 }
             }
         }
-    }
-
-    private static void logLumenException(LumenRuntimeException lre, Object target) {
-        String scriptClass = target.getClass().getSimpleName();
-        ScriptSourceMap.ScriptLineMapping mapping = lre.scriptLine() > 0
-                ? null
-                : ScriptSourceMap.findFromException(lre);
-        LumenLogger.severe("[Script " + scriptClass + "] " + lre.getMessage());
-        logSourceMapping(mapping);
-    }
-
-    private static void logSourceMapping(@Nullable ScriptSourceMap.ScriptLineMapping mapping) {
-        if (mapping == null) return;
-        LumenLogger.severe("  Script line " + mapping.scriptLine() + ": " + mapping.scriptSource());
-        LumenLogger.severe("  Java line: " + mapping.javaLine());
     }
 }

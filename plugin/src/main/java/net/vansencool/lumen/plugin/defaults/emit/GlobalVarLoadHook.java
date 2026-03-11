@@ -25,6 +25,43 @@ import java.util.Map;
 @SuppressWarnings("DataFlowIssue")
 public final class GlobalVarLoadHook implements BlockEnterHook {
 
+    /**
+     * Infers the Java field type from the default value expression.
+     *
+     * <p>Recognizes integer, long, double, boolean, and string literals.
+     * Falls back to {@code Object} for any expression that cannot be trivially classified.
+     *
+     * @param defaultJava the Java default value expression (e.g. {@code "5"}, {@code "\"hello\""})
+     * @return a Java type name suitable for a field declaration
+     */
+    private static @NotNull String inferFieldType(@NotNull String defaultJava) {
+        if (defaultJava.equals("true") || defaultJava.equals("false")) return "boolean";
+        if (defaultJava.startsWith("\"")) return "String";
+        if (defaultJava.endsWith("L") || defaultJava.endsWith("l")) {
+            String num = defaultJava.substring(0, defaultJava.length() - 1);
+            if (isDigits(num)) return "long";
+        }
+        if (defaultJava.contains(".")) {
+            try {
+                Double.parseDouble(defaultJava);
+                return "double";
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        if (isDigits(defaultJava)) return "int";
+        return "Object";
+    }
+
+    private static boolean isDigits(@NotNull String s) {
+        if (s.isEmpty()) return false;
+        int start = s.charAt(0) == '-' ? 1 : 0;
+        if (start >= s.length()) return false;
+        for (int i = start; i < s.length(); i++) {
+            if (!Character.isDigit(s.charAt(i))) return false;
+        }
+        return true;
+    }
+
     @Override
     public void onBlockEnter(@NotNull EmitContext ctx) {
         TypeEnv env = (TypeEnv) ctx.env();
@@ -96,42 +133,5 @@ public final class GlobalVarLoadHook implements BlockEnterHook {
                 env.markStored(name, keyExpr, baseKey, scopeVarName);
             }
         }
-    }
-
-    /**
-     * Infers the Java field type from the default value expression.
-     *
-     * <p>Recognizes integer, long, double, boolean, and string literals.
-     * Falls back to {@code Object} for any expression that cannot be trivially classified.
-     *
-     * @param defaultJava the Java default value expression (e.g. {@code "5"}, {@code "\"hello\""})
-     * @return a Java type name suitable for a field declaration
-     */
-    private static @NotNull String inferFieldType(@NotNull String defaultJava) {
-        if (defaultJava.equals("true") || defaultJava.equals("false")) return "boolean";
-        if (defaultJava.startsWith("\"")) return "String";
-        if (defaultJava.endsWith("L") || defaultJava.endsWith("l")) {
-            String num = defaultJava.substring(0, defaultJava.length() - 1);
-            if (isDigits(num)) return "long";
-        }
-        if (defaultJava.contains(".")) {
-            try {
-                Double.parseDouble(defaultJava);
-                return "double";
-            } catch (NumberFormatException ignored) {
-            }
-        }
-        if (isDigits(defaultJava)) return "int";
-        return "Object";
-    }
-
-    private static boolean isDigits(@NotNull String s) {
-        if (s.isEmpty()) return false;
-        int start = s.charAt(0) == '-' ? 1 : 0;
-        if (start >= s.length()) return false;
-        for (int i = start; i < s.length(); i++) {
-            if (!Character.isDigit(s.charAt(i))) return false;
-        }
-        return true;
     }
 }

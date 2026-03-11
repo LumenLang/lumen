@@ -22,6 +22,16 @@ import org.jetbrains.annotations.NotNull;
 @SuppressWarnings("unused")
 public final class CommandMetaStatements {
 
+    private static @NotNull CommandMeta requireCommandMeta(
+            @NotNull BindingAccess ctx) {
+        CommandMeta cmd = ctx.block().getEnvFromParents("cmd_meta");
+        if (cmd == null) {
+            throw new RuntimeException(
+                    "Command metadata statements used outside a 'command' block");
+        }
+        return cmd;
+    }
+
     @Call
     public void register(@NotNull LumenAPI api) {
         api.patterns().statement(b -> b
@@ -96,15 +106,5 @@ public final class CommandMetaStatements {
                     CommandMeta cmd = requireCommandMeta(ctx);
                     cmd.setPermission(ctx.java("perm"));
                 }));
-    }
-
-    private static @NotNull CommandMeta requireCommandMeta(
-            @NotNull BindingAccess ctx) {
-        CommandMeta cmd = ctx.block().getEnvFromParents("cmd_meta");
-        if (cmd == null) {
-            throw new RuntimeException(
-                    "Command metadata statements used outside a 'command' block");
-        }
-        return cmd;
     }
 }

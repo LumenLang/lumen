@@ -50,6 +50,27 @@ public final class ScriptWatcher {
     private Thread watchThread;
     private WatchService watchService;
 
+    private static void scheduleLoad(@NotNull Path scriptsDir, @NotNull String name) {
+        try {
+            Path file = scriptsDir.resolve(name);
+            if (!Files.isRegularFile(file))
+                return;
+            String source = Files.readString(file);
+            ScriptManager.load(name, source).exceptionally(t -> {
+                Throwable cause = t.getCause() != null ? t.getCause() : t;
+                if (cause instanceof LumenScriptException lse) {
+                    LumenLogger.severe("[Watcher] Script error in " + name + ": " + lse.getMessage());
+                } else {
+                    LumenLogger.severe(
+                            "[Watcher] Failed to load/reload script: " + name + " (" + cause.getMessage() + ")");
+                }
+                return null;
+            });
+        } catch (Throwable t) {
+            LumenLogger.severe("[Watcher] Failed to load/reload script: " + name + " (" + t.getMessage() + ")");
+        }
+    }
+
     /**
      * Starts the file watcher if any of the watch-related config flags are enabled.
      *
@@ -160,27 +181,6 @@ public final class ScriptWatcher {
                 LumenLogger.warning("Script watcher lost access to directory, stopping.");
                 break;
             }
-        }
-    }
-
-    private static void scheduleLoad(@NotNull Path scriptsDir, @NotNull String name) {
-        try {
-            Path file = scriptsDir.resolve(name);
-            if (!Files.isRegularFile(file))
-                return;
-            String source = Files.readString(file);
-            ScriptManager.load(name, source).exceptionally(t -> {
-                Throwable cause = t.getCause() != null ? t.getCause() : t;
-                if (cause instanceof LumenScriptException lse) {
-                    LumenLogger.severe("[Watcher] Script error in " + name + ": " + lse.getMessage());
-                } else {
-                    LumenLogger.severe(
-                            "[Watcher] Failed to load/reload script: " + name + " (" + cause.getMessage() + ")");
-                }
-                return null;
-            });
-        } catch (Throwable t) {
-            LumenLogger.severe("[Watcher] Failed to load/reload script: " + name + " (" + t.getMessage() + ")");
         }
     }
 }

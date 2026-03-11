@@ -38,6 +38,41 @@ import java.util.Map;
 @SuppressWarnings("DataFlowIssue")
 public final class VarStatementForm implements StatementFormHandler {
 
+    /**
+     * Tries to match the given tokens against a registered expression pattern,
+     * returning the full {@link ExpressionResult} (including refType) on success.
+     *
+     * @param tokens the expression tokens to match
+     * @param ctx    the emit context
+     * @param env    the type environment
+     * @return the expression result with refType preserved, or null if no pattern matched
+     */
+    private static @Nullable ExpressionResult tryExpressionPattern(
+            @NotNull List<Token> tokens,
+            @NotNull EmitContextImpl ctx,
+            @NotNull TypeEnv env) {
+        PatternRegistry reg;
+        try {
+            reg = PatternRegistry.instance();
+        } catch (RuntimeException e) {
+            return null;
+        }
+        RegisteredExpressionMatch match = reg.matchExpression(tokens, env);
+        if (match == null) {
+            match = reg.matchExpressionSlow(tokens, env);
+        }
+        if (match == null) {
+            return null;
+        }
+        try {
+            BlockContext block = env.blockContext();
+            BindingContext bc = new BindingContext(match.match(), env, ctx.codegenContext(), block);
+            return match.reg().handler().handle(bc);
+        } catch (RuntimeException e) {
+            return null;
+        }
+    }
+
     @Override
     public boolean tryHandle(@NotNull List<? extends ScriptToken> tokens, @NotNull EmitContext ctx) {
         if (tokens.size() < 4
@@ -64,7 +99,7 @@ public final class VarStatementForm implements StatementFormHandler {
         if (env.blockContext().isRoot()) {
             throw new LumenScriptException(ctx.line(), ctx.raw(),
                     "'var' cannot be used at the top level of a script. "
-                    + "Use 'global var " + name + " default <value>' instead to declare a script-wide variable.",
+                            + "Use 'global var " + name + " default <value>' instead to declare a script-wide variable.",
                     List.of(pipelineTokens.get(0)));
         }
 
@@ -139,40 +174,5 @@ public final class VarStatementForm implements StatementFormHandler {
             env.blockContext().parent().defineVar(name, varRef);
         }
         return true;
-    }
-
-    /**
-     * Tries to match the given tokens against a registered expression pattern,
-     * returning the full {@link ExpressionResult} (including refType) on success.
-     *
-     * @param tokens the expression tokens to match
-     * @param ctx    the emit context
-     * @param env    the type environment
-     * @return the expression result with refType preserved, or null if no pattern matched
-     */
-    private static @Nullable ExpressionResult tryExpressionPattern(
-            @NotNull List<Token> tokens,
-            @NotNull EmitContextImpl ctx,
-            @NotNull TypeEnv env) {
-        PatternRegistry reg;
-        try {
-            reg = PatternRegistry.instance();
-        } catch (RuntimeException e) {
-            return null;
-        }
-        RegisteredExpressionMatch match = reg.matchExpression(tokens, env);
-        if (match == null) {
-            match = reg.matchExpressionSlow(tokens, env);
-        }
-        if (match == null) {
-            return null;
-        }
-        try {
-            BlockContext block = env.blockContext();
-            BindingContext bc = new BindingContext(match.match(), env, ctx.codegenContext(), block);
-            return match.reg().handler().handle(bc);
-        } catch (RuntimeException e) {
-            return null;
-        }
     }
 }

@@ -21,6 +21,13 @@ import org.jetbrains.annotations.NotNull;
 @SuppressWarnings("unused")
 public final class GenericComparisonCondition {
 
+    private static void validateExprIdentifier(@NotNull String java,
+                                               @NotNull EnvironmentAccess env) {
+        if (java.matches("[a-zA-Z_][a-zA-Z0-9_]*") && env.lookupVar(java) == null) {
+            throw new RuntimeException("Variable '" + java + "' does not exist");
+        }
+    }
+
     @Call
     public void register(@NotNull LumenAPI api) {
         api.patterns().condition(b -> b
@@ -42,12 +49,5 @@ public final class GenericComparisonCondition {
                     }
                     return aVal + " " + op + " " + bVal;
                 }));
-    }
-
-    private static void validateExprIdentifier(@NotNull String java,
-            @NotNull EnvironmentAccess env) {
-        if (java.matches("[a-zA-Z_][a-zA-Z0-9_]*") && env.lookupVar(java) == null) {
-            throw new RuntimeException("Variable '" + java + "' does not exist");
-        }
     }
 }

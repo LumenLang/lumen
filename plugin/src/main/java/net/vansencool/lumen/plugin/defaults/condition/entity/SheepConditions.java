@@ -17,13 +17,13 @@ public final class SheepConditions {
     public void register(@NotNull LumenAPI api) {
         EntityHelper.forType(FQCN)
                 .alias("_sh")
-        .conditionPair(
-        "%e:ENTITY% is sheared",
-        "%e:ENTITY% is not sheared",
-        "isSheared()",
-        "Checks if a sheep is sheared.",
-        "Checks if a sheep is not sheared.",
-        "if mob is sheared:",
-        "if mob is not sheared:");
+                .conditionPair(
+                        "%e:ENTITY% is sheared",
+                        "%e:ENTITY% is not sheared",
+                        "isSheared()",
+                        "Checks if a sheep is sheared.",
+                        "Checks if a sheep is not sheared.",
+                        "if mob is sheared:",
+                        "if mob is not sheared:");
     }
 }

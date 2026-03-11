@@ -65,7 +65,7 @@ public final class CompiledClassCache {
      * @param scriptName the file name of the script (e.g. {@code "hello.luma"})
      * @param source     the current source text of the script
      * @return a map of fully-qualified class name → bytecodes, or {@code null} on a
-     *         cache miss
+     * cache miss
      */
     public static @Nullable Map<String, byte[]> load(@NotNull String scriptName, @NotNull String source) {
         Path dir = cacheDir(scriptName);
@@ -148,7 +148,7 @@ public final class CompiledClassCache {
      *                   compiler
      */
     public static void save(@NotNull String scriptName, @NotNull String source,
-            @NotNull Map<String, byte[]> bytecodes) {
+                            @NotNull Map<String, byte[]> bytecodes) {
         Path dir = cacheDir(scriptName);
         if (bytecodes.isEmpty()) {
             LumenLogger.debug("CompiledClassCache", "Not caching " + scriptName + ": bytecodes map is empty");

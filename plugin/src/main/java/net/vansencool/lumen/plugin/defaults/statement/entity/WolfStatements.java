@@ -17,13 +17,13 @@ public final class WolfStatements {
     public void register(@NotNull LumenAPI api) {
         EntityHelper.forType(FQCN)
                 .alias("_wf")
-        .boolSetter("set %e:ENTITY% angry [to] %val:BOOLEAN%",
-        "setAngry",
-        "Sets whether a wolf is angry.",
-        "set mob's angry to true")
-        .typedEnumSetter("set %e:ENTITY% collar color [to] %color:DYE_COLOR%",
-        "setCollarColor", "color",
-        "Sets a wolf's collar color.",
-        "set mob's collar color to red");
+                .boolSetter("set %e:ENTITY% angry [to] %val:BOOLEAN%",
+                        "setAngry",
+                        "Sets whether a wolf is angry.",
+                        "set mob's angry to true")
+                .typedEnumSetter("set %e:ENTITY% collar color [to] %color:DYE_COLOR%",
+                        "setCollarColor", "color",
+                        "Sets a wolf's collar color.",
+                        "set mob's collar color to red");
     }
 }

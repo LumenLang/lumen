@@ -17,9 +17,9 @@ public final class PhantomExpressions {
     public void register(@NotNull LumenAPI api) {
         EntityHelper.forType(FQCN)
                 .alias("_ph")
-        .intGetter("[get] %e:ENTITY% phantom size",
-        "getSize()",
-        "Returns the phantom's size.",
-        "var sz = mob's phantom size");
+                .intGetter("[get] %e:ENTITY% phantom size",
+                        "getSize()",
+                        "Returns the phantom's size.",
+                        "var sz = mob's phantom size");
     }
 }

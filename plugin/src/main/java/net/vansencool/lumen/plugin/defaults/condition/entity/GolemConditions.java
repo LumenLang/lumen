@@ -17,13 +17,13 @@ public final class GolemConditions {
     public void register(@NotNull LumenAPI api) {
         EntityHelper.forType(FQCN)
                 .alias("_ig")
-        .conditionPair(
-        "%e:ENTITY% is player created",
-        "%e:ENTITY% is not player created",
-        "isPlayerCreated()",
-        "Checks if an iron golem was created by a player.",
-        "Checks if an iron golem was not created by a player.",
-        "if mob is player created:",
-        "if mob is not player created:");
+                .conditionPair(
+                        "%e:ENTITY% is player created",
+                        "%e:ENTITY% is not player created",
+                        "isPlayerCreated()",
+                        "Checks if an iron golem was created by a player.",
+                        "Checks if an iron golem was not created by a player.",
+                        "if mob is player created:",
+                        "if mob is not player created:");
     }
 }

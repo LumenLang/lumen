@@ -17,13 +17,13 @@ public final class AxolotlConditions {
     public void register(@NotNull LumenAPI api) {
         EntityHelper.forType(FQCN)
                 .alias("_ax")
-        .conditionPair(
-        "%e:ENTITY% is playing dead",
-        "%e:ENTITY% is not playing dead",
-        "isPlayingDead()",
-        "Checks if an axolotl is playing dead.",
-        "Checks if an axolotl is not playing dead.",
-        "if mob is playing dead:",
-        "if mob is not playing dead:");
+                .conditionPair(
+                        "%e:ENTITY% is playing dead",
+                        "%e:ENTITY% is not playing dead",
+                        "isPlayingDead()",
+                        "Checks if an axolotl is playing dead.",
+                        "Checks if an axolotl is not playing dead.",
+                        "if mob is playing dead:",
+                        "if mob is not playing dead:");
     }
 }

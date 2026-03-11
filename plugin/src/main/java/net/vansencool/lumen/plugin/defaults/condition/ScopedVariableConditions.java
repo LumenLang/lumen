@@ -19,6 +19,45 @@ import org.jetbrains.annotations.NotNull;
 @SuppressWarnings("unused")
 public final class ScopedVariableConditions {
 
+    /**
+     * Builds a Java expression that reads a global (stored or in-memory) variable
+     * scoped to the given entity variable.
+     *
+     * @param env          the environment access
+     * @param ctx          the codegen access
+     * @param varName      the global variable name
+     * @param scopeVarName the scope variable name (e.g. "target")
+     * @return a Java expression that reads the scoped value
+     */
+    private static @NotNull String buildScopedRead(@NotNull EnvironmentAccess env,
+                                                   @NotNull CodegenAccess ctx,
+                                                   @NotNull String varName,
+                                                   @NotNull String scopeVarName) {
+        EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(varName);
+        if (info == null) {
+            throw new RuntimeException("Variable '" + varName
+                    + "' is not a global variable. Scoped reads (for ...) are only supported on global vars.");
+        }
+        EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
+        if (scopeRef == null) {
+            throw new RuntimeException("Scope variable not found: " + scopeVarName);
+        }
+        RefTypeHandle refType = scopeRef.type();
+        if (refType == null) {
+            throw new RuntimeException("Scope variable '" + scopeVarName
+                    + "' has no ref type. Expected a typed variable like a player or entity.");
+        }
+        String scopeKeyPart = refType.keyExpression(scopeRef.java());
+        String keyExpr = "\"" + info.className() + "." + varName + ".\" + " + scopeKeyPart;
+        if (info.stored()) {
+            ctx.addImport("net.vansencool.lumen.pipeline.persist.PersistentVars");
+            return "PersistentVars.get(" + keyExpr + ", " + info.defaultJava() + ")";
+        } else {
+            ctx.addImport("net.vansencool.lumen.pipeline.persist.GlobalVars");
+            return "GlobalVars.get(" + keyExpr + ", " + info.defaultJava() + ")";
+        }
+    }
+
     @Call
     public void register(@NotNull LumenAPI api) {
         api.patterns().condition(b -> b
@@ -101,44 +140,5 @@ public final class ScopedVariableConditions {
                     String readExpr = buildScopedRead(env, ctx, varName, scopeVarName);
                     return readExpr + " == null";
                 }));
-    }
-
-    /**
-     * Builds a Java expression that reads a global (stored or in-memory) variable
-     * scoped to the given entity variable.
-     *
-     * @param env           the environment access
-     * @param ctx           the codegen access
-     * @param varName       the global variable name
-     * @param scopeVarName  the scope variable name (e.g. "target")
-     * @return a Java expression that reads the scoped value
-     */
-    private static @NotNull String buildScopedRead(@NotNull EnvironmentAccess env,
-                                                    @NotNull CodegenAccess ctx,
-                                                    @NotNull String varName,
-                                                    @NotNull String scopeVarName) {
-        EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(varName);
-        if (info == null) {
-            throw new RuntimeException("Variable '" + varName
-                    + "' is not a global variable. Scoped reads (for ...) are only supported on global vars.");
-        }
-        EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
-        if (scopeRef == null) {
-            throw new RuntimeException("Scope variable not found: " + scopeVarName);
-        }
-        RefTypeHandle refType = scopeRef.type();
-        if (refType == null) {
-            throw new RuntimeException("Scope variable '" + scopeVarName
-                    + "' has no ref type. Expected a typed variable like a player or entity.");
-        }
-        String scopeKeyPart = refType.keyExpression(scopeRef.java());
-        String keyExpr = "\"" + info.className() + "." + varName + ".\" + " + scopeKeyPart;
-        if (info.stored()) {
-            ctx.addImport("net.vansencool.lumen.pipeline.persist.PersistentVars");
-            return "PersistentVars.get(" + keyExpr + ", " + info.defaultJava() + ")";
-        } else {
-            ctx.addImport("net.vansencool.lumen.pipeline.persist.GlobalVars");
-            return "GlobalVars.get(" + keyExpr + ", " + info.defaultJava() + ")";
-        }
     }
 }

@@ -17,21 +17,21 @@ public final class BeeConditions {
     public void register(@NotNull LumenAPI api) {
         EntityHelper.forType(FQCN)
                 .alias("_be")
-        .conditionPair(
-        "%e:ENTITY% has nectar",
-        "%e:ENTITY% (does not have|has no) nectar",
-        "hasNectar()",
-        "Checks if a bee has nectar.",
-        "Checks if a bee does not have nectar.",
-        "if mob has nectar:",
-        "if mob has no nectar:")
-        .conditionPair(
-        "%e:ENTITY% has stung",
-        "%e:ENTITY% has not stung",
-        "hasStung()",
-        "Checks if a bee has stung something.",
-        "Checks if a bee has not stung anything.",
-        "if mob has stung:",
-        "if mob has not stung:");
+                .conditionPair(
+                        "%e:ENTITY% has nectar",
+                        "%e:ENTITY% (does not have|has no) nectar",
+                        "hasNectar()",
+                        "Checks if a bee has nectar.",
+                        "Checks if a bee does not have nectar.",
+                        "if mob has nectar:",
+                        "if mob has no nectar:")
+                .conditionPair(
+                        "%e:ENTITY% has stung",
+                        "%e:ENTITY% has not stung",
+                        "hasStung()",
+                        "Checks if a bee has stung something.",
+                        "Checks if a bee has not stung anything.",
+                        "if mob has stung:",
+                        "if mob has not stung:");
     }
 }

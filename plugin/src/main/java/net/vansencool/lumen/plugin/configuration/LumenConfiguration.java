@@ -44,11 +44,13 @@ public final class LumenConfiguration {
                 LumenConfiguration.DEBUG.LOG_INFO,
                 LumenConfiguration.DEBUG.LOG_WARNINGS
         );
-        if (LumenConfiguration.EXTRA.ENABLE_CONFIG_FILE_WATCHER) ConfigWatcher.watch(LumenConfiguration.class, WatcherOptions.builder().listener(((file, action) -> {
-            if (action == WatchAction.DELETED) LumenLogger.warning("Configuration file deleted! The plugin will continue using the old configuration.");
-            else if (action == WatchAction.MODIFIED) LumenLogger.info("Reloading configuration...");
-            else if (action == WatchAction.CREATED) LumenLogger.info("Configuration file created, loading...");
-        })).build());
+        if (LumenConfiguration.EXTRA.ENABLE_CONFIG_FILE_WATCHER)
+            ConfigWatcher.watch(LumenConfiguration.class, WatcherOptions.builder().listener(((file, action) -> {
+                if (action == WatchAction.DELETED)
+                    LumenLogger.warning("Configuration file deleted! The plugin will continue using the old configuration.");
+                else if (action == WatchAction.MODIFIED) LumenLogger.info("Reloading configuration...");
+                else if (action == WatchAction.CREATED) LumenLogger.info("Configuration file created, loading...");
+            })).build());
     }
 
     public static void disablePaperOnlyFeatures() {

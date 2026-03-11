@@ -17,9 +17,9 @@ public final class BeeExpressions {
     public void register(@NotNull LumenAPI api) {
         EntityHelper.forType(FQCN)
                 .alias("_be")
-        .intGetter("[get] %e:ENTITY% anger [level]",
-        "getAnger()",
-        "Returns the bee's anger level in ticks.",
-        "var anger = mob's anger level");
+                .intGetter("[get] %e:ENTITY% anger [level]",
+                        "getAnger()",
+                        "Returns the bee's anger level in ticks.",
+                        "var anger = mob's anger level");
     }
 }

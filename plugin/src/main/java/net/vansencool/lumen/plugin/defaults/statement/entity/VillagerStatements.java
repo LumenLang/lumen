@@ -17,9 +17,9 @@ public final class VillagerStatements {
     public void register(@NotNull LumenAPI api) {
         EntityHelper.forType(FQCN)
                 .alias("_vl")
-        .intSetter("set %e:ENTITY% villager level [to] %val:INT%",
-        "setVillagerLevel",
-        "Sets a villager's trading level.",
-        "set mob's villager level to 3");
+                .intSetter("set %e:ENTITY% villager level [to] %val:INT%",
+                        "setVillagerLevel",
+                        "Sets a villager's trading level.",
+                        "set mob's villager level to 3");
     }
 }

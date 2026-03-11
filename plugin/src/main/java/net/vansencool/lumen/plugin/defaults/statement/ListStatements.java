@@ -19,6 +19,54 @@ import java.util.List;
 @SuppressWarnings({"unused", "DataFlowIssue"})
 public final class ListStatements {
 
+    private static @Nullable String listVarName(@NotNull BindingAccess ctx) {
+        Object val = ctx.value("list");
+        if (val instanceof EnvironmentAccess.VarHandle ref) {
+            return ref.java();
+        }
+        return null;
+    }
+
+    private static @Nullable EnvironmentAccess.VarHandle listVarHandle(@NotNull BindingAccess ctx) {
+        Object val = ctx.value("list");
+        if (val instanceof EnvironmentAccess.VarHandle ref) {
+            return ref;
+        }
+        return null;
+    }
+
+    private static void validateElementType(@NotNull String elementType,
+                                            @NotNull BindingAccess ctx,
+                                            @NotNull EnvironmentAccess env) {
+        List<String> valTokens = ctx.tokens("val");
+        if (valTokens.size() == 1) {
+            EnvironmentAccess.VarHandle valRef = env.lookupVar(valTokens.get(0));
+            if (valRef != null && valRef.hasMeta("data_type")) {
+                String valDataType = (String) valRef.meta("data_type");
+                if (valDataType == null) {
+                    throw new RuntimeException(
+                            "Cannot determine data type of value for list element type validation, expected '" + elementType + "'");
+                }
+                if (!valDataType.equalsIgnoreCase(elementType)) {
+                    throw new RuntimeException(
+                            "Type mismatch: list expects '" + elementType
+                                    + "' elements, but got '" + valDataType + "'");
+                }
+            }
+        }
+    }
+
+    private static void flushIfStored(
+            @NotNull EnvironmentAccess env,
+            @NotNull JavaOutput out,
+            @NotNull String listJava,
+            @Nullable String varName) {
+        if (varName != null && env.isStored(varName)) {
+            out.line(env.storedClassName(varName) + ".set(" + env.getStoredKey(varName) + ", "
+                    + listJava + ");");
+        }
+    }
+
     @Call
     public void register(@NotNull LumenAPI api) {
         api.patterns().statement(b -> b
@@ -106,53 +154,5 @@ public final class ListStatements {
                     out.line("((List<Object>) " + listJava + ").set(" + iJava + ", " + valJava + ");");
                     flushIfStored(env, out, listJava, listVarName(ctx));
                 }));
-    }
-
-    private static @Nullable String listVarName(@NotNull BindingAccess ctx) {
-        Object val = ctx.value("list");
-        if (val instanceof EnvironmentAccess.VarHandle ref) {
-            return ref.java();
-        }
-        return null;
-    }
-
-    private static @Nullable EnvironmentAccess.VarHandle listVarHandle(@NotNull BindingAccess ctx) {
-        Object val = ctx.value("list");
-        if (val instanceof EnvironmentAccess.VarHandle ref) {
-            return ref;
-        }
-        return null;
-    }
-
-    private static void validateElementType(@NotNull String elementType,
-            @NotNull BindingAccess ctx,
-            @NotNull EnvironmentAccess env) {
-        List<String> valTokens = ctx.tokens("val");
-        if (valTokens.size() == 1) {
-            EnvironmentAccess.VarHandle valRef = env.lookupVar(valTokens.get(0));
-            if (valRef != null && valRef.hasMeta("data_type")) {
-                String valDataType = (String) valRef.meta("data_type");
-                if (valDataType == null) {
-                    throw new RuntimeException(
-                            "Cannot determine data type of value for list element type validation, expected '" + elementType + "'");
-                }
-                if (!valDataType.equalsIgnoreCase(elementType)) {
-                    throw new RuntimeException(
-                            "Type mismatch: list expects '" + elementType
-                                    + "' elements, but got '" + valDataType + "'");
-                }
-            }
-        }
-    }
-
-    private static void flushIfStored(
-            @NotNull EnvironmentAccess env,
-            @NotNull JavaOutput out,
-            @NotNull String listJava,
-            @Nullable String varName) {
-        if (varName != null && env.isStored(varName)) {
-            out.line(env.storedClassName(varName) + ".set(" + env.getStoredKey(varName) + ", "
-                    + listJava + ");");
-        }
     }
 }

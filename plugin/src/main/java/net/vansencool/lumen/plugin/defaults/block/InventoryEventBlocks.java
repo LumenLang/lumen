@@ -47,6 +47,89 @@ public final class InventoryEventBlocks {
     private static final String ITEM_STACK = ItemStack.class.getName();
     private static final String WORLD = World.class.getName();
 
+    private static @NotNull String sanitize(@NotNull String name) {
+        return name.replaceAll("[^a-zA-Z0-9_]", "_")
+                .replaceAll("^\"|\"$", "");
+    }
+
+    private static void clickImports(@NotNull CodegenAccess jctx) {
+        jctx.addImport(InventoryClickEvent.class.getName());
+        jctx.addImport(Material.class.getName());
+        jctx.addImport(INVENTORY);
+        jctx.addImport(ITEM_STACK);
+        jctx.addImport(WORLD);
+        jctx.addImport(LumenInventoryHolder.class.getName());
+    }
+
+    private static void closeOpenImports(@NotNull CodegenAccess jctx, @NotNull Class<?> eventClass) {
+        jctx.addImport(eventClass.getName());
+        jctx.addImport(INVENTORY);
+        jctx.addImport(WORLD);
+        jctx.addImport(LumenInventoryHolder.class.getName());
+    }
+
+    /**
+     * Emits a guard that returns early if the inventory is not a Lumen inventory
+     * with the expected name.
+     */
+    private static void emitNameGuard(@NotNull JavaOutput out, @NotNull String name) {
+        out.line("if (!(event.getView().getTopInventory().getHolder() instanceof LumenInventoryHolder __lh)"
+                + " || !__lh.getName().equals(" + name + ")) return;");
+    }
+
+    /**
+     * Emits all standard click event variables and defines them in the environment.
+     */
+    private static void emitClickVars(
+            @NotNull EnvironmentAccess env,
+            @NotNull BindingAccess ctx,
+            @NotNull JavaOutput out) {
+        out.line("if (!(event.getWhoClicked() instanceof Player player)) return;");
+        out.line("World world = player.getWorld();");
+        out.line("Inventory inventory = event.getView().getTopInventory();");
+        out.line("int slot = event.getRawSlot();");
+        out.line("String clickType = event.getClick().name();");
+        out.line("String action = event.getAction().name();");
+        out.line("String title = event.getView().getTitle();");
+        out.line("ItemStack item = event.getCurrentItem();");
+        out.line("ItemStack cursor = (event.getCursor() != null"
+                + " && event.getCursor().getType() != Material.AIR)"
+                + " ? event.getCursor() : null;");
+
+        EnvironmentAccess.VarHandle playerH = env.defineVar("player", RefTypes.PLAYER, "player");
+        ctx.block().setDefault(RefTypes.PLAYER, playerH);
+        EnvironmentAccess.VarHandle worldH = env.defineVar("world", RefTypes.WORLD, "world");
+        ctx.block().setDefault(RefTypes.WORLD, worldH);
+        env.defineVar("inventory", null, "inventory");
+        env.defineVar("slot", null, "slot");
+        env.defineVar("clickType", null, "clickType");
+        env.defineVar("action", null, "action");
+        env.defineVar("title", null, "title");
+        EnvironmentAccess.VarHandle itemH = env.defineVar("item", RefTypes.ITEMSTACK, "item");
+        ctx.block().setDefault(RefTypes.ITEMSTACK, itemH);
+        env.defineVar("cursor", RefTypes.ITEMSTACK, "cursor");
+    }
+
+    /**
+     * Emits close/open event variables and defines them in the environment.
+     */
+    private static void emitCloseOpenVars(
+            @NotNull EnvironmentAccess env,
+            @NotNull BindingAccess ctx,
+            @NotNull JavaOutput out) {
+        out.line("if (!(event.getPlayer() instanceof Player player)) return;");
+        out.line("World world = player.getWorld();");
+        out.line("Inventory inventory = event.getView().getTopInventory();");
+        out.line("String title = event.getView().getTitle();");
+
+        EnvironmentAccess.VarHandle playerH = env.defineVar("player", RefTypes.PLAYER, "player");
+        ctx.block().setDefault(RefTypes.PLAYER, playerH);
+        EnvironmentAccess.VarHandle worldH = env.defineVar("world", RefTypes.WORLD, "world");
+        ctx.block().setDefault(RefTypes.WORLD, worldH);
+        env.defineVar("inventory", null, "inventory");
+        env.defineVar("title", null, "title");
+    }
+
     @Call
     public void register(@NotNull LumenAPI api) {
         registerSlotClick(api);
@@ -221,88 +304,5 @@ public final class InventoryEventBlocks {
                         out.line("}");
                     }
                 }));
-    }
-
-    private static @NotNull String sanitize(@NotNull String name) {
-        return name.replaceAll("[^a-zA-Z0-9_]", "_")
-                .replaceAll("^\"|\"$", "");
-    }
-
-    private static void clickImports(@NotNull CodegenAccess jctx) {
-        jctx.addImport(InventoryClickEvent.class.getName());
-        jctx.addImport(Material.class.getName());
-        jctx.addImport(INVENTORY);
-        jctx.addImport(ITEM_STACK);
-        jctx.addImport(WORLD);
-        jctx.addImport(LumenInventoryHolder.class.getName());
-    }
-
-    private static void closeOpenImports(@NotNull CodegenAccess jctx, @NotNull Class<?> eventClass) {
-        jctx.addImport(eventClass.getName());
-        jctx.addImport(INVENTORY);
-        jctx.addImport(WORLD);
-        jctx.addImport(LumenInventoryHolder.class.getName());
-    }
-
-    /**
-     * Emits a guard that returns early if the inventory is not a Lumen inventory
-     * with the expected name.
-     */
-    private static void emitNameGuard(@NotNull JavaOutput out, @NotNull String name) {
-        out.line("if (!(event.getView().getTopInventory().getHolder() instanceof LumenInventoryHolder __lh)"
-                + " || !__lh.getName().equals(" + name + ")) return;");
-    }
-
-    /**
-     * Emits all standard click event variables and defines them in the environment.
-     */
-    private static void emitClickVars(
-            @NotNull EnvironmentAccess env,
-            @NotNull BindingAccess ctx,
-            @NotNull JavaOutput out) {
-        out.line("if (!(event.getWhoClicked() instanceof Player player)) return;");
-        out.line("World world = player.getWorld();");
-        out.line("Inventory inventory = event.getView().getTopInventory();");
-        out.line("int slot = event.getRawSlot();");
-        out.line("String clickType = event.getClick().name();");
-        out.line("String action = event.getAction().name();");
-        out.line("String title = event.getView().getTitle();");
-        out.line("ItemStack item = event.getCurrentItem();");
-        out.line("ItemStack cursor = (event.getCursor() != null"
-                + " && event.getCursor().getType() != Material.AIR)"
-                + " ? event.getCursor() : null;");
-
-        EnvironmentAccess.VarHandle playerH = env.defineVar("player", RefTypes.PLAYER, "player");
-        ctx.block().setDefault(RefTypes.PLAYER, playerH);
-        EnvironmentAccess.VarHandle worldH = env.defineVar("world", RefTypes.WORLD, "world");
-        ctx.block().setDefault(RefTypes.WORLD, worldH);
-        env.defineVar("inventory", null, "inventory");
-        env.defineVar("slot", null, "slot");
-        env.defineVar("clickType", null, "clickType");
-        env.defineVar("action", null, "action");
-        env.defineVar("title", null, "title");
-        EnvironmentAccess.VarHandle itemH = env.defineVar("item", RefTypes.ITEMSTACK, "item");
-        ctx.block().setDefault(RefTypes.ITEMSTACK, itemH);
-        env.defineVar("cursor", RefTypes.ITEMSTACK, "cursor");
-    }
-
-    /**
-     * Emits close/open event variables and defines them in the environment.
-     */
-    private static void emitCloseOpenVars(
-            @NotNull EnvironmentAccess env,
-            @NotNull BindingAccess ctx,
-            @NotNull JavaOutput out) {
-        out.line("if (!(event.getPlayer() instanceof Player player)) return;");
-        out.line("World world = player.getWorld();");
-        out.line("Inventory inventory = event.getView().getTopInventory();");
-        out.line("String title = event.getView().getTitle();");
-
-        EnvironmentAccess.VarHandle playerH = env.defineVar("player", RefTypes.PLAYER, "player");
-        ctx.block().setDefault(RefTypes.PLAYER, playerH);
-        EnvironmentAccess.VarHandle worldH = env.defineVar("world", RefTypes.WORLD, "world");
-        ctx.block().setDefault(RefTypes.WORLD, worldH);
-        env.defineVar("inventory", null, "inventory");
-        env.defineVar("title", null, "title");
     }
 }

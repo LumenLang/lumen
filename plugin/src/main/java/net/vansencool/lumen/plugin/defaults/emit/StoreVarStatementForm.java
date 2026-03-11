@@ -33,6 +33,28 @@ import java.util.List;
 @SuppressWarnings("DataFlowIssue")
 public final class StoreVarStatementForm implements StatementFormHandler {
 
+    private static boolean isStoreStatement(@NotNull List<Token> t) {
+        if (t.size() < 4 || !t.get(0).text().equalsIgnoreCase("store")) {
+            return false;
+        }
+        for (int i = 2; i < t.size(); i++) {
+            if (t.get(i).text().equalsIgnoreCase("default")) return true;
+        }
+        return false;
+    }
+
+    private static boolean isStoredVarStatement(@NotNull List<Token> t) {
+        if (t.size() < 5
+                || !t.get(0).text().equalsIgnoreCase("stored")
+                || !t.get(1).text().equalsIgnoreCase("var")) {
+            return false;
+        }
+        for (int i = 3; i < t.size(); i++) {
+            if (t.get(i).text().equalsIgnoreCase("default")) return true;
+        }
+        return false;
+    }
+
     @Override
     public boolean tryHandle(@NotNull List<? extends ScriptToken> tokens, @NotNull EmitContext ctx) {
         List<Token> t = EmitContextImpl.toPipelineTokens(tokens);
@@ -164,27 +186,5 @@ public final class StoreVarStatementForm implements StatementFormHandler {
         String baseKey = "\"" + className + "." + name + ".\"";
         ctx.env().markStored(name, keyExpr, baseKey, scopeVar);
         return true;
-    }
-
-    private static boolean isStoreStatement(@NotNull List<Token> t) {
-        if (t.size() < 4 || !t.get(0).text().equalsIgnoreCase("store")) {
-            return false;
-        }
-        for (int i = 2; i < t.size(); i++) {
-            if (t.get(i).text().equalsIgnoreCase("default")) return true;
-        }
-        return false;
-    }
-
-    private static boolean isStoredVarStatement(@NotNull List<Token> t) {
-        if (t.size() < 5
-                || !t.get(0).text().equalsIgnoreCase("stored")
-                || !t.get(1).text().equalsIgnoreCase("var")) {
-            return false;
-        }
-        for (int i = 3; i < t.size(); i++) {
-            if (t.get(i).text().equalsIgnoreCase("default")) return true;
-        }
-        return false;
     }
 }

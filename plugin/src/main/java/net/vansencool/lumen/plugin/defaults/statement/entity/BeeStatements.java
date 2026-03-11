@@ -17,17 +17,17 @@ public final class BeeStatements {
     public void register(@NotNull LumenAPI api) {
         EntityHelper.forType(FQCN)
                 .alias("_be")
-        .boolSetter("set %e:ENTITY% has nectar [to] %val:BOOLEAN%",
-        "setHasNectar",
-        "Sets whether a bee has nectar.",
-        "set mob's has nectar to true")
-        .boolSetter("set %e:ENTITY% has stung [to] %val:BOOLEAN%",
-        "setHasStung",
-        "Sets whether a bee has stung.",
-        "set mob's has stung to true")
-        .intSetter("set %e:ENTITY% anger [to] %val:INT%",
-        "setAnger",
-        "Sets a bee's anger level in ticks.",
-        "set mob's anger to 400");
+                .boolSetter("set %e:ENTITY% has nectar [to] %val:BOOLEAN%",
+                        "setHasNectar",
+                        "Sets whether a bee has nectar.",
+                        "set mob's has nectar to true")
+                .boolSetter("set %e:ENTITY% has stung [to] %val:BOOLEAN%",
+                        "setHasStung",
+                        "Sets whether a bee has stung.",
+                        "set mob's has stung to true")
+                .intSetter("set %e:ENTITY% anger [to] %val:INT%",
+                        "setAnger",
+                        "Sets a bee's anger level in ticks.",
+                        "set mob's anger to 400");
     }
 }

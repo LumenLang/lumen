@@ -17,9 +17,9 @@ public final class AgeableExpressions {
     public void register(@NotNull LumenAPI api) {
         EntityHelper.forType(FQCN)
                 .alias("_ag")
-        .intGetter("[get] %e:ENTITY% age",
-        "getAge()",
-        "Returns the ageable entity's age value.",
-        "var a = mob's age");
+                .intGetter("[get] %e:ENTITY% age",
+                        "getAge()",
+                        "Returns the ageable entity's age value.",
+                        "var a = mob's age");
     }
 }

@@ -17,9 +17,9 @@ public final class WolfExpressions {
     public void register(@NotNull LumenAPI api) {
         EntityHelper.forType(FQCN)
                 .alias("_wf")
-        .stringGetter("[get] %e:ENTITY% collar color",
-        "getCollarColor().name()",
-        "Returns the wolf's collar color name.",
-        "var c = mob's collar color");
+                .stringGetter("[get] %e:ENTITY% collar color",
+                        "getCollarColor().name()",
+                        "Returns the wolf's collar color name.",
+                        "var c = mob's collar color");
     }
 }

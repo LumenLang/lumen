@@ -63,6 +63,10 @@ public final class BukkitMiniColorizeSerializer implements MiniColorizeSerialize
             Map.entry("white", ChatColor.WHITE)
     );
 
+    private static int clamp(int value) {
+        return Math.max(0, Math.min(255, value));
+    }
+
     @Override
     public @NotNull BaseComponent @NotNull [] serialize(@NotNull List<Node> nodes) {
         List<BaseComponent> components = new ArrayList<>();
@@ -317,10 +321,6 @@ public final class BukkitMiniColorizeSerializer implements MiniColorizeSerialize
             case "strikethrough" -> state.strikethrough = tag.enabled();
             case "obfuscated" -> state.obfuscated = tag.enabled();
         }
-    }
-
-    private static int clamp(int value) {
-        return Math.max(0, Math.min(255, value));
     }
 
     private static final class FormatState {

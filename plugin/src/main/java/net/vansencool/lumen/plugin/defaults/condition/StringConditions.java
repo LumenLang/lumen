@@ -146,7 +146,7 @@ public final class StringConditions {
                     ctx.addImport(Truthiness.class.getName());
                     return "Truthiness.check("
                             + match.java("a", ctx, env) + ")";
-                    }));
+                }));
 
         api.patterns().condition(b -> b
                 .by("Lumen")

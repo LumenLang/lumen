@@ -17,9 +17,9 @@ public final class PhantomStatements {
     public void register(@NotNull LumenAPI api) {
         EntityHelper.forType(FQCN)
                 .alias("_ph")
-        .intSetter("set %e:ENTITY% phantom size [to] %val:INT%",
-        "setSize",
-        "Sets a phantom's size.",
-        "set mob's phantom size to 3");
+                .intSetter("set %e:ENTITY% phantom size [to] %val:INT%",
+                        "setSize",
+                        "Sets a phantom's size.",
+                        "set mob's phantom size to 3");
     }
 }

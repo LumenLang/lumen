@@ -94,7 +94,7 @@ public final class AttributeBinding {
 
             @Override
             public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx,
-                    @NotNull EnvironmentAccess env) {
+                                          @NotNull EnvironmentAccess env) {
                 ctx.addImport(Attribute.class.getName());
                 return "Attribute." + value;
             }

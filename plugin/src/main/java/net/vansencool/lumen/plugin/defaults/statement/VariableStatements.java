@@ -26,6 +26,102 @@ import org.jetbrains.annotations.Nullable;
 @SuppressWarnings("unused")
 public final class VariableStatements {
 
+    /**
+     * Throws a parse-time error if a local variable that would be captured by a lambda
+     * is being mutated. Variables defined inside the lambda body are lambda-local and
+     * can be mutated freely. Only variables captured from an outer scope must be
+     * effectively final (unless they are class-level global fields).
+     */
+    private static void rejectLocalMutationInsideLambda(@NotNull BlockAccess block,
+                                                        @NotNull EnvironmentAccess env,
+                                                        @NotNull String varName) {
+        if (block.getEnvFromParents("__lambda_block") == null) return;
+        if (env.isGlobalField(varName)) return;
+        if (!env.isVarCapturedByLambda(varName)) return;
+        throw new RuntimeException(
+                "Cannot modify local variable '" + varName + "' inside a schedule block. "
+                        + "Local variables must be effectively final inside schedule/delay blocks. "
+                        + "Tip: use 'global var " + varName + " default <value>' to make it a class-level field instead.");
+    }
+
+    private static void emitAutoSave(@NotNull EnvironmentAccess env, @NotNull String varName,
+                                     EnvironmentAccess.@NotNull VarHandle ref, @NotNull JavaOutput out) {
+        if (env.isStored(varName)) {
+            out.line(env.storedClassName(varName) + ".set(" + env.getStoredKey(varName) + ", " + ref.java() + ");");
+        }
+    }
+
+    private static @NotNull String buildScopedKey(@NotNull EnvironmentAccess env,
+                                                  @NotNull String varName,
+                                                  @NotNull String scopeVarName,
+                                                  @NotNull EnvironmentAccess.GlobalInfo info) {
+        EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
+        if (scopeRef == null) {
+            throw new RuntimeException("Scope variable not found: " + scopeVarName);
+        }
+        RefTypeHandle refType = scopeRef.type();
+        if (refType == null) {
+            throw new RuntimeException("Scope variable '" + scopeVarName
+                    + "' has no ref type. Expected a typed variable like a player or entity.");
+        }
+        String scopeKeyPart = refType.keyExpression(scopeRef.java());
+        return "\"" + info.className() + "." + varName + ".\" + " + scopeKeyPart;
+    }
+
+    private static @NotNull String resolveStorageClass(@NotNull EnvironmentAccess.GlobalInfo info) {
+        return info.stored() ? "PersistentVars" : "GlobalVars";
+    }
+
+    private static void emitScopedMath(@NotNull BindingAccess ctx, @NotNull JavaOutput out,
+                                       @NotNull String varName, @NotNull String scopeVarName,
+                                       @NotNull String operand, @NotNull String op) {
+        EnvironmentAccess env = ctx.env();
+        EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(varName);
+        if (info == null) {
+            throw new RuntimeException("Variable '" + varName
+                    + "' is not a global variable. Scoped operations (for ...) are only supported on global vars.");
+        }
+        String storageClass = resolveStorageClass(info);
+        String keyExpr = buildScopedKey(env, varName, scopeVarName, info);
+        out.line("{");
+        out.line("    var __sv = " + storageClass + ".get(" + keyExpr + ", " + info.defaultJava() + ");");
+        out.line("    __sv = Coerce.toInt(__sv) " + op.replace("=", "") + " " + operand + ";");
+        out.line("    " + storageClass + ".set(" + keyExpr + ", __sv);");
+        out.line("}");
+    }
+
+    private static void emitScopedSet(@NotNull BindingAccess ctx, @NotNull JavaOutput out,
+                                      @NotNull String varName, @NotNull String scopeVarName,
+                                      @NotNull String valueJava) {
+        EnvironmentAccess env = ctx.env();
+        EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(varName);
+        if (info == null) {
+            throw new RuntimeException("Variable '" + varName
+                    + "' is not a global variable. Scoped operations (for ...) are only supported on global vars.");
+        }
+        String storageClass = resolveStorageClass(info);
+        String keyExpr = buildScopedKey(env, varName, scopeVarName, info);
+        out.line(storageClass + ".set(" + keyExpr + ", " + valueJava + ");");
+    }
+
+    private static void emitScopedDelete(@NotNull BindingAccess ctx, @NotNull JavaOutput out,
+                                         @NotNull String varName, @Nullable String scopeVarName) {
+        EnvironmentAccess env = ctx.env();
+        EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(varName);
+        if (info == null) {
+            throw new RuntimeException("Variable '" + varName
+                    + "' is not a global variable. Scoped operations (for ...) are only supported on global vars.");
+        }
+        String storageClass = resolveStorageClass(info);
+        if (scopeVarName != null) {
+            String keyExpr = buildScopedKey(env, varName, scopeVarName, info);
+            out.line(storageClass + ".delete(" + keyExpr + ");");
+        } else {
+            String baseKey = "\"" + info.className() + "." + varName + ".\"";
+            out.line(storageClass + ".deleteByPrefix(" + baseKey + ");");
+        }
+    }
+
     @Call
     public void register(@NotNull LumenAPI api) {
         api.patterns().statement(b -> b
@@ -203,101 +299,5 @@ public final class VariableStatements {
                         out.line(env.persistClassName() + ".delete(" + keyExpr + ");");
                     }
                 }));
-    }
-
-    /**
-     * Throws a parse-time error if a local variable that would be captured by a lambda
-     * is being mutated. Variables defined inside the lambda body are lambda-local and
-     * can be mutated freely. Only variables captured from an outer scope must be
-     * effectively final (unless they are class-level global fields).
-     */
-    private static void rejectLocalMutationInsideLambda(@NotNull BlockAccess block,
-                                                        @NotNull EnvironmentAccess env,
-                                                        @NotNull String varName) {
-        if (block.getEnvFromParents("__lambda_block") == null) return;
-        if (env.isGlobalField(varName)) return;
-        if (!env.isVarCapturedByLambda(varName)) return;
-        throw new RuntimeException(
-                "Cannot modify local variable '" + varName + "' inside a schedule block. "
-                + "Local variables must be effectively final inside schedule/delay blocks. "
-                + "Tip: use 'global var " + varName + " default <value>' to make it a class-level field instead.");
-    }
-
-    private static void emitAutoSave(@NotNull EnvironmentAccess env, @NotNull String varName,
-                                      EnvironmentAccess.@NotNull VarHandle ref, @NotNull JavaOutput out) {
-        if (env.isStored(varName)) {
-            out.line(env.storedClassName(varName) + ".set(" + env.getStoredKey(varName) + ", " + ref.java() + ");");
-        }
-    }
-
-    private static @NotNull String buildScopedKey(@NotNull EnvironmentAccess env,
-                                                   @NotNull String varName,
-                                                   @NotNull String scopeVarName,
-                                                   @NotNull EnvironmentAccess.GlobalInfo info) {
-        EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
-        if (scopeRef == null) {
-            throw new RuntimeException("Scope variable not found: " + scopeVarName);
-        }
-        RefTypeHandle refType = scopeRef.type();
-        if (refType == null) {
-            throw new RuntimeException("Scope variable '" + scopeVarName
-                    + "' has no ref type. Expected a typed variable like a player or entity.");
-        }
-        String scopeKeyPart = refType.keyExpression(scopeRef.java());
-        return "\"" + info.className() + "." + varName + ".\" + " + scopeKeyPart;
-    }
-
-    private static @NotNull String resolveStorageClass(@NotNull EnvironmentAccess.GlobalInfo info) {
-        return info.stored() ? "PersistentVars" : "GlobalVars";
-    }
-
-    private static void emitScopedMath(@NotNull BindingAccess ctx, @NotNull JavaOutput out,
-                                        @NotNull String varName, @NotNull String scopeVarName,
-                                        @NotNull String operand, @NotNull String op) {
-        EnvironmentAccess env = ctx.env();
-        EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(varName);
-        if (info == null) {
-            throw new RuntimeException("Variable '" + varName
-                    + "' is not a global variable. Scoped operations (for ...) are only supported on global vars.");
-        }
-        String storageClass = resolveStorageClass(info);
-        String keyExpr = buildScopedKey(env, varName, scopeVarName, info);
-        out.line("{");
-        out.line("    var __sv = " + storageClass + ".get(" + keyExpr + ", " + info.defaultJava() + ");");
-        out.line("    __sv = Coerce.toInt(__sv) " + op.replace("=", "") + " " + operand + ";");
-        out.line("    " + storageClass + ".set(" + keyExpr + ", __sv);");
-        out.line("}");
-    }
-
-    private static void emitScopedSet(@NotNull BindingAccess ctx, @NotNull JavaOutput out,
-                                       @NotNull String varName, @NotNull String scopeVarName,
-                                       @NotNull String valueJava) {
-        EnvironmentAccess env = ctx.env();
-        EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(varName);
-        if (info == null) {
-            throw new RuntimeException("Variable '" + varName
-                    + "' is not a global variable. Scoped operations (for ...) are only supported on global vars.");
-        }
-        String storageClass = resolveStorageClass(info);
-        String keyExpr = buildScopedKey(env, varName, scopeVarName, info);
-        out.line(storageClass + ".set(" + keyExpr + ", " + valueJava + ");");
-    }
-
-    private static void emitScopedDelete(@NotNull BindingAccess ctx, @NotNull JavaOutput out,
-                                          @NotNull String varName, @Nullable String scopeVarName) {
-        EnvironmentAccess env = ctx.env();
-        EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(varName);
-        if (info == null) {
-            throw new RuntimeException("Variable '" + varName
-                    + "' is not a global variable. Scoped operations (for ...) are only supported on global vars.");
-        }
-        String storageClass = resolveStorageClass(info);
-        if (scopeVarName != null) {
-            String keyExpr = buildScopedKey(env, varName, scopeVarName, info);
-            out.line(storageClass + ".delete(" + keyExpr + ");");
-        } else {
-            String baseKey = "\"" + info.className() + "." + varName + ".\"";
-            out.line(storageClass + ".deleteByPrefix(" + baseKey + ");");
-        }
     }
 }

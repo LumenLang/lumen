@@ -17,13 +17,13 @@ public final class WolfConditions {
     public void register(@NotNull LumenAPI api) {
         EntityHelper.forType(FQCN)
                 .alias("_wf")
-        .conditionPair(
-        "%e:ENTITY% is angry",
-        "%e:ENTITY% is not angry",
-        "isAngry()",
-        "Checks if a wolf is angry.",
-        "Checks if a wolf is not angry.",
-        "if mob is angry:",
-        "if mob is not angry:");
+                .conditionPair(
+                        "%e:ENTITY% is angry",
+                        "%e:ENTITY% is not angry",
+                        "isAngry()",
+                        "Checks if a wolf is angry.",
+                        "Checks if a wolf is not angry.",
+                        "if mob is angry:",
+                        "if mob is not angry:");
     }
 }

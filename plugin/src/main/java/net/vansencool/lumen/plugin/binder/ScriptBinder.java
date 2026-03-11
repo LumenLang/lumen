@@ -115,8 +115,8 @@ public final class ScriptBinder {
      * @param annotationType the annotations type to look for
      */
     public static void invokeMethodWithAnnotation(@NotNull Object instance,
-            @NotNull Class<?> clazz,
-            @NotNull Class<? extends Annotation> annotationType) {
+                                                  @NotNull Class<?> clazz,
+                                                  @NotNull Class<? extends Annotation> annotationType) {
         for (Method m : clazz.getDeclaredMethods()) {
             if (m.isAnnotationPresent(annotationType)) {
                 try {
