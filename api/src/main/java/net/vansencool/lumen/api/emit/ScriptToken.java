@@ -53,13 +53,21 @@ public interface ScriptToken {
      * Classifies the lexical category of a script token.
      */
     enum TokenType {
-        /** An identifier or keyword, including possessives like {@code player's}. */
+        /**
+         * An identifier or keyword, including possessives like {@code player's}.
+         */
         IDENT,
-        /** A numeric literal (integer or decimal). */
+        /**
+         * A numeric literal (integer or decimal).
+         */
         NUMBER,
-        /** A double-quoted string literal with quotes stripped. */
+        /**
+         * A double-quoted string literal with quotes stripped.
+         */
         STRING,
-        /** A single non-alphanumeric, non-whitespace character. */
+        /**
+         * A single non-alphanumeric, non-whitespace character.
+         */
         SYMBOL
     }
 }

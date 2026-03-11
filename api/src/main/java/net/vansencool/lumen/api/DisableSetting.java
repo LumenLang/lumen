@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
  *
  * @param reason    a short human-readable explanation shown in the server log
  * @param permanent whether the change should be persisted to disk
- *
  * @see LumenAddon#disablePaperOnlyFeatures()
  * @see LumenAddon#disableReduceClasspath()
  * @see LumenAddon#disableEnableAllScriptsImmediately()

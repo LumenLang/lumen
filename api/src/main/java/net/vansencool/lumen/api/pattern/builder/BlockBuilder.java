@@ -17,7 +17,7 @@ import java.util.function.Consumer;
  *
  * <p>
  * Example usage:
- * 
+ *
  * <pre>{@code
  * api.patterns().block(b -> b
  *         .pattern("if %cond:EXPR%")
@@ -29,7 +29,7 @@ import java.util.function.Consumer;
  *             public void begin(BindingAccess ctx, JavaOutput out) {
  *                 out.line("if (" + ctx.parseCondition("cond") + ") {");
  *             }
- * 
+ *
  *             public void end(BindingAccess ctx, JavaOutput out) {
  *                 out.line("}");
  *             }
@@ -41,9 +41,9 @@ import java.util.function.Consumer;
 public final class BlockBuilder {
 
     private final List<String> patterns = new ArrayList<>();
+    private final List<String> examples = new ArrayList<>();
     private @Nullable String by;
     private @Nullable String description;
-    private final List<String> examples = new ArrayList<>();
     private @Nullable String since;
     private @Nullable Category category;
     private boolean deprecated;

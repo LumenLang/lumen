@@ -54,7 +54,7 @@ public final class EnumTypeBinding {
         if (constants == null) {
             throw new IllegalArgumentException(
                     "Cannot load enum constants for " + fqcn
-                    + ". The class is not accessible as an enum on this server version.");
+                            + ". The class is not accessible as an enum on this server version.");
         }
         Set<String> constantNames = new HashSet<>();
         for (E e : constants) {

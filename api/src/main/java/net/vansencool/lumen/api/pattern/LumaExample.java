@@ -36,7 +36,8 @@ public final class LumaExample {
 
     private static final String INDENT = "    ";
 
-    private LumaExample() {}
+    private LumaExample() {
+    }
 
     /**
      * Joins pre-indented lines into a single example string.

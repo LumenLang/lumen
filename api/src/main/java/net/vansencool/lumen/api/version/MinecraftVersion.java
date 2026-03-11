@@ -66,6 +66,40 @@ public enum MinecraftVersion {
     }
 
     /**
+     * Returns the currently detected server version.
+     *
+     * <p>Returns {@link #UNKNOWN} if {@link #detect(String)} has not been called yet.
+     *
+     * @return the current version, never null
+     */
+    public static @NotNull MinecraftVersion current() {
+        return current;
+    }
+
+    /**
+     * Detects and stores the current Minecraft version from the raw version string.
+     *
+     * @param versionString the raw Minecraft version string (e.g. {@code "1.21.4"})
+     * @return the detected version
+     */
+    public static @NotNull MinecraftVersion detect(@NotNull String versionString) {
+        String trimmed = versionString.trim();
+        MinecraftVersion found = BY_ID.get(trimmed);
+        current = found != null ? found : UNKNOWN;
+        return current;
+    }
+
+    /**
+     * Looks up a version constant by its id string.
+     *
+     * @param versionString the version string (e.g. {@code "1.20.4"})
+     * @return the matching version, or null if not found
+     */
+    public static @Nullable MinecraftVersion fromString(@NotNull String versionString) {
+        return BY_ID.get(versionString.trim());
+    }
+
+    /**
      * Returns the version string as it appears in the Minecraft protocol
      * (e.g. {@code "1.21.4"}).
      *
@@ -124,40 +158,6 @@ public enum MinecraftVersion {
      */
     public boolean isBetween(@NotNull MinecraftVersion from, @NotNull MinecraftVersion to) {
         return isAtLeast(from) && isAtMost(to);
-    }
-
-    /**
-     * Returns the currently detected server version.
-     *
-     * <p>Returns {@link #UNKNOWN} if {@link #detect(String)} has not been called yet.
-     *
-     * @return the current version, never null
-     */
-    public static @NotNull MinecraftVersion current() {
-        return current;
-    }
-
-    /**
-     * Detects and stores the current Minecraft version from the raw version string.
-     *
-     * @param versionString the raw Minecraft version string (e.g. {@code "1.21.4"})
-     * @return the detected version
-     */
-    public static @NotNull MinecraftVersion detect(@NotNull String versionString) {
-        String trimmed = versionString.trim();
-        MinecraftVersion found = BY_ID.get(trimmed);
-        current = found != null ? found : UNKNOWN;
-        return current;
-    }
-
-    /**
-     * Looks up a version constant by its id string.
-     *
-     * @param versionString the version string (e.g. {@code "1.20.4"})
-     * @return the matching version, or null if not found
-     */
-    public static @Nullable MinecraftVersion fromString(@NotNull String versionString) {
-        return BY_ID.get(versionString.trim());
     }
 
     @Override
