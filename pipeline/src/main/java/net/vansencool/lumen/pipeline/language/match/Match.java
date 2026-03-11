@@ -44,6 +44,53 @@ public record Match(
 ) implements ConditionHandler.ConditionMatch {
 
     /**
+     * Resolves a bound value to Java source code. For EXPR-typed bindings with
+     * multiple tokens, attempts expression inlining via the pattern registry.
+     *
+     * @param bv  the bound value to resolve
+     * @param ctx the code generation context
+     * @param env the type environment
+     * @return the generated Java source expression
+     */
+    private static @NotNull String resolveBinding(
+            @NotNull BoundValue bv,
+            @NotNull CodegenContext ctx,
+            @NotNull TypeEnv env) {
+        if (bv.value() instanceof BraceExpr be) {
+            String inlined = ExprResolver.resolve(be.innerTokens(), ctx, env);
+            if (inlined != null) return inlined;
+            throw new TokenCarryingException(
+                    "Could not resolve braced expression: '{"
+                            + ExprResolver.joinTokens(be.innerTokens()) + "}'",
+                    bv.tokens());
+        }
+        if (bv.value() instanceof InlineExpr ie) {
+            String inlined = ExprResolver.resolve(ie.tokens(), ctx, env);
+            if (inlined != null) {
+                if (!bv.binding().id().equals("EXPR")) {
+                    return bv.binding().toJava(new InlineVarRef(inlined), ctx, env);
+                }
+                return inlined;
+            }
+            throw new TokenCarryingException(
+                    "Could not resolve inline expression: '"
+                            + ExprResolver.joinTokens(ie.tokens()) + "'",
+                    bv.tokens());
+        }
+        if (bv.binding().id().equals("EXPR")) {
+            String inlined = ExprResolver.resolve(bv.tokens(), ctx, env);
+            if (inlined != null) return inlined;
+            if (bv.tokens().size() > 1) {
+                throw new TokenCarryingException(
+                        "Expression not recognized: '" + ExprResolver.joinTokens(bv.tokens())
+                                + "'. Check spelling of variables and expression patterns.",
+                        bv.tokens());
+            }
+        }
+        return bv.binding().toJava(bv.value(), ctx, env);
+    }
+
+    /**
      * Returns the matched alternative text for the Nth required choice group in the
      * pattern.
      *
@@ -151,57 +198,10 @@ public record Match(
         return resolveBinding(bv, ctx, env);
     }
 
-    /**
-     * Resolves a bound value to Java source code. For EXPR-typed bindings with
-     * multiple tokens, attempts expression inlining via the pattern registry.
-     *
-     * @param bv  the bound value to resolve
-     * @param ctx the code generation context
-     * @param env the type environment
-     * @return the generated Java source expression
-     */
-    private static @NotNull String resolveBinding(
-            @NotNull BoundValue bv,
-            @NotNull CodegenContext ctx,
-            @NotNull TypeEnv env) {
-        if (bv.value() instanceof BraceExpr be) {
-            String inlined = ExprResolver.resolve(be.innerTokens(), ctx, env);
-            if (inlined != null) return inlined;
-            throw new TokenCarryingException(
-                    "Could not resolve braced expression: '{"
-                            + ExprResolver.joinTokens(be.innerTokens()) + "}'",
-                    bv.tokens());
-        }
-        if (bv.value() instanceof InlineExpr ie) {
-            String inlined = ExprResolver.resolve(ie.tokens(), ctx, env);
-            if (inlined != null) {
-                if (!bv.binding().id().equals("EXPR")) {
-                    return bv.binding().toJava(new InlineVarRef(inlined), ctx, env);
-                }
-                return inlined;
-            }
-            throw new TokenCarryingException(
-                    "Could not resolve inline expression: '"
-                            + ExprResolver.joinTokens(ie.tokens()) + "'",
-                    bv.tokens());
-        }
-        if (bv.binding().id().equals("EXPR")) {
-            String inlined = ExprResolver.resolve(bv.tokens(), ctx, env);
-            if (inlined != null) return inlined;
-            if (bv.tokens().size() > 1) {
-                throw new TokenCarryingException(
-                        "Expression not recognized: '" + ExprResolver.joinTokens(bv.tokens())
-                                + "'. Check spelling of variables and expression patterns.",
-                        bv.tokens());
-            }
-        }
-        return bv.binding().toJava(bv.value(), ctx, env);
-    }
-
     @Override
     public @NotNull String java(@NotNull String name,
-            @NotNull CodegenAccess ctx,
-            @NotNull EnvironmentAccess env) {
+                                @NotNull CodegenAccess ctx,
+                                @NotNull EnvironmentAccess env) {
         return java(name, (CodegenContext) ctx, (TypeEnv) env);
     }
 
@@ -217,8 +217,8 @@ public record Match(
 
     @Override
     public @NotNull String java(int index,
-            @NotNull CodegenAccess ctx,
-            @NotNull EnvironmentAccess env) {
+                                @NotNull CodegenAccess ctx,
+                                @NotNull EnvironmentAccess env) {
         return javaAt(index, (CodegenContext) ctx, (TypeEnv) env);
     }
 

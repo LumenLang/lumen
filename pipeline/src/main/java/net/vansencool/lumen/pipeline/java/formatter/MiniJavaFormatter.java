@@ -20,6 +20,9 @@ import java.util.regex.Pattern;
 @SuppressWarnings("unused")
 public final class MiniJavaFormatter {
 
+    private static final Pattern CAST_PATTERN =
+            Pattern.compile("\\((?:int|long|double|float|short|byte|char|boolean|[A-Z]\\w*(?:\\.\\w+)*(?:<[^)]*>)?(?:\\[])*)\\)");
+
     /**
      * Formats the source and merges consecutive identical if-blocks. The result is still valid Java.
      *
@@ -56,8 +59,8 @@ public final class MiniJavaFormatter {
      * Applies indentation and brace normalization to the source, prepending the provided header comment.
      * This is the shared formatting core used by all public format variants.
      *
-     * @param source  raw Java source
-     * @param header  comment lines to prepend (already newline-terminated)
+     * @param source raw Java source
+     * @param header comment lines to prepend (already newline-terminated)
      * @return indentation-normalized source with the header prepended
      */
     private static @NotNull String applyIndentation(@NotNull String source, @NotNull String header) {
@@ -158,10 +161,10 @@ public final class MiniJavaFormatter {
      * Balanced braces on lines that do not start with {@code '}'} (e.g. annotation array values)
      * do not cause a pre-write dedent.
      *
-     * @param indent  current indent level
-     * @param opens   open-brace count on the line
-     * @param closes  close-brace count on the line
-     * @param line    trimmed source line
+     * @param indent current indent level
+     * @param opens  open-brace count on the line
+     * @param closes close-brace count on the line
+     * @param line   trimmed source line
      * @return indent level to use when writing this line
      */
     private static int preWriteIndent(int indent, int opens, int closes, @NotNull String line) {
@@ -175,10 +178,10 @@ public final class MiniJavaFormatter {
     /**
      * Returns the indent level after writing {@code line}.
      *
-     * @param indent        indent level that was used when writing
-     * @param opens         open-brace count on the line
-     * @param closes        close-brace count on the line
-     * @param line          trimmed source line
+     * @param indent indent level that was used when writing
+     * @param opens  open-brace count on the line
+     * @param closes close-brace count on the line
+     * @param line   trimmed source line
      * @return updated indent level
      */
     private static int postWriteIndent(int indent, int opens, int closes, @NotNull String line) {
@@ -194,7 +197,7 @@ public final class MiniJavaFormatter {
      * then updates the indent tracker {@code indent[0]}.
      */
     private static void applyBraceIndent(@NotNull StringBuilder out, @NotNull String part,
-            int opens, int closes, int indent) {
+                                         int opens, int closes, int indent) {
         int writeIndent = preWriteIndent(indent, opens, closes, part);
         out.append(" ".repeat(writeIndent * 4));
         out.append(part);
@@ -326,8 +329,8 @@ public final class MiniJavaFormatter {
      * Collects the body lines of a brace-delimited block, starting after the opening {@code \{}.
      * Returns the index of the line after the closing {@code \}}.
      *
-     * @param lines    all source lines
-     * @param start    index to start scanning (first line inside the block)
+     * @param lines     all source lines
+     * @param start     index to start scanning (first line inside the block)
      * @param bodyLines list to populate with body lines
      * @return the index immediately after the closing brace line
      */
@@ -357,9 +360,6 @@ public final class MiniJavaFormatter {
         while (idx < line.length() && line.charAt(idx) == ' ') idx++;
         return line.substring(0, idx);
     }
-
-    private static final Pattern CAST_PATTERN =
-            Pattern.compile("\\((?:int|long|double|float|short|byte|char|boolean|[A-Z]\\w*(?:\\.\\w+)*(?:<[^)]*>)?(?:\\[])*)\\)");
 
     /**
      * Replaces all {@code String.valueOf(expr)} calls with just {@code expr}.
@@ -514,12 +514,12 @@ public final class MiniJavaFormatter {
     /**
      * Applies a per-line function to every line in {@code source}, reassembling with newlines.
      *
-     * @param source    multi-line source
-     * @param lineFunc  function taking a single line and returning the transformed line
+     * @param source   multi-line source
+     * @param lineFunc function taking a single line and returning the transformed line
      * @return reassembled source
      */
     private static @NotNull String processLines(@NotNull String source,
-            @NotNull LineTransformer lineFunc) {
+                                                @NotNull LineTransformer lineFunc) {
         String[] lines = source.split("\n", -1);
         StringBuilder result = new StringBuilder(source.length());
         for (int i = 0; i < lines.length; i++) {
@@ -527,11 +527,6 @@ public final class MiniJavaFormatter {
             if (i < lines.length - 1) result.append('\n');
         }
         return result.toString();
-    }
-
-    @FunctionalInterface
-    private interface LineTransformer {
-        @NotNull String transform(@NotNull String line);
     }
 
     /**
@@ -616,7 +611,7 @@ public final class MiniJavaFormatter {
      * {@code '}, {@code -}, {@code !}, or {@code ~}. If the position is at end-of-line
      * or the next non-space character is {@code )}, {@code ,}, or {@code ;} it is not a cast.
      *
-     * @param line the source line
+     * @param line       the source line
      * @param afterMatch index immediately after the closing {@code )} of the candidate cast
      * @return true if the context confirms a cast expression
      */
@@ -738,5 +733,10 @@ public final class MiniJavaFormatter {
             }
         }
         return count;
+    }
+
+    @FunctionalInterface
+    private interface LineTransformer {
+        @NotNull String transform(@NotNull String line);
     }
 }

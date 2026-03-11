@@ -20,9 +20,6 @@ import java.util.Set;
  */
 public final class SystemCompiler {
 
-    private static volatile JavaCompiler cachedCompiler;
-    private static volatile boolean reduceClasspath;
-
     private static final ThreadLocal<StandardJavaFileManager> THREAD_FM = ThreadLocal.withInitial(() -> {
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         if (compiler == null) {
@@ -30,7 +27,6 @@ public final class SystemCompiler {
         }
         return compiler.getStandardFileManager(null, null, null);
     });
-
     private static final Set<String> EXCLUDED_PACKAGES = Set.of(
             "/io/netty/",
             "/com/velocitypowered/",
@@ -60,6 +56,8 @@ public final class SystemCompiler {
             "/com/google/j2objc/",
             "/com/google/protobuf/"
     );
+    private static volatile JavaCompiler cachedCompiler;
+    private static volatile boolean reduceClasspath;
 
     /**
      * Enables or disables the reduced classpath mode.

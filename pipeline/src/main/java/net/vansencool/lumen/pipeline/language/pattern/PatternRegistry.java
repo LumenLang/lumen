@@ -148,6 +148,42 @@ public final class PatternRegistry {
     }
 
     /**
+     * Computes a specificity score for a pattern. Patterns with more literal parts are
+     * considered more specific and should be tried first during matching.
+     *
+     * @param pattern the pattern to score
+     * @return the specificity score (higher means more specific)
+     */
+    public static int specificity(@NotNull Pattern pattern) {
+        int score = 0;
+        for (PatternPart part : pattern.parts()) {
+            score += partSpecificity(part);
+        }
+        return score;
+    }
+
+    private static int partSpecificity(@NotNull PatternPart part) {
+        if (part instanceof PatternPart.Literal) return 2;
+        if (part instanceof PatternPart.FlexLiteral) return 2;
+        if (part instanceof PatternPart.PlaceholderPart pp) {
+            return pp.ph().typeId().equals("EXPR") ? 0 : 1;
+        }
+        if (part instanceof PatternPart.Group group) {
+            if (!group.required()) return 0;
+            int best = 0;
+            for (List<PatternPart> alt : group.alternatives()) {
+                int altScore = 0;
+                for (PatternPart altPart : alt) {
+                    altScore += partSpecificity(altPart);
+                }
+                best = Math.max(best, altScore);
+            }
+            return best;
+        }
+        return 0;
+    }
+
+    /**
      * Returns an unmodifiable view of all registered statement.
      *
      * @return the list of registered statements
@@ -627,41 +663,5 @@ public final class PatternRegistry {
                 return new RegisteredExpressionMatch(re, m);
         }
         return null;
-    }
-
-    /**
-     * Computes a specificity score for a pattern. Patterns with more literal parts are
-     * considered more specific and should be tried first during matching.
-     *
-     * @param pattern the pattern to score
-     * @return the specificity score (higher means more specific)
-     */
-    public static int specificity(@NotNull Pattern pattern) {
-        int score = 0;
-        for (PatternPart part : pattern.parts()) {
-            score += partSpecificity(part);
-        }
-        return score;
-    }
-
-    private static int partSpecificity(@NotNull PatternPart part) {
-        if (part instanceof PatternPart.Literal) return 2;
-        if (part instanceof PatternPart.FlexLiteral) return 2;
-        if (part instanceof PatternPart.PlaceholderPart pp) {
-            return pp.ph().typeId().equals("EXPR") ? 0 : 1;
-        }
-        if (part instanceof PatternPart.Group group) {
-            if (!group.required()) return 0;
-            int best = 0;
-            for (List<PatternPart> alt : group.alternatives()) {
-                int altScore = 0;
-                for (PatternPart altPart : alt) {
-                    altScore += partSpecificity(altPart);
-                }
-                best = Math.max(best, altScore);
-            }
-            return best;
-        }
-        return 0;
     }
 }

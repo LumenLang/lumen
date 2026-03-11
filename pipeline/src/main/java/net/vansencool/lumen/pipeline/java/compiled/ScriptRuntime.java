@@ -21,8 +21,8 @@ import java.util.stream.Collectors;
 public final class ScriptRuntime {
 
     public static String buildClass(@NotNull String className,
-            @NotNull CodegenContext ctx,
-            @NotNull JavaBuilder code) {
+                                    @NotNull CodegenContext ctx,
+                                    @NotNull JavaBuilder code) {
 
         StringBuilder sb = new StringBuilder();
 
@@ -109,14 +109,13 @@ public final class ScriptRuntime {
     private static boolean isJavaKeyword(String s) {
         return switch (s) {
             case "Abstract", "Assert", "Boolean", "Break", "Byte", "Case", "Catch",
-                    "Char", "Class", "Const", "Continue", "Default", "Do", "Double",
-                    "Else", "Enum", "Extends", "Final", "Finally", "Float", "For",
-                    "Goto", "If", "Implements", "Import", "Instanceof", "Int",
-                    "Interface", "Long", "Native", "New", "Package", "Private",
-                    "Protected", "Public", "Return", "Short", "Static", "Strictfp",
-                    "Super", "Switch", "Synchronized", "This", "Throw", "Throws",
-                    "Transient", "Try", "Void", "Volatile", "While" ->
-                true;
+                 "Char", "Class", "Const", "Continue", "Default", "Do", "Double",
+                 "Else", "Enum", "Extends", "Final", "Finally", "Float", "For",
+                 "Goto", "If", "Implements", "Import", "Instanceof", "Int",
+                 "Interface", "Long", "Native", "New", "Package", "Private",
+                 "Protected", "Public", "Return", "Short", "Static", "Strictfp",
+                 "Super", "Switch", "Synchronized", "This", "Throw", "Throws",
+                 "Transient", "Try", "Void", "Volatile", "While" -> true;
             default -> false;
         } || isReservedClassName(s);
     }
@@ -124,10 +123,9 @@ public final class ScriptRuntime {
     private static boolean isReservedClassName(String s) {
         return switch (s) {
             case "Math", "Object", "String", "System", "Thread", "Runtime",
-                    "Process", "Number", "Integer", "Character", "Error",
-                    "Exception", "Throwable", "Comparable", "Iterable",
-                    "Runnable", "Override", "Deprecated", "Record" ->
-                true;
+                 "Process", "Number", "Integer", "Character", "Error",
+                 "Exception", "Throwable", "Comparable", "Iterable",
+                 "Runnable", "Override", "Deprecated", "Record" -> true;
             default -> false;
         };
     }
@@ -145,7 +143,7 @@ public final class ScriptRuntime {
      *   <li>all other packages</li>
      * </ol>
      *
-     * @param sb the StringBuilder to write to
+     * @param sb      the StringBuilder to write to
      * @param imports the collection of import statements to process and write
      */
     private static void writeFormattedImports(StringBuilder sb, Collection<String> imports) {

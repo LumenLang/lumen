@@ -36,6 +36,9 @@ import java.util.Map;
  */
 public final class PatternMatcher {
 
+    private static final Object PARSE_FAILED = new Object();
+    private static final int CONSUME_REJECTED = -2;
+
     private PatternMatcher() {
     }
 
@@ -215,7 +218,7 @@ public final class PatternMatcher {
             List<Token> remaining = tokens.subList(ti, tokens.size());
             LumenLogger.debug("PatternMatcher.match", "Placeholder %" + ph.name() + ":" + ph.typeId()
                     + "% at ti=" + ti + " remaining=" + remaining.stream()
-                            .map(t -> "'" + t.text() + "'").reduce((a, b) -> a + " " + b).orElse("(empty)"));
+                    .map(t -> "'" + t.text() + "'").reduce((a, b) -> a + " " + b).orElse("(empty)"));
 
             int consumeCount = safeConsumeCount(binding, remaining, env);
             LumenLogger.debug("PatternMatcher.match", "  consumeCount=" + consumeCount);
@@ -277,10 +280,6 @@ public final class PatternMatcher {
 
         return -1;
     }
-
-    private static final Object PARSE_FAILED = new Object();
-
-    private static final int CONSUME_REJECTED = -2;
 
     /**
      * Safely calls {@link TypeBinding#consumeCount}.

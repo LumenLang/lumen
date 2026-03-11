@@ -404,7 +404,7 @@ public final class CodeEmitter {
         if (blockCtx.isRoot()) {
             throw new LumenScriptException(evs.raw().line(), evs.raw().raw(),
                     "'var' cannot be used at the top level of a script. "
-                    + "Use 'global var " + evs.name() + " default <value>' instead to declare a script-wide variable.");
+                            + "Use 'global var " + evs.name() + " default <value>' instead to declare a script-wide variable.");
         }
 
         BindingContext bc = new BindingContext(evs.match().match(), env, ctx, blockCtx);
@@ -423,7 +423,7 @@ public final class CodeEmitter {
     }
 
     private static @NotNull LumenScriptException wrapRuntimeException(int line, @NotNull String raw,
-            @NotNull RuntimeException e) {
+                                                                      @NotNull RuntimeException e) {
         if (e instanceof TokenCarryingException tce) {
             return new LumenScriptException(line, raw, tce.getMessage(), tce.tokens());
         }

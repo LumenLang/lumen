@@ -18,6 +18,16 @@ import java.util.Map;
 public record DataSchema(@NotNull String name, @NotNull Map<String, FieldType> fields) {
 
     /**
+     * Creates a new DataSchema builder for the given type name.
+     *
+     * @param name the data type name
+     * @return a new builder
+     */
+    public static @NotNull Builder builder(@NotNull String name) {
+        return new Builder(name);
+    }
+
+    /**
      * Represents a declared field type in a data class.
      */
     public enum FieldType {
@@ -33,6 +43,24 @@ public record DataSchema(@NotNull String name, @NotNull Map<String, FieldType> f
         FieldType(@NotNull String javaType, @NotNull String coercionTemplate) {
             this.javaType = javaType;
             this.coercionTemplate = coercionTemplate;
+        }
+
+        /**
+         * Parses a field type name from script source.
+         *
+         * @param name the type name as written in the data block
+         * @return the matching FieldType
+         * @throws IllegalArgumentException if the type name is not recognized
+         */
+        public static @NotNull FieldType fromName(@NotNull String name) {
+            return switch (name.toLowerCase()) {
+                case "text", "string", "str" -> TEXT;
+                case "number", "num", "double", "float", "decimal" -> NUMBER;
+                case "integer", "int" -> INTEGER;
+                case "boolean", "bool" -> BOOLEAN;
+                case "any", "object" -> ANY;
+                default -> throw new IllegalArgumentException("Unknown data field type: " + name);
+            };
         }
 
         /**
@@ -54,34 +82,6 @@ public record DataSchema(@NotNull String name, @NotNull Map<String, FieldType> f
         public @NotNull String coerce(@NotNull String expr) {
             return coercionTemplate.replace("$", expr);
         }
-
-        /**
-         * Parses a field type name from script source.
-         *
-         * @param name the type name as written in the data block
-         * @return the matching FieldType
-         * @throws IllegalArgumentException if the type name is not recognized
-         */
-        public static @NotNull FieldType fromName(@NotNull String name) {
-            return switch (name.toLowerCase()) {
-                case "text", "string", "str" -> TEXT;
-                case "number", "num", "double", "float", "decimal" -> NUMBER;
-                case "integer", "int" -> INTEGER;
-                case "boolean", "bool" -> BOOLEAN;
-                case "any", "object" -> ANY;
-                default -> throw new IllegalArgumentException("Unknown data field type: " + name);
-            };
-        }
-    }
-
-    /**
-     * Creates a new DataSchema builder for the given type name.
-     *
-     * @param name the data type name
-     * @return a new builder
-     */
-    public static @NotNull Builder builder(@NotNull String name) {
-        return new Builder(name);
     }
 
     /**

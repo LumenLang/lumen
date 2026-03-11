@@ -56,18 +56,18 @@ public final class LumenAPIImpl implements LumenAPI {
     private final EmitRegistrar emitters;
 
     public LumenAPIImpl(@NotNull PatternRegistry patternRegistry,
-            @NotNull TypeRegistry typeRegistry,
-            @NotNull EmitRegistry emitRegistry) {
+                        @NotNull TypeRegistry typeRegistry,
+                        @NotNull EmitRegistry emitRegistry) {
         this.patterns = new PatternRegistrar() {
             @Override
             public void statement(@NotNull String pattern,
-                    @NotNull StatementHandler handler) {
+                                  @NotNull StatementHandler handler) {
                 patternRegistry.statement(pattern, handler);
             }
 
             @Override
             public void statement(@NotNull List<String> patterns,
-                    @NotNull StatementHandler handler) {
+                                  @NotNull StatementHandler handler) {
                 for (String pattern : patterns) {
                     patternRegistry.statement(pattern, handler);
                 }
@@ -75,13 +75,13 @@ public final class LumenAPIImpl implements LumenAPI {
 
             @Override
             public void block(@NotNull String pattern,
-                    @NotNull BlockHandler handler) {
+                              @NotNull BlockHandler handler) {
                 patternRegistry.block(pattern, handler);
             }
 
             @Override
             public void block(@NotNull List<String> patterns,
-                    @NotNull BlockHandler handler) {
+                              @NotNull BlockHandler handler) {
                 for (String pattern : patterns) {
                     patternRegistry.block(pattern, handler);
                 }
@@ -89,13 +89,13 @@ public final class LumenAPIImpl implements LumenAPI {
 
             @Override
             public void condition(@NotNull String pattern,
-                    @NotNull ConditionHandler handler) {
+                                  @NotNull ConditionHandler handler) {
                 patternRegistry.condition(pattern, handler);
             }
 
             @Override
             public void condition(@NotNull List<String> patterns,
-                    @NotNull ConditionHandler handler) {
+                                  @NotNull ConditionHandler handler) {
                 for (String pattern : patterns) {
                     patternRegistry.condition(pattern, handler);
                 }
@@ -103,13 +103,13 @@ public final class LumenAPIImpl implements LumenAPI {
 
             @Override
             public void expression(@NotNull String pattern,
-                    @NotNull ExpressionHandler handler) {
+                                   @NotNull ExpressionHandler handler) {
                 patternRegistry.expression(pattern, handler);
             }
 
             @Override
             public void expression(@NotNull List<String> patterns,
-                    @NotNull ExpressionHandler handler) {
+                                   @NotNull ExpressionHandler handler) {
                 for (String pattern : patterns) {
                     patternRegistry.expression(pattern, handler);
                 }
@@ -245,7 +245,7 @@ public final class LumenAPIImpl implements LumenAPI {
 
             @Override
             public void property(@NotNull RefTypeHandle type, @NotNull String property, @NotNull String template,
-                    @NotNull PlaceholderType returnType) {
+                                 @NotNull PlaceholderType returnType) {
                 RefType internal = type instanceof RefType rt ? rt : RefType.byId(type.id());
                 if (internal == null) {
                     throw new IllegalArgumentException("Unknown ref type: " + type.id());

@@ -93,7 +93,7 @@ public sealed interface TypedStatement permits
      * @param expr     the parsed default value expression
      */
     record StoreVarStmt(StatementNode raw, String name, @Nullable String scopeVar,
-            Expr expr) implements TypedStatement {
+                        Expr expr) implements TypedStatement {
     }
 
     /**
@@ -124,7 +124,8 @@ public sealed interface TypedStatement permits
      * @param stored      whether the variable is persisted to disk
      */
     record GlobalVarStmt(StatementNode raw, String name, @Nullable String refTypeName,
-            Expr expr, @Nullable RegisteredExpressionMatch exprMatch, boolean stored) implements TypedStatement {
+                         Expr expr, @Nullable RegisteredExpressionMatch exprMatch,
+                         boolean stored) implements TypedStatement {
     }
 
     /**
@@ -144,6 +145,6 @@ public sealed interface TypedStatement permits
      * @param errorTokens the tokens responsible for the error, or {@code null} if the entire line is at fault
      */
     record ErrorStmt(@NotNull StatementNode raw, @NotNull String message,
-            @Nullable List<Token> errorTokens) implements TypedStatement {
+                     @Nullable List<Token> errorTokens) implements TypedStatement {
     }
 }

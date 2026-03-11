@@ -40,6 +40,39 @@ public final class EmitContextImpl implements EmitContext {
         this.raw = raw;
     }
 
+    /**
+     * Converts a list of API-level {@link ScriptToken}s to pipeline-internal {@link Token}s.
+     *
+     * <p>If the tokens are already {@link Token} instances, they are cast directly.
+     * Otherwise, a new {@link Token} is constructed with a mapped {@link TokenKind}.
+     *
+     * @param tokens the API-level tokens
+     * @return the pipeline-internal tokens
+     */
+    public static @NotNull List<Token> toPipelineTokens(@NotNull List<? extends ScriptToken> tokens) {
+        List<Token> result = new ArrayList<>(tokens.size());
+        for (ScriptToken t : tokens) {
+            if (t instanceof Token pt) {
+                result.add(pt);
+            } else {
+                result.add(new Token(
+                        mapTokenType(t.tokenType()),
+                        t.text(), t.line(), t.start(), t.end()));
+            }
+        }
+        return result;
+    }
+
+    private static @NotNull TokenKind mapTokenType(
+            ScriptToken.@NotNull TokenType type) {
+        return switch (type) {
+            case IDENT -> TokenKind.IDENT;
+            case NUMBER -> TokenKind.NUMBER;
+            case STRING -> TokenKind.STRING;
+            case SYMBOL -> TokenKind.SYMBOL;
+        };
+    }
+
     @Override
     public @NotNull EnvironmentAccess env() {
         return env;
@@ -78,38 +111,5 @@ public final class EmitContextImpl implements EmitContext {
      */
     public @NotNull CodegenContext codegenContext() {
         return ctx;
-    }
-
-    /**
-     * Converts a list of API-level {@link ScriptToken}s to pipeline-internal {@link Token}s.
-     *
-     * <p>If the tokens are already {@link Token} instances, they are cast directly.
-     * Otherwise, a new {@link Token} is constructed with a mapped {@link TokenKind}.
-     *
-     * @param tokens the API-level tokens
-     * @return the pipeline-internal tokens
-     */
-    public static @NotNull List<Token> toPipelineTokens(@NotNull List<? extends ScriptToken> tokens) {
-        List<Token> result = new ArrayList<>(tokens.size());
-        for (ScriptToken t : tokens) {
-            if (t instanceof Token pt) {
-                result.add(pt);
-            } else {
-                result.add(new Token(
-                        mapTokenType(t.tokenType()),
-                        t.text(), t.line(), t.start(), t.end()));
-            }
-        }
-        return result;
-    }
-
-    private static @NotNull TokenKind mapTokenType(
-            ScriptToken.@NotNull TokenType type) {
-        return switch (type) {
-            case IDENT -> TokenKind.IDENT;
-            case NUMBER -> TokenKind.NUMBER;
-            case STRING -> TokenKind.STRING;
-            case SYMBOL -> TokenKind.SYMBOL;
-        };
     }
 }

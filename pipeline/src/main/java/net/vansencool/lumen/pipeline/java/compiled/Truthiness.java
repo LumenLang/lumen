@@ -19,7 +19,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class Truthiness {
 
-    private Truthiness() {}
+    private Truthiness() {
+    }
 
     /**
      * Evaluates the truthiness of the given value.
