@@ -22,8 +22,6 @@ import java.util.concurrent.ConcurrentHashMap;
 @SuppressWarnings("unused")
 public final class InventoryRegistry {
 
-    private record Entry(@NotNull Object instance, @NotNull MethodHandle method) {}
-
     private static final ConcurrentHashMap<String, Entry> REGISTRY = new ConcurrentHashMap<>();
 
     private InventoryRegistry() {
@@ -85,5 +83,8 @@ public final class InventoryRegistry {
      */
     public static void clear() {
         REGISTRY.clear();
+    }
+
+    private record Entry(@NotNull Object instance, @NotNull MethodHandle method) {
     }
 }

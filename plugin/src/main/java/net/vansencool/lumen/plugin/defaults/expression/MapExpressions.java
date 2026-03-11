@@ -21,6 +21,22 @@ import java.util.Map;
 @SuppressWarnings("unused")
 public final class MapExpressions {
 
+    private static @NotNull String buildScopedKey(@NotNull EnvironmentAccess env,
+                                                  @NotNull String varName,
+                                                  @NotNull String scopeVarName,
+                                                  @NotNull EnvironmentAccess.GlobalInfo info) {
+        EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
+        if (scopeRef == null) {
+            throw new RuntimeException("Scope variable not found: " + scopeVarName);
+        }
+        RefTypeHandle refType = scopeRef.type();
+        if (refType == null) {
+            throw new RuntimeException("Scope variable '" + scopeVarName
+                    + "' has no ref type. Expected a typed variable like a player or entity.");
+        }
+        return "\"" + info.className() + "." + varName + ".\" + " + refType.keyExpression(scopeRef.java());
+    }
+
     @Call
     public void register(@NotNull LumenAPI api) {
         api.patterns().expression(b -> b
@@ -138,21 +154,5 @@ public final class MapExpressions {
                             RefTypes.LIST.id(),
                             Map.of());
                 }));
-    }
-
-    private static @NotNull String buildScopedKey(@NotNull EnvironmentAccess env,
-                                                   @NotNull String varName,
-                                                   @NotNull String scopeVarName,
-                                                   @NotNull EnvironmentAccess.GlobalInfo info) {
-        EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
-        if (scopeRef == null) {
-            throw new RuntimeException("Scope variable not found: " + scopeVarName);
-        }
-        RefTypeHandle refType = scopeRef.type();
-        if (refType == null) {
-            throw new RuntimeException("Scope variable '" + scopeVarName
-                    + "' has no ref type. Expected a typed variable like a player or entity.");
-        }
-        return "\"" + info.className() + "." + varName + ".\" + " + refType.keyExpression(scopeRef.java());
     }
 }

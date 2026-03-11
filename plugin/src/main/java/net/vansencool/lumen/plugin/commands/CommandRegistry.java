@@ -299,6 +299,12 @@ public final class CommandRegistry {
             this.handler = handler;
         }
 
+        private static void logSourceMapping(@Nullable ScriptSourceMap.ScriptLineMapping mapping) {
+            if (mapping == null) return;
+            LumenLogger.severe("  Script line " + mapping.scriptLine() + ": " + mapping.scriptSource());
+            LumenLogger.severe("  Java line: " + mapping.javaLine());
+        }
+
         @Override
         public boolean execute(@NotNull CommandSender sender, @NotNull String commandLabel, @NotNull String[] args) {
             try {
@@ -338,12 +344,6 @@ public final class CommandRegistry {
                     : ScriptSourceMap.findFromException(lre);
             LumenLogger.severe("[Script " + scriptClass + "] " + lre.getMessage());
             logSourceMapping(mapping);
-        }
-
-        private static void logSourceMapping(@Nullable ScriptSourceMap.ScriptLineMapping mapping) {
-            if (mapping == null) return;
-            LumenLogger.severe("  Script line " + mapping.scriptLine() + ": " + mapping.scriptSource());
-            LumenLogger.severe("  Java line: " + mapping.javaLine());
         }
     }
 

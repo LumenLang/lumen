@@ -160,8 +160,8 @@ public final class AttributeNames {
      *
      * @param input the user-provided attribute name, in any supported format
      * @return the version-correct {@code Attribute} enum constant name
-     *         (e.g. {@code "GENERIC_MAX_HEALTH"} on 1.20 or {@code "MAX_HEALTH"}
-     *         on 1.21.2+), or {@code null} if unrecognized or unavailable
+     * (e.g. {@code "GENERIC_MAX_HEALTH"} on 1.20 or {@code "MAX_HEALTH"}
+     * on 1.21.2+), or {@code null} if unrecognized or unavailable
      */
     public static @Nullable String resolve(@NotNull String input) {
         String normalized = input.trim().toLowerCase().replace(' ', '_').replace('-', '_');
@@ -210,8 +210,8 @@ public final class AttributeNames {
      * <p>The returned map preserves insertion order (registration order).
      *
      * @return an ordered map where keys are canonical names (e.g. {@code "max_health"})
-     *         and values are the Bukkit enum constant names for the current version
-     *         (e.g. {@code "GENERIC_MAX_HEALTH"} on 1.20 or {@code "MAX_HEALTH"} on 1.21.2+)
+     * and values are the Bukkit enum constant names for the current version
+     * (e.g. {@code "GENERIC_MAX_HEALTH"} on 1.20 or {@code "MAX_HEALTH"} on 1.21.2+)
      */
     public static @NotNull Map<String, String> availableAttributes() {
         Map<String, String> result = new LinkedHashMap<>();

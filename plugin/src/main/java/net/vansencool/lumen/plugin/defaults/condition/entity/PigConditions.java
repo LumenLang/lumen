@@ -17,13 +17,13 @@ public final class PigConditions {
     public void register(@NotNull LumenAPI api) {
         EntityHelper.forType(FQCN)
                 .alias("_pg")
-        .conditionPair(
-        "%e:ENTITY% has saddle",
-        "%e:ENTITY% (does not have|has no) saddle",
-        "hasSaddle()",
-        "Checks if a pig has a saddle.",
-        "Checks if a pig does not have a saddle.",
-        "if mob has saddle:",
-        "if mob has no saddle:");
+                .conditionPair(
+                        "%e:ENTITY% has saddle",
+                        "%e:ENTITY% (does not have|has no) saddle",
+                        "hasSaddle()",
+                        "Checks if a pig has a saddle.",
+                        "Checks if a pig does not have a saddle.",
+                        "if mob has saddle:",
+                        "if mob has no saddle:");
     }
 }

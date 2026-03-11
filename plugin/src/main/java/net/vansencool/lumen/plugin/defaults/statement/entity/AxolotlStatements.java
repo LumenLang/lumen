@@ -17,13 +17,13 @@ public final class AxolotlStatements {
     public void register(@NotNull LumenAPI api) {
         EntityHelper.forType(FQCN)
                 .alias("_ax")
-        .boolSetter("set %e:ENTITY% playing dead [to] %val:BOOLEAN%",
-        "setPlayingDead",
-        "Sets whether an axolotl is playing dead.",
-        "set mob's playing dead to true")
-        .typedEnumSetter("set %e:ENTITY% axolotl variant [to] %variant:AXOLOTL_VARIANT%",
-        "setVariant", "variant",
-        "Sets an axolotl's color variant.",
-        "set mob's axolotl variant to blue");
+                .boolSetter("set %e:ENTITY% playing dead [to] %val:BOOLEAN%",
+                        "setPlayingDead",
+                        "Sets whether an axolotl is playing dead.",
+                        "set mob's playing dead to true")
+                .typedEnumSetter("set %e:ENTITY% axolotl variant [to] %variant:AXOLOTL_VARIANT%",
+                        "setVariant", "variant",
+                        "Sets an axolotl's color variant.",
+                        "set mob's axolotl variant to blue");
     }
 }

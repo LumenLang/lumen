@@ -21,6 +21,13 @@ import java.util.concurrent.ThreadLocalRandom;
 @SuppressWarnings("unused")
 public final class GenericConditions {
 
+    private static void validateExprIdentifier(@NotNull String java,
+                                               @NotNull EnvironmentAccess env) {
+        if (java.matches("[a-zA-Z_][a-zA-Z0-9_]*") && env.lookupVar(java) == null) {
+            throw new RuntimeException("Variable '" + java + "' does not exist");
+        }
+    }
+
     @Call
     public void register(@NotNull LumenAPI api) {
         api.patterns().condition(b -> b
@@ -87,12 +94,5 @@ public final class GenericConditions {
                     validateExprIdentifier(max, env);
                     return "(" + val + " < " + min + " || " + val + " > " + max + ")";
                 }));
-    }
-
-    private static void validateExprIdentifier(@NotNull String java,
-            @NotNull EnvironmentAccess env) {
-        if (java.matches("[a-zA-Z_][a-zA-Z0-9_]*") && env.lookupVar(java) == null) {
-            throw new RuntimeException("Variable '" + java + "' does not exist");
-        }
     }
 }

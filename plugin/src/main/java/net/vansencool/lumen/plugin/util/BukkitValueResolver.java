@@ -23,11 +23,6 @@ public final class BukkitValueResolver implements Function<Object, Object> {
     private BukkitValueResolver() {
     }
 
-    @Override
-    public @NotNull Object apply(@NotNull Object value) {
-        return resolve(value);
-    }
-
     private static @NotNull Object resolve(@NotNull Object value) {
         if (value instanceof SerializedLocation loc) {
             return resolveLocation(loc);
@@ -71,5 +66,10 @@ public final class BukkitValueResolver implements Function<Object, Object> {
             result.put(key, val);
         }
         return changed ? result : (Map<Object, Object>) map;
+    }
+
+    @Override
+    public @NotNull Object apply(@NotNull Object value) {
+        return resolve(value);
     }
 }

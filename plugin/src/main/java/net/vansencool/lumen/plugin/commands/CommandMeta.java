@@ -23,11 +23,11 @@ import java.util.List;
  */
 public final class CommandMeta {
 
+    private final List<String> aliases = new ArrayList<>();
     private @NotNull String name;
     private @Nullable String namespace;
     private @Nullable String description;
     private @Nullable String permission;
-    private final List<String> aliases = new ArrayList<>();
 
     /**
      * Creates a new CommandMeta with the given primary command name.

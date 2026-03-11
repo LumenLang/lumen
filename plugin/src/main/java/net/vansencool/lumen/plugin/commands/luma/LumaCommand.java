@@ -40,7 +40,7 @@ public final class LumaCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label,
-            @NotNull String[] args) {
+                             @NotNull String[] args) {
 
         if (args.length < 1) {
             LumenText.send(sender, RED + "Usage: /lumen reload | reload scripts | reload <file> | unload <file>");
@@ -109,12 +109,12 @@ public final class LumaCommand implements CommandExecutor, TabCompleter {
                 String src = ScriptSourceLoader.load(target);
                 ScriptManager.load(target, src).thenAccept(time -> LumenText.send(sender, OK +
                         "Reloaded " + target +
-                                " | parse " + (time.parseNanos() / 1_000_000.0) + "ms" +
-                                " | compile " + (time.compileNanos() / 1_000_000.0) + "ms")).exceptionally(t -> {
-                            LumenText.send(sender, RED + "Reload failed: " + t.getMessage());
-                            LumenLogger.severe("Reload failed", t);
-                            return null;
-                        });
+                        " | parse " + (time.parseNanos() / 1_000_000.0) + "ms" +
+                        " | compile " + (time.compileNanos() / 1_000_000.0) + "ms")).exceptionally(t -> {
+                    LumenText.send(sender, RED + "Reload failed: " + t.getMessage());
+                    LumenLogger.severe("Reload failed", t);
+                    return null;
+                });
             } catch (IllegalArgumentException e) {
                 LumenText.send(sender, RED + e.getMessage());
             } catch (Throwable t) {
@@ -148,7 +148,7 @@ public final class LumaCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public @NotNull List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command,
-            @NotNull String label, @NotNull String[] args) {
+                                               @NotNull String label, @NotNull String[] args) {
         List<String> out = new ArrayList<>();
         String last = args.length == 0 ? "" : args[args.length - 1].toLowerCase();
 

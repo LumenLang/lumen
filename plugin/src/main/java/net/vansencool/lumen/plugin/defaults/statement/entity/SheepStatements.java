@@ -17,17 +17,17 @@ public final class SheepStatements {
     public void register(@NotNull LumenAPI api) {
         EntityHelper.forType(FQCN)
                 .alias("_sh")
-        .action("shear %e:ENTITY%",
-        "setSheared(true)",
-        "Shears a sheep.",
-        "shear mob")
-        .boolSetter("set %e:ENTITY% sheared [to] %val:BOOLEAN%",
-        "setSheared",
-        "Sets whether a sheep is sheared.",
-        "set mob's sheared to true")
-        .typedEnumSetter("set %e:ENTITY% (wool|sheep) color [to] %color:DYE_COLOR%",
-        "setColor", "color",
-        "Sets a sheep's wool color.",
-        "set mob's wool color to red");
+                .action("shear %e:ENTITY%",
+                        "setSheared(true)",
+                        "Shears a sheep.",
+                        "shear mob")
+                .boolSetter("set %e:ENTITY% sheared [to] %val:BOOLEAN%",
+                        "setSheared",
+                        "Sets whether a sheep is sheared.",
+                        "set mob's sheared to true")
+                .typedEnumSetter("set %e:ENTITY% (wool|sheep) color [to] %color:DYE_COLOR%",
+                        "setColor", "color",
+                        "Sets a sheep's wool color.",
+                        "set mob's wool color to red");
     }
 }

@@ -17,9 +17,9 @@ public final class PigStatements {
     public void register(@NotNull LumenAPI api) {
         EntityHelper.forType(FQCN)
                 .alias("_pg")
-        .boolSetter("set %e:ENTITY% saddle [to] %val:BOOLEAN%",
-        "setSaddle",
-        "Sets whether a pig has a saddle.",
-        "set mob's saddle to true");
+                .boolSetter("set %e:ENTITY% saddle [to] %val:BOOLEAN%",
+                        "setSaddle",
+                        "Sets whether a pig has a saddle.",
+                        "set mob's saddle to true");
     }
 }

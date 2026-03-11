@@ -17,13 +17,13 @@ public final class AgeableConditions {
     public void register(@NotNull LumenAPI api) {
         EntityHelper.forType(FQCN)
                 .alias("_ag")
-        .conditionPair(
-        "%e:ENTITY% is (adult|grown)",
-        "%e:ENTITY% is (baby|young)",
-        "isAdult()",
-        "Checks if an ageable entity is an adult.",
-        "Checks if an ageable entity is a baby.",
-        "if mob is adult:",
-        "if mob is baby:");
+                .conditionPair(
+                        "%e:ENTITY% is (adult|grown)",
+                        "%e:ENTITY% is (baby|young)",
+                        "isAdult()",
+                        "Checks if an ageable entity is an adult.",
+                        "Checks if an ageable entity is a baby.",
+                        "if mob is adult:",
+                        "if mob is baby:");
     }
 }

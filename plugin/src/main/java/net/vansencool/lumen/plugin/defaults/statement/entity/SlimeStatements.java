@@ -17,9 +17,9 @@ public final class SlimeStatements {
     public void register(@NotNull LumenAPI api) {
         EntityHelper.forType(FQCN)
                 .alias("_sl")
-        .intSetter("set %e:ENTITY% slime size [to] %val:INT%",
-        "setSize",
-        "Sets a slime's size.",
-        "set mob's slime size to 3");
+                .intSetter("set %e:ENTITY% slime size [to] %val:INT%",
+                        "setSize",
+                        "Sets a slime's size.",
+                        "set mob's slime size to 3");
     }
 }

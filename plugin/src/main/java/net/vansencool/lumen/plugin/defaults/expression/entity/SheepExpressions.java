@@ -17,9 +17,9 @@ public final class SheepExpressions {
     public void register(@NotNull LumenAPI api) {
         EntityHelper.forType(FQCN)
                 .alias("_sh")
-        .stringGetter("[get] %e:ENTITY% (wool|sheep) color",
-        "getColor().name()",
-        "Returns the sheep's wool color name.",
-        "var c = mob's sheep color");
+                .stringGetter("[get] %e:ENTITY% (wool|sheep) color",
+                        "getColor().name()",
+                        "Returns the sheep's wool color name.",
+                        "var c = mob's sheep color");
     }
 }

@@ -17,21 +17,21 @@ public final class FoxConditions {
     public void register(@NotNull LumenAPI api) {
         EntityHelper.forType(FQCN)
                 .alias("_fx")
-        .conditionPair(
-        "%e:ENTITY% is sleeping",
-        "%e:ENTITY% is not sleeping",
-        "isSleeping()",
-        "Checks if a fox is sleeping.",
-        "Checks if a fox is not sleeping.",
-        "if mob is sleeping:",
-        "if mob is not sleeping:")
-        .conditionPair(
-        "%e:ENTITY% is crouching",
-        "%e:ENTITY% is not crouching",
-        "isCrouching()",
-        "Checks if a fox is crouching.",
-        "Checks if a fox is not crouching.",
-        "if mob is crouching:",
-        "if mob is not crouching:");
+                .conditionPair(
+                        "%e:ENTITY% is sleeping",
+                        "%e:ENTITY% is not sleeping",
+                        "isSleeping()",
+                        "Checks if a fox is sleeping.",
+                        "Checks if a fox is not sleeping.",
+                        "if mob is sleeping:",
+                        "if mob is not sleeping:")
+                .conditionPair(
+                        "%e:ENTITY% is crouching",
+                        "%e:ENTITY% is not crouching",
+                        "isCrouching()",
+                        "Checks if a fox is crouching.",
+                        "Checks if a fox is not crouching.",
+                        "if mob is crouching:",
+                        "if mob is not crouching:");
     }
 }

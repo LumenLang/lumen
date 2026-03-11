@@ -31,48 +31,6 @@ import static net.vansencool.lumen.api.pattern.LumaExample.top;
 @SuppressWarnings("unused")
 public class ListBlocks {
 
-    @Call
-    public void register(@NotNull LumenAPI api) {
-        api.patterns().block(b -> b
-                .by("Lumen")
-                .pattern("loop %var:EXPR% in %list:LIST%")
-                .description("Iterates over each element in a list.")
-                .example(of(
-                        top("loop item in myList:"),
-                        secondly("broadcast item")))
-                .since("1.0.0")
-                .category(Categories.LIST)
-                .handler(new BlockHandler() {
-                    @Override
-                    public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
-                        if (ctx.block().isRoot()) {
-                            throw new RuntimeException("A 'loop' block cannot be top-level");
-                        }
-                        ctx.codegen().addImport(List.class.getName());
-                        String varName = ctx.java("var");
-                        if (ctx.env().lookupVar(varName) != null) {
-                            throw new RuntimeException(
-                                    "Loop variable '" + varName + "' is already defined in this scope.");
-                        }
-                        String listJava = ctx.java("list");
-                        out.line("for (var " + varName + " : (List<?>) " + listJava + ") {");
-
-                        RefTypeHandle elementType = resolveElementType(ctx);
-                        Map<String, Object> metadata = resolveElementMetadata(ctx);
-                        if (metadata != null) {
-                            ctx.env().defineVar(varName, elementType, varName, metadata);
-                        } else {
-                            ctx.env().defineVar(varName, elementType, varName);
-                        }
-                    }
-
-                    @Override
-                    public void end(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
-                        out.line("}");
-                    }
-                }));
-    }
-
     /**
      * Resolves the element ref type from the list variable's {@code element_type} metadata.
      *
@@ -113,5 +71,47 @@ public class ListBlocks {
             return Map.of("data_type", elementType);
         }
         return null;
+    }
+
+    @Call
+    public void register(@NotNull LumenAPI api) {
+        api.patterns().block(b -> b
+                .by("Lumen")
+                .pattern("loop %var:EXPR% in %list:LIST%")
+                .description("Iterates over each element in a list.")
+                .example(of(
+                        top("loop item in myList:"),
+                        secondly("broadcast item")))
+                .since("1.0.0")
+                .category(Categories.LIST)
+                .handler(new BlockHandler() {
+                    @Override
+                    public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
+                        if (ctx.block().isRoot()) {
+                            throw new RuntimeException("A 'loop' block cannot be top-level");
+                        }
+                        ctx.codegen().addImport(List.class.getName());
+                        String varName = ctx.java("var");
+                        if (ctx.env().lookupVar(varName) != null) {
+                            throw new RuntimeException(
+                                    "Loop variable '" + varName + "' is already defined in this scope.");
+                        }
+                        String listJava = ctx.java("list");
+                        out.line("for (var " + varName + " : (List<?>) " + listJava + ") {");
+
+                        RefTypeHandle elementType = resolveElementType(ctx);
+                        Map<String, Object> metadata = resolveElementMetadata(ctx);
+                        if (metadata != null) {
+                            ctx.env().defineVar(varName, elementType, varName, metadata);
+                        } else {
+                            ctx.env().defineVar(varName, elementType, varName);
+                        }
+                    }
+
+                    @Override
+                    public void end(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
+                        out.line("}");
+                    }
+                }));
     }
 }

@@ -41,8 +41,56 @@ import java.util.Set;
  * Registers all built-in type bindings for the default Lumen language.
  */
 @Registration(order = -1000)
-@SuppressWarnings({ "unused", "DataFlowIssue" })
+@SuppressWarnings({"unused", "DataFlowIssue"})
 public final class DefaultTypeBindings {
+
+    private static <E extends Enum<E>> void tryRegisterEnum(
+            @NotNull LumenAPI api,
+            @NotNull String typeId,
+            @NotNull Class<E> enumClass,
+            @NotNull String fqcn) {
+        try {
+            api.types().register(EnumTypeBinding.of(typeId, enumClass, fqcn));
+        } catch (Exception e) {
+            LumenLogger.warning("Skipping enum type binding '" + typeId + "' (" + fqcn + "): " + e.getMessage());
+        }
+    }
+
+    private static void tryRegisterRegistryType(
+            @NotNull LumenAPI api,
+            @NotNull String typeId,
+            @NotNull Class<?> clazz,
+            @NotNull String fqcn) {
+        try {
+            api.types().register(RegistryTypeBinding.fromStaticFields(typeId, clazz, fqcn));
+        } catch (Exception e) {
+            LumenLogger.warning("Skipping registry type binding '" + typeId + "' (" + fqcn + "): " + e.getMessage());
+        }
+    }
+
+    /**
+     * Formats a double value for clean Java source output.
+     *
+     * <p>
+     * Whole numbers produce a trailing {@code .0} (e.g. {@code 20.0}).
+     * Fractional values are rendered with up to 6 significant decimal digits,
+     * with trailing zeros stripped.
+     *
+     * @param d the double value
+     * @return a clean representation suitable for Java source code
+     */
+    private static @NotNull String formatDouble(double d) {
+        if (d == Math.floor(d) && !Double.isInfinite(d)) {
+            long whole = (long) d;
+            return whole + ".0";
+        }
+        String formatted = String.format(Locale.ROOT, "%.6f", d);
+        formatted = formatted.replaceAll("0+$", "");
+        if (formatted.endsWith(".")) {
+            formatted += "0";
+        }
+        return formatted;
+    }
 
     @Call
     public void register(@NotNull LumenAPI api) {
@@ -90,30 +138,6 @@ public final class DefaultTypeBindings {
         }
     }
 
-    private static <E extends Enum<E>> void tryRegisterEnum(
-            @NotNull LumenAPI api,
-            @NotNull String typeId,
-            @NotNull Class<E> enumClass,
-            @NotNull String fqcn) {
-        try {
-            api.types().register(EnumTypeBinding.of(typeId, enumClass, fqcn));
-        } catch (Exception e) {
-            LumenLogger.warning("Skipping enum type binding '" + typeId + "' (" + fqcn + "): " + e.getMessage());
-        }
-    }
-
-    private static void tryRegisterRegistryType(
-            @NotNull LumenAPI api,
-            @NotNull String typeId,
-            @NotNull Class<?> clazz,
-            @NotNull String fqcn) {
-        try {
-            api.types().register(RegistryTypeBinding.fromStaticFields(typeId, clazz, fqcn));
-        } catch (Exception e) {
-            LumenLogger.warning("Skipping registry type binding '" + typeId + "' (" + fqcn + "): " + e.getMessage());
-        }
-    }
-
     private void registerInt(@NotNull LumenAPI api) {
         api.types().register(new AddonTypeBinding() {
             @Override
@@ -155,7 +179,7 @@ public final class DefaultTypeBindings {
 
             @Override
             public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx,
-                    @NotNull EnvironmentAccess env) {
+                                          @NotNull EnvironmentAccess env) {
                 if (value instanceof VarHandle ref) {
                     return "Coerce.toInt(" + ref.java() + ")";
                 }
@@ -206,7 +230,7 @@ public final class DefaultTypeBindings {
 
             @Override
             public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx,
-                    @NotNull EnvironmentAccess env) {
+                                          @NotNull EnvironmentAccess env) {
                 if (value instanceof VarHandle ref) {
                     return "((long) Coerce.toDouble(" + ref.java() + "))";
                 }
@@ -254,7 +278,7 @@ public final class DefaultTypeBindings {
 
             @Override
             public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx,
-                    @NotNull EnvironmentAccess env) {
+                                          @NotNull EnvironmentAccess env) {
                 if (value instanceof VarHandle ref) {
                     return "Coerce.toDouble(" + ref.java() + ")";
                 }
@@ -318,7 +342,7 @@ public final class DefaultTypeBindings {
 
             @Override
             public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx,
-                    @NotNull EnvironmentAccess env) {
+                                          @NotNull EnvironmentAccess env) {
                 if (value instanceof VarHandle ref) {
                     return "Coerce.toDouble(" + ref.java() + ")";
                 }
@@ -379,7 +403,7 @@ public final class DefaultTypeBindings {
 
             @Override
             public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx,
-                    @NotNull EnvironmentAccess env) {
+                                          @NotNull EnvironmentAccess env) {
                 if (value instanceof VarHandle ref) {
                     return "Boolean.parseBoolean(String.valueOf(" + ref.java() + "))";
                 }
@@ -436,7 +460,7 @@ public final class DefaultTypeBindings {
 
             @Override
             public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx,
-                    @NotNull EnvironmentAccess env) {
+                                          @NotNull EnvironmentAccess env) {
                 ctx.addImport(Material.class.getName());
                 if (value instanceof VarHandle ref) {
                     return "Material.valueOf(String.valueOf(" + ref.java() + ").toUpperCase())";
@@ -511,7 +535,7 @@ public final class DefaultTypeBindings {
 
             @Override
             public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx,
-                    @NotNull EnvironmentAccess env) {
+                                          @NotNull EnvironmentAccess env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null player reference");
                 return ((VarHandle) v).java();
@@ -589,7 +613,7 @@ public final class DefaultTypeBindings {
 
             @Override
             public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx,
-                    @NotNull EnvironmentAccess env) {
+                                          @NotNull EnvironmentAccess env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null player reference");
                 return ((VarHandle) v).java();
@@ -666,7 +690,7 @@ public final class DefaultTypeBindings {
 
             @Override
             public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx,
-                    @NotNull EnvironmentAccess env) {
+                                          @NotNull EnvironmentAccess env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null offline player reference");
                 return ((VarHandle) v).java();
@@ -744,7 +768,7 @@ public final class DefaultTypeBindings {
 
             @Override
             public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx,
-                    @NotNull EnvironmentAccess env) {
+                                          @NotNull EnvironmentAccess env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null offline player reference");
                 return ((VarHandle) v).java();
@@ -780,7 +804,7 @@ public final class DefaultTypeBindings {
 
             @Override
             public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx,
-                    @NotNull EnvironmentAccess env) {
+                                          @NotNull EnvironmentAccess env) {
                 return (String) v;
             }
         });
@@ -893,7 +917,7 @@ public final class DefaultTypeBindings {
 
             @Override
             public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx,
-                    @NotNull EnvironmentAccess env) {
+                                          @NotNull EnvironmentAccess env) {
                 return (String) v;
             }
         });
@@ -964,7 +988,7 @@ public final class DefaultTypeBindings {
 
             @Override
             public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx,
-                    @NotNull EnvironmentAccess env) {
+                                          @NotNull EnvironmentAccess env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null entity reference");
                 return ((VarHandle) v).java();
@@ -1045,7 +1069,7 @@ public final class DefaultTypeBindings {
 
             @Override
             public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx,
-                    @NotNull EnvironmentAccess env) {
+                                          @NotNull EnvironmentAccess env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null entity reference");
                 return ((VarHandle) v).java();
@@ -1117,7 +1141,7 @@ public final class DefaultTypeBindings {
 
             @Override
             public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx,
-                    @NotNull EnvironmentAccess env) {
+                                          @NotNull EnvironmentAccess env) {
                 if (value instanceof VarHandle ref) {
                     ctx.addImport(EntityType.class.getName());
                     return "EntityType.valueOf(String.valueOf(" + ref.java() + ").toUpperCase())";
@@ -1192,7 +1216,7 @@ public final class DefaultTypeBindings {
 
             @Override
             public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx,
-                    @NotNull EnvironmentAccess env) {
+                                          @NotNull EnvironmentAccess env) {
                 ctx.addImport(ItemStack.class.getName());
                 ctx.addImport(Material.class.getName());
                 if (value instanceof VarHandle ref) {
@@ -1261,7 +1285,7 @@ public final class DefaultTypeBindings {
 
             @Override
             public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx,
-                    @NotNull EnvironmentAccess env) {
+                                          @NotNull EnvironmentAccess env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null item stack reference");
                 return ((VarHandle) v).java();
@@ -1331,7 +1355,7 @@ public final class DefaultTypeBindings {
 
             @Override
             public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx,
-                    @NotNull EnvironmentAccess env) {
+                                          @NotNull EnvironmentAccess env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null item stack reference");
                 return ((VarHandle) v).java();
@@ -1396,7 +1420,7 @@ public final class DefaultTypeBindings {
 
             @Override
             public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx,
-                    @NotNull EnvironmentAccess env) {
+                                          @NotNull EnvironmentAccess env) {
                 return ((VarHandle) v).java();
             }
 
@@ -1461,7 +1485,7 @@ public final class DefaultTypeBindings {
 
             @Override
             public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx,
-                    @NotNull EnvironmentAccess env) {
+                                          @NotNull EnvironmentAccess env) {
                 return ((VarHandle) v).java();
             }
 
@@ -1515,7 +1539,7 @@ public final class DefaultTypeBindings {
 
             @Override
             public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx,
-                    @NotNull EnvironmentAccess env) {
+                                          @NotNull EnvironmentAccess env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null list reference");
                 return ((VarHandle) v).java();
@@ -1571,7 +1595,7 @@ public final class DefaultTypeBindings {
 
             @Override
             public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx,
-                    @NotNull EnvironmentAccess env) {
+                                          @NotNull EnvironmentAccess env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null map reference");
                 return ((VarHandle) v).java();
@@ -1627,7 +1651,7 @@ public final class DefaultTypeBindings {
 
             @Override
             public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx,
-                    @NotNull EnvironmentAccess env) {
+                                          @NotNull EnvironmentAccess env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null data reference");
                 return ((VarHandle) v).java();
@@ -1692,7 +1716,7 @@ public final class DefaultTypeBindings {
 
             @Override
             public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx,
-                    @NotNull EnvironmentAccess env) {
+                                          @NotNull EnvironmentAccess env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null block reference");
                 return ((VarHandle) v).java();
@@ -1702,29 +1726,5 @@ public final class DefaultTypeBindings {
                 return ref.type() != null && ref.type().id().equals(RefTypes.BLOCK.id());
             }
         });
-    }
-
-    /**
-     * Formats a double value for clean Java source output.
-     *
-     * <p>
-     * Whole numbers produce a trailing {@code .0} (e.g. {@code 20.0}).
-     * Fractional values are rendered with up to 6 significant decimal digits,
-     * with trailing zeros stripped.
-     *
-     * @param d the double value
-     * @return a clean representation suitable for Java source code
-     */
-    private static @NotNull String formatDouble(double d) {
-        if (d == Math.floor(d) && !Double.isInfinite(d)) {
-            long whole = (long) d;
-            return whole + ".0";
-        }
-        String formatted = String.format(Locale.ROOT, "%.6f", d);
-        formatted = formatted.replaceAll("0+$", "");
-        if (formatted.endsWith(".")) {
-            formatted += "0";
-        }
-        return formatted;
     }
 }

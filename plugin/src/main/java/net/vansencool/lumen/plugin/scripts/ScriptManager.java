@@ -70,6 +70,7 @@ import java.util.concurrent.Executors;
  * phases
  * entirely when a script has not changed since the last compilation.
  */
+@SuppressWarnings("resource")
 public final class ScriptManager {
 
     private static final Map<String, LoadedScript> scripts = new ConcurrentHashMap<>();
@@ -93,7 +94,7 @@ public final class ScriptManager {
      * @param name   the script file name (e.g. {@code "hello.luma"})
      * @param source the raw {@code .luma} source text
      * @return a future that completes with {@link CompileTimings} on the main
-     *         thread
+     * thread
      */
     public static @NotNull CompletableFuture<CompileTimings> load(@NotNull String name, @NotNull String source) {
         return CompletableFuture.supplyAsync(() -> prepareScript(name, source), COMPILE_POOL)
@@ -486,7 +487,7 @@ public final class ScriptManager {
     }
 
     private static void logCompileErrors(@NotNull List<CompilationFailedException.CompileError> errors,
-                                          @NotNull String scriptName) {
+                                         @NotNull String scriptName) {
         for (CompilationFailedException.CompileError err : errors) {
             ScriptSourceMap.ScriptLineMapping mapping = err.javaLine() > 0
                     ? ScriptSourceMap.findScriptLine(err.fqcn(), (int) err.javaLine())
@@ -502,7 +503,7 @@ public final class ScriptManager {
     }
 
     private static void logCompileErrors(@NotNull List<CompilationFailedException.CompileError> errors,
-                                          @NotNull List<GeneratedSource> generated) {
+                                         @NotNull List<GeneratedSource> generated) {
         for (CompilationFailedException.CompileError err : errors) {
             String scriptName = generated.stream()
                     .filter(s -> s.fqcn().equals(err.fqcn()))
@@ -522,7 +523,7 @@ public final class ScriptManager {
     }
 
     private static @NotNull List<PreparedScript> batchCompile(@NotNull List<GeneratedSource> generated,
-            long parseTotalNanos) {
+                                                              long parseTotalNanos) {
         List<SourceFile> files = new ArrayList<>();
         for (GeneratedSource s : generated) {
             dumpIfEnabled(s);
@@ -577,8 +578,8 @@ public final class ScriptManager {
     }
 
     private static void loadBytecodes(@NotNull String scriptName,
-            @NotNull String fqcn,
-            @NotNull Map<String, byte[]> bytecodes) {
+                                      @NotNull String fqcn,
+                                      @NotNull Map<String, byte[]> bytecodes) {
         ScriptClassLoader loader = new ScriptClassLoader(ScriptRuntime.class.getClassLoader());
         for (var entry : bytecodes.entrySet()) {
             loader.define(entry.getKey(), entry.getValue());
@@ -596,9 +597,9 @@ public final class ScriptManager {
     }
 
     private static void cacheIfEnabled(@NotNull String scriptName,
-            @NotNull String originalSource,
-            @NotNull String javaSource,
-            @NotNull Map<String, byte[]> bytecodes) {
+                                       @NotNull String originalSource,
+                                       @NotNull String javaSource,
+                                       @NotNull Map<String, byte[]> bytecodes) {
         if (LumenConfiguration.PERFORMANCE.CACHE_COMPILED_CLASSES) {
             CompiledClassCache.save(scriptName, originalSource, bytecodes);
             CompiledClassCache.saveJavaSource(scriptName, javaSource);
@@ -628,7 +629,7 @@ public final class ScriptManager {
     }
 
     private static @NotNull Map<String, byte[]> extractBytecodes(@NotNull Map<String, byte[]> allClasses,
-            @NotNull String normalizedName) {
+                                                                 @NotNull String normalizedName) {
         String prefix = "net.vansencool.lumen.java.compiled." + normalizedName;
         Map<String, byte[]> result = new HashMap<>();
         for (var entry : allClasses.entrySet()) {

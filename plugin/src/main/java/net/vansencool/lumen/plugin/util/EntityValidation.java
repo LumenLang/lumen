@@ -51,7 +51,7 @@ public final class EntityValidation {
      * @param handle      the entity VarHandle
      * @param patternDesc a short description of what the pattern does (for error messages)
      * @return {@code true} if the entity is definitely a LivingEntity,
-     *         {@code false} if it is unknown (safe instanceof guard needed)
+     * {@code false} if it is unknown (safe instanceof guard needed)
      * @throws ParseFailureException if the entity is known to be incompatible
      */
     public static boolean requireLivingEntity(@NotNull VarHandle handle,
@@ -80,7 +80,7 @@ public final class EntityValidation {
      * @param requiredClass the fully-qualified class name that must be assignable
      * @param patternDesc   a short description for error messages
      * @return {@code true} if the entity is known to satisfy the requirement,
-     *         {@code false} if unknown (instanceof guard needed)
+     * {@code false} if unknown (instanceof guard needed)
      * @throws ParseFailureException if the entity is known to be incompatible
      */
     public static boolean requireSubtype(@NotNull VarHandle handle,

@@ -17,9 +17,9 @@ public final class AxolotlExpressions {
     public void register(@NotNull LumenAPI api) {
         EntityHelper.forType(FQCN)
                 .alias("_ax")
-        .stringGetter("[get] %e:ENTITY% axolotl variant",
-        "getVariant().name()",
-        "Returns the axolotl's variant name.",
-        "var v = mob's axolotl variant");
+                .stringGetter("[get] %e:ENTITY% axolotl variant",
+                        "getVariant().name()",
+                        "Returns the axolotl's variant name.",
+                        "var v = mob's axolotl variant");
     }
 }

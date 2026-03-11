@@ -21,6 +21,80 @@ import java.util.Map;
 @SuppressWarnings("unused")
 public final class MapStatements {
 
+    private static @Nullable String mapVarName(@NotNull BindingAccess ctx) {
+        Object val = ctx.value("map");
+        if (val instanceof EnvironmentAccess.VarHandle ref) {
+            return ref.java();
+        }
+        return null;
+    }
+
+    private static void flushIfStored(
+            @NotNull EnvironmentAccess env,
+            @NotNull JavaOutput out,
+            @NotNull String mapJava,
+            @Nullable String varName) {
+        if (varName != null && env.isStored(varName)) {
+            out.line(env.storedClassName(varName) + ".set(" + env.getStoredKey(varName) + ", "
+                    + mapJava + ");");
+        }
+    }
+
+    private static void emitScopedPut(@NotNull BindingAccess ctx, @NotNull JavaOutput out,
+                                      @NotNull String mapVarName, @NotNull String scopeVarName,
+                                      @NotNull String keyJava, @NotNull String valJava) {
+        EnvironmentAccess env = ctx.env();
+        EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(mapVarName);
+        if (info == null) {
+            throw new RuntimeException("Variable '" + mapVarName
+                    + "' is not a global variable. Scoped operations (for ...) are only supported on global vars.");
+        }
+        String storageClass = info.stored() ? "PersistentVars" : "GlobalVars";
+        String storageKey = buildScopedKey(env, mapVarName, scopeVarName, info);
+        String tempVar = "__scoped_" + mapVarName;
+        ctx.codegen().addImport(Map.class.getName());
+        ctx.codegen().addImport(HashMap.class.getName());
+        out.line("var " + tempVar + " = " + storageClass + ".get(" + storageKey + ", " + info.defaultJava() + ");");
+        out.line("((Map<Object, Object>) " + tempVar + ").put(" + keyJava + ", " + valJava + ");");
+        out.line(storageClass + ".set(" + storageKey + ", " + tempVar + ");");
+    }
+
+    private static void emitScopedRemove(@NotNull BindingAccess ctx, @NotNull JavaOutput out,
+                                         @NotNull String mapVarName, @NotNull String scopeVarName,
+                                         @NotNull String keyJava) {
+        EnvironmentAccess env = ctx.env();
+        EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(mapVarName);
+        if (info == null) {
+            throw new RuntimeException("Variable '" + mapVarName
+                    + "' is not a global variable. Scoped operations (for ...) are only supported on global vars.");
+        }
+        String storageClass = info.stored() ? "PersistentVars" : "GlobalVars";
+        String storageKey = buildScopedKey(env, mapVarName, scopeVarName, info);
+        String tempVar = "__scoped_" + mapVarName;
+        ctx.codegen().addImport(Map.class.getName());
+        ctx.codegen().addImport(HashMap.class.getName());
+        out.line("var " + tempVar + " = " + storageClass + ".get(" + storageKey + ", " + info.defaultJava() + ");");
+        out.line("((Map<?, ?>) " + tempVar + ").remove(" + keyJava + ");");
+        out.line(storageClass + ".set(" + storageKey + ", " + tempVar + ");");
+    }
+
+    private static @NotNull String buildScopedKey(@NotNull EnvironmentAccess env,
+                                                  @NotNull String varName,
+                                                  @NotNull String scopeVarName,
+                                                  @NotNull EnvironmentAccess.GlobalInfo info) {
+        EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
+        if (scopeRef == null) {
+            throw new RuntimeException("Scope variable not found: " + scopeVarName);
+        }
+        RefTypeHandle refType = scopeRef.type();
+        if (refType == null) {
+            throw new RuntimeException("Scope variable '" + scopeVarName
+                    + "' has no ref type. Expected a typed variable like a player or entity.");
+        }
+        String scopeKeyPart = refType.keyExpression(scopeRef.java());
+        return "\"" + info.className() + "." + varName + ".\" + " + scopeKeyPart;
+    }
+
     @Call
     public void register(@NotNull LumenAPI api) {
         api.patterns().statement(b -> b
@@ -99,79 +173,5 @@ public final class MapStatements {
                     out.line("((Map<?, ?>) " + mapJava + ").clear();");
                     flushIfStored(env, out, mapJava, mapVarName(ctx));
                 }));
-    }
-
-    private static @Nullable String mapVarName(@NotNull BindingAccess ctx) {
-        Object val = ctx.value("map");
-        if (val instanceof EnvironmentAccess.VarHandle ref) {
-            return ref.java();
-        }
-        return null;
-    }
-
-    private static void flushIfStored(
-            @NotNull EnvironmentAccess env,
-            @NotNull JavaOutput out,
-            @NotNull String mapJava,
-            @Nullable String varName) {
-        if (varName != null && env.isStored(varName)) {
-            out.line(env.storedClassName(varName) + ".set(" + env.getStoredKey(varName) + ", "
-                    + mapJava + ");");
-        }
-    }
-
-    private static void emitScopedPut(@NotNull BindingAccess ctx, @NotNull JavaOutput out,
-                                       @NotNull String mapVarName, @NotNull String scopeVarName,
-                                       @NotNull String keyJava, @NotNull String valJava) {
-        EnvironmentAccess env = ctx.env();
-        EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(mapVarName);
-        if (info == null) {
-            throw new RuntimeException("Variable '" + mapVarName
-                    + "' is not a global variable. Scoped operations (for ...) are only supported on global vars.");
-        }
-        String storageClass = info.stored() ? "PersistentVars" : "GlobalVars";
-        String storageKey = buildScopedKey(env, mapVarName, scopeVarName, info);
-        String tempVar = "__scoped_" + mapVarName;
-        ctx.codegen().addImport(Map.class.getName());
-        ctx.codegen().addImport(HashMap.class.getName());
-        out.line("var " + tempVar + " = " + storageClass + ".get(" + storageKey + ", " + info.defaultJava() + ");");
-        out.line("((Map<Object, Object>) " + tempVar + ").put(" + keyJava + ", " + valJava + ");");
-        out.line(storageClass + ".set(" + storageKey + ", " + tempVar + ");");
-    }
-
-    private static void emitScopedRemove(@NotNull BindingAccess ctx, @NotNull JavaOutput out,
-                                          @NotNull String mapVarName, @NotNull String scopeVarName,
-                                          @NotNull String keyJava) {
-        EnvironmentAccess env = ctx.env();
-        EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(mapVarName);
-        if (info == null) {
-            throw new RuntimeException("Variable '" + mapVarName
-                    + "' is not a global variable. Scoped operations (for ...) are only supported on global vars.");
-        }
-        String storageClass = info.stored() ? "PersistentVars" : "GlobalVars";
-        String storageKey = buildScopedKey(env, mapVarName, scopeVarName, info);
-        String tempVar = "__scoped_" + mapVarName;
-        ctx.codegen().addImport(Map.class.getName());
-        ctx.codegen().addImport(HashMap.class.getName());
-        out.line("var " + tempVar + " = " + storageClass + ".get(" + storageKey + ", " + info.defaultJava() + ");");
-        out.line("((Map<?, ?>) " + tempVar + ").remove(" + keyJava + ");");
-        out.line(storageClass + ".set(" + storageKey + ", " + tempVar + ");");
-    }
-
-    private static @NotNull String buildScopedKey(@NotNull EnvironmentAccess env,
-                                                   @NotNull String varName,
-                                                   @NotNull String scopeVarName,
-                                                   @NotNull EnvironmentAccess.GlobalInfo info) {
-        EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
-        if (scopeRef == null) {
-            throw new RuntimeException("Scope variable not found: " + scopeVarName);
-        }
-        RefTypeHandle refType = scopeRef.type();
-        if (refType == null) {
-            throw new RuntimeException("Scope variable '" + scopeVarName
-                    + "' has no ref type. Expected a typed variable like a player or entity.");
-        }
-        String scopeKeyPart = refType.keyExpression(scopeRef.java());
-        return "\"" + info.className() + "." + varName + ".\" + " + scopeKeyPart;
     }
 }

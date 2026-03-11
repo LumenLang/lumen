@@ -17,9 +17,9 @@ public final class GolemStatements {
     public void register(@NotNull LumenAPI api) {
         EntityHelper.forType(FQCN)
                 .alias("_ig")
-        .boolSetter("set %e:ENTITY% player created [to] %val:BOOLEAN%",
-        "setPlayerCreated",
-        "Sets whether an iron golem was created by a player.",
-        "set mob's player created to true");
+                .boolSetter("set %e:ENTITY% player created [to] %val:BOOLEAN%",
+                        "setPlayerCreated",
+                        "Sets whether an iron golem was created by a player.",
+                        "set mob's player created to true");
     }
 }

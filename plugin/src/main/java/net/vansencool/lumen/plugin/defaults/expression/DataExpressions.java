@@ -25,6 +25,98 @@ import java.util.StringJoiner;
 @SuppressWarnings("unused")
 public final class DataExpressions {
 
+    /**
+     * Attempts to coerce the raw {@code DataInstance.get()} result based on the
+     * compile-time data schema when both the object's data type and the field name
+     * are known.
+     *
+     * <p>This inspects the {@code obj} parameter tokens, looks up the variable's
+     * {@code data_type} metadata, retrieves the matching {@link DataSchema}, and
+     * wraps the expression in the field type's coercion template (e.g. wrapping
+     * with {@code Coerce.toDouble()}).
+     *
+     * <p>If the data type or field name cannot be determined at compile time, the
+     * raw {@code Object} value is returned without coercion.
+     *
+     * @param ctx    the binding access for the current pattern match
+     * @param rawGet the Java expression for the raw {@code DataInstance.get()} call
+     * @return an expression result with the coerced (or raw) Java expression
+     */
+    private static @NotNull ExpressionResult coerceFieldResult(@NotNull BindingAccess ctx,
+                                                               @NotNull String rawGet) {
+        DataSchema.FieldType fieldType = resolveFieldType(ctx);
+        if (fieldType != null && fieldType != DataSchema.FieldType.ANY) {
+            return new ExpressionResult(fieldType.coerce(rawGet), null);
+        }
+        return new ExpressionResult(rawGet, null);
+    }
+
+    /**
+     * Resolves the {@link DataSchema.FieldType} for the current field access expression
+     * by inspecting the object variable's metadata and the field name tokens.
+     *
+     * @param ctx the binding access
+     * @return the field type, or {@code null} if it cannot be determined at compile time
+     */
+    private static @Nullable DataSchema.FieldType resolveFieldType(@NotNull BindingAccess ctx) {
+        List<String> objTokens = ctx.tokens("obj");
+        if (objTokens.size() != 1) return null;
+
+        EnvironmentAccess.VarHandle varHandle = ctx.env().lookupVar(objTokens.get(0));
+        if (varHandle == null || !varHandle.hasMeta("data_type")) return null;
+
+        String dataType = String.valueOf(varHandle.meta("data_type"));
+        DataSchema schema = ctx.env().get("data_schema_" + dataType);
+        if (schema == null) return null;
+
+        List<String> fieldTokens = ctx.tokens("field");
+        if (fieldTokens.size() != 1) return null;
+
+        return schema.fields().get(fieldTokens.get(0));
+    }
+
+    /**
+     * Resolves a single token to a Java expression. Checks for string literals,
+     * numeric literals, boolean literals, and variable references.
+     */
+    private static @NotNull String resolveValueToken(@NotNull String token,
+                                                     @NotNull EnvironmentAccess env) {
+        if (token.startsWith("\"") && token.endsWith("\"")) {
+            String inner = token.substring(1, token.length() - 1);
+            if (inner.contains("{") && inner.contains("}")) {
+                return env.expandPlaceholders(inner);
+            }
+            return "\"" + inner + "\"";
+        }
+
+        if (token.contains("{") && token.contains("}")) {
+            return env.expandPlaceholders(token);
+        }
+
+        if (token.equalsIgnoreCase("true") || token.equalsIgnoreCase("false")) {
+            return token.toLowerCase();
+        }
+
+        try {
+            Integer.parseInt(token);
+            return token;
+        } catch (NumberFormatException ignored) {
+        }
+
+        try {
+            Double.parseDouble(token);
+            return token;
+        } catch (NumberFormatException ignored) {
+        }
+
+        EnvironmentAccess.VarHandle ref = env.lookupVar(token);
+        if (ref != null) {
+            return ref.java();
+        }
+
+        return "\"" + token + "\"";
+    }
+
     @Call
     public void register(@NotNull LumenAPI api) {
         registerConstructor(api);
@@ -149,95 +241,5 @@ public final class DataExpressions {
                     String rawGet = "((DataInstance) " + objJava + ").get(" + fieldJava + ")";
                     return coerceFieldResult(ctx, rawGet);
                 }));
-    }
-
-    /**
-     * Attempts to coerce the raw {@code DataInstance.get()} result based on the
-     * compile-time data schema when both the object's data type and the field name
-     * are known.
-     *
-     * <p>This inspects the {@code obj} parameter tokens, looks up the variable's
-     * {@code data_type} metadata, retrieves the matching {@link DataSchema}, and
-     * wraps the expression in the field type's coercion template (e.g. wrapping
-     * with {@code Coerce.toDouble()}).
-     *
-     * <p>If the data type or field name cannot be determined at compile time, the
-     * raw {@code Object} value is returned without coercion.
-     *
-     * @param ctx    the binding access for the current pattern match
-     * @param rawGet the Java expression for the raw {@code DataInstance.get()} call
-     * @return an expression result with the coerced (or raw) Java expression
-     */
-    private static @NotNull ExpressionResult coerceFieldResult(@NotNull BindingAccess ctx,
-                                                                @NotNull String rawGet) {
-        DataSchema.FieldType fieldType = resolveFieldType(ctx);
-        if (fieldType != null && fieldType != DataSchema.FieldType.ANY) {
-            return new ExpressionResult(fieldType.coerce(rawGet), null);
-        }
-        return new ExpressionResult(rawGet, null);
-    }
-
-    /**
-     * Resolves the {@link DataSchema.FieldType} for the current field access expression
-     * by inspecting the object variable's metadata and the field name tokens.
-     *
-     * @param ctx the binding access
-     * @return the field type, or {@code null} if it cannot be determined at compile time
-     */
-    private static @Nullable DataSchema.FieldType resolveFieldType(@NotNull BindingAccess ctx) {
-        List<String> objTokens = ctx.tokens("obj");
-        if (objTokens.size() != 1) return null;
-
-        EnvironmentAccess.VarHandle varHandle = ctx.env().lookupVar(objTokens.get(0));
-        if (varHandle == null || !varHandle.hasMeta("data_type")) return null;
-
-        String dataType = String.valueOf(varHandle.meta("data_type"));
-        DataSchema schema = ctx.env().get("data_schema_" + dataType);
-        if (schema == null) return null;
-
-        List<String> fieldTokens = ctx.tokens("field");
-        if (fieldTokens.size() != 1) return null;
-
-        return schema.fields().get(fieldTokens.get(0));
-    }
-
-    /**
-     * Resolves a single token to a Java expression. Checks for string literals,
-     * numeric literals, boolean literals, and variable references.
-     */
-    private static @NotNull String resolveValueToken(@NotNull String token,
-            @NotNull EnvironmentAccess env) {
-        if (token.startsWith("\"") && token.endsWith("\"")) {
-            String inner = token.substring(1, token.length() - 1);
-            if (inner.contains("{") && inner.contains("}")) {
-                return env.expandPlaceholders(inner);
-            }
-            return "\"" + inner + "\"";
-        }
-
-        if (token.contains("{") && token.contains("}")) {
-            return env.expandPlaceholders(token);
-        }
-
-        if (token.equalsIgnoreCase("true") || token.equalsIgnoreCase("false")) {
-            return token.toLowerCase();
-        }
-
-        try {
-            Integer.parseInt(token);
-            return token;
-        } catch (NumberFormatException ignored) {}
-
-        try {
-            Double.parseDouble(token);
-            return token;
-        } catch (NumberFormatException ignored) {}
-
-        EnvironmentAccess.VarHandle ref = env.lookupVar(token);
-        if (ref != null) {
-            return ref.java();
-        }
-
-        return "\"" + token + "\"";
     }
 }

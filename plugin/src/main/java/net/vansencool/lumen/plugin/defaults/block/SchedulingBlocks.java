@@ -43,6 +43,21 @@ public class SchedulingBlocks {
         ctx.block().putEnv("__lambda_block", true);
     }
 
+    private static @NotNull String toTicksExpr(@NotNull String value, @NotNull String unit) {
+        long multiplier = switch (unit) {
+            case "tick", "ticks" -> 1L;
+            case "second", "seconds" -> 20L;
+            case "minute", "minutes" -> 1200L;
+            case "hour", "hours" -> 72000L;
+            case "day", "days" -> 1728000L;
+            default -> throw new IllegalArgumentException("Unknown time unit: " + unit);
+        };
+        if (multiplier == 1L) {
+            return "(long)(" + value + ")";
+        }
+        return "(long)(" + value + " * " + multiplier + "L)";
+    }
+
     @Call
     public void register(@NotNull LumenAPI api) {
         api.patterns().block(b -> b
@@ -232,20 +247,5 @@ public class SchedulingBlocks {
                         }
                     }
                 }));
-    }
-
-    private static @NotNull String toTicksExpr(@NotNull String value, @NotNull String unit) {
-        long multiplier = switch (unit) {
-            case "tick", "ticks" -> 1L;
-            case "second", "seconds" -> 20L;
-            case "minute", "minutes" -> 1200L;
-            case "hour", "hours" -> 72000L;
-            case "day", "days" -> 1728000L;
-            default -> throw new IllegalArgumentException("Unknown time unit: " + unit);
-        };
-        if (multiplier == 1L) {
-            return "(long)(" + value + ")";
-        }
-        return "(long)(" + value + " * " + multiplier + "L)";
     }
 }

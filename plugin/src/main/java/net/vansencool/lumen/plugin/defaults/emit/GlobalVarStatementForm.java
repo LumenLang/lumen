@@ -33,6 +33,38 @@ import java.util.Map;
 @SuppressWarnings("DataFlowIssue")
 public final class GlobalVarStatementForm implements StatementFormHandler {
 
+    private static boolean isNewGlobalStatement(@NotNull List<Token> t) {
+        if (t.size() < 5 || !t.get(0).text().equalsIgnoreCase("global")) {
+            return false;
+        }
+        int idx = 1;
+        if (t.get(idx).text().equalsIgnoreCase("stored")) {
+            idx++;
+        }
+        if (!t.get(idx).text().equalsIgnoreCase("var")) {
+            return false;
+        }
+        String nameCandidate = t.get(idx + 1).text();
+        if (nameCandidate.equalsIgnoreCase("for") || nameCandidate.equalsIgnoreCase("default")) {
+            return false;
+        }
+        idx += 2;
+        for (int i = idx; i < t.size(); i++) {
+            if (t.get(i).text().equalsIgnoreCase("default")) return true;
+        }
+        return false;
+    }
+
+    private static boolean isShorthandGlobalStatement(@NotNull List<Token> t) {
+        if (t.size() < 4 || !t.get(0).text().equalsIgnoreCase("global")) {
+            return false;
+        }
+        if (t.get(2).text().equalsIgnoreCase("default")) return true;
+        return t.size() >= 6
+                && t.get(2).text().equalsIgnoreCase("for")
+                && t.get(4).text().equalsIgnoreCase("default");
+    }
+
     @Override
     public boolean tryHandle(@NotNull List<? extends ScriptToken> tokens, @NotNull EmitContext ctx) {
         List<Token> t = EmitContextImpl.toPipelineTokens(tokens);
@@ -157,37 +189,5 @@ public final class GlobalVarStatementForm implements StatementFormHandler {
             return m.java();
         }
         throw new IllegalStateException("Unexpected expression type: " + expr.getClass().getSimpleName());
-    }
-
-    private static boolean isNewGlobalStatement(@NotNull List<Token> t) {
-        if (t.size() < 5 || !t.get(0).text().equalsIgnoreCase("global")) {
-            return false;
-        }
-        int idx = 1;
-        if (t.get(idx).text().equalsIgnoreCase("stored")) {
-            idx++;
-        }
-        if (!t.get(idx).text().equalsIgnoreCase("var")) {
-            return false;
-        }
-        String nameCandidate = t.get(idx + 1).text();
-        if (nameCandidate.equalsIgnoreCase("for") || nameCandidate.equalsIgnoreCase("default")) {
-            return false;
-        }
-        idx += 2;
-        for (int i = idx; i < t.size(); i++) {
-            if (t.get(i).text().equalsIgnoreCase("default")) return true;
-        }
-        return false;
-    }
-
-    private static boolean isShorthandGlobalStatement(@NotNull List<Token> t) {
-        if (t.size() < 4 || !t.get(0).text().equalsIgnoreCase("global")) {
-            return false;
-        }
-        if (t.get(2).text().equalsIgnoreCase("default")) return true;
-        return t.size() >= 6
-                && t.get(2).text().equalsIgnoreCase("for")
-                && t.get(4).text().equalsIgnoreCase("default");
     }
 }

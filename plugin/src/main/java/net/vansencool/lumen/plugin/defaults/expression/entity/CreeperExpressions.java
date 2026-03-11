@@ -17,13 +17,13 @@ public final class CreeperExpressions {
     public void register(@NotNull LumenAPI api) {
         EntityHelper.forType(FQCN)
                 .alias("_cr")
-        .intGetter("[get] %e:ENTITY% explosion radius",
-        "getExplosionRadius()",
-        "Returns the creeper's explosion radius.",
-        "var r = mob's explosion radius")
-        .intGetter("[get] %e:ENTITY% max fuse ticks",
-        "getMaxFuseTicks()",
-        "Returns the creeper's max fuse ticks before detonation.",
-        "var fuse = mob's max fuse ticks");
+                .intGetter("[get] %e:ENTITY% explosion radius",
+                        "getExplosionRadius()",
+                        "Returns the creeper's explosion radius.",
+                        "var r = mob's explosion radius")
+                .intGetter("[get] %e:ENTITY% max fuse ticks",
+                        "getMaxFuseTicks()",
+                        "Returns the creeper's max fuse ticks before detonation.",
+                        "var fuse = mob's max fuse ticks");
     }
 }

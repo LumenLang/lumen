@@ -17,17 +17,17 @@ public final class VillagerExpressions {
     public void register(@NotNull LumenAPI api) {
         EntityHelper.forType(FQCN)
                 .alias("_vl")
-        .stringGetter("[get] %e:ENTITY% profession",
-        "getProfession().name()",
-        "Returns the villager's profession name.",
-        "var prof = mob's profession")
-        .intGetter("[get] %e:ENTITY% villager level",
-        "getVillagerLevel()",
-        "Returns the villager's trading level.",
-        "var lvl = mob's villager level")
-        .stringGetter("[get] %e:ENTITY% villager type",
-        "getVillagerType().name()",
-        "Returns the villager's biome type name.",
-        "var vt = mob's villager type");
+                .stringGetter("[get] %e:ENTITY% profession",
+                        "getProfession().name()",
+                        "Returns the villager's profession name.",
+                        "var prof = mob's profession")
+                .intGetter("[get] %e:ENTITY% villager level",
+                        "getVillagerLevel()",
+                        "Returns the villager's trading level.",
+                        "var lvl = mob's villager level")
+                .stringGetter("[get] %e:ENTITY% villager type",
+                        "getVillagerType().name()",
+                        "Returns the villager's biome type name.",
+                        "var vt = mob's villager type");
     }
 }

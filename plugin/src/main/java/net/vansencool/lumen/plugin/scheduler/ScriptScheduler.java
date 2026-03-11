@@ -476,8 +476,8 @@ public final class ScriptScheduler {
      * and the hot-swappable code wrapper.
      */
     private record ScheduleEntry(@NotNull String name, @NotNull HotSwappableRunnable code, @NotNull BukkitTask task,
-                         long delayTicks, long periodTicks, boolean restartOnReload, boolean cancelOnReload,
-                         boolean transitioning) {
+                                 long delayTicks, long periodTicks, boolean restartOnReload, boolean cancelOnReload,
+                                 boolean transitioning) {
     }
 
     /**

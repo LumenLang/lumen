@@ -36,7 +36,7 @@ public final class LocationUtils {
 
     /**
      * {@code true} if both locations reside in the same world. This uses
-     * {@link Objects#equals(Object,Object)} to safely handle null worlds.
+     * {@link Objects#equals(Object, Object)} to safely handle null worlds.
      */
     public static boolean sameWorld(@NotNull Location a, @NotNull Location b) {
         return Objects.equals(a.getWorld(), b.getWorld());
