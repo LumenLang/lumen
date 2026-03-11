@@ -70,16 +70,6 @@ public final class RefType implements RefTypeHandle {
         this.keyTemplate = keyTemplate;
     }
 
-    @Override
-    public @NotNull String id() {
-        return id;
-    }
-
-    @Override
-    public @NotNull String javaType() {
-        return javaType;
-    }
-
     /**
      * Registers a new {@code RefType} with a default key template of {@code "String.valueOf($)"}.
      *
@@ -150,6 +140,16 @@ public final class RefType implements RefTypeHandle {
      */
     public static @NotNull Collection<RefType> values() {
         return Collections.unmodifiableCollection(BY_ID.values());
+    }
+
+    @Override
+    public @NotNull String id() {
+        return id;
+    }
+
+    @Override
+    public @NotNull String javaType() {
+        return javaType;
     }
 
     /**

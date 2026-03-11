@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
  * This is used as a fallback when a condition does not match any registered
  * pattern
  * but resolves to a known variable or config value. For example:
- * 
+ *
  * <pre>{@code
  * config:
  *     debug: true

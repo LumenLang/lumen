@@ -50,7 +50,7 @@ import java.util.List;
  * position.
  *
  * <h2>Example Implementation</h2>
- * 
+ *
  * <pre>{@code
  * types.register(new TypeBinding() {
  *     public String id() {

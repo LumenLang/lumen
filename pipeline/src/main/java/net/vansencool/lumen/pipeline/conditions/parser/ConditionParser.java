@@ -87,6 +87,31 @@ public final class ConditionParser {
     }
 
     /**
+     * Attempts to extract a variable name from the token list.
+     *
+     * <p>Handles two forms:
+     * <ul>
+     *   <li>A single IDENT token: {@code myVar}</li>
+     *   <li>A curly-brace wrapped IDENT: <code>{myVar}</code> (3 tokens)</li>
+     * </ul>
+     *
+     * @param tokens the tokens to inspect
+     * @return the variable name, or {@code null} if the tokens do not form a variable reference
+     */
+    private static String extractVarName(List<Token> tokens) {
+        if (tokens.size() == 1 && tokens.get(0).kind() == TokenKind.IDENT) {
+            return tokens.get(0).text();
+        }
+        if (tokens.size() == 3
+                && tokens.get(0).kind() == TokenKind.SYMBOL && tokens.get(0).text().equals("{")
+                && tokens.get(1).kind() == TokenKind.IDENT
+                && tokens.get(2).kind() == TokenKind.SYMBOL && tokens.get(2).text().equals("}")) {
+            return tokens.get(1).text();
+        }
+        return null;
+    }
+
+    /**
      * Parses the given token list into a {@link ConditionExpr}.
      *
      * <p>The token list is first split on {@code or} keywords. Each segment is then split on
@@ -158,30 +183,5 @@ public final class ConditionParser {
                 "Unknown condition: " + joinTokens(tokens) + ". Raw: " + tokens,
                 tokens
         );
-    }
-
-    /**
-     * Attempts to extract a variable name from the token list.
-     *
-     * <p>Handles two forms:
-     * <ul>
-     *   <li>A single IDENT token: {@code myVar}</li>
-     *   <li>A curly-brace wrapped IDENT: <code>{myVar}</code> (3 tokens)</li>
-     * </ul>
-     *
-     * @param tokens the tokens to inspect
-     * @return the variable name, or {@code null} if the tokens do not form a variable reference
-     */
-    private static String extractVarName(List<Token> tokens) {
-        if (tokens.size() == 1 && tokens.get(0).kind() == TokenKind.IDENT) {
-            return tokens.get(0).text();
-        }
-        if (tokens.size() == 3
-                && tokens.get(0).kind() == TokenKind.SYMBOL && tokens.get(0).text().equals("{")
-                && tokens.get(1).kind() == TokenKind.IDENT
-                && tokens.get(2).kind() == TokenKind.SYMBOL && tokens.get(2).text().equals("}")) {
-            return tokens.get(1).text();
-        }
-        return null;
     }
 }

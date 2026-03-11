@@ -118,7 +118,7 @@ public class JavaBuilder implements JavaOutput {
      * Returns the full map of Java-line-index to script-line-info.
      *
      * @return the line map (unmodifiable view is not necessary since callers
-     *         are internal)
+     * are internal)
      */
     public @NotNull Map<Integer, ScriptLineInfo> lineMap() {
         return lineMap;

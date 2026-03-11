@@ -57,6 +57,35 @@ public final class LumenSerializer implements ValueSerializer {
         return INSTANCE;
     }
 
+    private static boolean isBukkitLocation(@NotNull Object value) {
+        return value.getClass().getName().equals(BUKKIT_LOCATION_CLASS);
+    }
+
+    private static void writeLocation(@NotNull DataOutputStream dos,
+                                      @NotNull String worldName,
+                                      double x, double y, double z) throws IOException {
+        dos.writeByte(TAG_LOCATION);
+        dos.writeUTF(worldName);
+        dos.writeDouble(x);
+        dos.writeDouble(y);
+        dos.writeDouble(z);
+    }
+
+    private static void writeLocationViaReflection(@NotNull DataOutputStream dos,
+                                                   @NotNull Object location) throws IOException {
+        try {
+            Object world = location.getClass().getMethod("getWorld").invoke(location);
+            String worldName = (String) world.getClass().getMethod("getName").invoke(world);
+            double x = (double) location.getClass().getMethod("getX").invoke(location);
+            double y = (double) location.getClass().getMethod("getY").invoke(location);
+            double z = (double) location.getClass().getMethod("getZ").invoke(location);
+            writeLocation(dos, worldName, x, y, z);
+        } catch (ReflectiveOperationException e) {
+            dos.writeByte(TAG_STRING);
+            dos.writeUTF(location.toString());
+        }
+    }
+
     @Override
     public byte @NotNull [] serialize(@NotNull Object value) {
         try {
@@ -258,34 +287,5 @@ public final class LumenSerializer implements ValueSerializer {
             }
             default -> null;
         };
-    }
-
-    private static boolean isBukkitLocation(@NotNull Object value) {
-        return value.getClass().getName().equals(BUKKIT_LOCATION_CLASS);
-    }
-
-    private static void writeLocation(@NotNull DataOutputStream dos,
-                                       @NotNull String worldName,
-                                       double x, double y, double z) throws IOException {
-        dos.writeByte(TAG_LOCATION);
-        dos.writeUTF(worldName);
-        dos.writeDouble(x);
-        dos.writeDouble(y);
-        dos.writeDouble(z);
-    }
-
-    private static void writeLocationViaReflection(@NotNull DataOutputStream dos,
-                                                    @NotNull Object location) throws IOException {
-        try {
-            Object world = location.getClass().getMethod("getWorld").invoke(location);
-            String worldName = (String) world.getClass().getMethod("getName").invoke(world);
-            double x = (double) location.getClass().getMethod("getX").invoke(location);
-            double y = (double) location.getClass().getMethod("getY").invoke(location);
-            double z = (double) location.getClass().getMethod("getZ").invoke(location);
-            writeLocation(dos, worldName, x, y, z);
-        } catch (ReflectiveOperationException e) {
-            dos.writeByte(TAG_STRING);
-            dos.writeUTF(location.toString());
-        }
     }
 }
