@@ -55,6 +55,7 @@ public final class AddonManager {
      */
     public void registerAddon(@NotNull LumenAddon addon) {
         addons.add(addon);
+        callOnLoad(addon);
         if (api != null) {
             enableSingle(addon);
         }
@@ -82,6 +83,7 @@ public final class AddonManager {
                 ServiceLoader<LumenAddon> sl = ServiceLoader.load(LumenAddon.class, loader);
                 for (LumenAddon addon : sl) {
                     addons.add(addon);
+                    callOnLoad(addon);
                     LumenLogger.info("Discovered addon jar: " + addon.name()
                             + " v" + addon.version()
                             + " (" + addon.description() + ")");
@@ -168,6 +170,14 @@ public final class AddonManager {
             LumenLogger.info("Enabled addon: " + addon.name() + " v" + addon.version());
         } catch (Exception e) {
             LumenLogger.severe("Error enabling addon " + addon.name() + " v" + addon.version(), e);
+        }
+    }
+
+    private void callOnLoad(@NotNull LumenAddon addon) {
+        try {
+            addon.onLoad();
+        } catch (Exception e) {
+            LumenLogger.warning("Error calling onLoad for addon " + addon.name() + " v" + addon.version() + ": " + e.getMessage());
         }
     }
 }

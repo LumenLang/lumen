@@ -302,7 +302,8 @@ public final class CommandRegistry {
         @Override
         public boolean execute(@NotNull CommandSender sender, @NotNull String commandLabel, @NotNull String[] args) {
             try {
-                return (boolean) handler.invoke(instance, sender, args);
+                handler.invoke(instance, sender, args);
+                return true;
             } catch (LumenRuntimeException lre) {
                 logLumenException(lre);
                 return false;

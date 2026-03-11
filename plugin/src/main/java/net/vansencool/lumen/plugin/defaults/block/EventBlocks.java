@@ -2,7 +2,6 @@ package net.vansencool.lumen.plugin.defaults.block;
 
 import net.vansencool.lumen.api.LumenAPI;
 import net.vansencool.lumen.api.annotations.Call;
-import net.vansencool.lumen.api.annotations.Description;
 import net.vansencool.lumen.api.annotations.Registration;
 import net.vansencool.lumen.api.codegen.BindingAccess;
 import net.vansencool.lumen.api.codegen.CodegenAccess;
@@ -34,7 +33,6 @@ import static net.vansencool.lumen.api.pattern.LumaExample.top;
  * {@code register inventory [named] <name>} block handlers.
  */
 @Registration
-@Description("Registers event, command, and inventory block handlers")
 @SuppressWarnings({"unused", "DataFlowIssue"})
 public final class EventBlocks {
 
@@ -65,6 +63,7 @@ public final class EventBlocks {
 
                         AdvancedEventDefinition advDef = EventDefRegistry.getAdvanced(eventName);
                         if (advDef != null) {
+                            ctx.block().putEnv("__event_cancellable", advDef.cancellable());
                             ctx.block().putEnv("__advanced_handler", advDef.handler());
 
                             for (String imp : advDef.imports()) {
@@ -100,6 +99,7 @@ public final class EventBlocks {
                                     "Unknown event: " + eventName, bc.bound("def").tokens());
                         }
 
+                        ctx.block().putEnv("__event_cancellable", def.cancellable());
                         jctx.addImport(def.className());
 
                         String simpleEventName = def.className().substring(def.className().lastIndexOf('.') + 1);
@@ -182,7 +182,7 @@ public final class EventBlocks {
                         ctx.codegen().addImport(ArrayList.class.getName());
                         ctx.codegen().addImport(Arrays.class.getName());
                         ctx.codegen().addImport(World.class.getName());
-                        out.line("public boolean cmd_" + cmd + "(CommandSender __sender, String[] __args) {");
+                        out.line("public void cmd_" + cmd + "(CommandSender __sender, String[] __args) {");
                         out.line("List<String> args = new ArrayList<>(Arrays.asList(__args));");
                         out.line("Player player = __sender instanceof Player ? (Player) __sender : null;");
                         out.line("CommandSender sender = __sender;");
@@ -199,7 +199,6 @@ public final class EventBlocks {
 
                     @Override
                     public void end(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
-                        out.line("return true;");
                         out.line("}");
 
                         CommandMeta meta = ctx.block().getEnv("cmd_meta");

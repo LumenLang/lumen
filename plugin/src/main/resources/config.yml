@@ -83,11 +83,10 @@ performance:
   # Note, JIT takes time to optimize, running a warmup way earlier in the startup process results much better compile times (40 avg to 20 avg ms on 9900x3d).
   warmup-on-startup: false
 
-  # Only include the server jar and plugin jar on the compiler classpath
-  # instead of every jar found in the classloader chain.
-  # This can speed up compilation slightly and reduce memory usage,
-  # but may break scripts that reference classes from other plugins.
-  reduce-classpath: false
+  # Exclude certain packages from the classpath when compiling scripts, such as internals or large libraries.
+  # This can speed up compilation and reduce memory usage.
+  # This shouldn't cause any issues unless some addon relies on shaded libraries that are excluded by this, in that case, they are allowed to disable this feature automatically.
+  reduce-classpath: true
 
 # Language-level behavior and experimental features
 language:
@@ -108,20 +107,9 @@ language:
 
 # Optional platform integrations
 features:
-  # Use MiniMessage formatting for all text output.
-  #
-  # This applies to chat messages, action bars, titles, and other text.
-  # Allows consistent formatting using MiniMessage syntax everywhere.
-  use-minimessage: true
-
   # Translate legacy & color codes (e.g. &a, &7, &l) into colored text.
   # Works alongside MiniMessage when both are enabled.
   use-legacy-colors: true
-
-  # Enable <#RRGGBB> hex color syntax in legacy mode.
-  # When disabled, only standard & codes are translated.
-  # MiniMessage has its own hex support via <color:#hex> regardless of this setting.
-  use-hex-colors: false
 
   # Enable Paper-only APIs and optimizations.
   # Disables compatibility with Spigot.
@@ -133,8 +121,7 @@ extra:
   # When enabled, changes to the config.yml file will be detected and applied without restarting or doing the /lumen reload command.
   enable-config-file-watcher: true
 
-  # When enabled, Lumen will dump all registered patterns, expressions,
-  # conditions, blocks, and type bindings to a JSON file after all
+  # When enabled, Lumen will dump all registered patterns, type bindings, and more to a JSON file after all
   # registrations are complete. The file is written to
   # plugins/Lumen/documentation.json and can be consumed by external
   # tools to generate documentation for the Lumen language.

@@ -14,9 +14,14 @@ import net.vansencool.lumen.pipeline.logger.LumenLogger;
 import net.vansencool.lumen.plugin.Lumen;
 
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Objects;
 
+/**
+ * This uses LSYAML's binding system to load configuration values from a YAML file into static fields.
+ * <p>
+ * Doing static fields allows the codebase to be cleaner, and more readable than constantly calling getters on a config instance, while being faster.
+ * View more at {@link ConfigLoader}
+ */
 @ConfigFile("plugins/Lumen/config.yml")
 @LatestConfig("config.yml")
 public final class LumenConfiguration {
@@ -47,15 +52,42 @@ public final class LumenConfiguration {
     }
 
     public static void disablePaperOnlyFeatures() {
+        FEATURES.PAPER_ONLY_FEATURES = false;
         YamlNode node = ConfigLoader.node(LumenConfiguration.class);
         if (node == null) {
             throw new RuntimeException("Called disablePaperOnlyFeatures before lumen's startup");
         }
-        MapNode featuresNode = Objects.requireNonNull(node.get("features"), "No 'features' section in the YAML file?").asMap();
+        MapNode featuresNode = Objects.requireNonNull(node.getMap("features"), "No 'features' section in the YAML file?").asMap();
         if (Boolean.FALSE.equals(featuresNode.getBoolean("paper-only-features"))) return;
 
         featuresNode.asMap().modify("paper-only-features").value(false);
-        LSYAML.writeToFile(node, Path.of("plugins/Lumen/config.yml"));
+        LSYAML.writeToFile(node, Lumen.instance().getDataFolder().toPath().resolve("config.yml"));
+    }
+
+    public static void disableReduceClasspath() {
+        PERFORMANCE.REDUCE_CLASSPATH = false;
+        YamlNode node = ConfigLoader.node(LumenConfiguration.class);
+        if (node == null) {
+            throw new RuntimeException("Called disableReduceClasspath before lumen's startup");
+        }
+        MapNode perfNode = Objects.requireNonNull(node.getMap("performance"), "No 'performance' section in the YAML file?").asMap();
+        if (Boolean.FALSE.equals(perfNode.getBoolean("reduce-classpath"))) return;
+
+        perfNode.modify("reduce-classpath").value(false);
+        LSYAML.writeToFile(node, Lumen.instance().getDataFolder().toPath().resolve("config.yml"));
+    }
+
+    public static void disableEnableAllScriptsImmediately() {
+        SCRIPTS.ENABLE_ALL_SCRIPTS_IMMEDIATELY_ON_STARTUP = false;
+        YamlNode node = ConfigLoader.node(LumenConfiguration.class);
+        if (node == null) {
+            throw new RuntimeException("Called disableEnableAllScriptsImmediately before lumen's startup");
+        }
+        MapNode scriptsNode = Objects.requireNonNull(node.getMap("scripts"), "No 'scripts' section in the YAML file?");
+        if (Boolean.FALSE.equals(scriptsNode.getBoolean("enable-all-scripts-immediately-on-startup"))) return;
+
+        scriptsNode.modify("enable-all-scripts-immediately-on-startup").value(false);
+        LSYAML.writeToFile(node, Lumen.instance().getDataFolder().toPath().resolve("config.yml"));
     }
 
     public static final class Scripts {

@@ -2,7 +2,6 @@ package net.vansencool.lumen.plugin.defaults.loop;
 
 import net.vansencool.lumen.api.LumenAPI;
 import net.vansencool.lumen.api.annotations.Call;
-import net.vansencool.lumen.api.annotations.Description;
 import net.vansencool.lumen.api.annotations.Registration;
 import net.vansencool.lumen.api.handler.LoopHandler;
 import net.vansencool.lumen.api.pattern.Categories;
@@ -14,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
  * {@code loop X in <source>:} blocks.
  */
 @Registration(order = 11)
-@Description("Registers the built-in loop sources: all players, all entities, all worlds.")
 @SuppressWarnings("unused")
 public final class DefaultLoopSources {
 

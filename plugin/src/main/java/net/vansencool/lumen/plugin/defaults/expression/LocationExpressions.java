@@ -2,7 +2,6 @@ package net.vansencool.lumen.plugin.defaults.expression;
 
 import net.vansencool.lumen.api.LumenAPI;
 import net.vansencool.lumen.api.annotations.Call;
-import net.vansencool.lumen.api.annotations.Description;
 import net.vansencool.lumen.api.annotations.Registration;
 import net.vansencool.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import net.vansencool.lumen.api.pattern.Categories;
@@ -16,7 +15,6 @@ import org.jetbrains.annotations.NotNull;
  * locations, computing distances, and getting the block at a location.
  */
 @Registration
-@Description("Registers location expressions: location x/y/z, distance between locations, block at location")
 @SuppressWarnings("unused")
 public final class LocationExpressions {
 

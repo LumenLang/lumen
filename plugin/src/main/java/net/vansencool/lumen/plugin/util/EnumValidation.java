@@ -1,6 +1,6 @@
 package net.vansencool.lumen.plugin.util;
 
-import org.bukkit.attribute.Attribute;
+import net.vansencool.lumen.plugin.defaults.util.AttributeNames;
 import org.bukkit.entity.EntityType;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,17 +30,13 @@ public final class EnumValidation {
     }
 
     /**
-     * Checks if the given string is a valid {@link Attribute} name.
+     * Checks if the given string is a valid attribute name, using {@link AttributeNames} for
+     * version-aware resolution that handles both the pre-1.21.2 and post-1.21.2 enum names.
      *
      * @param name the attribute name to check
-     * @return {@code true} if the name corresponds to a valid attribute
+     * @return {@code true} if the name corresponds to a valid attribute on the current server version
      */
     public static boolean isValidAttribute(@NotNull String name) {
-        try {
-            Attribute.valueOf(name.toUpperCase().replace(' ', '_').replace('-', '_'));
-            return true;
-        } catch (IllegalArgumentException e) {
-            return false;
-        }
+        return AttributeNames.resolve(name) != null;
     }
 }

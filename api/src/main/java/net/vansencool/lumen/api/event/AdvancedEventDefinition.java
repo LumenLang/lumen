@@ -32,6 +32,7 @@ public final class AdvancedEventDefinition {
     private final @NotNull List<String> examples;
     private final @Nullable String since;
     private final @Nullable String category;
+    private final boolean cancellable;
     private final boolean deprecated;
     private final @NotNull List<String> interfaces;
     private final @NotNull List<String> fields;
@@ -45,6 +46,7 @@ public final class AdvancedEventDefinition {
                             @NotNull List<String> examples,
                             @Nullable String since,
                             @Nullable String category,
+                            boolean cancellable,
                             boolean deprecated,
                             @NotNull List<String> interfaces,
                             @NotNull List<String> fields,
@@ -57,6 +59,7 @@ public final class AdvancedEventDefinition {
         this.examples = List.copyOf(examples);
         this.since = since;
         this.category = category;
+        this.cancellable = cancellable;
         this.deprecated = deprecated;
         this.interfaces = List.copyOf(interfaces);
         this.fields = List.copyOf(fields);
@@ -117,6 +120,18 @@ public final class AdvancedEventDefinition {
      */
     public @Nullable String category() {
         return category;
+    }
+
+    /**
+     * Returns whether this event is cancellable.
+     *
+     * <p>A cancellable event means the underlying event supports cancellation
+     * via the {@code cancel event} statement.
+     *
+     * @return {@code true} if the event is cancellable
+     */
+    public boolean cancellable() {
+        return cancellable;
     }
 
     /**
