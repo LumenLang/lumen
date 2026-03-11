@@ -1,4 +1,3 @@
-//file:noinspection GroovyAssignabilityCheck
 plugins {
     id "com.gradleup.shadow"
     id "xyz.jpenilla.run-paper"
@@ -44,8 +43,6 @@ shadowJar {
     archiveBaseName.set(rootProject.name)
     configurations = [project.configurations.runtimeClasspath]
     exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
-    relocate 'net.kyori', 'net.vansencool.lumen.lib.kyori'
-    relocate 'org.jetbrains', 'net.vansencool.lumen.lib.jetbrains'
 }
 
 build {
