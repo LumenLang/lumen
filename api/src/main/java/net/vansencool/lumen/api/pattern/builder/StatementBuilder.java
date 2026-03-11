@@ -18,7 +18,7 @@ import java.util.function.Consumer;
  *
  * <p>
  * Example usage:
- * 
+ *
  * <pre>{@code
  * api.patterns().statements(b -> b
  *         .pattern("message %who:PLAYER% %text:STRING%")
@@ -34,9 +34,9 @@ import java.util.function.Consumer;
 public final class StatementBuilder {
 
     private final List<String> patterns = new ArrayList<>();
+    private final List<String> examples = new ArrayList<>();
     private @Nullable String by;
     private @Nullable String description;
-    private final List<String> examples = new ArrayList<>();
     private @Nullable String since;
     private @Nullable Category category;
     private boolean deprecated;

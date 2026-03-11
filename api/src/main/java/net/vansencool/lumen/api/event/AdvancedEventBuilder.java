@@ -61,18 +61,18 @@ import java.util.Map;
 @SuppressWarnings({"unused", "UnusedReturnValue"})
 public final class AdvancedEventBuilder {
 
-    private @Nullable String name;
-    private @Nullable String by;
-    private @Nullable String description;
     private final List<String> examples = new ArrayList<>();
-    private @Nullable String since;
-    private @Nullable String category;
-    private boolean cancellable;
-    private boolean deprecated;
     private final List<String> interfaces = new ArrayList<>();
     private final List<String> fields = new ArrayList<>();
     private final List<String> imports = new ArrayList<>();
     private final Map<String, EventDefinition.VarEntry> vars = new LinkedHashMap<>();
+    private @Nullable String name;
+    private @Nullable String by;
+    private @Nullable String description;
+    private @Nullable String since;
+    private @Nullable String category;
+    private boolean cancellable;
+    private boolean deprecated;
     private @Nullable String lastVarName;
     private @Nullable BlockHandler handler;
 

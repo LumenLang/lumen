@@ -33,12 +33,12 @@ import java.util.Map;
 public final class EventBuilder {
 
     private final String name;
-    private @Nullable String by;
     private final Map<String, EventDefinition.VarEntry> vars = new LinkedHashMap<>();
+    private final List<String> examples = new ArrayList<>();
+    private @Nullable String by;
     private String className;
     private String lastVarName;
     private @Nullable String description;
-    private final List<String> examples = new ArrayList<>();
     private @Nullable String since;
     private @Nullable String category;
     private boolean cancellable;

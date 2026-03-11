@@ -17,7 +17,6 @@ import java.lang.annotation.Target;
  *
  * <pre>{@code
  * @Registration
- * @Description("Registers cool stuff")
  * public class MyRegistrations {
  *     @Call
  *     public void register(@NotNull LumenAPI api) {
@@ -28,7 +27,6 @@ import java.lang.annotation.Target;
  * }</pre>
  *
  * @see Call
- * @see Description
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)

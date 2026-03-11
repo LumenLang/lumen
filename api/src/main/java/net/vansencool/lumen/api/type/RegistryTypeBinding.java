@@ -142,7 +142,7 @@ public final class RegistryTypeBinding {
         if (names.isEmpty()) {
             throw new IllegalArgumentException(
                     "No public static constant fields found on " + fqcn
-                    + ". Cannot create a registry type binding.");
+                            + ". Cannot create a registry type binding.");
         }
         return of(typeId, names, fqcn);
     }

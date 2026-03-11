@@ -237,7 +237,7 @@ public interface EnvironmentAccess {
      *
      * @param name the variable name to check
      * @return {@code true} if the variable is captured by a lambda and therefore must be
-     *         effectively final (unless it is a class-level field)
+     * effectively final (unless it is a class-level field)
      */
     boolean isVarCapturedByLambda(@NotNull String name);
 
