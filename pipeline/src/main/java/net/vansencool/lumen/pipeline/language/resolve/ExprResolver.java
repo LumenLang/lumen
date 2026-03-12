@@ -9,6 +9,7 @@ import net.vansencool.lumen.pipeline.language.pattern.PatternRegistry;
 import net.vansencool.lumen.pipeline.language.pattern.RegisteredExpressionMatch;
 import net.vansencool.lumen.pipeline.language.tokenization.Token;
 import net.vansencool.lumen.pipeline.language.tokenization.TokenKind;
+import net.vansencool.lumen.pipeline.type.LumenType;
 import net.vansencool.lumen.pipeline.var.RefType;
 import net.vansencool.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +17,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Resolves token lists into Java expressions by trying, in order:
@@ -231,13 +231,21 @@ public final class ExprResolver {
         if (operators.isEmpty() || operands.size() != operators.size() + 1) return null;
 
         StringBuilder sb = new StringBuilder();
+        LumenType resultType = null;
         for (int i = 0; i < operands.size(); i++) {
             if (i > 0) sb.append(' ').append(operators.get(i - 1)).append(' ');
-            String resolved = resolveMathOperand(operands.get(i), ctx, env, depth);
-            if (resolved == null) return null;
-            sb.append(resolved);
+            TypedOperand operand = resolveMathOperand(operands.get(i), ctx, env, depth);
+            if (operand == null) return null;
+            sb.append(operand.java);
+            if (resultType == null) {
+                resultType = operand.type;
+            } else if (operand.type != null) {
+                LumenType.Primitive widened = LumenType.widenNumeric(resultType, operand.type);
+                if (widened != null) resultType = widened;
+            }
         }
-        return new ExpressionResult(sb.toString(), null, Map.of());
+        String javaType = resultType != null ? resultType.javaType() : null;
+        return new ExpressionResult(sb.toString(), null, javaType);
     }
 
     /**
@@ -247,9 +255,9 @@ public final class ExprResolver {
      * @param ctx    the code generation context
      * @param env    the type environment
      * @param depth  the current recursion depth
-     * @return the resolved Java expression for this operand, or null
+     * @return the resolved operand with type, or null
      */
-    private static @Nullable String resolveMathOperand(
+    private static @Nullable TypedOperand resolveMathOperand(
             @NotNull List<Token> tokens,
             @NotNull CodegenContext ctx,
             @NotNull TypeEnv env,
@@ -258,10 +266,14 @@ public final class ExprResolver {
 
         if (tokens.size() == 1) {
             Token t = tokens.get(0);
-            if (t.kind() == TokenKind.NUMBER) return t.text();
+            if (t.kind() == TokenKind.NUMBER) {
+                LumenType type = t.text().contains(".")
+                        ? LumenType.Primitive.DOUBLE : LumenType.Primitive.INT;
+                return new TypedOperand(t.text(), type);
+            }
             if (t.kind() == TokenKind.IDENT) {
                 VarRef ref = env.lookupVar(t.text());
-                if (ref != null) return ref.java();
+                if (ref != null) return new TypedOperand(ref.java(), ref.resolvedType());
             }
             return null;
         }
@@ -272,15 +284,23 @@ public final class ExprResolver {
                 && tokens.get(tokens.size() - 1).text().equals(")")) {
             List<Token> inner = tokens.subList(1, tokens.size() - 1);
             ExpressionResult innerResolved = resolveRecursive(inner, ctx, env, depth + 1);
-            if (innerResolved != null) return "(" + innerResolved.java() + ")";
+            if (innerResolved != null) {
+                LumenType type = LumenType.resolve(innerResolved.refTypeId(), innerResolved.javaType());
+                return new TypedOperand("(" + innerResolved.java() + ")", type);
+            }
             return null;
         }
 
         ExpressionResult result = resolveRecursive(tokens, ctx, env, depth + 1);
-        return result != null ? result.java() : null;
+        if (result == null) return null;
+        LumenType type = LumenType.resolve(result.refTypeId(), result.javaType());
+        return new TypedOperand(result.java(), type);
     }
 
     private static boolean isArithmeticOp(@NotNull String s) {
         return s.equals("+") || s.equals("-") || s.equals("*") || s.equals("/");
+    }
+
+    private record TypedOperand(@NotNull String java, @Nullable LumenType type) {
     }
 }

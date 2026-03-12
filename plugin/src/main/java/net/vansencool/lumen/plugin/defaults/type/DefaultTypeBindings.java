@@ -9,7 +9,7 @@ import net.vansencool.lumen.api.codegen.EnvironmentAccess.VarHandle;
 import net.vansencool.lumen.api.exceptions.ParseFailureException;
 import net.vansencool.lumen.api.type.AddonTypeBinding;
 import net.vansencool.lumen.api.type.EnumTypeBinding;
-import net.vansencool.lumen.api.type.RefTypes;
+import net.vansencool.lumen.api.type.Types;
 import net.vansencool.lumen.api.type.RegistryTypeBinding;
 import net.vansencool.lumen.api.type.TypeBindingMeta;
 import net.vansencool.lumen.api.version.MinecraftVersion;
@@ -500,7 +500,7 @@ public final class DefaultTypeBindings {
                 if (ref != null && isPlayer(ref))
                     return 1;
 
-                if (env.lookupDefault(RefTypes.PLAYER) != null)
+                if (env.lookupDefault(Types.PLAYER) != null)
                     return 0;
 
                 return 1;
@@ -509,7 +509,7 @@ public final class DefaultTypeBindings {
             @Override
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 if (tokens.isEmpty()) {
-                    VarHandle def = env.lookupDefault(RefTypes.PLAYER);
+                    VarHandle def = env.lookupDefault(Types.PLAYER);
                     if (def == null)
                         throw new ParseFailureException("No default player in this context");
                     return def;
@@ -526,7 +526,7 @@ public final class DefaultTypeBindings {
                     return ref;
                 }
 
-                VarHandle def = env.lookupDefault(RefTypes.PLAYER);
+                VarHandle def = env.lookupDefault(Types.PLAYER);
                 if (def != null)
                     return def;
 
@@ -542,7 +542,7 @@ public final class DefaultTypeBindings {
             }
 
             private boolean isPlayer(@NotNull VarHandle ref) {
-                return ref.type() != null && ref.type().id().equals(RefTypes.PLAYER.id());
+                return ref.type() != null && ref.type().id().equals(Types.PLAYER.id());
             }
         });
 
@@ -576,7 +576,7 @@ public final class DefaultTypeBindings {
                     return 1;
 
                 if (possessive) {
-                    if (env.lookupDefault(RefTypes.PLAYER) != null)
+                    if (env.lookupDefault(Types.PLAYER) != null)
                         return 1;
                     return 1;
                 }
@@ -587,7 +587,7 @@ public final class DefaultTypeBindings {
             @Override
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 if (tokens.isEmpty()) {
-                    VarHandle def = env.lookupDefault(RefTypes.PLAYER);
+                    VarHandle def = env.lookupDefault(Types.PLAYER);
                     if (def == null)
                         throw new ParseFailureException("No default player in this context");
                     return def;
@@ -604,7 +604,7 @@ public final class DefaultTypeBindings {
                     return ref;
                 }
 
-                VarHandle def = env.lookupDefault(RefTypes.PLAYER);
+                VarHandle def = env.lookupDefault(Types.PLAYER);
                 if (def != null)
                     return def;
 
@@ -620,7 +620,7 @@ public final class DefaultTypeBindings {
             }
 
             private boolean isPlayer(@NotNull VarHandle ref) {
-                return ref.type() != null && ref.type().id().equals(RefTypes.PLAYER.id());
+                return ref.type() != null && ref.type().id().equals(Types.PLAYER.id());
             }
         });
     }
@@ -655,7 +655,7 @@ public final class DefaultTypeBindings {
                 if (ref != null && isOfflinePlayer(ref))
                     return 1;
 
-                if (env.lookupDefault(RefTypes.OFFLINE_PLAYER) != null)
+                if (env.lookupDefault(Types.OFFLINE_PLAYER) != null)
                     return 0;
 
                 return 1;
@@ -664,7 +664,7 @@ public final class DefaultTypeBindings {
             @Override
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 if (tokens.isEmpty()) {
-                    VarHandle def = env.lookupDefault(RefTypes.OFFLINE_PLAYER);
+                    VarHandle def = env.lookupDefault(Types.OFFLINE_PLAYER);
                     if (def == null)
                         throw new ParseFailureException("No default offline player in this context");
                     return def;
@@ -681,7 +681,7 @@ public final class DefaultTypeBindings {
                     return ref;
                 }
 
-                VarHandle def = env.lookupDefault(RefTypes.OFFLINE_PLAYER);
+                VarHandle def = env.lookupDefault(Types.OFFLINE_PLAYER);
                 if (def != null)
                     return def;
 
@@ -697,7 +697,7 @@ public final class DefaultTypeBindings {
             }
 
             private boolean isOfflinePlayer(@NotNull VarHandle ref) {
-                return ref.type() != null && ref.type().id().equals(RefTypes.OFFLINE_PLAYER.id());
+                return ref.type() != null && ref.type().id().equals(Types.OFFLINE_PLAYER.id());
             }
         });
 
@@ -731,7 +731,7 @@ public final class DefaultTypeBindings {
                     return 1;
 
                 if (possessive) {
-                    if (env.lookupDefault(RefTypes.OFFLINE_PLAYER) != null)
+                    if (env.lookupDefault(Types.OFFLINE_PLAYER) != null)
                         return 1;
                     return 1;
                 }
@@ -742,7 +742,7 @@ public final class DefaultTypeBindings {
             @Override
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 if (tokens.isEmpty()) {
-                    VarHandle def = env.lookupDefault(RefTypes.OFFLINE_PLAYER);
+                    VarHandle def = env.lookupDefault(Types.OFFLINE_PLAYER);
                     if (def == null)
                         throw new ParseFailureException("No default offline player in this context");
                     return def;
@@ -759,7 +759,7 @@ public final class DefaultTypeBindings {
                     return ref;
                 }
 
-                VarHandle def = env.lookupDefault(RefTypes.OFFLINE_PLAYER);
+                VarHandle def = env.lookupDefault(Types.OFFLINE_PLAYER);
                 if (def != null)
                     return def;
 
@@ -775,7 +775,7 @@ public final class DefaultTypeBindings {
             }
 
             private boolean isOfflinePlayer(@NotNull VarHandle ref) {
-                return ref.type() != null && ref.type().id().equals(RefTypes.OFFLINE_PLAYER.id());
+                return ref.type() != null && ref.type().id().equals(Types.OFFLINE_PLAYER.id());
             }
         });
     }
@@ -953,7 +953,7 @@ public final class DefaultTypeBindings {
                 if (ref != null && isEntity(ref))
                     return 1;
 
-                if (env.lookupDefault(RefTypes.ENTITY) != null)
+                if (env.lookupDefault(Types.ENTITY) != null)
                     return 0;
 
                 return 1;
@@ -962,7 +962,7 @@ public final class DefaultTypeBindings {
             @Override
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 if (tokens.isEmpty()) {
-                    VarHandle def = env.lookupDefault(RefTypes.ENTITY);
+                    VarHandle def = env.lookupDefault(Types.ENTITY);
                     if (def == null)
                         throw new ParseFailureException("No default entity in this context");
                     return def;
@@ -979,7 +979,7 @@ public final class DefaultTypeBindings {
                     return ref;
                 }
 
-                VarHandle def = env.lookupDefault(RefTypes.ENTITY);
+                VarHandle def = env.lookupDefault(Types.ENTITY);
                 if (def != null)
                     return def;
 
@@ -998,7 +998,7 @@ public final class DefaultTypeBindings {
                 if (ref.type() == null)
                     return false;
                 String id = ref.type().id();
-                return id.equals(RefTypes.ENTITY.id()) || id.equals(RefTypes.PLAYER.id());
+                return id.equals(Types.ENTITY.id()) || id.equals(Types.PLAYER.id());
             }
         });
 
@@ -1032,7 +1032,7 @@ public final class DefaultTypeBindings {
                     return 1;
 
                 if (possessive) {
-                    if (env.lookupDefault(RefTypes.ENTITY) != null)
+                    if (env.lookupDefault(Types.ENTITY) != null)
                         return 1;
                     return 1;
                 }
@@ -1043,7 +1043,7 @@ public final class DefaultTypeBindings {
             @Override
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 if (tokens.isEmpty()) {
-                    VarHandle def = env.lookupDefault(RefTypes.ENTITY);
+                    VarHandle def = env.lookupDefault(Types.ENTITY);
                     if (def == null)
                         throw new ParseFailureException("No default entity in this context");
                     return def;
@@ -1060,7 +1060,7 @@ public final class DefaultTypeBindings {
                     return ref;
                 }
 
-                VarHandle def = env.lookupDefault(RefTypes.ENTITY);
+                VarHandle def = env.lookupDefault(Types.ENTITY);
                 if (def != null)
                     return def;
 
@@ -1079,7 +1079,7 @@ public final class DefaultTypeBindings {
                 if (ref.type() == null)
                     return false;
                 String id = ref.type().id();
-                return id.equals(RefTypes.ENTITY.id()) || id.equals(RefTypes.PLAYER.id());
+                return id.equals(Types.ENTITY.id()) || id.equals(Types.PLAYER.id());
             }
         });
 
@@ -1191,7 +1191,7 @@ public final class DefaultTypeBindings {
                     return 1;
                 VarHandle ref = env.lookupVar(tokens.get(0));
                 if (ref != null) {
-                    if (ref.type() != null && ref.type().id().equals(RefTypes.ITEMSTACK.id()))
+                    if (ref.type() != null && ref.type().id().equals(Types.ITEMSTACK.id()))
                         throw new ParseFailureException("ITEM does not accept ITEMSTACK variable: " + tokens.get(0));
                     return 1;
                 }
@@ -1207,7 +1207,7 @@ public final class DefaultTypeBindings {
                     return normalized;
                 VarHandle ref = env.lookupVar(raw);
                 if (ref != null) {
-                    if (ref.type() != null && ref.type().id().equals(RefTypes.ITEMSTACK.id()))
+                    if (ref.type() != null && ref.type().id().equals(Types.ITEMSTACK.id()))
                         throw new ParseFailureException("ITEM does not accept ITEMSTACK variable: " + raw);
                     return ref;
                 }
@@ -1255,7 +1255,7 @@ public final class DefaultTypeBindings {
                 VarHandle ref = env.lookupVar(raw);
                 if (ref != null && isItemStack(ref))
                     return 1;
-                if (env.lookupDefault(RefTypes.ITEMSTACK) != null)
+                if (env.lookupDefault(Types.ITEMSTACK) != null)
                     return 0;
                 return 1;
             }
@@ -1263,7 +1263,7 @@ public final class DefaultTypeBindings {
             @Override
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 if (tokens.isEmpty()) {
-                    VarHandle def = env.lookupDefault(RefTypes.ITEMSTACK);
+                    VarHandle def = env.lookupDefault(Types.ITEMSTACK);
                     if (def == null)
                         throw new ParseFailureException("No default item stack in this context");
                     return def;
@@ -1277,7 +1277,7 @@ public final class DefaultTypeBindings {
                         throw new ParseFailureException(raw + " is not an item stack");
                     return ref;
                 }
-                VarHandle def = env.lookupDefault(RefTypes.ITEMSTACK);
+                VarHandle def = env.lookupDefault(Types.ITEMSTACK);
                 if (def != null)
                     return def;
                 throw new ParseFailureException("Unknown item stack reference: " + raw);
@@ -1292,7 +1292,7 @@ public final class DefaultTypeBindings {
             }
 
             private boolean isItemStack(@NotNull VarHandle ref) {
-                return ref.type() != null && ref.type().id().equals(RefTypes.ITEMSTACK.id());
+                return ref.type() != null && ref.type().id().equals(Types.ITEMSTACK.id());
             }
         });
 
@@ -1323,7 +1323,7 @@ public final class DefaultTypeBindings {
                 if (ref != null && isItemStack(ref))
                     return 1;
                 if (possessive) {
-                    if (env.lookupDefault(RefTypes.ITEMSTACK) != null)
+                    if (env.lookupDefault(Types.ITEMSTACK) != null)
                         return 1;
                     return 1;
                 }
@@ -1333,7 +1333,7 @@ public final class DefaultTypeBindings {
             @Override
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 if (tokens.isEmpty()) {
-                    VarHandle def = env.lookupDefault(RefTypes.ITEMSTACK);
+                    VarHandle def = env.lookupDefault(Types.ITEMSTACK);
                     if (def == null)
                         throw new ParseFailureException("No default item stack in this context");
                     return def;
@@ -1347,7 +1347,7 @@ public final class DefaultTypeBindings {
                         throw new ParseFailureException(name + " is not an item stack");
                     return ref;
                 }
-                VarHandle def = env.lookupDefault(RefTypes.ITEMSTACK);
+                VarHandle def = env.lookupDefault(Types.ITEMSTACK);
                 if (def != null)
                     return def;
                 throw new ParseFailureException("Unknown item stack reference: " + name);
@@ -1362,7 +1362,7 @@ public final class DefaultTypeBindings {
             }
 
             private boolean isItemStack(@NotNull VarHandle ref) {
-                return ref.type() != null && ref.type().id().equals(RefTypes.ITEMSTACK.id());
+                return ref.type() != null && ref.type().id().equals(Types.ITEMSTACK.id());
             }
         });
     }
@@ -1392,7 +1392,7 @@ public final class DefaultTypeBindings {
                 VarHandle ref = env.lookupVar(name);
                 if (ref != null && isWorld(ref))
                     return 1;
-                if (env.lookupDefault(RefTypes.WORLD) != null)
+                if (env.lookupDefault(Types.WORLD) != null)
                     return 0;
                 return 1;
             }
@@ -1400,7 +1400,7 @@ public final class DefaultTypeBindings {
             @Override
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 if (tokens.isEmpty()) {
-                    VarHandle def = env.lookupDefault(RefTypes.WORLD);
+                    VarHandle def = env.lookupDefault(Types.WORLD);
                     if (def == null)
                         throw new ParseFailureException("No default world in this context");
                     return def;
@@ -1412,7 +1412,7 @@ public final class DefaultTypeBindings {
                         throw new ParseFailureException(name + " is not a world");
                     return ref;
                 }
-                VarHandle def = env.lookupDefault(RefTypes.WORLD);
+                VarHandle def = env.lookupDefault(Types.WORLD);
                 if (def != null)
                     return def;
                 throw new ParseFailureException("Unknown world reference: " + name);
@@ -1425,7 +1425,7 @@ public final class DefaultTypeBindings {
             }
 
             private boolean isWorld(@NotNull VarHandle ref) {
-                return ref.type() != null && ref.type().id().equals(RefTypes.WORLD.id());
+                return ref.type() != null && ref.type().id().equals(Types.WORLD.id());
             }
         });
     }
@@ -1455,7 +1455,7 @@ public final class DefaultTypeBindings {
                 VarHandle ref = env.lookupVar(name);
                 if (ref != null && isLocation(ref))
                     return 1;
-                if (env.lookupDefault(RefTypes.LOCATION) != null)
+                if (env.lookupDefault(Types.LOCATION) != null)
                     return 0;
                 return 1;
             }
@@ -1463,7 +1463,7 @@ public final class DefaultTypeBindings {
             @Override
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 if (tokens.isEmpty()) {
-                    VarHandle def = env.lookupDefault(RefTypes.LOCATION);
+                    VarHandle def = env.lookupDefault(Types.LOCATION);
                     if (def == null)
                         throw new ParseFailureException("No default location in this context");
                     return def;
@@ -1477,7 +1477,7 @@ public final class DefaultTypeBindings {
                         throw new ParseFailureException(name + " is not a location");
                     return ref;
                 }
-                VarHandle def = env.lookupDefault(RefTypes.LOCATION);
+                VarHandle def = env.lookupDefault(Types.LOCATION);
                 if (def != null)
                     return def;
                 throw new ParseFailureException("Unknown location reference: " + name);
@@ -1490,7 +1490,7 @@ public final class DefaultTypeBindings {
             }
 
             private boolean isLocation(@NotNull VarHandle ref) {
-                return ref.type() != null && ref.type().id().equals(RefTypes.LOCATION.id());
+                return ref.type() != null && ref.type().id().equals(Types.LOCATION.id());
             }
         });
     }
@@ -1546,7 +1546,7 @@ public final class DefaultTypeBindings {
             }
 
             private boolean isList(@NotNull VarHandle ref) {
-                return ref.type() != null && ref.type().id().equals(RefTypes.LIST.id());
+                return ref.type() != null && ref.type().id().equals(Types.LIST.id());
             }
         });
     }
@@ -1602,7 +1602,7 @@ public final class DefaultTypeBindings {
             }
 
             private boolean isMap(@NotNull VarHandle ref) {
-                return ref.type() != null && ref.type().id().equals(RefTypes.MAP.id());
+                return ref.type() != null && ref.type().id().equals(Types.MAP.id());
             }
         });
     }
@@ -1658,7 +1658,7 @@ public final class DefaultTypeBindings {
             }
 
             private boolean isData(@NotNull VarHandle ref) {
-                return ref.type() != null && ref.type().id().equals(RefTypes.DATA.id());
+                return ref.type() != null && ref.type().id().equals(Types.DATA.id());
             }
         });
     }
@@ -1688,7 +1688,7 @@ public final class DefaultTypeBindings {
                 VarHandle ref = env.lookupVar(name);
                 if (ref != null && isBlock(ref))
                     return 1;
-                if (env.lookupDefault(RefTypes.BLOCK) != null)
+                if (env.lookupDefault(Types.BLOCK) != null)
                     return 0;
                 return 1;
             }
@@ -1696,7 +1696,7 @@ public final class DefaultTypeBindings {
             @Override
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 if (tokens.isEmpty()) {
-                    VarHandle def = env.lookupDefault(RefTypes.BLOCK);
+                    VarHandle def = env.lookupDefault(Types.BLOCK);
                     if (def == null)
                         throw new ParseFailureException("No default block in this context");
                     return def;
@@ -1708,7 +1708,7 @@ public final class DefaultTypeBindings {
                         throw new ParseFailureException(name + " is not a block");
                     return ref;
                 }
-                VarHandle def = env.lookupDefault(RefTypes.BLOCK);
+                VarHandle def = env.lookupDefault(Types.BLOCK);
                 if (def != null)
                     return def;
                 throw new ParseFailureException("Unknown block reference: " + name);
@@ -1723,7 +1723,7 @@ public final class DefaultTypeBindings {
             }
 
             private boolean isBlock(@NotNull VarHandle ref) {
-                return ref.type() != null && ref.type().id().equals(RefTypes.BLOCK.id());
+                return ref.type() != null && ref.type().id().equals(Types.BLOCK.id());
             }
         });
     }

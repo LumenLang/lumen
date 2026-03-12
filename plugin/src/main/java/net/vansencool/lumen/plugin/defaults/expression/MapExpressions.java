@@ -7,7 +7,7 @@ import net.vansencool.lumen.api.codegen.EnvironmentAccess;
 import net.vansencool.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import net.vansencool.lumen.api.pattern.Categories;
 import net.vansencool.lumen.api.type.RefTypeHandle;
-import net.vansencool.lumen.api.type.RefTypes;
+import net.vansencool.lumen.api.type.Types;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -50,7 +50,7 @@ public final class MapExpressions {
                     ctx.codegen().addImport(HashMap.class.getName());
                     return new ExpressionResult(
                             "new HashMap<>()",
-                            RefTypes.MAP.id(),
+                            Types.MAP.id(),
                             Map.of());
                 }));
 
@@ -135,7 +135,7 @@ public final class MapExpressions {
                     ctx.codegen().addImport(ArrayList.class.getName());
                     return new ExpressionResult(
                             "new ArrayList<>(((Map<?, ?>) " + ctx.java("map") + ").keySet())",
-                            RefTypes.LIST.id(),
+                            Types.LIST.id(),
                             Map.of());
                 }));
 
@@ -151,7 +151,7 @@ public final class MapExpressions {
                     ctx.codegen().addImport(ArrayList.class.getName());
                     return new ExpressionResult(
                             "new ArrayList<>(((Map<?, ?>) " + ctx.java("map") + ").values())",
-                            RefTypes.LIST.id(),
+                            Types.LIST.id(),
                             Map.of());
                 }));
     }

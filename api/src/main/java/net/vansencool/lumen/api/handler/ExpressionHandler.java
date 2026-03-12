@@ -2,6 +2,7 @@ package net.vansencool.lumen.api.handler;
 
 import net.vansencool.lumen.api.codegen.BindingAccess;
 import net.vansencool.lumen.api.pattern.PatternRegistrar;
+import net.vansencool.lumen.api.type.Types;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,8 +19,14 @@ import java.util.Map;
  * <h2>Example</h2>
  * <pre>{@code
  * api.patterns().expression("get player %name:STRING%", ctx ->
- *     new ExpressionResult("org.bukkit.Bukkit.getPlayer(" + ctx.java("name") + ")", "PLAYER")
+ *     new ExpressionResult("Bukkit.getPlayer(" + ctx.java("name") + ")", Types.PLAYER.id())
  * );
+ * }</pre>
+ *
+ * <p>When the expression evaluates to a primitive or common Java type, use
+ * {@link Types} constants:
+ * <pre>{@code
+ * new ExpressionResult(expr, null, Types.DOUBLE)
  * }</pre>
  *
  * <p>Scripts can then write:
@@ -45,19 +52,45 @@ public interface ExpressionHandler {
      *
      * @param java      the Java expression string
      * @param refTypeId the ref type id for the resulting variable (e.g. "PLAYER"), or null if untyped
+     * @param javaType  the Java type of the expression result (e.g. {@code Types.INT}, {@code Types.STRING}), or null if unknown
      * @param metadata  compile-time metadata forwarded to the resulting variable reference
      */
     record ExpressionResult(@NotNull String java, @Nullable String refTypeId,
+                            @Nullable String javaType,
                             @NotNull Map<String, Object> metadata) {
 
         /**
-         * Creates a typed expression result with no metadata.
+         * Creates a typed expression result with no metadata and no explicit Java type.
          *
          * @param java      the Java expression string
          * @param refTypeId the ref type id
          */
         public ExpressionResult(@NotNull String java, @Nullable String refTypeId) {
-            this(java, refTypeId, Map.of());
+            this(java, refTypeId, null, Map.of());
+        }
+
+        /**
+         * Creates a typed expression result with metadata but no explicit Java type.
+         *
+         * @param java      the Java expression string
+         * @param refTypeId the ref type id
+         * @param metadata  compile-time metadata
+         */
+        public ExpressionResult(@NotNull String java, @Nullable String refTypeId,
+                                @NotNull Map<String, Object> metadata) {
+            this(java, refTypeId, null, metadata);
+        }
+
+        /**
+         * Creates a typed expression result with an explicit Java type and no metadata.
+         *
+         * @param java      the Java expression string
+         * @param refTypeId the ref type id, or null
+         * @param javaType  the Java type name
+         */
+        public ExpressionResult(@NotNull String java, @Nullable String refTypeId,
+                                @Nullable String javaType) {
+            this(java, refTypeId, javaType, Map.of());
         }
     }
 }

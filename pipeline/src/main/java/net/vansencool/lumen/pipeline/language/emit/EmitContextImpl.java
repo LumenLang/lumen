@@ -63,8 +63,7 @@ public final class EmitContextImpl implements EmitContext {
         return result;
     }
 
-    private static @NotNull TokenKind mapTokenType(
-            ScriptToken.@NotNull TokenType type) {
+    private static @NotNull TokenKind mapTokenType(ScriptToken.@NotNull TokenType type) {
         return switch (type) {
             case IDENT -> TokenKind.IDENT;
             case NUMBER -> TokenKind.NUMBER;

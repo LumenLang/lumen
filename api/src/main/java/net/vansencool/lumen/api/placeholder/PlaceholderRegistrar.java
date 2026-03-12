@@ -18,9 +18,9 @@ import org.jetbrains.annotations.NotNull;
  * <h2>Example</h2>
  * <pre>{@code
  * PlaceholderRegistrar ph = api.placeholders();
- * ph.property(RefTypes.PLAYER, "name", "$.getName()");
- * ph.property(RefTypes.PLAYER, "health", "$.getHealth()", PlaceholderType.NUMBER);
- * ph.defaultProperty(RefTypes.PLAYER, "name");
+ * ph.property(Types.PLAYER, "name", "$.getName()");
+ * ph.property(Types.PLAYER, "health", "$.getHealth()", PlaceholderType.NUMBER);
+ * ph.defaultProperty(Types.PLAYER, "name");
  * }</pre>
  *
  * <p>In a script:

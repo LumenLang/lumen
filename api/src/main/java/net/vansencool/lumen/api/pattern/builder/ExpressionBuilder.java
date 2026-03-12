@@ -26,7 +26,7 @@ import java.util.function.Consumer;
  *         .example("var loc = get player location")
  *         .since("1.0.0")
  *         .category(Categories.PLAYER)
- *         .handler(ctx -> new ExpressionResult(ctx.java("who") + ".getLocation()", RefTypes.LOCATION.id())));
+ *         .handler(ctx -> new ExpressionResult(ctx.java("who") + ".getLocation()", Types.LOCATION.id())));
  * }</pre>
  *
  * @see PatternRegistrar#expression(Consumer)

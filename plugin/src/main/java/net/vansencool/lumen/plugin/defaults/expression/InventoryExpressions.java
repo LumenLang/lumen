@@ -4,7 +4,7 @@ import net.vansencool.lumen.api.LumenAPI;
 import net.vansencool.lumen.api.annotations.Call;
 import net.vansencool.lumen.api.annotations.Registration;
 import net.vansencool.lumen.api.handler.ExpressionHandler.ExpressionResult;
-import net.vansencool.lumen.api.type.RefTypes;
+import net.vansencool.lumen.api.type.Types;
 import net.vansencool.lumen.plugin.util.InventoryHelper;
 import net.vansencool.lumen.plugin.util.LumenInventoryHelper;
 import net.vansencool.lumen.plugin.util.LumenInventoryHolder;
@@ -97,7 +97,7 @@ public final class InventoryExpressions {
                             ctx.codegen().addImport(INVENTORY);
                             return new ExpressionResult(
                                     "((Inventory) " + ctx.java("inv") + ").getItem(" + ctx.java("slot") + ")",
-                                    RefTypes.ITEMSTACK.id());
+                                    Types.ITEMSTACK.id());
                         })
                 .expression(
                         "[get] %inv:EXPR% inventory size",
@@ -107,7 +107,7 @@ public final class InventoryExpressions {
                             ctx.codegen().addImport(INVENTORY);
                             return new ExpressionResult(
                                     "((Inventory) " + ctx.java("inv") + ").getSize()",
-                                    null);
+                                    null, Types.INT);
                         })
                 .expression(
                         "[get] first empty slot of %inv:EXPR%",
@@ -117,7 +117,7 @@ public final class InventoryExpressions {
                             ctx.codegen().addImport(INVENTORY);
                             return new ExpressionResult(
                                     "((Inventory) " + ctx.java("inv") + ").firstEmpty()",
-                                    null);
+                                    null, Types.INT);
                         })
                 .expression(
                         "[get] name of %inv:EXPR%",
@@ -129,7 +129,7 @@ public final class InventoryExpressions {
                             String inv = ctx.java("inv");
                             return new ExpressionResult(
                                     "(((Inventory) " + inv + ").getHolder() instanceof LumenInventoryHolder __lh ? __lh.getName() : null)",
-                                    null);
+                                    null, Types.STRING);
                         });
     }
 }

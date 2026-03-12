@@ -2,6 +2,7 @@ package net.vansencool.lumen.pipeline.placeholder;
 
 import net.vansencool.lumen.api.placeholder.PlaceholderType;
 import net.vansencool.lumen.pipeline.codegen.TypeEnv;
+import net.vansencool.lumen.pipeline.type.LumenType;
 import net.vansencool.lumen.pipeline.var.RefType;
 import net.vansencool.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
@@ -112,6 +113,24 @@ public final class PlaceholderExpander {
         if (ref == null || ref.refType() == null) return null;
 
         return PlaceholderRegistry.getPropertyType(ref.refType(), property);
+    }
+
+    /**
+     * Returns the {@link LumenType} of a placeholder expression, or {@code null} if
+     * the placeholder cannot be resolved.
+     *
+     * @param placeholder the placeholder text without braces (e.g. "player_y")
+     * @param env         the type environment for variable lookups
+     * @return the lumen type, or {@code null} if unresolvable
+     */
+    public static @Nullable LumenType resolveExpressionType(@NotNull String placeholder, @NotNull TypeEnv env) {
+        PlaceholderType phType = resolveType(placeholder, env);
+        if (phType == null) return null;
+        return switch (phType) {
+            case STRING -> LumenType.Primitive.STRING;
+            case NUMBER -> LumenType.Primitive.DOUBLE;
+            case BOOLEAN -> LumenType.Primitive.BOOLEAN;
+        };
     }
 
     /**

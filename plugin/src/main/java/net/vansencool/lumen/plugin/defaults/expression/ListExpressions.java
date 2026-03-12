@@ -5,7 +5,7 @@ import net.vansencool.lumen.api.annotations.Call;
 import net.vansencool.lumen.api.annotations.Registration;
 import net.vansencool.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import net.vansencool.lumen.api.pattern.Categories;
-import net.vansencool.lumen.api.type.RefTypes;
+import net.vansencool.lumen.api.type.Types;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -32,7 +32,7 @@ public final class ListExpressions {
                     ctx.codegen().addImport(ArrayList.class.getName());
                     return new ExpressionResult(
                             "new ArrayList<>()",
-                            RefTypes.LIST.id(),
+                            Types.LIST.id(),
                             Map.of());
                 }));
 
@@ -48,7 +48,7 @@ public final class ListExpressions {
                     String elementType = ctx.tokens("type").get(0).toLowerCase();
                     return new ExpressionResult(
                             "new ArrayList<>()",
-                            RefTypes.LIST.id(),
+                            Types.LIST.id(),
                             Map.of("element_type", elementType));
                 }));
 
@@ -63,7 +63,7 @@ public final class ListExpressions {
                     ctx.codegen().addImport(List.class.getName());
                     return new ExpressionResult(
                             "((List<?>) " + ctx.java("list") + ").size()",
-                            null);
+                            null, Types.INT);
                 }));
 
         api.patterns().expression(b -> b
@@ -77,7 +77,7 @@ public final class ListExpressions {
                     ctx.codegen().addImport(List.class.getName());
                     return new ExpressionResult(
                             "((List<?>) " + ctx.java("list") + ").size()",
-                            null);
+                            null, Types.INT);
                 }));
 
         api.patterns().expression(b -> b
@@ -105,7 +105,7 @@ public final class ListExpressions {
                     ctx.codegen().addImport(List.class.getName());
                     return new ExpressionResult(
                             "((List<?>) " + ctx.java("list") + ").indexOf(" + ctx.java("val") + ")",
-                            null);
+                            null, Types.INT);
                 }));
     }
 }

@@ -3,6 +3,7 @@ package net.vansencool.lumen.pipeline.language.match;
 import net.vansencool.lumen.api.codegen.CodegenAccess;
 import net.vansencool.lumen.api.codegen.EnvironmentAccess;
 import net.vansencool.lumen.api.handler.ConditionHandler;
+import net.vansencool.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import net.vansencool.lumen.api.type.RefTypeHandle;
 import net.vansencool.lumen.pipeline.codegen.CodegenContext;
 import net.vansencool.lumen.pipeline.codegen.TypeEnv;
@@ -10,6 +11,7 @@ import net.vansencool.lumen.pipeline.language.exceptions.TokenCarryingException;
 import net.vansencool.lumen.pipeline.language.pattern.Pattern;
 import net.vansencool.lumen.pipeline.language.resolve.ExprResolver;
 import net.vansencool.lumen.pipeline.typebinding.TypeRegistry;
+import net.vansencool.lumen.pipeline.var.RefType;
 import net.vansencool.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,12 +67,14 @@ public record Match(
                     bv.tokens());
         }
         if (bv.value() instanceof InlineExpr ie) {
-            String inlined = ExprResolver.resolve(ie.tokens(), ctx, env);
-            if (inlined != null) {
+            ExpressionResult result = ExprResolver.resolveWithType(ie.tokens(), ctx, env);
+            if (result != null) {
                 if (!bv.binding().id().equals("EXPR")) {
-                    return bv.binding().toJava(new InlineVarRef(inlined), ctx, env);
+                    RefType ref = result.refTypeId() != null ? RefType.byId(result.refTypeId()) : null;
+                    return bv.binding().toJava(
+                            new InlineVarRef(result.java(), ref, result.metadata()), ctx, env);
                 }
-                return inlined;
+                return result.java();
             }
             throw new TokenCarryingException(
                     "Could not resolve inline expression: '"
@@ -223,16 +227,47 @@ public record Match(
     }
 
     /**
+     * Creates a synthetic {@link EnvironmentAccess.VarHandle} wrapping a resolved Java
+     * expression with no type information.
+     *
+     * @param javaExpr the resolved Java expression
+     * @return a VarHandle backed by the expression
+     */
+    public static EnvironmentAccess.@NotNull VarHandle syntheticHandle(@NotNull String javaExpr) {
+        return new InlineVarRef(javaExpr, null, Map.of());
+    }
+
+    /**
+     * Creates a synthetic {@link EnvironmentAccess.VarHandle} wrapping a resolved Java
+     * expression together with type and metadata from the original expression result.
+     *
+     * @param javaExpr  the resolved Java expression
+     * @param refType   the ref type of the expression, or {@code null}
+     * @param metadata  compile-time metadata from the expression result
+     * @return a VarHandle backed by the expression with full type info
+     */
+    public static EnvironmentAccess.@NotNull VarHandle syntheticHandle(
+            @NotNull String javaExpr,
+            @Nullable RefTypeHandle refType,
+            @NotNull Map<String, Object> metadata) {
+        return new InlineVarRef(javaExpr, refType, metadata);
+    }
+
+    /**
      * Synthetic {@link EnvironmentAccess.VarHandle} wrapping a resolved inline expression's
      * Java code. This allows typed bindings (e.g. MATERIAL, ENTITY_TYPE) to apply their
      * coercion logic (such as {@code Material.valueOf(...)}) when the slot was filled by
      * an inline expression rather than a direct variable reference.
      */
-    private record InlineVarRef(@NotNull String javaExpr) implements EnvironmentAccess.VarHandle {
+    private record InlineVarRef(
+            @NotNull String javaExpr,
+            @Nullable RefTypeHandle refType,
+            @NotNull Map<String, Object> meta
+    ) implements EnvironmentAccess.VarHandle {
 
         @Override
         public @Nullable RefTypeHandle type() {
-            return null;
+            return refType;
         }
 
         @Override
@@ -242,17 +277,17 @@ public record Match(
 
         @Override
         public @Nullable Object meta(@NotNull String key) {
-            return null;
+            return meta.get(key);
         }
 
         @Override
         public boolean hasMeta(@NotNull String key) {
-            return false;
+            return meta.containsKey(key);
         }
 
         @Override
         public @NotNull Map<String, Object> metadata() {
-            return Map.of();
+            return meta;
         }
     }
 }

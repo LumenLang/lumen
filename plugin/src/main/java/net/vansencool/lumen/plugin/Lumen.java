@@ -236,8 +236,7 @@ public final class Lumen extends JavaPlugin {
         if (ServerPlatform.isCraftBukkit()) {
             this.getLogger().severe("====================================================");
             this.getLogger().severe("Unsupported server software detected: " + ServerPlatform.getSoftwareName());
-            this.getLogger().severe("This plugin requires Spigot, Paper, or any forks of those.");
-            this.getLogger().severe("CraftBukkit is not supported and there is no functional reason to run it.");
+            this.getLogger().severe("This plugin requires Spigot, Paper, or any forks of them.");
             this.getLogger().severe("Please switch to Paper or Spigot.");
             this.getLogger().severe("====================================================");
             Bukkit.getPluginManager().disablePlugin(this);

@@ -5,7 +5,7 @@ import net.vansencool.lumen.api.annotations.Call;
 import net.vansencool.lumen.api.annotations.Registration;
 import net.vansencool.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import net.vansencool.lumen.api.pattern.Categories;
-import net.vansencool.lumen.api.type.RefTypes;
+import net.vansencool.lumen.api.type.Types;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
@@ -73,7 +73,7 @@ public final class DefaultExpressions {
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .handler(ctx -> new ExpressionResult(ctx.java("who") + ".getLocation()",
-                        RefTypes.LOCATION.id())));
+                        Types.LOCATION.id())));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -83,7 +83,7 @@ public final class DefaultExpressions {
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .handler(ctx -> new ExpressionResult(ctx.java("who") + ".getLocation()",
-                        RefTypes.LOCATION.id())));
+                        Types.LOCATION.id())));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -93,7 +93,7 @@ public final class DefaultExpressions {
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .handler(ctx -> new ExpressionResult(ctx.java("who") + ".getWorld()",
-                        RefTypes.WORLD.id())));
+                        Types.WORLD.id())));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -104,7 +104,7 @@ public final class DefaultExpressions {
                 .category(Categories.PLAYER)
                 .handler(ctx -> new ExpressionResult(
                         "Bukkit.getPlayer(" + ctx.java("name") + ")",
-                        RefTypes.PLAYER.id())));
+                        Types.PLAYER.id())));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -115,7 +115,7 @@ public final class DefaultExpressions {
                 .category(Categories.PLAYER)
                 .handler(ctx -> new ExpressionResult(
                         "Bukkit.getPlayer(String.valueOf(" + ctx.java("name") + "))",
-                        RefTypes.PLAYER.id())));
+                        Types.PLAYER.id())));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -128,7 +128,7 @@ public final class DefaultExpressions {
                     ctx.codegen().addImport(UUID.class.getName());
                     return new ExpressionResult(
                             "Bukkit.getPlayer(UUID.fromString(" + ctx.java("uuid") + "))",
-                            RefTypes.PLAYER.id());
+                            Types.PLAYER.id());
                 }));
 
         api.patterns().expression(b -> b
@@ -140,7 +140,7 @@ public final class DefaultExpressions {
                 .category(Categories.WORLD)
                 .handler(ctx -> new ExpressionResult(
                         "Bukkit.getWorld(" + ctx.java("name") + ")",
-                        RefTypes.WORLD.id())));
+                        Types.WORLD.id())));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -154,7 +154,7 @@ public final class DefaultExpressions {
                     ctx.codegen().addImport(OfflinePlayer.class.getName());
                     return new ExpressionResult(
                             "Bukkit.getOfflinePlayer(" + nameJava + ")",
-                            RefTypes.OFFLINE_PLAYER.id());
+                            Types.OFFLINE_PLAYER.id());
                 }));
 
         api.patterns().expression(b -> b
@@ -171,7 +171,7 @@ public final class DefaultExpressions {
                     return new ExpressionResult(
                             "Bukkit.getOfflinePlayer(UUID.fromString("
                                     + uuidJava + "))",
-                            RefTypes.OFFLINE_PLAYER.id());
+                            Types.OFFLINE_PLAYER.id());
                 }));
 
         api.patterns().expression(b -> b
@@ -181,7 +181,7 @@ public final class DefaultExpressions {
                 .example("var name = get player's name")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler(ctx -> new ExpressionResult(ctx.java("op") + ".getName()", null)));
+                .handler(ctx -> new ExpressionResult(ctx.java("op") + ".getName()", null, Types.STRING)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -190,7 +190,7 @@ public final class DefaultExpressions {
                 .example("var name = get offlinePlayer's name")
                 .since("1.0.0")
                 .category(Categories.OFFLINE_PLAYER)
-                .handler(ctx -> new ExpressionResult(ctx.java("op") + ".getName()", null)));
+                .handler(ctx -> new ExpressionResult(ctx.java("op") + ".getName()", null, Types.STRING)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -200,7 +200,7 @@ public final class DefaultExpressions {
                 .since("1.0.0")
                 .category(Categories.OFFLINE_PLAYER)
                 .handler(ctx -> new ExpressionResult(ctx.java("op") + ".getUniqueId().toString()",
-                        null)));
+                        null, Types.STRING)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -209,7 +209,7 @@ public final class DefaultExpressions {
                 .example("var time = get offlinePlayer's first played")
                 .since("1.0.0")
                 .category(Categories.OFFLINE_PLAYER)
-                .handler(ctx -> new ExpressionResult(ctx.java("op") + ".getFirstPlayed()", null)));
+                .handler(ctx -> new ExpressionResult(ctx.java("op") + ".getFirstPlayed()", null, Types.LONG)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -218,7 +218,7 @@ public final class DefaultExpressions {
                 .example("var time = get offlinePlayer's last played")
                 .since("1.0.0")
                 .category(Categories.OFFLINE_PLAYER)
-                .handler(ctx -> new ExpressionResult(ctx.java("op") + ".getLastPlayed()", null)));
+                .handler(ctx -> new ExpressionResult(ctx.java("op") + ".getLastPlayed()", null, Types.LONG)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -228,7 +228,7 @@ public final class DefaultExpressions {
                 .since("1.0.0")
                 .category(Categories.OFFLINE_PLAYER)
                 .handler(ctx -> new ExpressionResult(ctx.java("op") + ".getBedSpawnLocation()",
-                        RefTypes.LOCATION.id())));
+                        Types.LOCATION.id())));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -237,7 +237,7 @@ public final class DefaultExpressions {
                 .example("var px = get player's x")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler(ctx -> new ExpressionResult(ctx.java("who") + ".getLocation().getX()", null)));
+                .handler(ctx -> new ExpressionResult(ctx.java("who") + ".getLocation().getX()", null, Types.DOUBLE)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -246,7 +246,7 @@ public final class DefaultExpressions {
                 .example("var py = get player's y")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler(ctx -> new ExpressionResult(ctx.java("who") + ".getLocation().getY()", null)));
+                .handler(ctx -> new ExpressionResult(ctx.java("who") + ".getLocation().getY()", null, Types.DOUBLE)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -255,7 +255,7 @@ public final class DefaultExpressions {
                 .example("var pz = get player's z")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler(ctx -> new ExpressionResult(ctx.java("who") + ".getLocation().getZ()", null)));
+                .handler(ctx -> new ExpressionResult(ctx.java("who") + ".getLocation().getZ()", null, Types.DOUBLE)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -265,7 +265,7 @@ public final class DefaultExpressions {
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .handler(ctx -> new ExpressionResult(ctx.java("who") + ".getUniqueId().toString()",
-                        null)));
+                        null, Types.STRING)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -275,7 +275,7 @@ public final class DefaultExpressions {
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .handler(ctx -> new ExpressionResult(ctx.java("who") + ".getLevel()",
-                        null)));
+                        null, Types.INT)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -285,7 +285,7 @@ public final class DefaultExpressions {
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .handler(ctx -> new ExpressionResult(ctx.java("who") + ".getEyeLocation()",
-                        RefTypes.LOCATION.id())));
+                        Types.LOCATION.id())));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -295,7 +295,7 @@ public final class DefaultExpressions {
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .handler(ctx -> new ExpressionResult(
-                        ctx.java("who") + ".getLocation().getDirection().getX()", null)));
+                        ctx.java("who") + ".getLocation().getDirection().getX()", null, Types.DOUBLE)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -305,7 +305,7 @@ public final class DefaultExpressions {
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .handler(ctx -> new ExpressionResult(
-                        ctx.java("who") + ".getLocation().getDirection().getY()", null)));
+                        ctx.java("who") + ".getLocation().getDirection().getY()", null, Types.DOUBLE)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -315,7 +315,7 @@ public final class DefaultExpressions {
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .handler(ctx -> new ExpressionResult(
-                        ctx.java("who") + ".getLocation().getDirection().getZ()", null)));
+                        ctx.java("who") + ".getLocation().getDirection().getZ()", null, Types.DOUBLE)));
     }
 
     /**
@@ -341,7 +341,7 @@ public final class DefaultExpressions {
                     return new ExpressionResult(
                             "new Location(" + ctx.java("w") + ", " + ctx.java("x") + ", "
                                     + ctx.java("y") + ", " + ctx.java("z") + ")",
-                            RefTypes.LOCATION.id());
+                            Types.LOCATION.id());
                 }));
 
         api.patterns().expression(b -> b
@@ -356,7 +356,7 @@ public final class DefaultExpressions {
                     return new ExpressionResult(
                             "new Location(" + ctx.java("w") + ", " + ctx.java("x") + ", "
                                     + ctx.java("y") + ", " + ctx.java("z") + ")",
-                            RefTypes.LOCATION.id());
+                            Types.LOCATION.id());
                 }));
     }
 
@@ -384,7 +384,7 @@ public final class DefaultExpressions {
                             playerJava + ".getLocation().getWorld().spawnEntity("
                                     + playerJava + ".getLocation(), " + typeEnum
                                     + ")",
-                            RefTypes.ENTITY.id(),
+                            Types.ENTITY.id(),
                             meta);
                 }));
 
@@ -402,7 +402,7 @@ public final class DefaultExpressions {
                     return new ExpressionResult(
                             ctx.java("loc") + ".getWorld().spawnEntity(" + ctx.java("loc")
                                     + ", " + typeEnum + ")",
-                            RefTypes.ENTITY.id(),
+                            Types.ENTITY.id(),
                             meta);
                 }));
 
@@ -421,7 +421,7 @@ public final class DefaultExpressions {
                     return new ExpressionResult(
                             locJava + ".getWorld().spawnEntity(" + locJava
                                     + ", " + typeEnum + ")",
-                            RefTypes.ENTITY.id(),
+                            Types.ENTITY.id(),
                             meta);
                 }));
     }
@@ -453,7 +453,7 @@ public final class DefaultExpressions {
                     String player = ctx.java("who");
                     return new ExpressionResult(
                             "(Entity) " + player + ".launchProjectile((Class) " + type + ".getEntityClass())",
-                            RefTypes.ENTITY.id());
+                            Types.ENTITY.id());
                 }));
 
         api.patterns().expression(b -> b
@@ -469,7 +469,7 @@ public final class DefaultExpressions {
                     String loc = ctx.java("loc");
                     return new ExpressionResult(
                             loc + ".getWorld().spawnEntity(" + loc + ", " + type + ")",
-                            RefTypes.ENTITY.id());
+                            Types.ENTITY.id());
                 }));
     }
 
@@ -498,7 +498,7 @@ public final class DefaultExpressions {
                 .category(Categories.VARIABLE)
                 .handler(ctx -> {
                     ctx.codegen().addImport(Location.class.getName());
-                    return new ExpressionResult("(Location) null", RefTypes.LOCATION.id());
+                    return new ExpressionResult("(Location) null", Types.LOCATION.id());
                 }));
 
         api.patterns().expression(b -> b
@@ -508,7 +508,7 @@ public final class DefaultExpressions {
                 .example("global var target for ref type player default no player")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
-                .handler(ctx -> new ExpressionResult("(Player) null", RefTypes.PLAYER.id())));
+                .handler(ctx -> new ExpressionResult("(Player) null", Types.PLAYER.id())));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -519,7 +519,7 @@ public final class DefaultExpressions {
                 .category(Categories.VARIABLE)
                 .handler(ctx -> {
                     ctx.codegen().addImport(Entity.class.getName());
-                    return new ExpressionResult("(Entity) null", RefTypes.ENTITY.id());
+                    return new ExpressionResult("(Entity) null", Types.ENTITY.id());
                 }));
 
         api.patterns().expression(b -> b
@@ -531,7 +531,7 @@ public final class DefaultExpressions {
                 .category(Categories.VARIABLE)
                 .handler(ctx -> {
                     ctx.codegen().addImport(World.class.getName());
-                    return new ExpressionResult("(World) null", RefTypes.WORLD.id());
+                    return new ExpressionResult("(World) null", Types.WORLD.id());
                 }));
 
         api.patterns().expression(b -> b
@@ -543,7 +543,7 @@ public final class DefaultExpressions {
                 .category(Categories.VARIABLE)
                 .handler(ctx -> {
                     ctx.codegen().addImport(Block.class.getName());
-                    return new ExpressionResult("(Block) null", RefTypes.BLOCK.id());
+                    return new ExpressionResult("(Block) null", Types.BLOCK.id());
                 }));
     }
 }

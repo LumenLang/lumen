@@ -5,7 +5,7 @@ import net.vansencool.lumen.api.annotations.Call;
 import net.vansencool.lumen.api.annotations.Registration;
 import net.vansencool.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import net.vansencool.lumen.api.pattern.Categories;
-import net.vansencool.lumen.api.type.RefTypes;
+import net.vansencool.lumen.api.type.Types;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -24,7 +24,7 @@ public final class BlockExpressions {
                 .example("var b = block at loc").since("1.0.0").category(Categories.BLOCK)
                 .handler(ctx -> new ExpressionResult(
                         ctx.java("loc") + ".getBlock()",
-                        RefTypes.BLOCK.id())));
+                        Types.BLOCK.id())));
 
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("[get] %b:BLOCK% type")
@@ -32,7 +32,7 @@ public final class BlockExpressions {
                 .example("var t = block type").since("1.0.0").category(Categories.BLOCK)
                 .handler(ctx -> new ExpressionResult(
                         ctx.java("b") + ".getType().name()",
-                        null)));
+                        null, Types.STRING)));
 
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("[get] %b:BLOCK% location")
@@ -40,7 +40,7 @@ public final class BlockExpressions {
                 .example("var loc = block location").since("1.0.0").category(Categories.BLOCK)
                 .handler(ctx -> new ExpressionResult(
                         ctx.java("b") + ".getLocation()",
-                        RefTypes.LOCATION.id())));
+                        Types.LOCATION.id())));
 
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("[get] %b:BLOCK% world")
@@ -48,7 +48,7 @@ public final class BlockExpressions {
                 .example("var w = block world").since("1.0.0").category(Categories.BLOCK)
                 .handler(ctx -> new ExpressionResult(
                         ctx.java("b") + ".getWorld()",
-                        RefTypes.WORLD.id())));
+                        Types.WORLD.id())));
 
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("[get] %b:BLOCK% (x|y|z)")
@@ -64,7 +64,7 @@ public final class BlockExpressions {
                     };
                     return new ExpressionResult(
                             matched + method,
-                            null);
+                            null, Types.INT);
                 }));
 
         api.patterns().expression(b -> b
@@ -73,7 +73,7 @@ public final class BlockExpressions {
                 .example("var light = block light level").since("1.0.0").category(Categories.BLOCK)
                 .handler(ctx -> new ExpressionResult(
                         ctx.java("b") + ".getLightLevel()",
-                        null)));
+                        null, Types.INT)));
 
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("[get] %b:BLOCK% data [string]")
@@ -81,6 +81,6 @@ public final class BlockExpressions {
                 .example("var data = block data").since("1.0.0").category(Categories.BLOCK)
                 .handler(ctx -> new ExpressionResult(
                         ctx.java("b") + ".getBlockData().getAsString()",
-                        null)));
+                        null, Types.STRING)));
     }
 }

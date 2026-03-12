@@ -17,10 +17,7 @@ import static net.vansencool.lumen.api.pattern.LumaExample.secondly;
 import static net.vansencool.lumen.api.pattern.LumaExample.top;
 
 /**
- * Registers scheduling block handlers: wait, every, and their named variants.
- *
- * <p>All schedule blocks support cancellation from within the block body
- * via the {@code cancel} statement, which stops the schedule immediately.
+ * Registers scheduling block handlers.
  */
 @Registration
 @SuppressWarnings({"unused", "DataFlowIssue"})

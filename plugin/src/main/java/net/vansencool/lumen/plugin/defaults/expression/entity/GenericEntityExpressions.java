@@ -5,7 +5,7 @@ import net.vansencool.lumen.api.annotations.Call;
 import net.vansencool.lumen.api.annotations.Registration;
 import net.vansencool.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import net.vansencool.lumen.api.pattern.Categories;
-import net.vansencool.lumen.api.type.RefTypes;
+import net.vansencool.lumen.api.type.Types;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -23,7 +23,7 @@ public final class GenericEntityExpressions {
                 .example("var loc = mob's location")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler(ctx -> new ExpressionResult(ctx.java("e") + ".getLocation()", RefTypes.LOCATION.id())));
+                .handler(ctx -> new ExpressionResult(ctx.java("e") + ".getLocation()", Types.LOCATION.id())));
 
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("get %e:ENTITY_POSSESSIVE% world")
@@ -31,7 +31,7 @@ public final class GenericEntityExpressions {
                 .example("var w = mob's world")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler(ctx -> new ExpressionResult(ctx.java("e") + ".getWorld()", RefTypes.WORLD.id())));
+                .handler(ctx -> new ExpressionResult(ctx.java("e") + ".getWorld()", Types.WORLD.id())));
 
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("get %e:ENTITY_POSSESSIVE% type")
@@ -47,7 +47,7 @@ public final class GenericEntityExpressions {
                 .example("var n = mob's name")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler(ctx -> new ExpressionResult(ctx.java("e") + ".getName()", null)));
+                .handler(ctx -> new ExpressionResult(ctx.java("e") + ".getName()", null, Types.STRING)));
 
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("get %e:ENTITY_POSSESSIVE% custom name")
@@ -55,7 +55,7 @@ public final class GenericEntityExpressions {
                 .example("var cn = mob's custom name")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler(ctx -> new ExpressionResult(ctx.java("e") + ".getCustomName()", null)));
+                .handler(ctx -> new ExpressionResult(ctx.java("e") + ".getCustomName()", null, Types.STRING)));
 
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("get %e:ENTITY_POSSESSIVE% uuid")
@@ -63,7 +63,7 @@ public final class GenericEntityExpressions {
                 .example("var id = mob's uuid")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler(ctx -> new ExpressionResult(ctx.java("e") + ".getUniqueId().toString()", null)));
+                .handler(ctx -> new ExpressionResult(ctx.java("e") + ".getUniqueId().toString()", null, Types.STRING)));
 
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("get %e:ENTITY_POSSESSIVE% velocity")
@@ -79,7 +79,7 @@ public final class GenericEntityExpressions {
                 .example("var ft = mob's fire ticks")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler(ctx -> new ExpressionResult(ctx.java("e") + ".getFireTicks()", null)));
+                .handler(ctx -> new ExpressionResult(ctx.java("e") + ".getFireTicks()", null, Types.INT)));
 
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("get %e:ENTITY_POSSESSIVE% passenger count")
@@ -87,6 +87,6 @@ public final class GenericEntityExpressions {
                 .example("var count = mob's passenger count")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler(ctx -> new ExpressionResult(ctx.java("e") + ".getPassengers().size()", null)));
+                .handler(ctx -> new ExpressionResult(ctx.java("e") + ".getPassengers().size()", null, Types.INT)));
     }
 }
