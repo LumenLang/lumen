@@ -56,6 +56,9 @@ hs_err_pid*
 # Icon must end with two \r
 Icon
 
+# Weird github issues
+.github
+
 # Thumbnails
 ._*
 

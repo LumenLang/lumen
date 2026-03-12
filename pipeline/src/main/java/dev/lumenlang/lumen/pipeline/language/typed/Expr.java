@@ -50,25 +50,6 @@ public sealed interface Expr permits
      * @param resolvedType the compile-time type inferred from the literal value
      */
     record Literal(@Nullable Object value, @Nullable LumenType resolvedType) implements Expr {
-
-        /**
-         * Creates a literal with type inferred from the value.
-         *
-         * @param value the literal value
-         */
-        public Literal(@Nullable Object value) {
-            this(value, inferType(value));
-        }
-
-        private static @Nullable LumenType inferType(@Nullable Object value) {
-            if (value instanceof Integer) return LumenType.Primitive.INT;
-            if (value instanceof Long) return LumenType.Primitive.LONG;
-            if (value instanceof Double) return LumenType.Primitive.DOUBLE;
-            if (value instanceof Float) return LumenType.Primitive.FLOAT;
-            if (value instanceof Boolean) return LumenType.Primitive.BOOLEAN;
-            if (value instanceof String) return LumenType.Primitive.STRING;
-            return null;
-        }
     }
 
     /**
@@ -83,15 +64,6 @@ public sealed interface Expr permits
      * @param resolvedType the compile-time type from the variable's definition
      */
     record RefExpr(@NotNull String name, @Nullable LumenType resolvedType) implements Expr {
-
-        /**
-         * Creates a ref expression without type information.
-         *
-         * @param name the variable name
-         */
-        public RefExpr(@NotNull String name) {
-            this(name, null);
-        }
     }
 
     /**
@@ -102,15 +74,6 @@ public sealed interface Expr permits
      * @param resolvedType the compile-time numeric result type
      */
     record MathExpr(@NotNull String java, @Nullable LumenType resolvedType) implements Expr {
-
-        /**
-         * Creates a math expression without type information.
-         *
-         * @param java the Java expression source code
-         */
-        public MathExpr(@NotNull String java) {
-            this(java, null);
-        }
     }
 
     /**

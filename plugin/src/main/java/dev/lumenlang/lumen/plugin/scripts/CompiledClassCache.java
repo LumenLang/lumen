@@ -1,5 +1,6 @@
 package dev.lumenlang.lumen.plugin.scripts;
 
+import dev.lumenlang.lumen.pipeline.java.compiled.ScriptSourceMap;
 import dev.lumenlang.lumen.pipeline.java.version.JavaVersions;
 import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
 import dev.lumenlang.lumen.plugin.Lumen;
@@ -180,7 +181,7 @@ public final class CompiledClassCache {
 
     /**
      * Persists the generated Java source for a script alongside its compiled
-     * bytecodes so that {@link dev.lumenlang.lumen.pipeline.java.compiled.ScriptSourceMap}
+     * bytecodes so that {@link ScriptSourceMap}
      * can be restored when the script is loaded from cache on subsequent server
      * starts.
      *
