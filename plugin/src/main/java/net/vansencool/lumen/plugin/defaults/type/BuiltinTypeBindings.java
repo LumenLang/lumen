@@ -73,6 +73,11 @@ public final class BuiltinTypeBindings {
             }
 
             @Override
+            public int consumeCount(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
+                return -1;
+            }
+
+            @Override
             public @NotNull String toJava(Object value, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
                 TokenList tl = (TokenList) value;
                 return tl.tokens().stream()
@@ -93,7 +98,9 @@ public final class BuiltinTypeBindings {
 
             @Override
             public int consumeCount(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
-                return tokens.isEmpty() ? 0 : 1;
+                if (tokens.isEmpty())
+                    throw new ParseFailureException("STRING requires at least one token");
+                return 1;
             }
 
             @Override
@@ -130,7 +137,8 @@ public final class BuiltinTypeBindings {
 
             @Override
             public int consumeCount(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
-                if (tokens.isEmpty()) return 0;
+                if (tokens.isEmpty())
+                    throw new ParseFailureException("QSTRING requires at least one token");
                 Token first = tokens.get(0);
                 if (first.kind() == TokenKind.STRING) return 1;
                 if (env.lookupVar(first.text()) != null) return 1;

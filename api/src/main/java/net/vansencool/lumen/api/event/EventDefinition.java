@@ -147,7 +147,7 @@ public final class EventDefinition {
     /**
      * A variable entry in an event definition.
      *
-     * @param refTypeId the ref type id for implicit resolution, or {@code null} for plain variables
+     * @param refTypeId the ref type id for type checking, or {@code null} for plain variables
      * @param javaType  the Java type name (primitive name or fully qualified class name)
      * @param expr      the initialiser expression
      * @param metadata  compile-time metadata entries propagated to the resulting VarHandle

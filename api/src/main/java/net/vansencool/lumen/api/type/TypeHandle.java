@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
  * interface.
  *
  * <p>Addons can register new reference types via {@link RefTypeRegistrar} so they
- * participate in default variable resolution and type checking.
+ * participate in type checking.
  *
  * @see RefTypeHandle
  * @see RefTypeRegistrar

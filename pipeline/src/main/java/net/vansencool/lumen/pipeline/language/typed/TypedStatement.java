@@ -111,7 +111,7 @@ public sealed interface TypedStatement permits
      * <p>
      * When {@code refTypeName} is non-null, the global is scoped to that
      * {@code RefType}.
-     * Blocks that provide a default variable for the given type will load the
+     * Blocks that have a variable matching the given type will load the
      * global with
      * a scoped key; blocks that do not have that type simply skip loading this
      * variable.

@@ -143,20 +143,27 @@ public final class TypeEnv implements EnvironmentAccess {
     }
 
     /**
-     * Returns the default {@link VarRef} for the given {@link RefType} by walking the scope stack.
+     * Returns the first {@link VarRef} in scope whose {@link RefType} matches the given type.
      *
-     * <p>This is used by type bindings (e.g. the {@code PLAYER} binding) to infer an implicit
-     * variable when no explicit token is provided in script source.
+     * <p>Walks the scope stack from innermost to outermost scope, examining all variables
+     * in each frame.
      *
-     * @param type the ref type to look up
-     * @return the default {@link VarRef}, or {@code null} if none is set in any enclosing scope
+     * @param type the ref type to match against
+     * @return the first matching variable, or {@code null} if none found
      */
-    public VarRef lookupDefault(RefType type) {
+    public @Nullable VarRef lookupVarByType(@NotNull RefType type) {
         for (BlockContext c = currentBlock; c != null; c = c.parent()) {
-            VarRef v = c.getDefaultLocal(type);
-            if (v != null) return v;
+            VarRef found = c.findVarByType(type);
+            if (found != null) return found;
         }
         return null;
+    }
+
+    @Override
+    public @Nullable VarRef lookupVarByType(@NotNull RefTypeHandle type) {
+        RefType internal = type instanceof RefType rt ? rt : RefType.byId(type.id());
+        if (internal == null) return null;
+        return lookupVarByType(internal);
     }
 
     /**
@@ -191,7 +198,7 @@ public final class TypeEnv implements EnvironmentAccess {
      * @param key the key to test
      * @return {@code true} if present
      */
-    public boolean has(String key) {
+    public boolean has(@NotNull String key) {
         return globals.containsKey(key);
     }
 
@@ -200,7 +207,7 @@ public final class TypeEnv implements EnvironmentAccess {
      *
      * @param feature the experimental feature identifier
      */
-    public void useExperimental(String feature) {
+    public void useExperimental(@NotNull String feature) {
         experimental.add(feature);
     }
 
@@ -210,7 +217,7 @@ public final class TypeEnv implements EnvironmentAccess {
      * @param feature the experimental feature identifier
      * @return {@code true} if activated
      */
-    public boolean isExperimental(String feature) {
+    public boolean isExperimental(@NotNull String feature) {
         return experimental.contains(feature);
     }
 
@@ -416,12 +423,6 @@ public final class TypeEnv implements EnvironmentAccess {
     }
 
     @Override
-    public @Nullable VarHandle lookupDefault(@NotNull RefTypeHandle type) {
-        RefType internal = type instanceof RefType rt ? rt : RefType.byId(type.id());
-        return internal != null ? lookupDefault(internal) : null;
-    }
-
-    @Override
     public VarHandle defineVar(@NotNull String name, @Nullable RefTypeHandle refType, @NotNull String java) {
         RefType internal = refType instanceof RefType rt ? rt : (refType != null ? RefType.byId(refType.id()) : null);
         VarRef ref = new VarRef(internal, java);
@@ -442,7 +443,7 @@ public final class TypeEnv implements EnvironmentAccess {
      * Defines a named variable in the current block scope with a full compile-time type.
      *
      * @param name      the variable name
-     * @param refType   the ref type for implicit resolution, or {@code null}
+     * @param refType   the ref type for type checking, or {@code null}
      * @param java      the Java variable name
      * @param lumenType the full compile-time type, or {@code null}
      * @param metadata  compile-time metadata entries

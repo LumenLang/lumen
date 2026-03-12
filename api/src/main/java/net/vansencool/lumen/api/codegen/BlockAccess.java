@@ -1,6 +1,5 @@
 package net.vansencool.lumen.api.codegen;
 
-import net.vansencool.lumen.api.type.RefTypeHandle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,15 +63,6 @@ public interface BlockAccess {
      * @return the raw source line
      */
     @NotNull String raw();
-
-    /**
-     * Sets the default variable for the given ref type in this scope.
-     *
-     * @param type the ref type handle
-     * @param var  the variable to set as default
-     */
-    void setDefault(@NotNull RefTypeHandle type,
-                    @NotNull EnvironmentAccess.VarHandle var);
 
     /**
      * Stores a value in this block's local environment map.

@@ -17,8 +17,8 @@ import java.util.Map;
  *
  * <p>A {@code VarRef} represents knowledge that, at runtime, there will be a local variable
  * bound to the given Java name. If a {@link RefType} is present, the variable participates
- * in implicit resolution (e.g. a player reference can be used implicitly by type bindings
- * when no explicit token is provided in script source).
+ * in type checking (e.g. a player reference can be resolved by type bindings
+ * when an explicit variable name is provided in script source).
  *
  * <p>An optional {@link #lumenType()} carries the full compile-time type, covering both
  * primitives and object reference types. When present, {@link #refType()} is derived from it.
@@ -31,10 +31,10 @@ import java.util.Map;
  *
  * <h2>Example</h2>
  * <pre>{@code
- * // A typed variable (player) that can be resolved implicitly:
+ * // A typed variable (player) that can be resolved by name:
  * env.defineVar("player", new VarRef(RefType.PLAYER, "player"));
  *
- * // A plain variable (args) with no implicit resolution:
+ * // A plain variable (args) with no type category:
  * env.defineVar("args", new VarRef(null, "args"));
  *
  * // A variable with full type and metadata:
@@ -42,7 +42,7 @@ import java.util.Map;
  *     .withMeta("entityType", "ZOMBIE");
  * }</pre>
  *
- * @param refType   the logical type category for implicit resolution, or {@code null} for plain variables
+ * @param refType   the logical type category for type checking, or {@code null} for plain variables
  * @param java      the Java variable name that will appear in generated source
  * @param lumenType the full compile-time type, or {@code null} if unknown
  * @param metadata  an unmodifiable map of compile-time metadata entries

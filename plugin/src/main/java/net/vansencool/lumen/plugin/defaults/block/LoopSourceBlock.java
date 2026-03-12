@@ -71,10 +71,9 @@ public final class LoopSourceBlock {
                                 (CodegenContext) ctx.codegen(), (BlockContext) ctx.block());
                         LoopHandler.LoopResult result = loopMatch.reg().handler().handle(loopCtx);
                         out.line("for (var " + varName + " : " + result.iterableJava() + ") {");
-                        RefType refType = result.elementTypeId() != null
+                        ctx.env().defineVar(varName, result.elementTypeId() != null
                                 ? RefType.byId(result.elementTypeId())
-                                : null;
-                        ctx.env().defineVar(varName, refType, varName);
+                                : null, varName);
                     }
 
                     @Override

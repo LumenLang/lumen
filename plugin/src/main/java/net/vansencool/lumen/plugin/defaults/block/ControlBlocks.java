@@ -41,8 +41,7 @@ public final class ControlBlocks {
                             out.line("@LumenPreload");
                             out.line("public void __lumen_if_" + lineNum + "() {");
                         }
-                        String condJava = ctx.parseCondition("cond");
-                        out.line("if (" + condJava + ") {");
+                        out.line("if (" + ctx.parseCondition("cond") + ") {");
                     }
 
                     @Override
@@ -80,8 +79,7 @@ public final class ControlBlocks {
                         if (ctx.block().prevHeadExact("else")) {
                             throw new RuntimeException("An 'else if' block cannot come after an 'else' block");
                         }
-                        String condJava = ctx.parseCondition("cond");
-                        out.line("else if (" + condJava + ") {");
+                        out.line("else if (" + ctx.parseCondition("cond") + ") {");
                     }
 
                     @Override

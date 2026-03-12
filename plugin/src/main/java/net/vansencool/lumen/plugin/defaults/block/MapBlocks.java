@@ -51,9 +51,8 @@ public final class MapBlocks {
                             throw new RuntimeException(
                                     "Loop variable '" + valName + "' is already defined in this scope.");
                         }
-                        String mapJava = ctx.java("map");
                         String entryVar = "__entry_" + keyName + "_" + valName;
-                        out.line("for (var " + entryVar + " : ((Map<?, ?>) " + mapJava + ").entrySet()) {");
+                        out.line("for (var " + entryVar + " : ((Map<?, ?>) " + ctx.java("map") + ").entrySet()) {");
                         out.line("var " + keyName + " = " + entryVar + ".getKey();");
                         out.line("var " + valName + " = " + entryVar + ".getValue();");
                         ctx.env().defineVar(keyName, null, keyName);

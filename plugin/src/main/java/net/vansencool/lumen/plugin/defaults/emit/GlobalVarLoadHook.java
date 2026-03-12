@@ -19,8 +19,8 @@ import java.util.Map;
  * <p>For each global declared with {@code global [stored] var}, this hook emits a local
  * variable initialization that reads from either {@link PersistentVars} (stored) or
  * {@link GlobalVars} (in-memory). When the global has a ref type, the storage key is scoped
- * to the block's default variable for that type. If no default variable is available in
- * the current scope, the global is silently skipped.
+ * to the first variable matching that type in the current scope. If no matching variable
+ * is available, the global is silently skipped.
  */
 @SuppressWarnings("DataFlowIssue")
 public final class GlobalVarLoadHook implements BlockEnterHook {
@@ -90,7 +90,7 @@ public final class GlobalVarLoadHook implements BlockEnterHook {
                 if (refType == null) {
                     continue;
                 }
-                VarRef scopeRef = env.lookupDefault(refType);
+                VarRef scopeRef = env.lookupVarByType(refType);
                 if (scopeRef == null) {
                     continue;
                 }
