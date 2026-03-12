@@ -40,7 +40,7 @@ import java.util.function.Consumer;
  *
  * <h2>Simple Example</h2>
  * <pre>{@code
- * api.patterns().statements("explode %who:PLAYER%",
+ * api.patterns().statement("explode %who:PLAYER%",
  *         (line, ctx, out) -> out.line(ctx.java("who") + ".getWorld().createExplosion(" +
  *                 ctx.java("who") + ".getLocation(), 4F);"));
  * }</pre>

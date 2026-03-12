@@ -5,6 +5,8 @@ import net.vansencool.lumen.pipeline.language.tokenization.Token;
 import net.vansencool.lumen.pipeline.language.tokenization.TokenKind;
 import net.vansencool.lumen.pipeline.math.MathEngine;
 import net.vansencool.lumen.pipeline.placeholder.PlaceholderExpander;
+import net.vansencool.lumen.pipeline.type.LumenType;
+import net.vansencool.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -43,18 +45,19 @@ public final class ExprParser {
             Token t = tokens.get(0);
 
             if (t.kind() == TokenKind.STRING)
-                return new Expr.Literal(t.text());
+                return new Expr.Literal(t.text(), LumenType.Primitive.STRING);
 
             if (t.kind() == TokenKind.NUMBER)
-                return new Expr.Literal(Integer.parseInt(t.text()));
+                return new Expr.Literal(Integer.parseInt(t.text()), LumenType.Primitive.INT);
 
             if (t.kind() == TokenKind.IDENT) {
                 String text = t.text();
                 if (text.equalsIgnoreCase("true") || text.equalsIgnoreCase("false"))
-                    return new Expr.Literal(Boolean.parseBoolean(text.toLowerCase()));
+                    return new Expr.Literal(Boolean.parseBoolean(text.toLowerCase()), LumenType.Primitive.BOOLEAN);
 
-                if (env.lookupVar(text) != null)
-                    return new Expr.RefExpr(text);
+                VarRef ref = env.lookupVar(text);
+                if (ref != null)
+                    return new Expr.RefExpr(text, ref.resolvedType());
             }
         }
 
@@ -62,12 +65,14 @@ public final class ExprParser {
             String placeholder = tokens.get(1).text();
             String java = PlaceholderExpander.resolveForExpression(placeholder, env);
             if (java != null) {
-                return new Expr.MathExpr(java);
+                LumenType phType = PlaceholderExpander.resolveExpressionType(placeholder, env);
+                return new Expr.MathExpr(java, phType);
             }
         }
 
         if (MathEngine.isMathExpression(tokens, env)) {
-            return new Expr.MathExpr(MathEngine.compile(tokens, env));
+            MathEngine.TypedResult result = MathEngine.compileTyped(tokens, env);
+            return new Expr.MathExpr(result.java(), result.type());
         }
 
         return new Expr.RawExpr(tokens);

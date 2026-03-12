@@ -12,7 +12,7 @@ import net.vansencool.lumen.api.event.EventDefinition;
 import net.vansencool.lumen.api.handler.BlockHandler;
 import net.vansencool.lumen.api.pattern.Categories;
 import net.vansencool.lumen.api.type.RefTypeHandle;
-import net.vansencool.lumen.api.type.RefTypes;
+import net.vansencool.lumen.api.type.Types;
 import net.vansencool.lumen.pipeline.codegen.BindingContext;
 import net.vansencool.lumen.pipeline.events.EventDefRegistry;
 import net.vansencool.lumen.pipeline.language.exceptions.TokenCarryingException;
@@ -188,13 +188,13 @@ public final class EventBlocks {
                         out.line("CommandSender sender = __sender;");
                         out.line("World world = player != null ? player.getWorld() : null;");
 
-                        EnvironmentAccess.VarHandle player = env.defineVar("player", RefTypes.PLAYER, "player");
-                        ctx.block().setDefault(RefTypes.PLAYER, player);
-                        EnvironmentAccess.VarHandle sender = env.defineVar("sender", RefTypes.SENDER, "sender");
-                        ctx.block().setDefault(RefTypes.SENDER, sender);
-                        EnvironmentAccess.VarHandle world = env.defineVar("world", RefTypes.WORLD, "world");
-                        ctx.block().setDefault(RefTypes.WORLD, world);
-                        env.defineVar("args", RefTypes.LIST, "args");
+                        EnvironmentAccess.VarHandle player = env.defineVar("player", Types.PLAYER, "player");
+                        ctx.block().setDefault(Types.PLAYER, player);
+                        EnvironmentAccess.VarHandle sender = env.defineVar("sender", Types.SENDER, "sender");
+                        ctx.block().setDefault(Types.SENDER, sender);
+                        EnvironmentAccess.VarHandle world = env.defineVar("world", Types.WORLD, "world");
+                        ctx.block().setDefault(Types.WORLD, world);
+                        env.defineVar("args", Types.LIST, "args");
                     }
 
                     @Override
@@ -243,7 +243,7 @@ public final class EventBlocks {
                         + "is available inside the block and represents the target player.")
                 .example(of(
                         top("register inventory \"shop\":"),
-                        secondly("var gui = new inventory \"shop\" with size 54 titled \"&6Shop\"")))
+                        secondly("var gui = new inventory \"shop\" with size 54 titled \"<gray>Shop\"")))
                 .since("1.0.0")
                 .category(Categories.INVENTORY)
                 .handler(new BlockHandler() {
@@ -269,10 +269,10 @@ public final class EventBlocks {
                         out.line("public void " + methodName + "(Player player) {");
                         out.line("World world = player.getWorld();");
 
-                        EnvironmentAccess.VarHandle player = env.defineVar("player", RefTypes.PLAYER, "player");
-                        ctx.block().setDefault(RefTypes.PLAYER, player);
-                        EnvironmentAccess.VarHandle world = env.defineVar("world", RefTypes.WORLD, "world");
-                        ctx.block().setDefault(RefTypes.WORLD, world);
+                        EnvironmentAccess.VarHandle player = env.defineVar("player", Types.PLAYER, "player");
+                        ctx.block().setDefault(Types.PLAYER, player);
+                        EnvironmentAccess.VarHandle world = env.defineVar("world", Types.WORLD, "world");
+                        ctx.block().setDefault(Types.WORLD, world);
                     }
 
                     @Override

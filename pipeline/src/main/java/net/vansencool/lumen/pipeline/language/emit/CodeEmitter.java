@@ -29,6 +29,7 @@ import net.vansencool.lumen.pipeline.language.typed.Expr;
 import net.vansencool.lumen.pipeline.language.typed.StatementClassifier;
 import net.vansencool.lumen.pipeline.language.typed.TypedStatement;
 import net.vansencool.lumen.pipeline.logger.LumenLogger;
+import net.vansencool.lumen.pipeline.type.LumenType;
 import net.vansencool.lumen.pipeline.var.RefType;
 import net.vansencool.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
@@ -414,7 +415,8 @@ public final class CodeEmitter {
         RefType refType = result.refTypeId() != null ? RefType.byId(result.refTypeId()) : null;
         LumenLogger.debug("emitExprVar",
                 "RefType.byId(" + result.refTypeId() + ") -> " + (refType != null ? refType.id() : "null"));
-        VarRef varRef = new VarRef(refType, evs.name(), result.metadata());
+        LumenType lumenType = LumenType.resolve(result.refTypeId(), result.javaType());
+        VarRef varRef = new VarRef(refType, evs.name(), lumenType, result.metadata());
         env.defineVar(evs.name(), varRef);
         BlockContext parentScope = env.blockContext().parent();
         if (parentScope != null) {

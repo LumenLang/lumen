@@ -7,8 +7,7 @@ import net.vansencool.lumen.api.codegen.BindingAccess;
 import net.vansencool.lumen.api.codegen.JavaOutput;
 import net.vansencool.lumen.api.handler.BlockHandler;
 import net.vansencool.lumen.api.pattern.Categories;
-import net.vansencool.lumen.api.type.JavaTypes;
-import net.vansencool.lumen.api.type.RefTypes;
+import net.vansencool.lumen.api.type.Types;
 import net.vansencool.lumen.plugin.Lumen;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
@@ -64,7 +63,7 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .cancellable(false)
-                .addVar("player", RefTypes.PLAYER, "event.getPlayer()")
+                .addVar("player", Types.PLAYER, "event.getPlayer()")
                 .build());
         api.events().register(api.events().builder("respawn").by("Lumen")
                 .className(PlayerRespawnEvent.class.getName())
@@ -73,8 +72,8 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .cancellable(false)
-                .addVar("player", RefTypes.PLAYER, "event.getPlayer()")
-                .addVar("respawnLocation", RefTypes.LOCATION, "event.getRespawnLocation()")
+                .addVar("player", Types.PLAYER, "event.getPlayer()")
+                .addVar("respawnLocation", Types.LOCATION, "event.getRespawnLocation()")
                 .build());
         api.events().register(api.events().builder("teleport").by("Lumen")
                 .className(PlayerTeleportEvent.class.getName())
@@ -83,9 +82,9 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .cancellable(true)
-                .addVar("player", RefTypes.PLAYER, "event.getPlayer()")
-                .addVar("from", RefTypes.LOCATION, "event.getFrom()")
-                .addVar("to", RefTypes.LOCATION, "event.getTo()")
+                .addVar("player", Types.PLAYER, "event.getPlayer()")
+                .addVar("from", Types.LOCATION, "event.getFrom()")
+                .addVar("to", Types.LOCATION, "event.getTo()")
                 .build());
         api.events().register(api.events().builder("quit").by("Lumen")
                 .className(PlayerQuitEvent.class.getName())
@@ -94,7 +93,7 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .cancellable(false)
-                .addVar("player", RefTypes.PLAYER, "event.getPlayer()")
+                .addVar("player", Types.PLAYER, "event.getPlayer()")
                 .build());
         api.events().register(api.events().builder("move").by("Lumen")
                 .className(PlayerMoveEvent.class.getName())
@@ -103,9 +102,9 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .cancellable(true)
-                .addVar("player", RefTypes.PLAYER, "event.getPlayer()")
-                .addVar("from", RefTypes.LOCATION, "event.getFrom()")
-                .addVar("to", RefTypes.LOCATION, "event.getTo()")
+                .addVar("player", Types.PLAYER, "event.getPlayer()")
+                .addVar("from", Types.LOCATION, "event.getFrom()")
+                .addVar("to", Types.LOCATION, "event.getTo()")
                 .build());
         api.events().register(api.events().builder("toggle_sneak").by("Lumen")
                 .className(PlayerToggleSneakEvent.class.getName())
@@ -114,7 +113,7 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .cancellable(true)
-                .addVar("player", RefTypes.PLAYER, "event.getPlayer()")
+                .addVar("player", Types.PLAYER, "event.getPlayer()")
                 .build());
         api.events().register(api.events().builder("toggle_sprint").by("Lumen")
                 .className(PlayerToggleSprintEvent.class.getName())
@@ -123,7 +122,7 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .cancellable(true)
-                .addVar("player", RefTypes.PLAYER, "event.getPlayer()")
+                .addVar("player", Types.PLAYER, "event.getPlayer()")
                 .build());
         api.events().register(api.events().builder("toggle_flight").by("Lumen")
                 .className(PlayerToggleFlightEvent.class.getName())
@@ -132,8 +131,8 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .cancellable(true)
-                .addVar("player", RefTypes.PLAYER, "event.getPlayer()")
-                .addVar("flying", JavaTypes.BOOLEAN, "event.isFlying()")
+                .addVar("player", Types.PLAYER, "event.getPlayer()")
+                .addVar("flying", Types.BOOLEAN, "event.isFlying()")
                 .build());
 
         api.events().register(api.events().builder("entity_spawn").by("Lumen")
@@ -143,9 +142,9 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.ENTITY)
                 .cancellable(true)
-                .addVar("entity", RefTypes.ENTITY, "event.getEntity()")
+                .addVar("entity", Types.ENTITY, "event.getEntity()")
                 .withMeta("javaClass", LivingEntity.class.getName())
-                .addVar("location", RefTypes.LOCATION, "event.getLocation()")
+                .addVar("location", Types.LOCATION, "event.getLocation()")
                 .build());
         api.events().register(api.events().builder("entity_death").by("Lumen")
                 .className(EntityDeathEvent.class.getName())
@@ -154,9 +153,9 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.ENTITY)
                 .cancellable(false)
-                .addVar("entity", RefTypes.ENTITY, "event.getEntity()")
+                .addVar("entity", Types.ENTITY, "event.getEntity()")
                 .withMeta("javaClass", LivingEntity.class.getName())
-                .addVar("killer", RefTypes.PLAYER, Player.class.getName(),
+                .addVar("killer", Types.PLAYER, Player.class.getName(),
                         """
                                 if (event.getEntity().getKiller() != null) {
                                     killer = event.getEntity().getKiller();
@@ -172,8 +171,8 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.ENTITY)
                 .cancellable(true)
-                .addVar("entity", RefTypes.ENTITY, "event.getEntity()")
-                .addVar("damage", JavaTypes.DOUBLE, "event.getDamage()")
+                .addVar("entity", Types.ENTITY, "event.getEntity()")
+                .addVar("damage", Types.DOUBLE, "event.getDamage()")
                 .build());
         api.events().register(api.events().builder("entity_damage_by_entity").by("Lumen")
                 .className(EntityDamageByEntityEvent.class.getName())
@@ -182,9 +181,9 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.ENTITY)
                 .cancellable(true)
-                .addVar("entity", RefTypes.ENTITY, "event.getEntity()")
-                .addVar("damager", RefTypes.ENTITY, "event.getDamager()")
-                .addVar("damagerPlayer", RefTypes.PLAYER, Player.class.getName(),
+                .addVar("entity", Types.ENTITY, "event.getEntity()")
+                .addVar("damager", Types.ENTITY, "event.getDamager()")
+                .addVar("damagerPlayer", Types.PLAYER, Player.class.getName(),
                         """
                                 if (event.getDamager() instanceof Player __dp) {
                                     damagerPlayer = __dp;
@@ -192,7 +191,7 @@ public final class DefaultEvents {
                                     damagerPlayer = null;
                                 }""")
                 .withMeta("nullable", true)
-                .addVar("damage", JavaTypes.DOUBLE, "event.getDamage()")
+                .addVar("damage", Types.DOUBLE, "event.getDamage()")
                 .build());
         api.events().register(api.events().builder("entity_interact").by("Lumen")
                 .className(PlayerInteractEntityEvent.class.getName())
@@ -201,8 +200,8 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.ENTITY)
                 .cancellable(true)
-                .addVar("player", RefTypes.PLAYER, "event.getPlayer()")
-                .addVar("entity", RefTypes.ENTITY, "event.getRightClicked()")
+                .addVar("player", Types.PLAYER, "event.getPlayer()")
+                .addVar("entity", Types.ENTITY, "event.getRightClicked()")
                 .build());
 
         api.events().register(api.events().builder("player_death").by("Lumen")
@@ -212,8 +211,8 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .cancellable(false)
-                .addVar("player", RefTypes.PLAYER, "event.getEntity()")
-                .addVar("killer", RefTypes.PLAYER, Player.class.getName(),
+                .addVar("player", Types.PLAYER, "event.getEntity()")
+                .addVar("killer", Types.PLAYER, Player.class.getName(),
                         """
                                 if (event.getEntity().getKiller() != null) {
                                     killer = event.getEntity().getKiller();
@@ -230,9 +229,9 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.BLOCK)
                 .cancellable(true)
-                .addVar("player", RefTypes.PLAYER, "event.getPlayer()")
-                .addVar("block", RefTypes.BLOCK, "event.getBlock()")
-                .addVar("item", RefTypes.ITEMSTACK, ItemStack.class.getName(),
+                .addVar("player", Types.PLAYER, "event.getPlayer()")
+                .addVar("block", Types.BLOCK, "event.getBlock()")
+                .addVar("item", Types.ITEMSTACK, ItemStack.class.getName(),
                         """
                                 if (event.getPlayer().getInventory().getItemInMainHand().getType() != org.bukkit.Material.AIR) {
                                     item = event.getPlayer().getInventory().getItemInMainHand();
@@ -249,9 +248,9 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.BLOCK)
                 .cancellable(true)
-                .addVar("player", RefTypes.PLAYER, "event.getPlayer()")
-                .addVar("block", RefTypes.BLOCK, "event.getBlock()")
-                .addVar("item", RefTypes.ITEMSTACK, "event.getItemInHand()")
+                .addVar("player", Types.PLAYER, "event.getPlayer()")
+                .addVar("block", Types.BLOCK, "event.getBlock()")
+                .addVar("item", Types.ITEMSTACK, "event.getItemInHand()")
                 .build());
 
         api.events().register(api.events().builder("interact").by("Lumen")
@@ -271,9 +270,9 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .cancellable(true)
-                .addVar("player", RefTypes.PLAYER, "event.getPlayer()")
+                .addVar("player", Types.PLAYER, "event.getPlayer()")
                 .addVar("action", "String", "event.getAction().name()")
-                .addVar("block", RefTypes.BLOCK, Block.class.getName(),
+                .addVar("block", Types.BLOCK, Block.class.getName(),
                         """
                                 if (event.getClickedBlock() != null) {
                                     block = event.getClickedBlock();
@@ -281,7 +280,7 @@ public final class DefaultEvents {
                                     block = null;
                                 }""")
                 .withMeta("nullable", true)
-                .addVar("item", RefTypes.ITEMSTACK, ItemStack.class.getName(),
+                .addVar("item", Types.ITEMSTACK, ItemStack.class.getName(),
                         """
                                 if (event.getItem() != null) {
                                     item = event.getItem();
@@ -302,7 +301,7 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.INVENTORY)
                 .cancellable(true)
-                .addVar("player", RefTypes.PLAYER, Player.class.getName(),
+                .addVar("player", Types.PLAYER, Player.class.getName(),
                         """
                                 if (event.getWhoClicked() instanceof Player __inv_p) {
                                     player = __inv_p;
@@ -311,7 +310,7 @@ public final class DefaultEvents {
                                 }""")
                 .withMeta("nullable", true)
                 .addVar("inventory", Inventory.class.getName(), "event.getView().getTopInventory()")
-                .addVar("name", null, "String",
+                .addVar("name", null, Types.STRING,
                         """
                                 if (event.getView().getTopInventory().getHolder() instanceof net.vansencool.lumen.plugin.util.LumenInventoryHolder __lh) {
                                     name = __lh.getName();
@@ -319,12 +318,12 @@ public final class DefaultEvents {
                                     name = null;
                                 }""")
                 .withMeta("nullable", true)
-                .addVar("slot", JavaTypes.INT, "event.getSlot()")
-                .addVar("rawSlot", JavaTypes.INT, "event.getRawSlot()")
+                .addVar("slot", Types.INT, "event.getSlot()")
+                .addVar("rawSlot", Types.INT, "event.getRawSlot()")
                 .addVar("clickType", "String", "event.getClick().name()")
                 .addVar("action", "String", "event.getAction().name()")
                 .addVar("title", "String", "event.getView().getTitle()")
-                .addVar("item", RefTypes.ITEMSTACK, ItemStack.class.getName(),
+                .addVar("item", Types.ITEMSTACK, ItemStack.class.getName(),
                         """
                                 if (event.getCurrentItem() != null) {
                                     item = event.getCurrentItem();
@@ -332,7 +331,7 @@ public final class DefaultEvents {
                                     item = null;
                                 }""")
                 .withMeta("nullable", true)
-                .addVar("cursor", RefTypes.ITEMSTACK, ItemStack.class.getName(),
+                .addVar("cursor", Types.ITEMSTACK, ItemStack.class.getName(),
                         """
                                 if (event.getCursor() != null && event.getCursor().getType() != org.bukkit.Material.AIR) {
                                     cursor = event.getCursor();
@@ -349,7 +348,7 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.INVENTORY)
                 .cancellable(false)
-                .addVar("player", RefTypes.PLAYER, Player.class.getName(),
+                .addVar("player", Types.PLAYER, Player.class.getName(),
                         """
                                 if (event.getPlayer() instanceof Player __inv_p) {
                                     player = __inv_p;
@@ -358,7 +357,7 @@ public final class DefaultEvents {
                                 }""")
                 .withMeta("nullable", true)
                 .addVar("inventory", Inventory.class.getName(), "event.getView().getTopInventory()")
-                .addVar("name", null, "String",
+                .addVar("name", null, Types.STRING,
                         """
                                 if (event.getView().getTopInventory().getHolder() instanceof net.vansencool.lumen.plugin.util.LumenInventoryHolder __lh) {
                                     name = __lh.getName();
@@ -376,7 +375,7 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.INVENTORY)
                 .cancellable(true)
-                .addVar("player", RefTypes.PLAYER, Player.class.getName(),
+                .addVar("player", Types.PLAYER, Player.class.getName(),
                         """
                                 if (event.getPlayer() instanceof Player __inv_p) {
                                     player = __inv_p;
@@ -385,7 +384,7 @@ public final class DefaultEvents {
                                 }""")
                 .withMeta("nullable", true)
                 .addVar("inventory", Inventory.class.getName(), "event.getView().getTopInventory()")
-                .addVar("name", null, "String",
+                .addVar("name", null, Types.STRING,
                         """
                                 if (event.getView().getTopInventory().getHolder() instanceof net.vansencool.lumen.plugin.util.LumenInventoryHolder __lh) {
                                     name = __lh.getName();
@@ -403,7 +402,7 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.INVENTORY)
                 .cancellable(true)
-                .addVar("player", RefTypes.PLAYER, Player.class.getName(),
+                .addVar("player", Types.PLAYER, Player.class.getName(),
                         """
                                 if (event.getWhoClicked() instanceof Player __inv_p) {
                                     player = __inv_p;
@@ -412,7 +411,7 @@ public final class DefaultEvents {
                                 }""")
                 .withMeta("nullable", true)
                 .addVar("inventory", Inventory.class.getName(), "event.getView().getTopInventory()")
-                .addVar("name", null, "String",
+                .addVar("name", null, Types.STRING,
                         """
                                 if (event.getView().getTopInventory().getHolder() instanceof net.vansencool.lumen.plugin.util.LumenInventoryHolder __lh) {
                                     name = __lh.getName();
@@ -433,7 +432,7 @@ public final class DefaultEvents {
                 .cancellable(false)
                 .addImport(AsyncPlayerChatEvent.class.getName())
                 .addImport(Lumen.class.getName())
-                .addVar("player", RefTypes.PLAYER, "player")
+                .addVar("player", Types.PLAYER, "player")
                 .addVar("text", "String", "text")
                 .handler(new BlockHandler() {
                     @Override
@@ -461,7 +460,7 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .cancellable(true)
-                .addVar("player", RefTypes.PLAYER, "event.getPlayer()")
+                .addVar("player", Types.PLAYER, "event.getPlayer()")
                 .addVar("text", "String", "event.getMessage()")
                 .build());
 
@@ -472,8 +471,8 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .cancellable(true)
-                .addVar("player", RefTypes.PLAYER, "event.getPlayer()")
-                .addVar("entity", RefTypes.ENTITY, Entity.class.getName(),
+                .addVar("player", Types.PLAYER, "event.getPlayer()")
+                .addVar("entity", Types.ENTITY, Entity.class.getName(),
                         """
                                 if (event.getCaught() != null) {
                                     entity = event.getCaught();
@@ -481,7 +480,7 @@ public final class DefaultEvents {
                                     entity = null;
                                 }""")
                 .withMeta("nullable", true)
-                .addVar("hook", RefTypes.ENTITY, "event.getHook()")
+                .addVar("hook", Types.ENTITY, "event.getHook()")
                 .addVar("state", "String", "event.getState().name()")
                 .build());
 
@@ -492,8 +491,8 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.ENTITY)
                 .cancellable(true)
-                .addVar("entity", RefTypes.ENTITY, "event.getEntity()")
-                .addVar("shooter", RefTypes.PLAYER, Player.class.getName(),
+                .addVar("entity", Types.ENTITY, "event.getEntity()")
+                .addVar("shooter", Types.PLAYER, Player.class.getName(),
                         """
                                 if (event.getEntity().getShooter() instanceof Player __sp) {
                                     shooter = __sp;
@@ -510,8 +509,8 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.ENTITY)
                 .cancellable(true)
-                .addVar("entity", RefTypes.ENTITY, "event.getEntity()")
-                .addVar("shooter", RefTypes.PLAYER, Player.class.getName(),
+                .addVar("entity", Types.ENTITY, "event.getEntity()")
+                .addVar("shooter", Types.PLAYER, Player.class.getName(),
                         """
                                 if (event.getEntity().getShooter() instanceof Player __sp) {
                                     shooter = __sp;
@@ -519,7 +518,7 @@ public final class DefaultEvents {
                                     shooter = null;
                                 }""")
                 .withMeta("nullable", true)
-                .addVar("hit_entity", RefTypes.ENTITY, Entity.class.getName(),
+                .addVar("hit_entity", Types.ENTITY, Entity.class.getName(),
                         """
                                 if (event.getHitEntity() != null) {
                                     hit_entity = event.getHitEntity();
@@ -527,7 +526,7 @@ public final class DefaultEvents {
                                     hit_entity = null;
                                 }""")
                 .withMeta("nullable", true)
-                .addVar("hit_block", RefTypes.BLOCK, Block.class.getName(),
+                .addVar("hit_block", Types.BLOCK, Block.class.getName(),
                         """
                                 if (event.getHitBlock() != null) {
                                     hit_block = event.getHitBlock();

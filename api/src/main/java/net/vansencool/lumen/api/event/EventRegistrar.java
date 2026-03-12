@@ -24,7 +24,7 @@ import java.util.function.Consumer;
  * api.events().register(
  *     api.events().builder("respawn")
  *         .className("org.bukkit.event.player.PlayerRespawnEvent")
- *         .addVar("player", RefTypes.PLAYER, "event.getPlayer()")
+ *         .addVar("player", Types.PLAYER, "event.getPlayer()")
  *         .build()
  * );
  * }</pre>

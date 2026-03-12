@@ -5,8 +5,10 @@ import net.vansencool.lumen.pipeline.codegen.TypeEnv;
 import net.vansencool.lumen.pipeline.language.tokenization.Token;
 import net.vansencool.lumen.pipeline.language.tokenization.TokenKind;
 import net.vansencool.lumen.pipeline.placeholder.PlaceholderExpander;
+import net.vansencool.lumen.pipeline.type.LumenType;
 import net.vansencool.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -53,6 +55,24 @@ public final class MathEngine {
             throw new RuntimeException("Unexpected token after expression: " + engine.peek().text());
         }
         return result;
+    }
+
+    /**
+     * Compiles a list of tokens into a Java expression string and resolves the numeric
+     * result type by tracking type widening through operations.
+     *
+     * @param tokens the token list representing the math expression
+     * @param env    the compile-time symbol table for variable resolution
+     * @return a typed result containing the Java expression and its resolved type
+     * @throws RuntimeException if the expression is malformed or references an unknown variable
+     */
+    public static @NotNull TypedResult compileTyped(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
+        MathEngine engine = new MathEngine(tokens, env);
+        TypedFragment fragment = engine.parseExprTyped();
+        if (engine.pos < engine.tokens.size()) {
+            throw new RuntimeException("Unexpected token after expression: " + engine.peek().text());
+        }
+        return new TypedResult(fragment.java, fragment.type);
     }
 
     /**
@@ -108,6 +128,12 @@ public final class MathEngine {
             }
         }
         return hasOperator;
+    }
+
+    private static @NotNull LumenType widenTypes(@Nullable LumenType a, @Nullable LumenType b) {
+        if (a == null || b == null) return LumenType.Primitive.INT;
+        LumenType.Primitive widened = LumenType.widenNumeric(a, b);
+        return widened != null ? widened : LumenType.Primitive.INT;
     }
 
     private @NotNull String parseExpr() {
@@ -195,7 +221,111 @@ public final class MathEngine {
         throw new RuntimeException("Unexpected token in math expression: " + t.text());
     }
 
+    private @NotNull TypedFragment parseExprTyped() {
+        TypedFragment left = parseTermTyped();
+
+        while (pos < tokens.size()) {
+            Token t = peek();
+            if (t.kind() == TokenKind.SYMBOL && (t.text().equals("+") || t.text().equals("-"))) {
+                pos++;
+                TypedFragment right = parseTermTyped();
+                LumenType widened = widenTypes(left.type, right.type);
+                left = new TypedFragment(left.java + " " + t.text() + " " + right.java, widened);
+            } else {
+                break;
+            }
+        }
+
+        return left;
+    }
+
+    private @NotNull TypedFragment parseTermTyped() {
+        TypedFragment left = parseFactorTyped();
+
+        while (pos < tokens.size()) {
+            Token t = peek();
+            if (t.kind() == TokenKind.SYMBOL && (t.text().equals("*") || t.text().equals("/"))) {
+                pos++;
+                TypedFragment right = parseFactorTyped();
+                LumenType widened = widenTypes(left.type, right.type);
+                if (t.text().equals("/") && widened == LumenType.Primitive.INT) {
+                    widened = LumenType.Primitive.DOUBLE;
+                }
+                left = new TypedFragment(left.java + " " + t.text() + " " + right.java, widened);
+            } else {
+                break;
+            }
+        }
+
+        return left;
+    }
+
+    private @NotNull TypedFragment parseFactorTyped() {
+        if (pos >= tokens.size()) {
+            throw new RuntimeException("Unexpected end of math expression");
+        }
+
+        Token t = peek();
+
+        if (t.kind() == TokenKind.NUMBER) {
+            pos++;
+            LumenType type = t.text().contains(".") ? LumenType.Primitive.DOUBLE : LumenType.Primitive.INT;
+            return new TypedFragment(t.text(), type);
+        }
+
+        if (t.kind() == TokenKind.IDENT) {
+            pos++;
+            VarRef ref = env.lookupVar(t.text());
+            if (ref == null) {
+                throw new RuntimeException("Variable not found in math expression: " + t.text());
+            }
+            LumenType type = ref.resolvedType();
+            return new TypedFragment(ref.java(), type != null ? type : LumenType.Primitive.INT);
+        }
+
+        if (t.kind() == TokenKind.SYMBOL && t.text().equals("{")) {
+            if (pos + 2 < tokens.size()
+                    && tokens.get(pos + 1).kind() == TokenKind.IDENT
+                    && tokens.get(pos + 2).kind() == TokenKind.SYMBOL
+                    && tokens.get(pos + 2).text().equals("}")) {
+                String placeholder = tokens.get(pos + 1).text();
+                pos += 3;
+                String java = PlaceholderExpander.resolveForExpression(placeholder, env);
+                if (java == null) {
+                    throw new RuntimeException("Cannot resolve placeholder in math expression: {" + placeholder + "}");
+                }
+                LumenType phType = PlaceholderExpander.resolveExpressionType(placeholder, env);
+                return new TypedFragment(java, phType != null ? phType : LumenType.Primitive.DOUBLE);
+            }
+        }
+
+        if (t.kind() == TokenKind.SYMBOL && t.text().equals("(")) {
+            pos++;
+            TypedFragment inner = parseExprTyped();
+            if (pos >= tokens.size() || !peek().text().equals(")")) {
+                throw new RuntimeException("Missing closing parenthesis in math expression");
+            }
+            pos++;
+            return new TypedFragment("(" + inner.java + ")", inner.type);
+        }
+
+        throw new RuntimeException("Unexpected token in math expression: " + t.text());
+    }
+
     private @NotNull Token peek() {
         return tokens.get(pos);
+    }
+
+    /**
+     * The result of a typed math compilation, carrying both the Java source and the
+     * resolved numeric type.
+     *
+     * @param java the Java expression source string
+     * @param type the resolved numeric type, or {@code null} if unknown
+     */
+    public record TypedResult(@NotNull String java, @Nullable LumenType type) {
+    }
+
+    private record TypedFragment(@NotNull String java, @Nullable LumenType type) {
     }
 }

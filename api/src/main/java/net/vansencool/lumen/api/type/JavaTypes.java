@@ -1,16 +1,19 @@
 package net.vansencool.lumen.api.type;
 
 import net.vansencool.lumen.api.event.EventBuilder;
+import net.vansencool.lumen.api.handler.ExpressionHandler;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Constants for common Java types that can be used in event variable definitions.
+ * Constants for common Java types used in event variable definitions and expression results.
  *
- * <p>Use these instead of raw type strings when registering event variables that do not
- * have a dedicated {@link RefTypeHandle}. This keeps event definitions clean and
- * avoids typos in fully-qualified class names or primitive type names.
+ * <p>Use these instead of raw type strings when registering event variables or returning
+ * expression results. This avoids typos and keeps definitions clean.
  *
- * <h2>Usage</h2>
+ * <p>For object/reference types, use {@link RefTypes} or register custom types via
+ * {@link RefTypeRegistrar}. The constants here cover only primitives and {@code String}.
+ *
+ * <h2>Event Variable Usage</h2>
  * <pre>{@code
  * api.events().register(api.events().builder("entity_damage")
  *     .className("org.bukkit.event.entity.EntityDamageEvent")
@@ -20,9 +23,18 @@ import org.jetbrains.annotations.NotNull;
  * );
  * }</pre>
  *
+ * <h2>Expression Result Usage</h2>
+ * <pre>{@code
+ * new ExpressionResult(ctx.java("loc") + ".getX()", null, JavaTypes.DOUBLE)
+ * }</pre>
+ *
  * @see RefTypes
+ * @see RefTypeRegistrar
  * @see EventBuilder
+ * @see ExpressionHandler.ExpressionResult
+ * @deprecated Use {@link Types} instead. This class will be removed in a future release.
  */
+@Deprecated
 @SuppressWarnings("unused")
 public final class JavaTypes {
 

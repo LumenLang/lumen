@@ -7,7 +7,7 @@ import net.vansencool.lumen.api.codegen.BindingAccess;
 import net.vansencool.lumen.api.codegen.EnvironmentAccess;
 import net.vansencool.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import net.vansencool.lumen.api.pattern.Categories;
-import net.vansencool.lumen.api.type.RefTypes;
+import net.vansencool.lumen.api.type.Types;
 import net.vansencool.lumen.pipeline.data.DataSchema;
 import net.vansencool.lumen.pipeline.java.compiled.DataInstance;
 import org.jetbrains.annotations.NotNull;
@@ -157,7 +157,7 @@ public final class DataExpressions {
                     if (tokens.size() == 1) {
                         return new ExpressionResult(
                                 "new DataInstance(\"" + typeName + "\")",
-                                RefTypes.DATA.id(),
+                                Types.DATA.id(),
                                 Map.of("data_type", typeName));
                     }
 
@@ -195,7 +195,7 @@ public final class DataExpressions {
 
                     return new ExpressionResult(
                             "new DataInstance(\"" + typeName + "\", " + mapBuilder + ")",
-                            RefTypes.DATA.id(),
+                            Types.DATA.id(),
                             Map.of("data_type", typeName));
                 }));
     }

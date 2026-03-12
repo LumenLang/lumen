@@ -18,6 +18,7 @@ import net.vansencool.lumen.pipeline.language.typed.Expr;
 import net.vansencool.lumen.pipeline.language.typed.ExprParser;
 import net.vansencool.lumen.pipeline.language.validator.VarNameValidator;
 import net.vansencool.lumen.pipeline.placeholder.PlaceholderExpander;
+import net.vansencool.lumen.pipeline.type.LumenType;
 import net.vansencool.lumen.pipeline.var.RefType;
 import net.vansencool.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
@@ -109,6 +110,7 @@ public final class VarStatementForm implements StatementFormHandler {
         String java;
         VarRef inheritedRef = null;
         @Nullable RefType resolvedRefType = null;
+        @Nullable LumenType exprLumenType = null;
         @NotNull Map<String, Object> resolvedMetadata = Map.of();
 
         if (e instanceof Expr.Literal l) {
@@ -137,6 +139,7 @@ public final class VarStatementForm implements StatementFormHandler {
                     if (exprResult.refTypeId() != null) {
                         resolvedRefType = RefType.byId(exprResult.refTypeId());
                     }
+                    exprLumenType = LumenType.resolve(exprResult.refTypeId(), exprResult.javaType());
                     resolvedMetadata = exprResult.metadata();
                 } else {
                     ExpressionResult resolvedResult = ExprResolver.resolveWithType(
@@ -148,6 +151,7 @@ public final class VarStatementForm implements StatementFormHandler {
                         if (resolvedResult.refTypeId() != null) {
                             resolvedRefType = RefType.byId(resolvedResult.refTypeId());
                         }
+                        exprLumenType = LumenType.resolve(resolvedResult.refTypeId(), resolvedResult.javaType());
                         resolvedMetadata = resolvedResult.metadata();
                     } else {
                         return false;
@@ -166,9 +170,13 @@ public final class VarStatementForm implements StatementFormHandler {
 
         ctx.out().line("var " + name + " = " + java + ";");
         RefType effectiveRefType = inheritedRef != null ? inheritedRef.refType() : resolvedRefType;
-        VarRef varRef = inheritedRef != null
-                ? new VarRef(effectiveRefType, name)
-                : new VarRef(effectiveRefType, name, resolvedMetadata);
+        LumenType resolvedLumenType = inheritedRef != null
+                ? inheritedRef.resolvedType()
+                : (exprLumenType != null ? exprLumenType : e.resolvedType());
+        if (resolvedLumenType == null && effectiveRefType != null) {
+            resolvedLumenType = new LumenType.ObjectType(effectiveRefType);
+        }
+        VarRef varRef = new VarRef(effectiveRefType, name, resolvedLumenType, resolvedMetadata);
         env.defineVar(name, varRef);
         if (env.blockContext().parent() != null) {
             env.blockContext().parent().defineVar(name, varRef);

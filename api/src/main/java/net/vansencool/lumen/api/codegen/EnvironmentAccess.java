@@ -1,6 +1,7 @@
 package net.vansencool.lumen.api.codegen;
 
 import net.vansencool.lumen.api.type.RefTypeHandle;
+import net.vansencool.lumen.api.type.TypeHandle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -275,6 +276,18 @@ public interface EnvironmentAccess {
          * @return the ref type, or {@code null}
          */
         @Nullable RefTypeHandle type();
+
+        /**
+         * Returns the full compile-time type of this variable, or {@code null} if unknown.
+         *
+         * <p>This provides richer type information than {@link #type()}, covering
+         * primitives and generic collections in addition to object reference types.
+         *
+         * @return the type handle, or {@code null}
+         */
+        default @Nullable TypeHandle typeHandle() {
+            return null;
+        }
 
         /**
          * Returns the Java variable name that this variable maps to in generated code.

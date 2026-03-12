@@ -9,7 +9,7 @@ import net.vansencool.lumen.api.codegen.JavaOutput;
 import net.vansencool.lumen.api.handler.BlockHandler;
 import net.vansencool.lumen.api.pattern.Categories;
 import net.vansencool.lumen.api.type.RefTypeHandle;
-import net.vansencool.lumen.api.type.RefTypes;
+import net.vansencool.lumen.api.type.Types;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,7 +49,7 @@ public class ListBlocks {
         String elementType = String.valueOf(listRef.meta("element_type"));
         Object schema = ctx.env().get("data_schema_" + elementType);
         if (schema != null) {
-            return RefTypes.DATA;
+            return Types.DATA;
         }
         return null;
     }

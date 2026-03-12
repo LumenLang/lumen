@@ -7,6 +7,7 @@ import net.vansencool.lumen.api.codegen.CodegenAccess;
 import net.vansencool.lumen.api.codegen.EnvironmentAccess.VarHandle;
 import net.vansencool.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import net.vansencool.lumen.api.pattern.Categories;
+import net.vansencool.lumen.api.type.Types;
 import net.vansencool.lumen.plugin.util.EntityValidation;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
@@ -43,10 +44,10 @@ public final class AttributeExpressions {
                     if (known) {
                         String le = "((LivingEntity) " + java + ")";
                         return new ExpressionResult(
-                                "(" + le + ".getAttribute(" + attr + ") != null ? " + le + ".getAttribute(" + attr + ").getBaseValue() : 0)", null);
+                                "(" + le + ".getAttribute(" + attr + ") != null ? " + le + ".getAttribute(" + attr + ").getBaseValue() : 0)", null, Types.DOUBLE);
                     }
                     return new ExpressionResult(
-                            "(" + java + " instanceof LivingEntity _le && _le.getAttribute(" + attr + ") != null ? _le.getAttribute(" + attr + ").getBaseValue() : 0)", null);
+                            "(" + java + " instanceof LivingEntity _le && _le.getAttribute(" + attr + ") != null ? _le.getAttribute(" + attr + ").getBaseValue() : 0)", null, Types.DOUBLE);
                 }));
 
         api.patterns().expression(b -> b
@@ -65,10 +66,10 @@ public final class AttributeExpressions {
                     if (known) {
                         String le = "((LivingEntity) " + java + ")";
                         return new ExpressionResult(
-                                "(" + le + ".getAttribute(" + attr + ") != null ? " + le + ".getAttribute(" + attr + ").getValue() : 0)", null);
+                                "(" + le + ".getAttribute(" + attr + ") != null ? " + le + ".getAttribute(" + attr + ").getValue() : 0)", null, Types.DOUBLE);
                     }
                     return new ExpressionResult(
-                            "(" + java + " instanceof LivingEntity _le && _le.getAttribute(" + attr + ") != null ? _le.getAttribute(" + attr + ").getValue() : 0)", null);
+                            "(" + java + " instanceof LivingEntity _le && _le.getAttribute(" + attr + ") != null ? _le.getAttribute(" + attr + ").getValue() : 0)", null, Types.DOUBLE);
                 }));
 
         api.patterns().expression(b -> b
@@ -87,10 +88,10 @@ public final class AttributeExpressions {
                     if (known) {
                         String le = "((LivingEntity) " + java + ")";
                         return new ExpressionResult(
-                                "(" + le + ".getAttribute(" + attr + ") != null ? " + le + ".getAttribute(" + attr + ").getDefaultValue() : 0)", null);
+                                "(" + le + ".getAttribute(" + attr + ") != null ? " + le + ".getAttribute(" + attr + ").getDefaultValue() : 0)", null, Types.DOUBLE);
                     }
                     return new ExpressionResult(
-                            "(" + java + " instanceof LivingEntity _le && _le.getAttribute(" + attr + ") != null ? _le.getAttribute(" + attr + ").getDefaultValue() : 0)", null);
+                            "(" + java + " instanceof LivingEntity _le && _le.getAttribute(" + attr + ") != null ? _le.getAttribute(" + attr + ").getDefaultValue() : 0)", null, Types.DOUBLE);
                 }));
     }
 }

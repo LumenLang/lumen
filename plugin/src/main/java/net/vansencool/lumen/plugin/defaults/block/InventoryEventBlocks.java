@@ -9,7 +9,7 @@ import net.vansencool.lumen.api.codegen.EnvironmentAccess;
 import net.vansencool.lumen.api.codegen.JavaOutput;
 import net.vansencool.lumen.api.handler.BlockHandler;
 import net.vansencool.lumen.api.pattern.Categories;
-import net.vansencool.lumen.api.type.RefTypes;
+import net.vansencool.lumen.api.type.Types;
 import net.vansencool.lumen.plugin.util.LumenInventoryHolder;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -96,18 +96,18 @@ public final class InventoryEventBlocks {
                 + " && event.getCursor().getType() != Material.AIR)"
                 + " ? event.getCursor() : null;");
 
-        EnvironmentAccess.VarHandle playerH = env.defineVar("player", RefTypes.PLAYER, "player");
-        ctx.block().setDefault(RefTypes.PLAYER, playerH);
-        EnvironmentAccess.VarHandle worldH = env.defineVar("world", RefTypes.WORLD, "world");
-        ctx.block().setDefault(RefTypes.WORLD, worldH);
+        EnvironmentAccess.VarHandle playerH = env.defineVar("player", Types.PLAYER, "player");
+        ctx.block().setDefault(Types.PLAYER, playerH);
+        EnvironmentAccess.VarHandle worldH = env.defineVar("world", Types.WORLD, "world");
+        ctx.block().setDefault(Types.WORLD, worldH);
         env.defineVar("inventory", null, "inventory");
         env.defineVar("slot", null, "slot");
         env.defineVar("clickType", null, "clickType");
         env.defineVar("action", null, "action");
         env.defineVar("title", null, "title");
-        EnvironmentAccess.VarHandle itemH = env.defineVar("item", RefTypes.ITEMSTACK, "item");
-        ctx.block().setDefault(RefTypes.ITEMSTACK, itemH);
-        env.defineVar("cursor", RefTypes.ITEMSTACK, "cursor");
+        EnvironmentAccess.VarHandle itemH = env.defineVar("item", Types.ITEMSTACK, "item");
+        ctx.block().setDefault(Types.ITEMSTACK, itemH);
+        env.defineVar("cursor", Types.ITEMSTACK, "cursor");
     }
 
     /**
@@ -122,10 +122,10 @@ public final class InventoryEventBlocks {
         out.line("Inventory inventory = event.getView().getTopInventory();");
         out.line("String title = event.getView().getTitle();");
 
-        EnvironmentAccess.VarHandle playerH = env.defineVar("player", RefTypes.PLAYER, "player");
-        ctx.block().setDefault(RefTypes.PLAYER, playerH);
-        EnvironmentAccess.VarHandle worldH = env.defineVar("world", RefTypes.WORLD, "world");
-        ctx.block().setDefault(RefTypes.WORLD, worldH);
+        EnvironmentAccess.VarHandle playerH = env.defineVar("player", Types.PLAYER, "player");
+        ctx.block().setDefault(Types.PLAYER, playerH);
+        EnvironmentAccess.VarHandle worldH = env.defineVar("world", Types.WORLD, "world");
+        ctx.block().setDefault(Types.WORLD, worldH);
         env.defineVar("inventory", null, "inventory");
         env.defineVar("title", null, "title");
     }

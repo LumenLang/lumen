@@ -234,7 +234,7 @@ public final class AdvancedEventBuilder {
      *
      * @param name     the variable name accessible in script child statements
      * @param refType  the logical type category for implicit resolution, or {@code null}
-     * @param javaType the fully-qualified Java class name for the declaration
+     * @param javaType the Java type name (e.g. {@code Types.DOUBLE} or a fully qualified class name)
      * @param expr     the initialiser expression
      * @return this builder
      */
@@ -268,7 +268,7 @@ public final class AdvancedEventBuilder {
      * Adds a plain variable (no ref type).
      *
      * @param name     the variable name
-     * @param javaType the fully-qualified Java class name
+     * @param javaType the Java type name (e.g. {@code Types.BOOLEAN} or a fully qualified class name)
      * @param expr     the initialiser expression
      * @return this builder
      */

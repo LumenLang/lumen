@@ -5,7 +5,7 @@ import net.vansencool.lumen.api.annotations.Call;
 import net.vansencool.lumen.api.annotations.Registration;
 import net.vansencool.lumen.api.placeholder.PlaceholderRegistrar;
 import net.vansencool.lumen.api.placeholder.PlaceholderType;
-import net.vansencool.lumen.api.type.RefTypes;
+import net.vansencool.lumen.api.type.Types;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -18,10 +18,10 @@ public class DefaultLocationPlaceholders {
     @Call
     public void register(@NotNull LumenAPI api) {
         PlaceholderRegistrar ph = api.placeholders();
-        ph.property(RefTypes.LOCATION, "x", "$.getBlockX()", PlaceholderType.NUMBER);
-        ph.property(RefTypes.LOCATION, "y", "$.getBlockY()", PlaceholderType.NUMBER);
-        ph.property(RefTypes.LOCATION, "z", "$.getBlockZ()", PlaceholderType.NUMBER);
-        ph.property(RefTypes.LOCATION, "world", "$.getWorld().getName()");
-        ph.defaultProperty(RefTypes.LOCATION, "world");
+        ph.property(Types.LOCATION, "x", "$.getBlockX()", PlaceholderType.NUMBER);
+        ph.property(Types.LOCATION, "y", "$.getBlockY()", PlaceholderType.NUMBER);
+        ph.property(Types.LOCATION, "z", "$.getBlockZ()", PlaceholderType.NUMBER);
+        ph.property(Types.LOCATION, "world", "$.getWorld().getName()");
+        ph.defaultProperty(Types.LOCATION, "world");
     }
 }

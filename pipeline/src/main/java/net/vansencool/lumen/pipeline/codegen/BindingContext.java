@@ -1,15 +1,21 @@
 package net.vansencool.lumen.pipeline.codegen;
 
 import net.vansencool.lumen.api.codegen.BindingAccess;
+import net.vansencool.lumen.api.codegen.EnvironmentAccess;
 import net.vansencool.lumen.api.handler.BlockHandler;
 import net.vansencool.lumen.api.handler.StatementHandler;
 import net.vansencool.lumen.pipeline.conditions.ConditionExpr;
 import net.vansencool.lumen.pipeline.conditions.parser.ConditionParser;
 import net.vansencool.lumen.pipeline.language.TypeBinding;
 import net.vansencool.lumen.pipeline.language.match.BoundValue;
+import net.vansencool.lumen.pipeline.language.match.BraceExpr;
+import net.vansencool.lumen.pipeline.language.match.InlineExpr;
 import net.vansencool.lumen.pipeline.language.match.Match;
 import net.vansencool.lumen.pipeline.language.pattern.PatternRegistry;
+import net.vansencool.lumen.pipeline.language.resolve.ExprResolver;
 import net.vansencool.lumen.pipeline.language.tokenization.Token;
+import net.vansencool.lumen.api.handler.ExpressionHandler.ExpressionResult;
+import net.vansencool.lumen.pipeline.var.RefType;
 import net.vansencool.lumen.pipeline.logger.LumenLogger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -175,7 +181,7 @@ public final class BindingContext implements BindingAccess {
      */
     @Override
     public Object value(@NotNull String n) {
-        return bound(n).value();
+        return resolveDeferred(bound(n).value());
     }
 
     /**
@@ -257,7 +263,7 @@ public final class BindingContext implements BindingAccess {
      * @throws IndexOutOfBoundsException if the index is out of range
      */
     public Object valueAt(int index) {
-        return match.valueAt(index);
+        return resolveDeferred(match.valueAt(index));
     }
 
     /**
@@ -301,5 +307,22 @@ public final class BindingContext implements BindingAccess {
         ConditionParser cp = new ConditionParser(PatternRegistry.instance().conditionRegistry());
         ConditionExpr expr = cp.parse(bound(paramName).tokens(), env);
         return expr.toJava(env, ctx);
+    }
+
+    private @NotNull Object resolveDeferred(@NotNull Object value) {
+        if (value instanceof InlineExpr ie) {
+            ExpressionResult result = ExprResolver.resolveWithType(ie.tokens(), ctx, env);
+            if (result != null) return toSyntheticHandle(result);
+        }
+        if (value instanceof BraceExpr be) {
+            ExpressionResult result = ExprResolver.resolveWithType(be.innerTokens(), ctx, env);
+            if (result != null) return toSyntheticHandle(result);
+        }
+        return value;
+    }
+
+    private static EnvironmentAccess.@NotNull VarHandle toSyntheticHandle(@NotNull ExpressionResult result) {
+        RefType refType = result.refTypeId() != null ? RefType.byId(result.refTypeId()) : null;
+        return Match.syntheticHandle(result.java(), refType, result.metadata());
     }
 }

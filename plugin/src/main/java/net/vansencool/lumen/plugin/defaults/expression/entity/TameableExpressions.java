@@ -5,7 +5,7 @@ import net.vansencool.lumen.api.annotations.Call;
 import net.vansencool.lumen.api.annotations.Registration;
 import net.vansencool.lumen.api.codegen.EnvironmentAccess.VarHandle;
 import net.vansencool.lumen.api.handler.ExpressionHandler.ExpressionResult;
-import net.vansencool.lumen.api.type.RefTypes;
+import net.vansencool.lumen.api.type.Types;
 import net.vansencool.lumen.plugin.util.EntityHelper;
 import net.vansencool.lumen.plugin.util.EntityValidation;
 import org.bukkit.entity.Tameable;
@@ -33,7 +33,7 @@ public final class TameableExpressions {
                             return new ExpressionResult(
                                     "(" + java + " instanceof Tameable _tm && _tm.getOwner() != null"
                                             + " ? _tm.getOwner() : null)",
-                                    RefTypes.PLAYER.id());
+                                    Types.PLAYER.id());
                         });
     }
 }

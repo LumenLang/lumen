@@ -5,7 +5,7 @@ import net.vansencool.lumen.api.annotations.Call;
 import net.vansencool.lumen.api.annotations.Registration;
 import net.vansencool.lumen.api.placeholder.PlaceholderRegistrar;
 import net.vansencool.lumen.api.placeholder.PlaceholderType;
-import net.vansencool.lumen.api.type.RefTypes;
+import net.vansencool.lumen.api.type.Types;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -19,9 +19,9 @@ public class DefaultWorldPlaceholders {
     public void register(@NotNull LumenAPI api) {
         PlaceholderRegistrar ph = api.placeholders();
 
-        ph.property(RefTypes.WORLD, "name", "$.getName()");
-        ph.property(RefTypes.WORLD, "time", "$.getTime()", PlaceholderType.NUMBER);
-        ph.property(RefTypes.WORLD, "weather", "($.hasStorm() ? \"storm\" : \"clear\")");
-        ph.defaultProperty(RefTypes.WORLD, "name");
+        ph.property(Types.WORLD, "name", "$.getName()");
+        ph.property(Types.WORLD, "time", "$.getTime()", PlaceholderType.NUMBER);
+        ph.property(Types.WORLD, "weather", "($.hasStorm() ? \"storm\" : \"clear\")");
+        ph.defaultProperty(Types.WORLD, "name");
     }
 }

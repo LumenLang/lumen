@@ -6,6 +6,7 @@ import net.vansencool.lumen.api.annotations.Registration;
 import net.vansencool.lumen.api.codegen.EnvironmentAccess.VarHandle;
 import net.vansencool.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import net.vansencool.lumen.api.pattern.Categories;
+import net.vansencool.lumen.api.type.Types;
 import net.vansencool.lumen.plugin.defaults.util.AttributeNames;
 import net.vansencool.lumen.plugin.util.EntityValidation;
 import org.bukkit.attribute.Attribute;
@@ -36,11 +37,11 @@ public final class LivingEntityExpressions {
                     boolean known = EntityValidation.requireLivingEntity(h, "get health");
                     ctx.codegen().addImport(LIVING_ENTITY);
                     if (known) {
-                        return new ExpressionResult("((LivingEntity) " + java + ").getHealth()", null);
+                        return new ExpressionResult("((LivingEntity) " + java + ").getHealth()", null, Types.DOUBLE);
                     }
                     return new ExpressionResult(
                             "(" + java + " instanceof LivingEntity _le ? _le.getHealth() : 0.0)",
-                            null);
+                            null, Types.DOUBLE);
                 }));
 
         api.patterns().expression(b -> b
@@ -59,11 +60,11 @@ public final class LivingEntityExpressions {
                     if (known) {
                         return new ExpressionResult(
                                 "((LivingEntity) " + java + ").getAttribute(Attribute." + attrName + ").getValue()",
-                                null);
+                                null, Types.DOUBLE);
                     }
                     return new ExpressionResult(
                             "(" + java + " instanceof LivingEntity _le ? _le.getAttribute(Attribute." + attrName + ").getValue() : 0.0)",
-                            null);
+                            null, Types.DOUBLE);
                 }));
     }
 }

@@ -25,7 +25,7 @@ import java.util.Map;
  *     .example("on respawn:")
  *     .since("1.0.0")
  *     .category("Player")
- *     .addVar("player", RefTypes.PLAYER, "event.getPlayer()")
+ *     .addVar("player", Types.PLAYER, "event.getPlayer()")
  *     .build();
  * }</pre>
  */
@@ -159,7 +159,7 @@ public final class EventBuilder {
      *
      * @param name     the variable name accessible in script child statements
      * @param refType  the logical type category for implicit resolution, or {@code null} for plain variables
-     * @param javaType the fully-qualified Java class name for the declaration
+     * @param javaType the Java type name (e.g. {@code Types.DOUBLE} or a fully qualified class name)
      * @param expr     the initialiser expression (e.g. {@code "event.getPlayer()"})
      * @return this builder
      */
@@ -199,7 +199,7 @@ public final class EventBuilder {
      * in implicit resolution.
      *
      * @param name     the variable name accessible in script child statements
-     * @param javaType the fully-qualified Java class name for the declaration
+     * @param javaType the Java type name (e.g. {@code Types.BOOLEAN} or a fully qualified class name)
      * @param expr     the initialiser expression (e.g. {@code "event.isSneaking()"})
      * @return this builder
      */

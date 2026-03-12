@@ -5,7 +5,7 @@ import net.vansencool.lumen.api.annotations.Call;
 import net.vansencool.lumen.api.annotations.Registration;
 import net.vansencool.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import net.vansencool.lumen.api.pattern.Categories;
-import net.vansencool.lumen.api.type.RefTypes;
+import net.vansencool.lumen.api.type.Types;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -27,7 +27,7 @@ public final class LocationExpressions {
                 .example("var px = player location x")
                 .since("1.0.0")
                 .category(Categories.LOCATION)
-                .handler(ctx -> new ExpressionResult(ctx.java("loc") + ".getX()", null)));
+                .handler(ctx -> new ExpressionResult(ctx.java("loc") + ".getX()", null, Types.DOUBLE)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -36,7 +36,7 @@ public final class LocationExpressions {
                 .example("var py = player location y")
                 .since("1.0.0")
                 .category(Categories.LOCATION)
-                .handler(ctx -> new ExpressionResult(ctx.java("loc") + ".getY()", null)));
+                .handler(ctx -> new ExpressionResult(ctx.java("loc") + ".getY()", null, Types.DOUBLE)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -45,7 +45,7 @@ public final class LocationExpressions {
                 .example("var pz = player location z")
                 .since("1.0.0")
                 .category(Categories.LOCATION)
-                .handler(ctx -> new ExpressionResult(ctx.java("loc") + ".getZ()", null)));
+                .handler(ctx -> new ExpressionResult(ctx.java("loc") + ".getZ()", null, Types.DOUBLE)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -54,7 +54,7 @@ public final class LocationExpressions {
                 .example("var dist = distance between player location and targetLoc")
                 .since("1.0.0")
                 .category(Categories.LOCATION)
-                .handler(ctx -> new ExpressionResult(ctx.java("a") + ".distance(" + ctx.java("b") + ")", null)));
+                .handler(ctx -> new ExpressionResult(ctx.java("a") + ".distance(" + ctx.java("b") + ")", null, Types.DOUBLE)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -63,7 +63,7 @@ public final class LocationExpressions {
                 .example("var b = block at player location")
                 .since("1.0.0")
                 .category(Categories.BLOCK)
-                .handler(ctx -> new ExpressionResult(ctx.java("loc") + ".getBlock()", RefTypes.BLOCK.id())));
+                .handler(ctx -> new ExpressionResult(ctx.java("loc") + ".getBlock()", Types.BLOCK.id())));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -72,6 +72,6 @@ public final class LocationExpressions {
                 .example("var w = myLocation world")
                 .since("1.0.0")
                 .category(Categories.LOCATION)
-                .handler(ctx -> new ExpressionResult(ctx.java("loc") + ".getWorld()", RefTypes.WORLD.id())));
+                .handler(ctx -> new ExpressionResult(ctx.java("loc") + ".getWorld()", Types.WORLD.id())));
     }
 }

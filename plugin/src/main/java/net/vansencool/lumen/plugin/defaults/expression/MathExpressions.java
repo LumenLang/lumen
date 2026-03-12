@@ -5,6 +5,7 @@ import net.vansencool.lumen.api.annotations.Call;
 import net.vansencool.lumen.api.annotations.Registration;
 import net.vansencool.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import net.vansencool.lumen.api.pattern.Categories;
+import net.vansencool.lumen.api.type.Types;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.ThreadLocalRandom;
@@ -36,7 +37,7 @@ public final class MathExpressions {
                     return new ExpressionResult(
                             "ThreadLocalRandom.current().nextInt("
                                     + min + ", " + max + " + 1)",
-                            null);
+                            null, Types.INT);
                 }));
 
         api.patterns().expression(b -> b
@@ -55,7 +56,7 @@ public final class MathExpressions {
                     return new ExpressionResult(
                             "ThreadLocalRandom.current().nextDouble("
                                     + min + ", " + max + ")",
-                            null);
+                            null, Types.DOUBLE);
                 }));
 
         api.patterns().expression(b -> b
@@ -72,7 +73,7 @@ public final class MathExpressions {
                     return new ExpressionResult(
                             "(ThreadLocalRandom.current().nextDouble(100.0) < ((Number)((Object) "
                                     + pct + ")).doubleValue())",
-                            null);
+                            null, Types.BOOLEAN);
                 }));
 
         api.patterns().expression(b -> b
@@ -86,7 +87,7 @@ public final class MathExpressions {
                 .category(Categories.MATH)
                 .handler(ctx -> new ExpressionResult(
                         "Math.min(" + ctx.java("x") + ", " + ctx.java("y") + ")",
-                        null)));
+                        null, Types.DOUBLE)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -99,7 +100,7 @@ public final class MathExpressions {
                 .category(Categories.MATH)
                 .handler(ctx -> new ExpressionResult(
                         "Math.max(" + ctx.java("x") + ", " + ctx.java("y") + ")",
-                        null)));
+                        null, Types.DOUBLE)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -110,7 +111,7 @@ public final class MathExpressions {
                 .category(Categories.MATH)
                 .handler(ctx -> new ExpressionResult(
                         "Math.abs(" + ctx.java("x") + ")",
-                        null)));
+                        null, Types.DOUBLE)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -121,7 +122,7 @@ public final class MathExpressions {
                 .category(Categories.MATH)
                 .handler(ctx -> new ExpressionResult(
                         "Math.round(((Number) ((Object) " + ctx.java("x") + ")).doubleValue())",
-                        null)));
+                        null, Types.LONG)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -132,7 +133,7 @@ public final class MathExpressions {
                 .category(Categories.MATH)
                 .handler(ctx -> new ExpressionResult(
                         "(int) Math.floor(((Number) ((Object) " + ctx.java("x") + ")).doubleValue())",
-                        null)));
+                        null, Types.INT)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -143,7 +144,7 @@ public final class MathExpressions {
                 .category(Categories.MATH)
                 .handler(ctx -> new ExpressionResult(
                         "(int) Math.ceil(((Number) ((Object) " + ctx.java("x") + ")).doubleValue())",
-                        null)));
+                        null, Types.INT)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -155,6 +156,6 @@ public final class MathExpressions {
                 .handler(ctx -> new ExpressionResult(
                         "Math.max(" + ctx.java("min") + ", Math.min(" + ctx.java("x")
                                 + ", " + ctx.java("max") + "))",
-                        null)));
+                        null, Types.DOUBLE)));
     }
 }

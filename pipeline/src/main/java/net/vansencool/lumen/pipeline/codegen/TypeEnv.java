@@ -6,6 +6,7 @@ import net.vansencool.lumen.pipeline.data.DataSchema;
 import net.vansencool.lumen.pipeline.persist.GlobalVars;
 import net.vansencool.lumen.pipeline.persist.PersistentVars;
 import net.vansencool.lumen.pipeline.placeholder.PlaceholderExpander;
+import net.vansencool.lumen.pipeline.type.LumenType;
 import net.vansencool.lumen.pipeline.var.RefType;
 import net.vansencool.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
@@ -435,6 +436,22 @@ public final class TypeEnv implements EnvironmentAccess {
         VarRef ref = new VarRef(internal, java, metadata);
         defineVar(name, ref);
         return ref;
+    }
+
+    /**
+     * Defines a named variable in the current block scope with a full compile-time type.
+     *
+     * @param name      the variable name
+     * @param refType   the ref type for implicit resolution, or {@code null}
+     * @param java      the Java variable name
+     * @param lumenType the full compile-time type, or {@code null}
+     * @param metadata  compile-time metadata entries
+     */
+    public void defineVar(@NotNull String name, @Nullable RefType refType,
+                          @NotNull String java, @Nullable LumenType lumenType,
+                          @NotNull Map<String, Object> metadata) {
+        VarRef ref = new VarRef(refType, java, lumenType, metadata);
+        defineVar(name, ref);
     }
 
     @Override

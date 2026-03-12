@@ -20,7 +20,7 @@ import java.util.function.Consumer;
  * Example usage:
  *
  * <pre>{@code
- * api.patterns().statements(b -> b
+ * api.patterns().statement(b -> b
  *         .pattern("message %who:PLAYER% %text:STRING%")
  *         .description("Sends a message to a player.")
  *         .example("message player \"Hello!\"")
