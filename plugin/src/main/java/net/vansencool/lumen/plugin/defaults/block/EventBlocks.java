@@ -243,7 +243,7 @@ public final class EventBlocks {
                         + "is available inside the block and represents the target player.")
                 .example(of(
                         top("register inventory \"shop\":"),
-                        secondly("var gui = new inventory \"shop\" with size 54 titled \"<gray>Shop\"")))
+                        secondly("var gui = new inventory \"shop\" with size 54 titled \"&6Shop\"")))
                 .since("1.0.0")
                 .category(Categories.INVENTORY)
                 .handler(new BlockHandler() {
