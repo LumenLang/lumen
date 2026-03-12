@@ -2,6 +2,7 @@ package net.vansencool.lumen.api.type;
 
 import net.vansencool.lumen.api.codegen.CodegenAccess;
 import net.vansencool.lumen.api.codegen.EnvironmentAccess;
+import net.vansencool.lumen.api.exceptions.ParseFailureException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -12,16 +13,15 @@ import java.util.List;
  *
  * <p>Register instances with {@link TypeRegistrar#register(AddonTypeBinding)}.
  * If the binding works with a custom reference type, register that type first via
- * {@link RefTypeRegistrar} so it participates in default variable resolution.
+ * {@link RefTypeRegistrar} so it participates in type checking.
  *
  * <h2>Example</h2>
  * <pre>{@code
  * api.types().register(new AddonTypeBinding() {
  *     public @NotNull String id() { return "ENTITY"; }
  *
- *     public int consumeCount(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
- *         return 1;
- *     }
+ *     // Uses the default consumeCount which throws ParseFailureException
+ *     // when tokens are empty and returns 1 otherwise.
  *
  *     public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
  *         return env.lookupVar(tokens.get(0));
@@ -68,12 +68,34 @@ public interface AddonTypeBinding {
     /**
      * Determines how many tokens this type binding should consume.
      *
+     * <p>
+     * Return values:
+     * <ul>
+     * <li><b>-1</b>: Consume all remaining tokens until the next literal or
+     * end of stream. Used by types like EXPR and COND.</li>
+     * <li><b>0</b>: Consume no tokens, but still call {@link #parse} with an
+     * empty list. This signals that the binding produces a value without
+     * consuming input (e.g. a default or implicit value).</li>
+     * <li><b>1+</b>: Consume exactly this many tokens.</li>
+     * </ul>
+     *
+     * <p>
+     * To <b>reject</b> a match, throw {@link ParseFailureException}. The pattern
+     * matcher catches it and treats the binding as a non-match.
+     *
+     * <p>
+     * The default implementation throws {@link ParseFailureException} when the
+     * token list is empty and returns {@code 1} otherwise.
+     *
      * @param tokens the remaining token texts available
      * @param env    the current type environment
      * @return number of tokens to consume, or {@code -1} for all remaining
+     * @throws ParseFailureException if this binding cannot match the given tokens
      */
     default int consumeCount(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
-        return -1;
+        if (tokens.isEmpty())
+            throw new ParseFailureException(id() + " requires at least one token");
+        return 1;
     }
 
     /**

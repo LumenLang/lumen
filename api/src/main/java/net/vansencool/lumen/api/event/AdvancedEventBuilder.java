@@ -233,7 +233,7 @@ public final class AdvancedEventBuilder {
      * body, identical to how regular event variables work.
      *
      * @param name     the variable name accessible in script child statements
-     * @param refType  the logical type category for implicit resolution, or {@code null}
+     * @param refType  the logical type category for type checking, or {@code null}
      * @param javaType the Java type name (e.g. {@code Types.DOUBLE} or a fully qualified class name)
      * @param expr     the initialiser expression
      * @return this builder

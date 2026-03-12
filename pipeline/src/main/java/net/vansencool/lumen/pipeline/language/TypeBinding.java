@@ -1,5 +1,6 @@
 package net.vansencool.lumen.pipeline.language;
 
+import net.vansencool.lumen.api.exceptions.ParseFailureException;
 import net.vansencool.lumen.pipeline.codegen.CodegenContext;
 import net.vansencool.lumen.pipeline.codegen.TypeEnv;
 import net.vansencool.lumen.pipeline.language.pattern.Pattern;
@@ -57,12 +58,8 @@ import java.util.List;
  *         return "PLAYER";
  *     }
  *
- *     public int consumeCount(List<Token> tokens, TypeEnv env) {
- *         // Guard against an empty token list: return 0 so the pattern matcher
- *         // knows this placeholder has nothing to consume and can fall back to
- *         // a default value. When tokens are available, consume exactly 1.
- *         return tokens.isEmpty() ? 0 : 1;
- *     }
+ *     // Uses the default consumeCount which throws ParseFailureException
+ *     // when tokens are empty and returns 1 otherwise.
  *
  *     public Object parse(List<Token> tokens, TypeEnv env) {
  *         String name = tokens.get(0).text();
@@ -139,22 +136,29 @@ public interface TypeBinding {
      *
      * <p>
      * This method is called during pattern matching to decide where one
-     * placeholders ends
-     * and the next begins. This is especially important when multiple placeholders
-     * appear
-     * consecutively without literal tokens between them.
+     * placeholder ends and the next begins. This is especially important when
+     * multiple placeholders appear consecutively without literal tokens between
+     * them.
      *
      * <h3>Return Values</h3>
      * <ul>
      * <li><b>-1</b>: Consume all remaining tokens until the next literal in the
-     * pattern
-     * or end of stream (default behavior for EXPR, STRING when last in
-     * pattern)</li>
-     * <li><b>0</b>: Consume no tokens (used when a default value is available, like
-     * implicit "player" in event handlers)</li>
+     * pattern or end of stream. Used by types like EXPR and COND that capture
+     * everything remaining in their position.</li>
+     * <li><b>0</b>: Consume no tokens, but still call {@link #parse} with an
+     * empty list. This signals that the binding produces a value without
+     * consuming input (e.g. a default or implicit value).</li>
      * <li><b>1+</b>: Consume exactly this many tokens (typical for PLAYER,
-     * MATERIAL, INT)</li>
+     * MATERIAL, INT).</li>
      * </ul>
+     *
+     * <p>
+     * To <b>reject</b> a match, throw {@link ParseFailureException}. The pattern
+     * matcher catches it and treats the binding as a non-match.
+     *
+     * <p>
+     * The default implementation throws {@link ParseFailureException} when the
+     * token list is empty and returns {@code 1} otherwise.
      *
      * <h3>Pattern Matching Example</h3>
      * <p>
@@ -175,8 +179,11 @@ public interface TypeBinding {
      * @param tokens the remaining tokens available to consume
      * @param env    the current type environment for context-aware decisions
      * @return number of tokens to consume, or -1 to consume until next literal
+     * @throws ParseFailureException if this binding cannot match the given tokens
      */
     default int consumeCount(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
-        return -1;
+        if (tokens.isEmpty())
+            throw new ParseFailureException(id() + " requires at least one token");
+        return 1;
     }
 }

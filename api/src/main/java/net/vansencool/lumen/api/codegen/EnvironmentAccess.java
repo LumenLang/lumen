@@ -30,21 +30,21 @@ public interface EnvironmentAccess {
     @Nullable VarHandle lookupVar(@NotNull String name);
 
     /**
-     * Returns the default variable for the given ref type by walking the scope stack.
+     * Returns the first variable in scope whose ref type matches the given type.
      *
-     * @param type the ref type to look up
-     * @return the default variable, or {@code null} if none is set in any enclosing scope
+     * <p>Walks the scope stack from innermost to outermost scope, examining all variables
+     * in each frame.
+     *
+     * @param type the ref type to match against
+     * @return the first matching variable, or {@code null} if none found
      */
-    @Nullable VarHandle lookupDefault(@NotNull RefTypeHandle type);
+    @Nullable VarHandle lookupVarByType(@NotNull RefTypeHandle type);
 
     /**
      * Defines a named variable in the current block scope.
      *
-     * <p>If {@code refType} is non-null, the variable participates in implicit resolution
-     * (e.g. a player reference can be resolved implicitly by type bindings).
-     *
      * @param name    the variable name to bind
-     * @param refType the ref type for implicit resolution, or {@code null} for plain variables
+     * @param refType the ref type for type checking, or {@code null} for plain variables
      * @param java    the Java variable name in generated code
      * @return a reference to the defined variable
      */
@@ -57,7 +57,7 @@ public interface EnvironmentAccess {
      * patterns can inspect it for parse-time validation.
      *
      * @param name     the variable name to bind
-     * @param refType  the ref type for implicit resolution, or {@code null} for plain variables
+     * @param refType  the ref type for type checking, or {@code null} for plain variables
      * @param java     the Java variable name in generated code
      * @param metadata compile-time metadata entries
      * @return a reference to the defined variable
@@ -253,10 +253,8 @@ public interface EnvironmentAccess {
     /**
      * Defines a variable at the root (class) scope, making it visible from all block contexts.
      *
-     * <p>This is used for config entries that become class-level fields in the generated Java class.
-     *
      * @param name    the variable name
-     * @param refType the ref type for implicit resolution, or {@code null} for plain variables
+     * @param refType the ref type for type checking, or {@code null} for plain variables
      * @param java    the Java variable name in generated code
      * @return a reference to the defined variable
      */
@@ -266,7 +264,6 @@ public interface EnvironmentAccess {
      * A compile-time descriptor for a named variable that is in scope.
      *
      * @see #lookupVar(String)
-     * @see #lookupDefault(RefTypeHandle)
      */
     interface VarHandle {
 

@@ -82,10 +82,7 @@ public final class EventBlocks {
                                 RefTypeHandle refType = v.refTypeId() != null
                                         ? api.refTypes().byId(v.refTypeId())
                                         : null;
-                                EnvironmentAccess.VarHandle handle = env.defineVar(name, refType, v.expr());
-                                if (refType != null) {
-                                    ctx.block().setDefault(refType, handle);
-                                }
+                                env.defineVar(name, refType, v.expr());
                             }
 
                             advDef.handler().begin(ctx, out);
@@ -133,11 +130,11 @@ public final class EventBlocks {
                             RefTypeHandle refType = v.refTypeId() != null
                                     ? api.refTypes().byId(v.refTypeId())
                                     : null;
-                            EnvironmentAccess.VarHandle handle = v.metadata().isEmpty()
-                                    ? env.defineVar(name, refType, name)
-                                    : env.defineVar(name, refType, name, v.metadata());
-                            if (refType != null)
-                                ctx.block().setDefault(refType, handle);
+                            if (v.metadata().isEmpty()) {
+                                env.defineVar(name, refType, name);
+                            } else {
+                                env.defineVar(name, refType, name, v.metadata());
+                            }
                         }
                     }
 
@@ -188,12 +185,9 @@ public final class EventBlocks {
                         out.line("CommandSender sender = __sender;");
                         out.line("World world = player != null ? player.getWorld() : null;");
 
-                        EnvironmentAccess.VarHandle player = env.defineVar("player", Types.PLAYER, "player");
-                        ctx.block().setDefault(Types.PLAYER, player);
-                        EnvironmentAccess.VarHandle sender = env.defineVar("sender", Types.SENDER, "sender");
-                        ctx.block().setDefault(Types.SENDER, sender);
-                        EnvironmentAccess.VarHandle world = env.defineVar("world", Types.WORLD, "world");
-                        ctx.block().setDefault(Types.WORLD, world);
+                        env.defineVar("player", Types.PLAYER, "player");
+                        env.defineVar("sender", Types.SENDER, "sender");
+                        env.defineVar("world", Types.WORLD, "world");
                         env.defineVar("args", Types.LIST, "args");
                     }
 
@@ -269,10 +263,8 @@ public final class EventBlocks {
                         out.line("public void " + methodName + "(Player player) {");
                         out.line("World world = player.getWorld();");
 
-                        EnvironmentAccess.VarHandle player = env.defineVar("player", Types.PLAYER, "player");
-                        ctx.block().setDefault(Types.PLAYER, player);
-                        EnvironmentAccess.VarHandle world = env.defineVar("world", Types.WORLD, "world");
-                        ctx.block().setDefault(Types.WORLD, world);
+                        env.defineVar("player", Types.PLAYER, "player");
+                        env.defineVar("world", Types.WORLD, "world");
                     }
 
                     @Override

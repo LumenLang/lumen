@@ -206,13 +206,6 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public int consumeCount(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
-                if (tokens.isEmpty())
-                    throw new ParseFailureException("LONG requires at least one token");
-                return 1;
-            }
-
-            @Override
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 String text = tokens.get(0);
                 if (text.endsWith("L") || text.endsWith("l")) {
@@ -257,13 +250,6 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public int consumeCount(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
-                if (tokens.isEmpty())
-                    throw new ParseFailureException("DOUBLE requires at least one token");
-                return 1;
-            }
-
-            @Override
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 String text = tokens.get(0);
                 try {
@@ -302,13 +288,6 @@ public final class DefaultTypeBindings {
                         List.of("set %var:EXPR% to %val:NUMBER%"),
                         "1.0.0",
                         false);
-            }
-
-            @Override
-            public int consumeCount(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
-                if (tokens.isEmpty())
-                    throw new ParseFailureException("NUMBER requires at least one token");
-                return 1;
             }
 
             @Override
@@ -480,7 +459,7 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull TypeBindingMeta meta() {
                 return new TypeBindingMeta(
-                        "Resolves a player reference from a variable name. Does not accept possessive syntax. Falls back to the default player in the current events context.",
+                        "Resolves a player reference from a variable name. Does not accept possessive syntax.",
                         Player.class.getName(),
                         List.of("message %who:PLAYER% \"Hello!\"", "kill player"),
                         "1.0.0",
@@ -488,49 +467,17 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public int consumeCount(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
-                if (tokens.isEmpty())
-                    return 0;
-
-                String raw = tokens.get(0);
-                if (raw.endsWith("'s"))
-                    throw new ParseFailureException("PLAYER does not accept possessive form: " + raw);
-
-                VarHandle ref = env.lookupVar(raw);
-                if (ref != null && isPlayer(ref))
-                    return 1;
-
-                if (env.lookupDefault(Types.PLAYER) != null)
-                    return 0;
-
-                return 1;
-            }
-
-            @Override
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
-                if (tokens.isEmpty()) {
-                    VarHandle def = env.lookupDefault(Types.PLAYER);
-                    if (def == null)
-                        throw new ParseFailureException("No default player in this context");
-                    return def;
-                }
-
                 String raw = tokens.get(0);
                 if (raw.endsWith("'s"))
                     throw new ParseFailureException("PLAYER does not accept possessive form: " + raw);
 
                 VarHandle ref = env.lookupVar(raw);
-                if (ref != null) {
-                    if (!isPlayer(ref))
-                        throw new ParseFailureException(raw + " is not a player");
-                    return ref;
-                }
-
-                VarHandle def = env.lookupDefault(Types.PLAYER);
-                if (def != null)
-                    return def;
-
-                throw new ParseFailureException("Unknown player reference: " + raw);
+                if (ref == null)
+                    throw new ParseFailureException("Unknown player reference: " + raw);
+                if (!isPlayer(ref))
+                    throw new ParseFailureException(raw + " is not a player");
+                return ref;
             }
 
             @Override
@@ -555,7 +502,7 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull TypeBindingMeta meta() {
                 return new TypeBindingMeta(
-                        "Resolves a player reference from a possessive token (e.g. player's). The token must end with 's. Falls back to the default player in the current events context.",
+                        "Resolves a player reference from a possessive token (e.g. player's). The token must end with 's.",
                         Player.class.getName(),
                         List.of("%who:PLAYER_POSSESSIVE% name", "%who:PLAYER_POSSESSIVE% health"),
                         "1.0.0",
@@ -563,52 +510,18 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public int consumeCount(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
-                if (tokens.isEmpty())
-                    return 0;
-
-                String raw = tokens.get(0);
-                boolean possessive = raw.endsWith("'s");
-                String name = possessive ? raw.substring(0, raw.length() - 2) : raw;
-
-                VarHandle ref = env.lookupVar(name);
-                if (ref != null && isPlayer(ref))
-                    return 1;
-
-                if (possessive) {
-                    if (env.lookupDefault(Types.PLAYER) != null)
-                        return 1;
-                    return 1;
-                }
-
-                throw new ParseFailureException("Not a known player reference: " + raw);
-            }
-
-            @Override
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
-                if (tokens.isEmpty()) {
-                    VarHandle def = env.lookupDefault(Types.PLAYER);
-                    if (def == null)
-                        throw new ParseFailureException("No default player in this context");
-                    return def;
-                }
-
                 String raw = tokens.get(0);
-                boolean possessive = raw.endsWith("'s");
-                String name = possessive ? raw.substring(0, raw.length() - 2) : raw;
+                if (!raw.endsWith("'s"))
+                    throw new ParseFailureException("PLAYER_POSSESSIVE requires possessive form (e.g. player's): " + raw);
+                String name = raw.substring(0, raw.length() - 2);
 
                 VarHandle ref = env.lookupVar(name);
-                if (ref != null) {
-                    if (!isPlayer(ref))
-                        throw new ParseFailureException(name + " is not a player");
-                    return ref;
-                }
-
-                VarHandle def = env.lookupDefault(Types.PLAYER);
-                if (def != null)
-                    return def;
-
-                throw new ParseFailureException("Unknown player reference: " + name);
+                if (ref == null)
+                    throw new ParseFailureException("Unknown player reference: " + name);
+                if (!isPlayer(ref))
+                    throw new ParseFailureException(name + " is not a player");
+                return ref;
             }
 
             @Override
@@ -635,7 +548,7 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull TypeBindingMeta meta() {
                 return new TypeBindingMeta(
-                        "Resolves an offline player reference. Does not accept possessive syntax. Falls back to the default offline player in the current events context.",
+                        "Resolves an offline player reference. Does not accept possessive syntax.",
                         OfflinePlayer.class.getName(),
                         List.of("ban %target:OFFLINE_PLAYER%"),
                         "1.0.0",
@@ -643,49 +556,17 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public int consumeCount(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
-                if (tokens.isEmpty())
-                    return 0;
-
-                String raw = tokens.get(0);
-                if (raw.endsWith("'s"))
-                    throw new ParseFailureException("OFFLINE_PLAYER does not accept possessive form: " + raw);
-
-                VarHandle ref = env.lookupVar(raw);
-                if (ref != null && isOfflinePlayer(ref))
-                    return 1;
-
-                if (env.lookupDefault(Types.OFFLINE_PLAYER) != null)
-                    return 0;
-
-                return 1;
-            }
-
-            @Override
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
-                if (tokens.isEmpty()) {
-                    VarHandle def = env.lookupDefault(Types.OFFLINE_PLAYER);
-                    if (def == null)
-                        throw new ParseFailureException("No default offline player in this context");
-                    return def;
-                }
-
                 String raw = tokens.get(0);
                 if (raw.endsWith("'s"))
                     throw new ParseFailureException("OFFLINE_PLAYER does not accept possessive form: " + raw);
 
                 VarHandle ref = env.lookupVar(raw);
-                if (ref != null) {
-                    if (!isOfflinePlayer(ref))
-                        throw new ParseFailureException(raw + " is not an offline player");
-                    return ref;
-                }
-
-                VarHandle def = env.lookupDefault(Types.OFFLINE_PLAYER);
-                if (def != null)
-                    return def;
-
-                throw new ParseFailureException("Unknown offline player reference: " + raw);
+                if (ref == null)
+                    throw new ParseFailureException("Unknown offline player reference: " + raw);
+                if (!isOfflinePlayer(ref))
+                    throw new ParseFailureException(raw + " is not an offline player");
+                return ref;
             }
 
             @Override
@@ -718,52 +599,18 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public int consumeCount(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
-                if (tokens.isEmpty())
-                    return 0;
-
-                String raw = tokens.get(0);
-                boolean possessive = raw.endsWith("'s");
-                String name = possessive ? raw.substring(0, raw.length() - 2) : raw;
-
-                VarHandle ref = env.lookupVar(name);
-                if (ref != null && isOfflinePlayer(ref))
-                    return 1;
-
-                if (possessive) {
-                    if (env.lookupDefault(Types.OFFLINE_PLAYER) != null)
-                        return 1;
-                    return 1;
-                }
-
-                throw new ParseFailureException("Not a known offline player reference: " + raw);
-            }
-
-            @Override
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
-                if (tokens.isEmpty()) {
-                    VarHandle def = env.lookupDefault(Types.OFFLINE_PLAYER);
-                    if (def == null)
-                        throw new ParseFailureException("No default offline player in this context");
-                    return def;
-                }
-
                 String raw = tokens.get(0);
-                boolean possessive = raw.endsWith("'s");
-                String name = possessive ? raw.substring(0, raw.length() - 2) : raw;
+                if (!raw.endsWith("'s"))
+                    throw new ParseFailureException("OFFLINE_PLAYER_POSSESSIVE requires possessive form (e.g. player's): " + raw);
+                String name = raw.substring(0, raw.length() - 2);
 
                 VarHandle ref = env.lookupVar(name);
-                if (ref != null) {
-                    if (!isOfflinePlayer(ref))
-                        throw new ParseFailureException(name + " is not an offline player");
-                    return ref;
-                }
-
-                VarHandle def = env.lookupDefault(Types.OFFLINE_PLAYER);
-                if (def != null)
-                    return def;
-
-                throw new ParseFailureException("Unknown offline player reference: " + name);
+                if (ref == null)
+                    throw new ParseFailureException("Unknown offline player reference: " + name);
+                if (!isOfflinePlayer(ref))
+                    throw new ParseFailureException(name + " is not an offline player");
+                return ref;
             }
 
             @Override
@@ -803,6 +650,11 @@ public final class DefaultTypeBindings {
             }
 
             @Override
+            public int consumeCount(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
+                return -1;
+            }
+
+            @Override
             public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx,
                                           @NotNull EnvironmentAccess env) {
                 return (String) v;
@@ -830,7 +682,7 @@ public final class DefaultTypeBindings {
             @Override
             public int consumeCount(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 if (tokens.isEmpty())
-                    return 0;
+                    throw new ParseFailureException("OP requires at least one token");
                 String first = tokens.get(0).toLowerCase(Locale.ROOT);
                 if (tokens.size() >= 3) {
                     String second = tokens.get(1).toLowerCase(Locale.ROOT);
@@ -889,8 +741,6 @@ public final class DefaultTypeBindings {
 
             @Override
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
-                if (tokens.isEmpty())
-                    throw new ParseFailureException("Expected operator but got end of input");
                 if (tokens.size() == 2) {
                     String combined = tokens.get(0) + tokens.get(1);
                     if (combined.equals(">=") || combined.equals("<=") || combined.equals("==")
@@ -933,7 +783,7 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull TypeBindingMeta meta() {
                 return new TypeBindingMeta(
-                        "Resolves an entity reference from a variable name. Does not accept possessive syntax. Falls back to the default entity in the current events context.",
+                        "Resolves an entity reference from a variable name. Does not accept possessive syntax.",
                         Entity.class.getName(),
                         List.of("kill %e:ENTITY%", "teleport entity to location"),
                         "1.0.0",
@@ -941,49 +791,17 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public int consumeCount(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
-                if (tokens.isEmpty())
-                    return 0;
-
-                String raw = tokens.get(0);
-                if (raw.endsWith("'s"))
-                    throw new ParseFailureException("ENTITY does not accept possessive form: " + raw);
-
-                VarHandle ref = env.lookupVar(raw);
-                if (ref != null && isEntity(ref))
-                    return 1;
-
-                if (env.lookupDefault(Types.ENTITY) != null)
-                    return 0;
-
-                return 1;
-            }
-
-            @Override
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
-                if (tokens.isEmpty()) {
-                    VarHandle def = env.lookupDefault(Types.ENTITY);
-                    if (def == null)
-                        throw new ParseFailureException("No default entity in this context");
-                    return def;
-                }
-
                 String raw = tokens.get(0);
                 if (raw.endsWith("'s"))
                     throw new ParseFailureException("ENTITY does not accept possessive form: " + raw);
 
                 VarHandle ref = env.lookupVar(raw);
-                if (ref != null) {
-                    if (!isEntity(ref))
-                        throw new ParseFailureException(raw + " is not an entity");
-                    return ref;
-                }
-
-                VarHandle def = env.lookupDefault(Types.ENTITY);
-                if (def != null)
-                    return def;
-
-                throw new ParseFailureException("Unknown entity reference: " + raw);
+                if (ref == null)
+                    throw new ParseFailureException("Unknown entity reference: " + raw);
+                if (!isEntity(ref))
+                    throw new ParseFailureException(raw + " is not an entity");
+                return ref;
             }
 
             @Override
@@ -1011,7 +829,7 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull TypeBindingMeta meta() {
                 return new TypeBindingMeta(
-                        "Resolves an entity reference from a possessive token (e.g. entity's). The token must end with 's. Falls back to the default entity in the current events context.",
+                        "Resolves an entity reference from a possessive token (e.g. entity's). The token must end with 's.",
                         Entity.class.getName(),
                         List.of("%e:ENTITY_POSSESSIVE% health"),
                         "1.0.0",
@@ -1019,52 +837,18 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public int consumeCount(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
-                if (tokens.isEmpty())
-                    return 0;
-
-                String raw = tokens.get(0);
-                boolean possessive = raw.endsWith("'s");
-                String name = possessive ? raw.substring(0, raw.length() - 2) : raw;
-
-                VarHandle ref = env.lookupVar(name);
-                if (ref != null && isEntity(ref))
-                    return 1;
-
-                if (possessive) {
-                    if (env.lookupDefault(Types.ENTITY) != null)
-                        return 1;
-                    return 1;
-                }
-
-                throw new ParseFailureException("Not a known entity reference: " + raw);
-            }
-
-            @Override
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
-                if (tokens.isEmpty()) {
-                    VarHandle def = env.lookupDefault(Types.ENTITY);
-                    if (def == null)
-                        throw new ParseFailureException("No default entity in this context");
-                    return def;
-                }
-
                 String raw = tokens.get(0);
-                boolean possessive = raw.endsWith("'s");
-                String name = possessive ? raw.substring(0, raw.length() - 2) : raw;
+                if (!raw.endsWith("'s"))
+                    throw new ParseFailureException("ENTITY_POSSESSIVE requires possessive form (e.g. entity's): " + raw);
+                String name = raw.substring(0, raw.length() - 2);
 
                 VarHandle ref = env.lookupVar(name);
-                if (ref != null) {
-                    if (!isEntity(ref))
-                        throw new ParseFailureException(name + " is not an entity");
-                    return ref;
-                }
-
-                VarHandle def = env.lookupDefault(Types.ENTITY);
-                if (def != null)
-                    return def;
-
-                throw new ParseFailureException("Unknown entity reference: " + name);
+                if (ref == null)
+                    throw new ParseFailureException("Unknown entity reference: " + name);
+                if (!isEntity(ref))
+                    throw new ParseFailureException(name + " is not an entity");
+                return ref;
             }
 
             @Override
@@ -1114,7 +898,7 @@ public final class DefaultTypeBindings {
             @Override
             public int consumeCount(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 if (tokens.isEmpty())
-                    return 0;
+                    throw new ParseFailureException("ENTITY_TYPE requires at least one token");
                 String normalized = tokens.get(0).toUpperCase(Locale.ROOT)
                         .replace(' ', '_').replace('-', '_');
                 if (knownEntities.contains(normalized))
@@ -1126,8 +910,6 @@ public final class DefaultTypeBindings {
 
             @Override
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
-                if (tokens.isEmpty())
-                    throw new ParseFailureException("No entity type token provided");
                 String raw = tokens.get(0);
                 String normalized = raw.toUpperCase(Locale.ROOT)
                         .replace(' ', '_').replace('-', '_');
@@ -1184,7 +966,7 @@ public final class DefaultTypeBindings {
             @Override
             public int consumeCount(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 if (tokens.isEmpty())
-                    return 0;
+                    throw new ParseFailureException("ITEM requires at least one token");
                 String normalized = tokens.get(0).toUpperCase(Locale.ROOT)
                         .replace(' ', '_').replace('-', '_');
                 if (knownMaterials.contains(normalized))
@@ -1238,7 +1020,7 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull TypeBindingMeta meta() {
                 return new TypeBindingMeta(
-                        "Resolves an ItemStack reference from a variable name. Does not accept possessive syntax. Falls back to the default item in the current events context.",
+                        "Resolves an ItemStack reference from a variable name. Does not accept possessive syntax.",
                         ItemStack.class.getName(),
                         List.of("set %i:ITEMSTACK% amount to 5"),
                         "1.0.0",
@@ -1246,41 +1028,16 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public int consumeCount(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
-                if (tokens.isEmpty())
-                    return 0;
-                String raw = tokens.get(0);
-                if (raw.endsWith("'s"))
-                    throw new ParseFailureException("ITEMSTACK does not accept possessive form: " + raw);
-                VarHandle ref = env.lookupVar(raw);
-                if (ref != null && isItemStack(ref))
-                    return 1;
-                if (env.lookupDefault(Types.ITEMSTACK) != null)
-                    return 0;
-                return 1;
-            }
-
-            @Override
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
-                if (tokens.isEmpty()) {
-                    VarHandle def = env.lookupDefault(Types.ITEMSTACK);
-                    if (def == null)
-                        throw new ParseFailureException("No default item stack in this context");
-                    return def;
-                }
                 String raw = tokens.get(0);
                 if (raw.endsWith("'s"))
                     throw new ParseFailureException("ITEMSTACK does not accept possessive form: " + raw);
                 VarHandle ref = env.lookupVar(raw);
-                if (ref != null) {
-                    if (!isItemStack(ref))
-                        throw new ParseFailureException(raw + " is not an item stack");
-                    return ref;
-                }
-                VarHandle def = env.lookupDefault(Types.ITEMSTACK);
-                if (def != null)
-                    return def;
-                throw new ParseFailureException("Unknown item stack reference: " + raw);
+                if (ref == null)
+                    throw new ParseFailureException("Unknown item stack reference: " + raw);
+                if (!isItemStack(ref))
+                    throw new ParseFailureException(raw + " is not an item stack");
+                return ref;
             }
 
             @Override
@@ -1305,7 +1062,7 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull TypeBindingMeta meta() {
                 return new TypeBindingMeta(
-                        "Resolves an ItemStack reference from a possessive token (e.g. item's). The token must end with 's. Falls back to the default item in the current events context.",
+                        "Resolves an ItemStack reference from a possessive token (e.g. item's). The token must end with 's.",
                         ItemStack.class.getName(),
                         List.of("%i:ITEMSTACK_POSSESSIVE% display name"),
                         "1.0.0",
@@ -1313,44 +1070,17 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public int consumeCount(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
-                if (tokens.isEmpty())
-                    return 0;
-                String raw = tokens.get(0);
-                boolean possessive = raw.endsWith("'s");
-                String name = possessive ? raw.substring(0, raw.length() - 2) : raw;
-                VarHandle ref = env.lookupVar(name);
-                if (ref != null && isItemStack(ref))
-                    return 1;
-                if (possessive) {
-                    if (env.lookupDefault(Types.ITEMSTACK) != null)
-                        return 1;
-                    return 1;
-                }
-                throw new ParseFailureException("Not a known item stack reference: " + raw);
-            }
-
-            @Override
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
-                if (tokens.isEmpty()) {
-                    VarHandle def = env.lookupDefault(Types.ITEMSTACK);
-                    if (def == null)
-                        throw new ParseFailureException("No default item stack in this context");
-                    return def;
-                }
                 String raw = tokens.get(0);
-                boolean possessive = raw.endsWith("'s");
-                String name = possessive ? raw.substring(0, raw.length() - 2) : raw;
+                if (!raw.endsWith("'s"))
+                    throw new ParseFailureException("ITEMSTACK_POSSESSIVE requires possessive form (e.g. item's): " + raw);
+                String name = raw.substring(0, raw.length() - 2);
                 VarHandle ref = env.lookupVar(name);
-                if (ref != null) {
-                    if (!isItemStack(ref))
-                        throw new ParseFailureException(name + " is not an item stack");
-                    return ref;
-                }
-                VarHandle def = env.lookupDefault(Types.ITEMSTACK);
-                if (def != null)
-                    return def;
-                throw new ParseFailureException("Unknown item stack reference: " + name);
+                if (ref == null)
+                    throw new ParseFailureException("Unknown item stack reference: " + name);
+                if (!isItemStack(ref))
+                    throw new ParseFailureException(name + " is not an item stack");
+                return ref;
             }
 
             @Override
@@ -1377,7 +1107,7 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull TypeBindingMeta meta() {
                 return new TypeBindingMeta(
-                        "Resolves a world reference from a variable name. Falls back to the default world in the current events context.",
+                        "Resolves a world reference from a variable name.",
                         World.class.getName(),
                         List.of("set time in %w:WORLD% to 0"),
                         "1.0.0",
@@ -1385,37 +1115,14 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public int consumeCount(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
-                if (tokens.isEmpty())
-                    return 0;
-                String name = tokens.get(0);
-                VarHandle ref = env.lookupVar(name);
-                if (ref != null && isWorld(ref))
-                    return 1;
-                if (env.lookupDefault(Types.WORLD) != null)
-                    return 0;
-                return 1;
-            }
-
-            @Override
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
-                if (tokens.isEmpty()) {
-                    VarHandle def = env.lookupDefault(Types.WORLD);
-                    if (def == null)
-                        throw new ParseFailureException("No default world in this context");
-                    return def;
-                }
                 String name = tokens.get(0);
                 VarHandle ref = env.lookupVar(name);
-                if (ref != null) {
-                    if (!isWorld(ref))
-                        throw new ParseFailureException(name + " is not a world");
-                    return ref;
-                }
-                VarHandle def = env.lookupDefault(Types.WORLD);
-                if (def != null)
-                    return def;
-                throw new ParseFailureException("Unknown world reference: " + name);
+                if (ref == null)
+                    throw new ParseFailureException("Unknown world reference: " + name);
+                if (!isWorld(ref))
+                    throw new ParseFailureException(name + " is not a world");
+                return ref;
             }
 
             @Override
@@ -1440,7 +1147,7 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull TypeBindingMeta meta() {
                 return new TypeBindingMeta(
-                        "Resolves a location reference from a variable name. Falls back to the default location in the current events context.",
+                        "Resolves a location reference from a variable name.",
                         Location.class.getName(),
                         List.of("teleport player to %loc:LOCATION%"),
                         "1.0.0",
@@ -1448,39 +1155,14 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public int consumeCount(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
-                if (tokens.isEmpty())
-                    return 0;
-                String name = tokens.get(0);
-                VarHandle ref = env.lookupVar(name);
-                if (ref != null && isLocation(ref))
-                    return 1;
-                if (env.lookupDefault(Types.LOCATION) != null)
-                    return 0;
-                return 1;
-            }
-
-            @Override
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
-                if (tokens.isEmpty()) {
-                    VarHandle def = env.lookupDefault(Types.LOCATION);
-                    if (def == null)
-                        throw new ParseFailureException("No default location in this context");
-                    return def;
-                }
                 String name = tokens.get(0);
                 VarHandle ref = env.lookupVar(name);
-                if (ref != null) {
-                    LumenLogger.debug("LOCATION.parse",
-                            "Found var '" + name + "', type=" + (ref.type() != null ? ref.type().id() : "null"));
-                    if (!isLocation(ref))
-                        throw new ParseFailureException(name + " is not a location");
-                    return ref;
-                }
-                VarHandle def = env.lookupDefault(Types.LOCATION);
-                if (def != null)
-                    return def;
-                throw new ParseFailureException("Unknown location reference: " + name);
+                if (ref == null)
+                    throw new ParseFailureException("Unknown location reference: " + name);
+                if (!isLocation(ref))
+                    throw new ParseFailureException(name + " is not a location");
+                return ref;
             }
 
             @Override
@@ -1515,7 +1197,7 @@ public final class DefaultTypeBindings {
             @Override
             public int consumeCount(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 if (tokens.isEmpty())
-                    return 0;
+                    throw new ParseFailureException("LIST requires at least one token");
                 String name = tokens.get(0);
                 VarHandle ref = env.lookupVar(name);
                 if (ref != null && isList(ref))
@@ -1525,8 +1207,6 @@ public final class DefaultTypeBindings {
 
             @Override
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
-                if (tokens.isEmpty())
-                    throw new ParseFailureException("Expected list variable name");
                 String name = tokens.get(0);
                 VarHandle ref = env.lookupVar(name);
                 if (ref != null) {
@@ -1571,7 +1251,7 @@ public final class DefaultTypeBindings {
             @Override
             public int consumeCount(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 if (tokens.isEmpty())
-                    return 0;
+                    throw new ParseFailureException("MAP requires at least one token");
                 String name = tokens.get(0);
                 VarHandle ref = env.lookupVar(name);
                 if (ref != null && isMap(ref))
@@ -1581,8 +1261,6 @@ public final class DefaultTypeBindings {
 
             @Override
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
-                if (tokens.isEmpty())
-                    throw new ParseFailureException("Expected map variable name");
                 String name = tokens.get(0);
                 VarHandle ref = env.lookupVar(name);
                 if (ref != null) {
@@ -1627,7 +1305,7 @@ public final class DefaultTypeBindings {
             @Override
             public int consumeCount(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 if (tokens.isEmpty())
-                    return 0;
+                    throw new ParseFailureException("DATA requires at least one token");
                 String name = tokens.get(0);
                 VarHandle ref = env.lookupVar(name);
                 if (ref != null && isData(ref))
@@ -1637,8 +1315,6 @@ public final class DefaultTypeBindings {
 
             @Override
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
-                if (tokens.isEmpty())
-                    throw new ParseFailureException("Expected data variable name");
                 String name = tokens.get(0);
                 VarHandle ref = env.lookupVar(name);
                 if (ref != null) {
@@ -1673,7 +1349,7 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull TypeBindingMeta meta() {
                 return new TypeBindingMeta(
-                        "Resolves a block reference from a variable name. Falls back to the default block in the current events context.",
+                        "Resolves a block reference from a variable name.",
                         Block.class.getName(),
                         List.of("set %b:BLOCK% type to stone", "break block naturally"),
                         "1.0.0",
@@ -1681,37 +1357,14 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public int consumeCount(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
-                if (tokens.isEmpty())
-                    return 0;
-                String name = tokens.get(0);
-                VarHandle ref = env.lookupVar(name);
-                if (ref != null && isBlock(ref))
-                    return 1;
-                if (env.lookupDefault(Types.BLOCK) != null)
-                    return 0;
-                return 1;
-            }
-
-            @Override
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
-                if (tokens.isEmpty()) {
-                    VarHandle def = env.lookupDefault(Types.BLOCK);
-                    if (def == null)
-                        throw new ParseFailureException("No default block in this context");
-                    return def;
-                }
                 String name = tokens.get(0);
                 VarHandle ref = env.lookupVar(name);
-                if (ref != null) {
-                    if (!isBlock(ref))
-                        throw new ParseFailureException(name + " is not a block");
-                    return ref;
-                }
-                VarHandle def = env.lookupDefault(Types.BLOCK);
-                if (def != null)
-                    return def;
-                throw new ParseFailureException("Unknown block reference: " + name);
+                if (ref == null)
+                    throw new ParseFailureException("Unknown block reference: " + name);
+                if (!isBlock(ref))
+                    throw new ParseFailureException(name + " is not a block");
+                return ref;
             }
 
             @Override

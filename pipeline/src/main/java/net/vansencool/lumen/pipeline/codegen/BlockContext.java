@@ -1,8 +1,6 @@
 package net.vansencool.lumen.pipeline.codegen;
 
 import net.vansencool.lumen.api.codegen.BlockAccess;
-import net.vansencool.lumen.api.codegen.EnvironmentAccess;
-import net.vansencool.lumen.api.type.RefTypeHandle;
 import net.vansencool.lumen.pipeline.language.nodes.BlockNode;
 import net.vansencool.lumen.pipeline.language.nodes.Node;
 import net.vansencool.lumen.pipeline.var.RefType;
@@ -22,11 +20,6 @@ import java.util.Map;
  * ends. This gives inner blocks access to variables defined in outer blocks while keeping their
  * own definitions isolated.
  *
- * <p>Each context also stores a reference to the current {@link Node} being processed, its
- * position among its siblings, and a set of default {@link VarRef} values per {@link RefType}. The
- * defaults allow type bindings to resolve an implicit variable (e.g. an ambient player) when
- * no explicit token is present in the script source.
- *
  * @see TypeEnv
  */
 @SuppressWarnings("unused")
@@ -38,7 +31,6 @@ public final class BlockContext implements BlockAccess {
     private final int index;
 
     private final Map<String, VarRef> vars = new HashMap<>();
-    private final Map<RefType, VarRef> defaults = new HashMap<>();
     private final Map<String, Object> env = new HashMap<>();
 
     /**
@@ -95,30 +87,18 @@ public final class BlockContext implements BlockAccess {
     }
 
     /**
-     * Sets the default {@link VarRef} for the given {@link RefType} in this frame.
+     * Returns the first variable in this frame whose ref type matches the given type.
      *
-     * <p>Only the first variable registered for each {@link RefType} becomes the default.
-     * Subsequent calls for the same type are ignored, keeping the primary variable
-     * (e.g. {@code player} instead of the nullable {@code killer} in player_death events).
-     *
-     * <p>Type bindings can retrieve this value to use as an implicit variable when no explicit
-     * token is present in the script source.
-     *
-     * @param type the ref type
-     * @param var  the default variable reference
+     * @param type the ref type to search for
+     * @return the matching variable, or {@code null} if none found in this frame
      */
-    public void setDefault(@NotNull RefType type, @NotNull VarRef var) {
-        defaults.putIfAbsent(type, var);
-    }
-
-    /**
-     * Returns the default {@link VarRef} for the given {@link RefType} in this frame only.
-     *
-     * @param type the ref type
-     * @return the default {@link VarRef}, or {@code null}
-     */
-    public @Nullable VarRef getDefaultLocal(@NotNull RefType type) {
-        return defaults.get(type);
+    public @Nullable VarRef findVarByType(@NotNull RefType type) {
+        for (VarRef ref : vars.values()) {
+            if (ref.refType() != null && ref.refType().id().equals(type.id())) {
+                return ref;
+            }
+        }
+        return null;
     }
 
     /**
@@ -358,14 +338,5 @@ public final class BlockContext implements BlockAccess {
     @Override
     public @NotNull String raw() {
         return node != null ? node.raw() : "";
-    }
-
-    @Override
-    public void setDefault(@NotNull RefTypeHandle type, EnvironmentAccess.@NotNull VarHandle var) {
-        RefType internal = type instanceof RefType rt ? rt : RefType.byId(type.id());
-        VarRef internalVar = var instanceof VarRef vr ? vr : new VarRef(internal, var.java(), var.metadata());
-        if (internal != null) {
-            setDefault(internal, internalVar);
-        }
     }
 }
