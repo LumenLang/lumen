@@ -6,7 +6,7 @@ plugins {
 }
 
 allprojects {
-    group = 'net.vansencool'
+    group = 'dev.lumenlang'
     version = '1.0.5-BETA'
 
     repositories {

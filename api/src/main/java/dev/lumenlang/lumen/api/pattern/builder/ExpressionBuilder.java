@@ -1,0 +1,185 @@
+package dev.lumenlang.lumen.api.pattern.builder;
+
+import dev.lumenlang.lumen.api.handler.ExpressionHandler;
+import dev.lumenlang.lumen.api.pattern.Category;
+import dev.lumenlang.lumen.api.pattern.PatternMeta;
+import dev.lumenlang.lumen.api.pattern.PatternRegistrar;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Consumer;
+
+/**
+ * Fluent builder for registering an expression pattern with documentation
+ * metadata.
+ *
+ * <p>
+ * Example usage:
+ *
+ * <pre>{@code
+ * api.patterns().expression(b -> b
+ *         .pattern("[get] %who:PLAYER% location")
+ *         .description("Returns the location of a player.")
+ *         .example("var loc = get player location")
+ *         .since("1.0.0")
+ *         .category(Categories.PLAYER)
+ *         .handler(ctx -> new ExpressionResult(ctx.java("who") + ".getLocation()", Types.LOCATION.id())));
+ * }</pre>
+ *
+ * @see PatternRegistrar#expression(Consumer)
+ */
+public final class ExpressionBuilder {
+
+    private final List<String> patterns = new ArrayList<>();
+    private final List<String> examples = new ArrayList<>();
+    private @Nullable String by;
+    private @Nullable String description;
+    private @Nullable String since;
+    private @Nullable Category category;
+    private boolean deprecated;
+    private @Nullable ExpressionHandler handler;
+
+    /**
+     * Sets the addon name that registers this expression pattern.
+     *
+     * @param by the addon name (e.g. "Lumen")
+     * @return this builder
+     */
+    public @NotNull ExpressionBuilder by(@NotNull String by) {
+        this.by = by;
+        return this;
+    }
+
+    /**
+     * Adds a pattern string for this expression.
+     *
+     * @param pattern the expression pattern (e.g.
+     *                {@code "[get] %who:PLAYER% location"})
+     * @return this builder
+     */
+    public @NotNull ExpressionBuilder pattern(@NotNull String pattern) {
+        this.patterns.add(pattern);
+        return this;
+    }
+
+    /**
+     * Adds multiple pattern strings that all use the same handler.
+     *
+     * @param patterns the expression patterns
+     * @return this builder
+     */
+    public @NotNull ExpressionBuilder patterns(@NotNull String... patterns) {
+        Collections.addAll(this.patterns, patterns);
+        return this;
+    }
+
+    /**
+     * Sets the human-readable description of what this expression returns.
+     *
+     * @param description the description
+     * @return this builder
+     */
+    public @NotNull ExpressionBuilder description(@NotNull String description) {
+        this.description = description;
+        return this;
+    }
+
+    /**
+     * Adds an example showing how this expression is used in a Lumen script.
+     *
+     * @param example a Lumen script example
+     * @return this builder
+     */
+    public @NotNull ExpressionBuilder example(@NotNull String example) {
+        this.examples.add(example);
+        return this;
+    }
+
+    /**
+     * Adds multiple examples showing how this expression is used in a Lumen script.
+     *
+     * @param examples the Lumen script examples
+     * @return this builder
+     */
+    public @NotNull ExpressionBuilder examples(@NotNull String... examples) {
+        Collections.addAll(this.examples, examples);
+        return this;
+    }
+
+    /**
+     * Sets the version in which this expression was introduced.
+     *
+     * @param since the version string (e.g. "1.0.0")
+     * @return this builder
+     */
+    public @NotNull ExpressionBuilder since(@NotNull String since) {
+        this.since = since;
+        return this;
+    }
+
+    /**
+     * Sets the documentation category for this expression.
+     *
+     * @param category the category
+     * @return this builder
+     */
+    public @NotNull ExpressionBuilder category(@NotNull Category category) {
+        this.category = category;
+        return this;
+    }
+
+    /**
+     * Marks this expression as deprecated.
+     *
+     * <p>
+     * Deprecated patterns will still work but will be flagged
+     * in documentation as patterns that should be avoided.
+     *
+     * @param deprecated true if this expression is deprecated
+     * @return this builder
+     */
+    public @NotNull ExpressionBuilder deprecated(boolean deprecated) {
+        this.deprecated = deprecated;
+        return this;
+    }
+
+    /**
+     * Sets the handler that returns the Java expression result.
+     *
+     * @param handler the expression handler
+     * @return this builder
+     */
+    public @NotNull ExpressionBuilder handler(@NotNull ExpressionHandler handler) {
+        this.handler = handler;
+        return this;
+    }
+
+    public @NotNull List<String> getPatterns() {
+        return patterns;
+    }
+
+    public @NotNull ExpressionHandler getHandler() {
+        if (handler == null)
+            throw new IllegalStateException("Expression handler is not set for pattern: " + patterns.get(0));
+        return handler;
+    }
+
+    public @NotNull PatternMeta buildMeta() {
+        return new PatternMeta(by, description, List.copyOf(examples), since, category, deprecated);
+    }
+
+    public void validate() {
+        if (patterns.isEmpty()) {
+            throw new IllegalStateException("Expression builder requires at least one pattern");
+        }
+        if (handler == null) {
+            throw new IllegalStateException("Expression builder requires a handler");
+        }
+        if (by == null) {
+            throw new IllegalStateException("Expression builder requires a 'by' (addon name)");
+        }
+    }
+}

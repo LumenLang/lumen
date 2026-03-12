@@ -1,6 +1,6 @@
 name: Lumen
 version: '${version}'
-main: net.vansencool.lumen.plugin.Lumen
+main: dev.lumenlang.lumen.plugin.Lumen
 api-version: '1.20'
 author: vansen
 folia-supported: true
