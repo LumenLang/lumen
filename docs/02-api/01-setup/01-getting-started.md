@@ -18,7 +18,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly 'dev.lumenlang:lumen-api:VERSION'
+    compileOnly "dev.lumenlang:lumen-api:VERSION"
 }
 ```
 
