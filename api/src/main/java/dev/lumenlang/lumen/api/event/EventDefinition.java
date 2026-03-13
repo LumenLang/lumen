@@ -171,20 +171,5 @@ public final class EventDefinition {
                         @NotNull String expr) {
             this(refTypeId, javaType, expr, Map.of(), null);
         }
-
-        /**
-         * Creates a VarEntry with metadata but no description.
-         *
-         * @param refTypeId the ref type id, or {@code null}
-         * @param javaType  the Java type name (primitive name or fully qualified class name)
-         * @param expr      the initialiser expression
-         * @param metadata  compile-time metadata entries
-         */
-        public VarEntry(@Nullable String refTypeId,
-                        @NotNull String javaType,
-                        @NotNull String expr,
-                        @NotNull Map<String, Object> metadata) {
-            this(refTypeId, javaType, expr, metadata, null);
-        }
     }
 }

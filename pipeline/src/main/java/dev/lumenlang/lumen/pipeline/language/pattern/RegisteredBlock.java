@@ -25,9 +25,4 @@ public record RegisteredBlock(@NotNull Pattern pattern, @NotNull BlockHandler ha
     public RegisteredBlock(@NotNull Pattern pattern, @NotNull BlockHandler handler) {
         this(pattern, handler, PatternMeta.EMPTY, List.of());
     }
-
-    public RegisteredBlock(@NotNull Pattern pattern, @NotNull BlockHandler handler,
-                           @NotNull PatternMeta meta) {
-        this(pattern, handler, meta, List.of());
-    }
 }

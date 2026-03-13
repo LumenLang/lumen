@@ -33,16 +33,4 @@ public record BlockVarInfo(
     public BlockVarInfo(@NotNull String name, @NotNull String type) {
         this(name, type, Map.of(), null);
     }
-
-    /**
-     * Creates a BlockVarInfo with metadata but no description.
-     *
-     * @param name     the variable name
-     * @param type     the human readable type string
-     * @param metadata compile-time metadata entries
-     */
-    public BlockVarInfo(@NotNull String name, @NotNull String type,
-                        @NotNull Map<String, Object> metadata) {
-        this(name, type, metadata, null);
-    }
 }
