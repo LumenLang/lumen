@@ -6,6 +6,8 @@ description: "How to use BindingAccess, JavaOutput, CodegenAccess, and Environme
 
 When a pattern handler runs, it receives several context objects that provide access to matched parameters, the Java output builder, class level metadata, and the compile time symbol table. These are the tools you use to emit Java code from your patterns.
 
+It is important to remember that handlers run at **compile time**, not at runtime. Your handler code does not execute the script logic. It assembles Java source code that will be compiled into a class and executed later on the server. All the values you work with (variable names, type information, metadata) are compile time constructs.
+
 ## BindingAccess
 
 `BindingAccess` is the primary context passed to statement and block handlers. It provides access to the values matched by pattern placeholders.
@@ -29,7 +31,77 @@ api.patterns().statement(
 );
 ```
 
-Use `ctx.java(name)` or `ctx.java(index)` to get the Java expression for a parameter. Use `ctx.value(name)` for the raw parsed value, or `ctx.varHandle(name)` to get it as a `VarHandle` directly.
+There are several ways to access a matched parameter, each suited to a different purpose:
+
+#### `ctx.java(name)` returns a Java source expression
+
+This is the primary method for accessing parameters. It converts the matched value into valid Java source code by calling the type binding's `toJava()` method. The result is a string you embed directly into the generated Java output.
+
+What it returns depends on the type binding that parsed the parameter:
+
+| Type Binding | Example Input | `ctx.java(name)` Returns |
+|---|---|---|
+| PLAYER | `player` | `"player"` (the Java variable name) |
+| MATERIAL | `diamond` | `"org.bukkit.Material.DIAMOND"` |
+| INT | `42` | `"42"` |
+| STRING | `"hello"` | `"\"hello\""` (quoted for Java) |
+| EXPR | `player` | Resolved inline Java expression |
+
+For EXPR typed parameters, `java()` runs the full expression resolution pipeline. It tries to match the tokens against registered expression patterns, performs sub expression substitution, and handles arithmetic splitting. If resolution fails, it throws an error with the unrecognized expression.
+
+#### `ctx.value(name)` returns the raw parsed object
+
+Returns whatever the type binding's `parse()` method produced. The return type depends entirely on the binding implementation:
+
+- **PLAYER / ENTITY** bindings typically return a `VarHandle` (a compile time variable descriptor)
+- **MATERIAL** binding might return an enum string
+- **INT** binding returns a number
+- **STRING** binding returns the string content without quotes
+
+Use this when you need to inspect the actual parsed data at compile time rather than converting it to Java code. For example, branching on what material was specified:
+
+```java
+api.patterns().statement(
+    "place %block:MATERIAL%",
+    (line, ctx, out) -> {
+        Object material = ctx.value("block");
+        // Inspect the parsed material for compile-time decisions
+        out.line("world.getBlockAt(loc).setType(" + ctx.java("block") + ");");
+    }
+);
+```
+
+#### `ctx.varHandle(name)` returns a `VarHandle`
+
+Returns the parsed value as a `VarHandle` (or null if it is not one). This is a convenience cast over `value()`. Use this when the parameter is a variable reference and you need access to its compile time type information and metadata.
+
+A `VarHandle` provides:
+
+- `.java()` returns the Java variable name that will exist at runtime (e.g. `"player"`)
+- `.type()` returns the `RefTypeHandle` for type checking (e.g. `Types.PLAYER`), or null for untyped variables
+- `.typeHandle()` returns the full compile time type including primitives and generics, or null if unknown
+- `.meta(key)` returns a compile time metadata value, or null if absent
+- `.hasMeta(key)` checks for a metadata key
+- `.metadata()` returns the full unmodifiable metadata map
+
+Variables can carry metadata set by event blocks, expression patterns, or explicit `withMeta()` calls. For example, an entity variable from a `on entity_death` event might carry `{"entityType": "ZOMBIE"}` (it does not), which downstream patterns can inspect for type specific code generation.
+
+```java
+api.patterns().statement(
+    "describe %e:ENTITY%",
+    (line, ctx, out) -> {
+        VarHandle entity = ctx.requireVarHandle("e");
+        String javaName = entity.java(); // "entity"
+        RefTypeHandle type = entity.type(); // Types.ENTITY
+        Object entityType = entity.meta("entityType"); // "ZOMBIE" or null
+        out.line("sender.sendMessage(" + javaName + ".getName());");
+    }
+);
+```
+
+Use `ctx.requireVarHandle(name)` instead if you want to throw immediately when the value is not a `VarHandle`.
+
+All access methods also have positional variants (`ctx.java(index)`, `ctx.value(index)`, `ctx.tokens(index)`) that access parameters by their left to right order in the pattern.
 
 ### Choice Groups
 

@@ -51,16 +51,3 @@ public void onEnable(@NotNull LumenAPI api) {
     api.binders().register(new MyBinder());
 }
 ```
-
-Or with the `@Registration` scanning system:
-
-```java
-@Registration
-public class MyBinderRegistration {
-
-    @Call
-    public void register(@NotNull LumenAPI api) {
-        api.binders().register(new MyBinder());
-    }
-}
-```

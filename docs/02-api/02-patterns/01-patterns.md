@@ -6,6 +6,12 @@ description: "How to register custom statement, block, condition, expression, an
 
 Patterns are the core of Lumen's syntax system. Every statement, block, condition, expression, and loop source in the language is defined as a pattern. Addons register patterns using the `PatternRegistrar`, which is accessed via `api.patterns()`.
 
+## How Patterns Work
+
+Lumen is a compiled scripting language. When a script is loaded, Lumen compiles it into a Java class that runs on the server. Pattern handlers do not execute script logic themselves. Instead, they **emit Java source code** that will be compiled and executed later.
+
+Because handlers emit Java code rather than running logic directly, the values you work with in a handler are **compile time** values. A `PLAYER` parameter does not give you an actual `Player` object. It gives you the Java variable name (like `"player"`) that will refer to one at runtime.
+
 ## Pattern Syntax
 
 A pattern string describes what a line of script should look like:
@@ -210,7 +216,28 @@ api.patterns().condition(
 );
 ```
 
-The `ConditionMatch` parameter provides access to matched values. Use `match.ref("name")` to get a variable reference, `match.value("name")` to get the raw parsed value, or `match.java("name", ctx, env)` to get the Java expression for a parameter.
+### ConditionMatch Parameter Access
+
+The `ConditionMatch` parameter provides the same three accessor methods as `BindingAccess`. Condition handlers receive a `ConditionMatch` instead of a `BindingAccess` because conditions return a single Java expression rather than emitting lines through `JavaOutput`.
+
+- `match.ref("name")` returns a `VarHandle` (the compile time variable descriptor with `.java()`, `.type()`, `.meta()`)
+- `match.value("name")` returns the raw object from the type binding's `parse()` method
+- `match.java("name", ctx, env)` returns a Java source expression string ready to embed in output
+
+The condition handler signature passes `ctx` and `env` separately, so `java()` requires all three arguments. For a full explanation of what each method returns and when to use it, see [Parameter Access Methods](../06-code-generation/01-code-generation.md#accessing-parameters) in the Code Generation guide.
+
+```java
+api.patterns().condition(
+    "%p:PLAYER% has health above %n:INT%",
+    (match, env, ctx) -> {
+        String playerJava = match.java("p", ctx, env);  // "player"
+        String numberJava = match.java("n", ctx, env);  // "10"
+        return playerJava + ".getHealth() > " + numberJava;
+    }
+);
+```
+
+All three methods also have positional variants (`ref(index)`, `value(index)`, `java(index, ctx, env)`) that access parameters by position instead of by name.
 
 In a script:
 

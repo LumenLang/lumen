@@ -5,23 +5,16 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Describes an addon's request to disable a Lumen configuration option.
  *
- * <p>Return an instance of this record from the relevant {@link LumenAddon} method to
- * signal that a particular feature flag must be turned off. Lumen will log the addon
- * name, version, and reason, then apply the change.
- *
  * <h2>Permanence</h2>
  * <ul>
  *   <li>When {@code permanent} is {@code true}, the change is written to {@code config.yml}
  *       so it persists across server restarts.</li>
  *   <li>When {@code permanent} is {@code false}, the flag is only overridden in memory for
- *       this server session; the config file is left untouched.</li>
+ *       this server session; the config file is left untouched, will be overwritten on configuration reload.</li>
  * </ul>
  *
  * @param reason    a short human-readable explanation shown in the server log
  * @param permanent whether the change should be persisted to disk
- * @see LumenAddon#disablePaperOnlyFeatures()
- * @see LumenAddon#disableReduceClasspath()
- * @see LumenAddon#disableEnableAllScriptsImmediately()
  */
 public record DisableSetting(@NotNull String reason, boolean permanent) {
 
