@@ -224,7 +224,7 @@ The `ConditionMatch` parameter provides the same three accessor methods as `Bind
 - `match.value("name")` returns the raw object from the type binding's `parse()` method
 - `match.java("name", ctx, env)` returns a Java source expression string ready to embed in output
 
-The condition handler signature passes `ctx` and `env` separately, so `java()` requires all three arguments. For a full explanation of what each method returns and when to use it, see [Parameter Access Methods](../06-code-generation/01-code-generation.md#accessing-parameters) in the Code Generation guide.
+The condition handler signature passes `ctx` and `env` separately, so `java()` requires all three arguments. For a full explanation of what each method returns and when to use it, see [Parameter Access Methods](../06-code-generation/01-code-generation#accessing-parameters) in the Code Generation guide.
 
 ```java
 api.patterns().condition(
