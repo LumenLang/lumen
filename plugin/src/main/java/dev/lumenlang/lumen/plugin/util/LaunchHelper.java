@@ -6,8 +6,7 @@ import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Runtime helper used by generated script code to launch an entity
- * toward a target location with a given speed.
+ * Runtime helper used by generated script code.
  */
 @SuppressWarnings("unused")
 public final class LaunchHelper {
@@ -16,8 +15,7 @@ public final class LaunchHelper {
     }
 
     /**
-     * Launches an entity toward a target location by setting its velocity
-     * to a normalized direction vector multiplied by the given speed.
+     * Launches an entity toward a target location.
      *
      * @param entity the entity to launch
      * @param target the location to launch toward

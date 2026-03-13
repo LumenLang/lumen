@@ -1,13 +1,5 @@
 package dev.lumenlang.lumen.plugin.minicolorize;
 
-import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.chat.BaseComponent;
-import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.HoverEvent;
-import net.md_5.bungee.api.chat.KeybindComponent;
-import net.md_5.bungee.api.chat.TextComponent;
-import net.md_5.bungee.api.chat.TranslatableComponent;
-import net.md_5.bungee.api.chat.hover.content.Text;
 import dev.lumenlang.lumen.pipeline.minicolorize.MiniColorizeSerializer;
 import dev.lumenlang.lumen.pipeline.minicolorize.node.Node;
 import dev.lumenlang.lumen.pipeline.minicolorize.node.TagNode;
@@ -24,6 +16,14 @@ import dev.lumenlang.lumen.pipeline.minicolorize.tag.ResetTag;
 import dev.lumenlang.lumen.pipeline.minicolorize.tag.Tag;
 import dev.lumenlang.lumen.pipeline.minicolorize.tag.TransitionTag;
 import dev.lumenlang.lumen.pipeline.minicolorize.tag.TranslatableTag;
+import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.KeybindComponent;
+import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.chat.TranslatableComponent;
+import net.md_5.bungee.api.chat.hover.content.Text;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

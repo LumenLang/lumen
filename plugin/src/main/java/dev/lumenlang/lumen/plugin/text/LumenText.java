@@ -1,12 +1,12 @@
 package dev.lumenlang.lumen.plugin.text;
 
-import net.md_5.bungee.api.ChatMessageType;
-import net.md_5.bungee.api.chat.BaseComponent;
-import net.md_5.bungee.api.chat.TextComponent;
 import dev.lumenlang.lumen.pipeline.java.compiled.LumenNullException;
 import dev.lumenlang.lumen.pipeline.minicolorize.MiniColorize;
 import dev.lumenlang.lumen.plugin.configuration.LumenConfiguration;
 import dev.lumenlang.lumen.plugin.minicolorize.BukkitMiniColorizeSerializer;
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;

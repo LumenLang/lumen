@@ -1,4 +1,4 @@
-package dev.lumenlang.lumen.pipeline.annotations;
+package dev.lumenlang.lumen.plugin.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -8,8 +8,8 @@ import java.lang.annotation.Target;
 /**
  * Marks a method as a Lumen script command handler.
  *
- * <p>Methods annotated with {@code @LumenCmd} are discovered at runtime by
- * {@code ScriptBinder} and registered as server commands.
+ * <p>Methods annotated with {@code @LumenCmd} are discovered at runtime and
+ * registered as server commands.
  *
  * <p>The annotated method must have the signature:
  * <pre>{@code

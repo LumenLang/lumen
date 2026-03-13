@@ -1,7 +1,8 @@
 package dev.lumenlang.lumen.plugin.scripts;
 
-import dev.lumenlang.lumen.pipeline.annotations.LumenLoad;
-import dev.lumenlang.lumen.pipeline.annotations.LumenPreload;
+import dev.lumenlang.lumen.api.annotations.LumenLoad;
+import dev.lumenlang.lumen.api.annotations.LumenPreload;
+import dev.lumenlang.lumen.pipeline.binder.ScriptBinder;
 import dev.lumenlang.lumen.pipeline.codegen.CodegenContext;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.pipeline.java.JavaBuilder;
@@ -19,7 +20,6 @@ import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
 import dev.lumenlang.lumen.pipeline.persist.GlobalVars;
 import dev.lumenlang.lumen.plugin.Lumen;
-import dev.lumenlang.lumen.plugin.binder.ScriptBinder;
 import dev.lumenlang.lumen.plugin.commands.CommandRegistry;
 import dev.lumenlang.lumen.plugin.configuration.LumenConfiguration;
 import dev.lumenlang.lumen.plugin.scheduler.ScriptScheduler;
