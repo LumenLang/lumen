@@ -53,7 +53,7 @@ public final class ItemStackExpressions {
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("get %i:ITEMSTACK_POSSESSIVE% (display name|name)")
                 .description("Returns the display name of an item stack, or the material name if none is set.")
-                .example("var name = item's display name")
+                .example("var name = get item's display name")
                 .since("1.0.0").category(Categories.ITEM)
                 .handler(ctx -> {
                     String java = ctx.java("i");
@@ -65,7 +65,7 @@ public final class ItemStackExpressions {
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("get %i:ITEMSTACK_POSSESSIVE% lore")
                 .description("Returns the lore of an item stack as a list of strings.")
-                .example("var lore = item's lore")
+                .example("var lore = get item's lore")
                 .since("1.0.0").category(Categories.ITEM)
                 .handler(ctx -> {
                     ctx.codegen().addImport(List.class.getName());
@@ -79,21 +79,21 @@ public final class ItemStackExpressions {
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("get %i:ITEMSTACK_POSSESSIVE% amount")
                 .description("Returns the stack amount of an item.")
-                .example("var amt = item's amount")
+                .example("var amt = get item's amount")
                 .since("1.0.0").category(Categories.ITEM)
                 .handler(ctx -> new ExpressionResult(ctx.java("i") + ".getAmount()", null, Types.INT)));
 
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("get %i:ITEMSTACK_POSSESSIVE% type")
                 .description("Returns the material type name of an item stack.")
-                .example("var mat = item's type")
+                .example("var mat = get item's type")
                 .since("1.0.0").category(Categories.ITEM)
                 .handler(ctx -> new ExpressionResult(ctx.java("i") + ".getType().name()", null, Types.STRING)));
 
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("get %i:ITEMSTACK_POSSESSIVE% durability")
                 .description("Returns the durability damage of a damageable item, or 0 if not damageable.")
-                .example("var dmg = item's durability")
+                .example("var dmg = get item's durability")
                 .since("1.0.0").category(Categories.ITEM)
                 .handler(ctx -> {
                     ctx.codegen().addImport(DAMAGEABLE);
@@ -106,14 +106,14 @@ public final class ItemStackExpressions {
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("get %i:ITEMSTACK_POSSESSIVE% max durability")
                 .description("Returns the maximum durability of the item's material.")
-                .example("var maxDmg = item's max durability")
+                .example("var maxDmg = get item's max durability")
                 .since("1.0.0").category(Categories.ITEM)
                 .handler(ctx -> new ExpressionResult(ctx.java("i") + ".getType().getMaxDurability()", null, Types.INT)));
 
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("get %i:ITEMSTACK_POSSESSIVE% custom model data")
                 .description("Returns the custom model data of an item, or 0 if not set.")
-                .example("var cmd = item's custom model data")
+                .example("var cmd = get item's custom model data")
                 .since("1.0.0").category(Categories.ITEM)
                 .handler(ctx -> {
                     String java = ctx.java("i");

@@ -28,7 +28,7 @@ public final class LivingEntityExpressions {
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("get %e:ENTITY_POSSESSIVE% health")
                 .description("Returns the entity's current health (requires LivingEntity).")
-                .example("var hp = mob's health")
+                .example("var hp = get mob's health")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
                 .handler(ctx -> {
@@ -47,7 +47,7 @@ public final class LivingEntityExpressions {
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("get %e:ENTITY_POSSESSIVE% max health")
                 .description("Returns the entity's max health (requires LivingEntity).")
-                .example("var maxHp = mob's max health")
+                .example("var maxHp = get mob's max health")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
                 .handler(ctx -> {

@@ -33,7 +33,7 @@ public final class PersistentDataExpressions {
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("get pdc %key:STRING% of %e:ENTITY%")
                 .description("Retrieves a string value from an entity's PersistentDataContainer.")
-                .example("var val = pdc \"myKey\" of entity")
+                .example("var val = get pdc \"myKey\" of entity")
                 .since("1.0.0").category(Categories.ENTITY)
                 .handler(ctx -> {
                     pdcImports(ctx.codegen());
@@ -46,7 +46,7 @@ public final class PersistentDataExpressions {
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("get pdc %key:STRING% of %i:ITEMSTACK%")
                 .description("Retrieves a string value from an item stack's PersistentDataContainer.")
-                .example("var val = pdc \"custom_id\" of item")
+                .example("var val = get pdc \"custom_id\" of item")
                 .since("1.0.0").category(Categories.ITEM)
                 .handler(ctx -> {
                     pdcImports(ctx.codegen());
@@ -60,7 +60,7 @@ public final class PersistentDataExpressions {
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("get pdc %key:STRING% of %bl:BLOCK%")
                 .description("Retrieves a string value from a block's PersistentDataContainer.")
-                .example("var val = pdc \"owner\" of block")
+                .example("var val = get pdc \"owner\" of block")
                 .since("1.0.0").category(Categories.BLOCK)
                 .handler(ctx -> {
                     pdcImports(ctx.codegen());
