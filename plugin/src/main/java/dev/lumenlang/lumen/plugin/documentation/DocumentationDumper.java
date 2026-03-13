@@ -172,7 +172,7 @@ import java.util.concurrent.CompletableFuture;
  * this event is deprecated.</td></tr>
  * <tr><td>{@code variables}</td><td>{@code object[]}</td><td>Variables exposed to
  * child statements, each with {@code name}, {@code javaType}, optional
- * {@code refTypeId}, and optional {@code description}.</td></tr>
+ * {@code refTypeId}, optional {@code description}, {code nullable}, and {code metadata}</td></tr>
  * </table>
  *
  * <h3>Type binding entry</h3>
@@ -437,11 +437,15 @@ public final class DocumentationDumper {
             List<Map<String, Object>> varList = new ArrayList<>();
             for (var varEntry : def.vars().entrySet()) {
                 Map<String, Object> varObj = new LinkedHashMap<>();
-                EventDefinition.VarEntry ve = varEntry.getValue();
+                EventDefinition.VarEntry var = varEntry.getValue();
                 varObj.put("name", varEntry.getKey());
-                varObj.put("javaType", ve.javaType());
-                varObj.put("refTypeId", ve.refTypeId());
-                varObj.put("description", ve.description());
+                varObj.put("javaType", var.javaType());
+                varObj.put("refTypeId", var.refTypeId());
+                varObj.put("description", var.description());
+                varObj.put("nullable", var.metadata().getOrDefault("nullable", false));
+                if (!var.metadata().isEmpty()) {
+                    varObj.put("metadata", var.metadata());
+                }
                 varList.add(varObj);
             }
             entry.put("variables", varList);
