@@ -147,7 +147,7 @@ import java.util.concurrent.CompletableFuture;
  *   "category": "Player",
  *   "deprecated": false,
  *   "variables": [
-     *     { "name": "player", "javaType": "org.bukkit.entity.Player", "refTypeId": "PLAYER", "description": "The player who joined" }
+ *     { "name": "player", "javaType": "org.bukkit.entity.Player", "refTypeId": "PLAYER", "description": "The player who joined" }
  *   ]
  * }
  * }</pre>
