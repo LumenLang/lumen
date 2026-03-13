@@ -1,19 +1,24 @@
 package dev.lumenlang.lumen.plugin.configuration;
 
+import dev.lumenlang.lumen.api.ConfigOption;
+import dev.lumenlang.lumen.api.ConfigOverride;
 import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
 import dev.lumenlang.lumen.plugin.Lumen;
 import net.vansencool.lsyaml.LSYAML;
 import net.vansencool.lsyaml.binding.ConfigFile;
 import net.vansencool.lsyaml.binding.ConfigLoader;
+import net.vansencool.lsyaml.binding.Ignore;
 import net.vansencool.lsyaml.binding.Key;
 import net.vansencool.lsyaml.binding.LatestConfig;
 import net.vansencool.lsyaml.binding.watcher.ConfigWatcher;
 import net.vansencool.lsyaml.binding.watcher.WatchAction;
 import net.vansencool.lsyaml.binding.watcher.WatcherOptions;
 import net.vansencool.lsyaml.node.MapNode;
-import net.vansencool.lsyaml.node.YamlNode;
+import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -33,6 +38,9 @@ public final class LumenConfiguration {
     public static Features FEATURES = new Features();
     public static Extra EXTRA = new Extra();
 
+    @Ignore
+    private static final List<ConfigOverride> lastingOverrides = new ArrayList<>();
+
     public static void load() {
         if (!Files.exists(Lumen.instance().getDataFolder().toPath().resolve("config.yml"))) {
             Lumen.instance().saveResource("config.yml", false);
@@ -48,47 +56,73 @@ public final class LumenConfiguration {
             ConfigWatcher.watch(LumenConfiguration.class, WatcherOptions.builder().listener(((file, action) -> {
                 if (action == WatchAction.DELETED)
                     LumenLogger.warning("Configuration file deleted! The plugin will continue using the old configuration.");
-                else if (action == WatchAction.MODIFIED) LumenLogger.info("Reloading configuration...");
-                else if (action == WatchAction.CREATED) LumenLogger.info("Configuration file created, loading...");
+                else if (action == WatchAction.MODIFIED) {
+                    LumenLogger.info("Reloading configuration...");
+                    reapplyLastingOverrides();
+                } else if (action == WatchAction.CREATED) {
+                    LumenLogger.info("Configuration file created, loading...");
+                    reapplyLastingOverrides();
+                }
             })).build());
     }
 
-    public static void disablePaperOnlyFeatures() {
-        FEATURES.PAPER_ONLY_FEATURES = false;
-        YamlNode node = ConfigLoader.node(LumenConfiguration.class);
-        if (node == null) {
-            throw new RuntimeException("Called disablePaperOnlyFeatures before lumen's startup");
+    /**
+     * Applies a {@link ConfigOverride} to the running configuration.
+     *
+     * <p>For {@link ConfigOverride.Persistence#SESSION}, the value is set in memory only.
+     * For {@link ConfigOverride.Persistence#LASTING_SESSION}, it is set in memory and
+     * re-applied automatically after configuration reloads.
+     * For {@link ConfigOverride.Persistence#PERMANENT}, it is written to {@code config.yml}.
+     *
+     * @param override the override to apply
+     */
+    public static void applyOverride(@NotNull ConfigOverride override) {
+        applyInMemory(override.option(), override.value());
+        if (override.persistence() == ConfigOverride.Persistence.LASTING_SESSION) {
+            lastingOverrides.add(override);
+        } else if (override.persistence() == ConfigOverride.Persistence.PERMANENT) {
+            writeOption(override.option(), override.value());
         }
-        MapNode featuresNode = Objects.requireNonNull(node.getMap("features"), "No 'features' section in the YAML file?").asMap();
-        if (Boolean.FALSE.equals(featuresNode.getBoolean("paper-only-features"))) return;
-
-        featuresNode.asMap().modify("paper-only-features").value(false);
-        LSYAML.writeToFile(node, Lumen.instance().getDataFolder().toPath().resolve("config.yml"));
     }
 
-    public static void disableReduceClasspath() {
-        PERFORMANCE.REDUCE_CLASSPATH = false;
-        YamlNode node = ConfigLoader.node(LumenConfiguration.class);
-        if (node == null) {
-            throw new RuntimeException("Called disableReduceClasspath before lumen's startup");
+    private static void reapplyLastingOverrides() {
+        for (ConfigOverride override : lastingOverrides) {
+            applyInMemory(override.option(), override.value());
         }
-        MapNode perfNode = Objects.requireNonNull(node.getMap("performance"), "No 'performance' section in the YAML file?").asMap();
-        if (Boolean.FALSE.equals(perfNode.getBoolean("reduce-classpath"))) return;
-
-        perfNode.modify("reduce-classpath").value(false);
-        LSYAML.writeToFile(node, Lumen.instance().getDataFolder().toPath().resolve("config.yml"));
     }
 
-    public static void disableEnableAllScriptsImmediately() {
-        SCRIPTS.ENABLE_ALL_SCRIPTS_IMMEDIATELY_ON_STARTUP = false;
-        YamlNode node = ConfigLoader.node(LumenConfiguration.class);
-        if (node == null) {
-            throw new RuntimeException("Called disableEnableAllScriptsImmediately before lumen's startup");
+    /**
+     * Applies a configuration option value in memory without writing to disk.
+     *
+     * @param option the config option to change
+     * @param value  the desired value
+     */
+    public static void applyInMemory(@NotNull ConfigOption option, boolean value) {
+        switch (option) {
+            case PAPER_ONLY_FEATURES -> FEATURES.PAPER_ONLY_FEATURES = value;
+            case REDUCE_CLASSPATH -> PERFORMANCE.REDUCE_CLASSPATH = value;
+            case ENABLE_ALL_SCRIPTS_IMMEDIATELY -> SCRIPTS.ENABLE_ALL_SCRIPTS_IMMEDIATELY_ON_STARTUP = value;
         }
-        MapNode scriptsNode = Objects.requireNonNull(node.getMap("scripts"), "No 'scripts' section in the YAML file?");
-        if (Boolean.FALSE.equals(scriptsNode.getBoolean("enable-all-scripts-immediately-on-startup"))) return;
+    }
 
-        scriptsNode.modify("enable-all-scripts-immediately-on-startup").value(false);
+    /**
+     * Applies a configuration option value in memory and writes it to {@code config.yml}.
+     *
+     * @param option the config option to change
+     * @param value  the desired value
+     */
+    public static void writeOption(@NotNull ConfigOption option, boolean value) {
+        applyInMemory(option, value);
+        MapNode node = ConfigLoader.node(LumenConfiguration.class);
+        if (node == null) {
+            throw new RuntimeException("writeOption called before startup");
+        }
+        MapNode sectionNode = Objects.requireNonNull(
+                node.getMap(option.section()),
+                "No '" + option.section() + "' section in the YAML file?"
+        );
+        if (Boolean.valueOf(value).equals(sectionNode.getBoolean(option.key()))) return;
+        sectionNode.modify(option.key()).value(value);
         LSYAML.writeToFile(node, Lumen.instance().getDataFolder().toPath().resolve("config.yml"));
     }
 

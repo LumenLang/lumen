@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
  * <pre>{@code
  * public class MyPlugin extends JavaPlugin {
  *
- *     public void onEnable() {
+ *     public void onLoad() {
  *         // Register your addon with Lumen. This will call your addon's onEnable() with the API handle.
  *         LumenProvider.registerAddon(new MyAddon());
  *     }
@@ -46,9 +46,9 @@ public final class LumenProvider {
     /**
      * Returns the global {@link LumenAPI} handle.
      *
-     * <p>Returns {@code null} if Lumen has not yet finished its {@code onEnable()}.
+     * <p>Returns {@code null} until Lumen has initialized its API during {@code onLoad()}.
      * Plugin-based addons that declare {@code depend: [Lumen]} in their {@code plugin.yml}
-     * are guaranteed that this returns non-null in their own {@code onEnable()}.
+     * are guaranteed that this returns non-null from their own {@code onLoad()} onwards.
      *
      * @return the API handle, or {@code null} if Lumen is not yet ready
      */
@@ -63,7 +63,7 @@ public final class LumenProvider {
      * {@link LumenAddon#onEnable(LumenAPI)} is called immediately. Otherwise
      * it is queued and will be enabled when Lumen finishes initializing.
      *
-     * <p>Call this from your plugin's {@code onEnable()} after declaring
+     * <p>Call this from your plugin's {@code onLoad()} after declaring
      * {@code depend: [Lumen]} in your {@code plugin.yml}.
      *
      * @param addon the addon to register

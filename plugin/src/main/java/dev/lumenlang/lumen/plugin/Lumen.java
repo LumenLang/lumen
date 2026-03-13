@@ -1,6 +1,7 @@
 package dev.lumenlang.lumen.plugin;
 
-import dev.lumenlang.lumen.api.DisableSetting;
+import dev.lumenlang.lumen.api.ConfigOption;
+import dev.lumenlang.lumen.api.ConfigOverride;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.LumenAddon;
 import dev.lumenlang.lumen.api.LumenProvider;
@@ -87,18 +88,14 @@ public final class Lumen extends JavaPlugin {
         LumenLogger.init(this.getLogger());
         LSYAMLLogger.setAdapter(new JulLogAdapter("Lumen"));
         LumenConfiguration.load();
-        if (LumenConfiguration.SCRIPTS.ENABLE_ALL_SCRIPTS_IMMEDIATELY_ON_STARTUP) {
-            initApi();
-        }
+        initApi();
     }
 
     @Override
     public void onEnable() {
-        if (lumenApi == null) {
-            initApi();
-        }
         applyAddonSettings();
         platformCheck();
+        addonManager.enableAll(lumenApi);
         ExampleCopier.copyExamples(ScriptSourceLoader.scriptsDir());
         setupSystemCompiler();
         LumaCommand.register();
@@ -143,9 +140,9 @@ public final class Lumen extends JavaPlugin {
      * loads jar-based addons, enables them, and exposes the API via
      * {@link LumenProvider} so that other plugins can access it.
      *
-     * <p>This method is idempotent in practice. It is called either from
-     * {@link #onLoad()} (when early init is requested) or from {@link #onEnable()}
-     * (the default path). Either way it runs exactly once per server start.
+     * <p>Called once from {@link #onLoad()} so that plugin-based addons can
+     * register via {@link LumenProvider#registerAddon(LumenAddon)} during their
+     * own {@code onLoad()} phase, regardless of configuration.
      */
     private void initApi() {
         TypeRegistry types = new TypeRegistry();
@@ -172,7 +169,6 @@ public final class Lumen extends JavaPlugin {
 
         RegistrationScanner.init(new RegistrationScannerBackend(lumenApi));
         RegistrationScanner.scan("dev.lumenlang.lumen.plugin.defaults");
-        addonManager.enableAll(lumenApi);
     }
 
     /**
@@ -204,32 +200,10 @@ public final class Lumen extends JavaPlugin {
 
     private void applyAddonSettings() {
         for (LumenAddon addon : addonManager.addons()) {
-            DisableSetting paper = addon.disablePaperOnlyFeatures();
-            if (paper != null) {
-                LumenLogger.info("Addon " + addon.name() + " v" + addon.version() + " is disabling paper-only-features: " + paper.reason());
-                if (paper.permanent()) {
-                    LumenConfiguration.disablePaperOnlyFeatures();
-                } else {
-                    LumenConfiguration.FEATURES.PAPER_ONLY_FEATURES = false;
-                }
-            }
-            DisableSetting cp = addon.disableReduceClasspath();
-            if (cp != null) {
-                LumenLogger.info("Addon " + addon.name() + " v" + addon.version() + " is disabling reduce-classpath: " + cp.reason());
-                if (cp.permanent()) {
-                    LumenConfiguration.disableReduceClasspath();
-                } else {
-                    LumenConfiguration.PERFORMANCE.REDUCE_CLASSPATH = false;
-                }
-            }
-            DisableSetting early = addon.disableEnableAllScriptsImmediately();
-            if (early != null) {
-                LumenLogger.info("Addon " + addon.name() + " v" + addon.version() + " is disabling enable-all-scripts-immediately-on-startup: " + early.reason());
-                if (early.permanent()) {
-                    LumenConfiguration.disableEnableAllScriptsImmediately();
-                } else {
-                    LumenConfiguration.SCRIPTS.ENABLE_ALL_SCRIPTS_IMMEDIATELY_ON_STARTUP = false;
-                }
+            for (ConfigOverride override : addon.configOverrides()) {
+                LumenLogger.info("Addon " + addon.name() + " v" + addon.version() +
+                        " is " + (override.value() ? "enabling" : "disabling") + " " + override.option().key() + ": " + override.reason());
+                LumenConfiguration.applyOverride(override);
             }
         }
     }
@@ -237,11 +211,14 @@ public final class Lumen extends JavaPlugin {
     private void platformCheck() {
         if (ServerPlatform.isFolia()) {
             this.getLogger().warning("Folia detected. Folia is currently not officially supported, features such as entity, schedules, and additional issues may occur. Use at your own risk.");
+            LumenConfiguration.applyInMemory(ConfigOption.ENABLE_ALL_SCRIPTS_IMMEDIATELY, true); // Remove after folia support
+            LumenConfiguration.applyOverride(ConfigOverride.disable(ConfigOption.ENABLE_ALL_SCRIPTS_IMMEDIATELY)
+                    .lastingSession("Disabling ENABLE_ALL_SCRIPTS_IMMEDIATELY will make the code use runTask, which is not supported on folia"));
         }
         if (!ServerPlatform.isPaper() && LumenConfiguration.FEATURES.PAPER_ONLY_FEATURES) {
             this.getLogger().warning(
                     "Paper-only features are enabled in the configuration, but you're not running Paper. To prevent issues, we are automatically setting the 'paper-only-features' config option to false.");
-            LumenConfiguration.disablePaperOnlyFeatures();
+            LumenConfiguration.writeOption(ConfigOption.PAPER_ONLY_FEATURES, false);
         }
         if (ServerPlatform.isCraftBukkit()) {
             this.getLogger().severe("====================================================");
