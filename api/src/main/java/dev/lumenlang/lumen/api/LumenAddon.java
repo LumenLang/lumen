@@ -1,7 +1,8 @@
 package dev.lumenlang.lumen.api;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * Entry point for a Lumen addon.
@@ -111,45 +112,32 @@ public interface LumenAddon {
     }
 
     /**
-     * Returns a {@link DisableSetting} describing why this addon requires {@code paper-only-features}
-     * to be disabled, or {@code null} to leave the setting unchanged.
+     * Returns a list of configuration overrides that this addon requires.
      *
-     * <p>When non-null, Lumen logs the addon name, version, and reason, then disables the
-     * {@code paper-only-features} configuration option before platform checks run.
-     * If {@link DisableSetting#permanent()} is {@code true}, the change is written to disk.
+     * <p>Each {@link ConfigOverride} specifies which option to change, whether to enable
+     * or disable it, how long the override should persist, and a human readable reason
+     * that is logged to the console.
      *
-     * @return the disable setting, or {@code null}
+     * <h2>Example</h2>
+     * <pre>{@code
+     * @Override
+     * public @NotNull List<ConfigOverride> configOverrides() {
+     *     return List.of(
+     *         ConfigOverride.disable(ConfigOption.PAPER_ONLY_FEATURES)
+     *             .permanent("requires Spigot compatibility"),
+     *         ConfigOverride.disable(ConfigOption.ENABLE_ALL_SCRIPTS_IMMEDIATELY)
+     *             .lastingSession("registers patterns during plugin enable")
+     *     );
+     * }
+     * }</pre>
+     *
+     * <p>The default implementation returns an empty list.
+     *
+     * @return the list of config overrides, never null
+     * @see ConfigOverride
+     * @see ConfigOption
      */
-    default @Nullable DisableSetting disablePaperOnlyFeatures() {
-        return null;
-    }
-
-    /**
-     * Returns a {@link DisableSetting} describing why this addon requires {@code reduce-classpath}
-     * to be disabled, or {@code null} to leave the setting unchanged.
-     *
-     * <p>When non-null, Lumen logs the addon name, version, and reason, then disables the
-     * {@code reduce-classpath} performance option before the compiler is configured.
-     * If {@link DisableSetting#permanent()} is {@code true}, the change is written to disk.
-     *
-     * @return the disable setting, or {@code null}
-     */
-    default @Nullable DisableSetting disableReduceClasspath() {
-        return null;
-    }
-
-    /**
-     * Returns a {@link DisableSetting} describing why this addon requires
-     * {@code enable-all-scripts-immediately-on-startup} to be disabled, or {@code null} to leave
-     * the setting unchanged.
-     *
-     * <p>When non-null, Lumen logs the addon name, version, and reason, then forces the flag
-     * off before scripts are scheduled.
-     * If {@link DisableSetting#permanent()} is {@code true}, the change is written to disk.
-     *
-     * @return the disable setting, or {@code null}
-     */
-    default @Nullable DisableSetting disableEnableAllScriptsImmediately() {
-        return null;
+    default @NotNull List<ConfigOverride> configOverrides() {
+        return List.of();
     }
 }

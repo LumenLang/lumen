@@ -63,7 +63,7 @@ public final class LumenProvider {
      * {@link LumenAddon#onEnable(LumenAPI)} is called immediately. Otherwise
      * it is queued and will be enabled when Lumen finishes initializing.
      *
-     * <p>Call this from your plugin's {@code onEnable()} after declaring
+     * <p>Call this from your plugin's {@code onLoad()} after declaring
      * {@code depend: [Lumen]} in your {@code plugin.yml}.
      *
      * @param addon the addon to register

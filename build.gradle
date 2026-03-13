@@ -6,8 +6,10 @@ plugins {
 }
 
 allprojects {
+    apply plugin: 'java-library'
+
     group = 'dev.lumenlang'
-    version = '1.0.5-BETA'
+    version = '1.0.6-BETA'
 
     repositories {
         mavenCentral()
@@ -15,8 +17,6 @@ allprojects {
 }
 
 subprojects {
-    apply plugin: 'java-library'
-
     java {
         toolchain {
             languageVersion = JavaLanguageVersion.of(17)
@@ -29,6 +29,6 @@ subprojects {
     }
 
     dependencies {
-        implementation "org.jetbrains:annotations:26.0.2-1"
+        api "org.jetbrains:annotations:26.0.2-1"
     }
 }
