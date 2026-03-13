@@ -4,9 +4,9 @@
 
 Lumen is a high-performance scripting language for Minecraft servers that compiles your scripts directly into native Java code, with full hot reload and on-the-fly updates.
 
-Visit the [documentation](https://docs.lumenlang.dev/) for guides, examples, and how-to's.
+Visit the [Documentation](https://docs.lumenlang.dev/) for guides, examples, and how-to's.
 
-Visit the [reference documentation](https://lumenlang.dev) for a full list of features, syntax, and examples.
+Visit the [Reference Documentation](https://lumenlang.dev) for a full list of features, syntax, and examples.
 
 ---
 
