@@ -109,7 +109,7 @@ import java.util.concurrent.CompletableFuture;
  *   "category": "Player",
  *   "deprecated": false,
  *   "variables": [
- *     { "name": "player", "javaType": "org.bukkit.entity.Player", "refTypeId": "PLAYER" }
+     *     { "name": "player", "javaType": "org.bukkit.entity.Player", "refTypeId": "PLAYER", "description": "The player who joined" }
  *   ]
  * }
  * }</pre>
@@ -133,8 +133,8 @@ import java.util.concurrent.CompletableFuture;
  * <tr><td>{@code deprecated}</td><td>{@code boolean}</td><td>{@code true} if
  * this event is deprecated.</td></tr>
  * <tr><td>{@code variables}</td><td>{@code object[]}</td><td>Variables exposed to
- * child statements, each with {@code name}, {@code javaType}, and optional
- * {@code refTypeId}.</td></tr>
+ * child statements, each with {@code name}, {@code javaType}, optional
+ * {@code refTypeId}, and optional {@code description}.</td></tr>
  * </table>
  *
  * <h3>Type binding entry</h3>
@@ -383,6 +383,7 @@ public final class DocumentationDumper {
                 varObj.put("name", varEntry.getKey());
                 varObj.put("javaType", ve.javaType());
                 varObj.put("refTypeId", ve.refTypeId());
+                varObj.put("description", ve.description());
                 varList.add(varObj);
             }
             entry.put("variables", varList);
@@ -410,6 +411,7 @@ public final class DocumentationDumper {
                 varObj.put("name", varEntry.getKey());
                 varObj.put("javaType", ve.javaType());
                 varObj.put("refTypeId", ve.refTypeId());
+                varObj.put("description", ve.description());
                 varList.add(varObj);
             }
             entry.put("variables", varList);

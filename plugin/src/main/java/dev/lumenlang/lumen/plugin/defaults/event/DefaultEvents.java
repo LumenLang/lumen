@@ -64,6 +64,7 @@ public final class DefaultEvents {
                 .category(Categories.PLAYER)
                 .cancellable(false)
                 .addVar("player", Types.PLAYER, "event.getPlayer()")
+                .varDescription("The player who joined the server")
                 .build());
         api.events().register(api.events().builder("respawn").by("Lumen")
                 .className(PlayerRespawnEvent.class.getName())
@@ -73,7 +74,9 @@ public final class DefaultEvents {
                 .category(Categories.PLAYER)
                 .cancellable(false)
                 .addVar("player", Types.PLAYER, "event.getPlayer()")
+                .varDescription("The player who respawned")
                 .addVar("respawnLocation", Types.LOCATION, "event.getRespawnLocation()")
+                .varDescription("The location where the player will respawn")
                 .build());
         api.events().register(api.events().builder("teleport").by("Lumen")
                 .className(PlayerTeleportEvent.class.getName())
@@ -83,8 +86,11 @@ public final class DefaultEvents {
                 .category(Categories.PLAYER)
                 .cancellable(true)
                 .addVar("player", Types.PLAYER, "event.getPlayer()")
+                .varDescription("The player who teleported")
                 .addVar("from", Types.LOCATION, "event.getFrom()")
+                .varDescription("The location the player teleported from")
                 .addVar("to", Types.LOCATION, "event.getTo()")
+                .varDescription("The location the player teleported to")
                 .build());
         api.events().register(api.events().builder("quit").by("Lumen")
                 .className(PlayerQuitEvent.class.getName())
@@ -94,6 +100,7 @@ public final class DefaultEvents {
                 .category(Categories.PLAYER)
                 .cancellable(false)
                 .addVar("player", Types.PLAYER, "event.getPlayer()")
+                .varDescription("The player who left the server")
                 .build());
         api.events().register(api.events().builder("move").by("Lumen")
                 .className(PlayerMoveEvent.class.getName())
@@ -103,8 +110,11 @@ public final class DefaultEvents {
                 .category(Categories.PLAYER)
                 .cancellable(true)
                 .addVar("player", Types.PLAYER, "event.getPlayer()")
+                .varDescription("The player who moved")
                 .addVar("from", Types.LOCATION, "event.getFrom()")
+                .varDescription("The location the player moved from")
                 .addVar("to", Types.LOCATION, "event.getTo()")
+                .varDescription("The location the player moved to")
                 .build());
         api.events().register(api.events().builder("toggle_sneak").by("Lumen")
                 .className(PlayerToggleSneakEvent.class.getName())
@@ -114,6 +124,7 @@ public final class DefaultEvents {
                 .category(Categories.PLAYER)
                 .cancellable(true)
                 .addVar("player", Types.PLAYER, "event.getPlayer()")
+                .varDescription("The player who toggled sneaking")
                 .build());
         api.events().register(api.events().builder("toggle_sprint").by("Lumen")
                 .className(PlayerToggleSprintEvent.class.getName())
@@ -123,6 +134,7 @@ public final class DefaultEvents {
                 .category(Categories.PLAYER)
                 .cancellable(true)
                 .addVar("player", Types.PLAYER, "event.getPlayer()")
+                .varDescription("The player who toggled sprinting")
                 .build());
         api.events().register(api.events().builder("toggle_flight").by("Lumen")
                 .className(PlayerToggleFlightEvent.class.getName())
@@ -132,7 +144,9 @@ public final class DefaultEvents {
                 .category(Categories.PLAYER)
                 .cancellable(true)
                 .addVar("player", Types.PLAYER, "event.getPlayer()")
+                .varDescription("The player who toggled flight")
                 .addVar("flying", Types.BOOLEAN, "event.isFlying()")
+                .varDescription("Whether the player is now flying")
                 .build());
 
         api.events().register(api.events().builder("entity_spawn").by("Lumen")
@@ -143,8 +157,10 @@ public final class DefaultEvents {
                 .category(Categories.ENTITY)
                 .cancellable(true)
                 .addVar("entity", Types.ENTITY, "event.getEntity()")
+                .varDescription("The entity that spawned")
                 .withMeta("javaClass", LivingEntity.class.getName())
                 .addVar("location", Types.LOCATION, "event.getLocation()")
+                .varDescription("The location where the entity spawned")
                 .build());
         api.events().register(api.events().builder("entity_death").by("Lumen")
                 .className(EntityDeathEvent.class.getName())
@@ -154,6 +170,7 @@ public final class DefaultEvents {
                 .category(Categories.ENTITY)
                 .cancellable(false)
                 .addVar("entity", Types.ENTITY, "event.getEntity()")
+                .varDescription("The entity that died")
                 .withMeta("javaClass", LivingEntity.class.getName())
                 .addVar("killer", Types.PLAYER, Player.class.getName(),
                         """
@@ -162,6 +179,7 @@ public final class DefaultEvents {
                                 } else {
                                     killer = null;
                                 }""")
+                .varDescription("The player who killed the entity, or null if not killed by a player")
                 .withMeta("nullable", true)
                 .build());
         api.events().register(api.events().builder("entity_damage").by("Lumen")
@@ -172,7 +190,9 @@ public final class DefaultEvents {
                 .category(Categories.ENTITY)
                 .cancellable(true)
                 .addVar("entity", Types.ENTITY, "event.getEntity()")
+                .varDescription("The entity that took damage")
                 .addVar("damage", Types.DOUBLE, "event.getDamage()")
+                .varDescription("The amount of damage dealt")
                 .build());
         api.events().register(api.events().builder("entity_damage_by_entity").by("Lumen")
                 .className(EntityDamageByEntityEvent.class.getName())
@@ -182,7 +202,9 @@ public final class DefaultEvents {
                 .category(Categories.ENTITY)
                 .cancellable(true)
                 .addVar("entity", Types.ENTITY, "event.getEntity()")
+                .varDescription("The entity that took damage")
                 .addVar("damager", Types.ENTITY, "event.getDamager()")
+                .varDescription("The entity that dealt the damage")
                 .addVar("damagerPlayer", Types.PLAYER, Player.class.getName(),
                         """
                                 if (event.getDamager() instanceof Player __dp) {
@@ -190,8 +212,10 @@ public final class DefaultEvents {
                                 } else {
                                     damagerPlayer = null;
                                 }""")
+                .varDescription("The player who dealt the damage, or null if the damager is not a player")
                 .withMeta("nullable", true)
                 .addVar("damage", Types.DOUBLE, "event.getDamage()")
+                .varDescription("The amount of damage dealt")
                 .build());
         api.events().register(api.events().builder("entity_interact").by("Lumen")
                 .className(PlayerInteractEntityEvent.class.getName())
@@ -201,7 +225,9 @@ public final class DefaultEvents {
                 .category(Categories.ENTITY)
                 .cancellable(true)
                 .addVar("player", Types.PLAYER, "event.getPlayer()")
+                .varDescription("The player who right clicked the entity")
                 .addVar("entity", Types.ENTITY, "event.getRightClicked()")
+                .varDescription("The entity that was right clicked")
                 .build());
 
         api.events().register(api.events().builder("player_death").by("Lumen")
@@ -212,6 +238,7 @@ public final class DefaultEvents {
                 .category(Categories.PLAYER)
                 .cancellable(false)
                 .addVar("player", Types.PLAYER, "event.getEntity()")
+                .varDescription("The player who died")
                 .addVar("killer", Types.PLAYER, Player.class.getName(),
                         """
                                 if (event.getEntity().getKiller() != null) {
@@ -219,6 +246,7 @@ public final class DefaultEvents {
                                 } else {
                                     killer = null;
                                 }""")
+                .varDescription("The player who killed this player, or null if not killed by a player")
                 .withMeta("nullable", true)
                 .build());
 
@@ -230,7 +258,9 @@ public final class DefaultEvents {
                 .category(Categories.BLOCK)
                 .cancellable(true)
                 .addVar("player", Types.PLAYER, "event.getPlayer()")
+                .varDescription("The player who broke the block")
                 .addVar("block", Types.BLOCK, "event.getBlock()")
+                .varDescription("The block that was broken")
                 .addVar("item", Types.ITEMSTACK, ItemStack.class.getName(),
                         """
                                 if (event.getPlayer().getInventory().getItemInMainHand().getType() != org.bukkit.Material.AIR) {
@@ -238,6 +268,7 @@ public final class DefaultEvents {
                                 } else {
                                     item = null;
                                 }""")
+                .varDescription("The item the player used to break the block, or null if empty hand")
                 .withMeta("nullable", true)
                 .build());
 
@@ -249,13 +280,16 @@ public final class DefaultEvents {
                 .category(Categories.BLOCK)
                 .cancellable(true)
                 .addVar("player", Types.PLAYER, "event.getPlayer()")
+                .varDescription("The player who placed the block")
                 .addVar("block", Types.BLOCK, "event.getBlock()")
+                .varDescription("The block that was placed")
                 .addVar("item", Types.ITEMSTACK, "event.getItemInHand()")
+                .varDescription("The item that was used to place the block")
                 .build());
 
         api.events().register(api.events().builder("interact").by("Lumen")
                 .className(PlayerInteractEvent.class.getName())
-                .description("Fires when a player interacts (left or right click) with a block or air. The 'action' variable contains the action type as a string: LEFT_CLICK_BLOCK, RIGHT_CLICK_BLOCK, LEFT_CLICK_AIR, RIGHT_CLICK_AIR, or PHYSICAL.")
+                .description("Fires when a player interacts with a block or air.")
                 .example("on interact:")
                 .example(of(
                         top("on interact:"),
@@ -271,7 +305,10 @@ public final class DefaultEvents {
                 .category(Categories.PLAYER)
                 .cancellable(true)
                 .addVar("player", Types.PLAYER, "event.getPlayer()")
+                .varDescription("The player who interacted")
                 .addVar("action", "String", "event.getAction().name()")
+                .varDescription("The action type: LEFT_CLICK_BLOCK, RIGHT_CLICK_BLOCK, LEFT_CLICK_AIR, RIGHT_CLICK_AIR, " +
+                        "or PHYSICAL (triggering a block by stepping on or colliding with it, such as pressure plates or farmland).")
                 .addVar("block", Types.BLOCK, Block.class.getName(),
                         """
                                 if (event.getClickedBlock() != null) {
@@ -279,6 +316,7 @@ public final class DefaultEvents {
                                 } else {
                                     block = null;
                                 }""")
+                .varDescription("The block involved in the interaction, or null if the action targets air")
                 .withMeta("nullable", true)
                 .addVar("item", Types.ITEMSTACK, ItemStack.class.getName(),
                         """
@@ -287,6 +325,7 @@ public final class DefaultEvents {
                                 } else {
                                     item = null;
                                 }""")
+                .varDescription("The item in the player's hand, or null if empty")
                 .withMeta("nullable", true)
                 .build());
 
@@ -308,8 +347,10 @@ public final class DefaultEvents {
                                 } else {
                                     player = null;
                                 }""")
+                .varDescription("The player who clicked, or null if the clicker is not a player (unlikely)")
                 .withMeta("nullable", true)
                 .addVar("inventory", Inventory.class.getName(), "event.getView().getTopInventory()")
+                .varDescription("The top inventory being viewed")
                 .addVar("name", null, Types.STRING,
                         """
                                 if (event.getView().getTopInventory().getHolder() instanceof dev.lumenlang.lumen.plugin.util.LumenInventoryHolder __lh) {
@@ -317,12 +358,18 @@ public final class DefaultEvents {
                                 } else {
                                     name = null;
                                 }""")
+                .varDescription("The Lumen inventory name, or null if not a Lumen inventory")
                 .withMeta("nullable", true)
                 .addVar("slot", Types.INT, "event.getSlot()")
+                .varDescription("The slot index that was clicked")
                 .addVar("rawSlot", Types.INT, "event.getRawSlot()")
+                .varDescription("The raw slot index including both top and bottom inventory")
                 .addVar("clickType", "String", "event.getClick().name()")
+                .varDescription("The click type: LEFT, RIGHT, SHIFT_LEFT, SHIFT_RIGHT, MIDDLE, etc.")
                 .addVar("action", "String", "event.getAction().name()")
+                .varDescription("The inventory action: PICKUP_ALL, PLACE_ALL, SWAP_WITH_CURSOR, etc.")
                 .addVar("title", "String", "event.getView().getTitle()")
+                .varDescription("The display title of the inventory")
                 .addVar("item", Types.ITEMSTACK, ItemStack.class.getName(),
                         """
                                 if (event.getCurrentItem() != null) {
@@ -330,6 +377,7 @@ public final class DefaultEvents {
                                 } else {
                                     item = null;
                                 }""")
+                .varDescription("The item in the clicked slot, or null if the slot is empty")
                 .withMeta("nullable", true)
                 .addVar("cursor", Types.ITEMSTACK, ItemStack.class.getName(),
                         """
@@ -338,6 +386,7 @@ public final class DefaultEvents {
                                 } else {
                                     cursor = null;
                                 }""")
+                .varDescription("The item on the cursor, or null if the cursor is empty")
                 .withMeta("nullable", true)
                 .build());
 
@@ -355,8 +404,10 @@ public final class DefaultEvents {
                                 } else {
                                     player = null;
                                 }""")
+                .varDescription("The player who closed the inventory, or null if the viewer is not a player (unlikely)")
                 .withMeta("nullable", true)
                 .addVar("inventory", Inventory.class.getName(), "event.getView().getTopInventory()")
+                .varDescription("The top inventory that was closed")
                 .addVar("name", null, Types.STRING,
                         """
                                 if (event.getView().getTopInventory().getHolder() instanceof dev.lumenlang.lumen.plugin.util.LumenInventoryHolder __lh) {
@@ -364,8 +415,10 @@ public final class DefaultEvents {
                                 } else {
                                     name = null;
                                 }""")
+                .varDescription("The Lumen inventory name, or null if not a Lumen inventory")
                 .withMeta("nullable", true)
                 .addVar("title", "String", "event.getView().getTitle()")
+                .varDescription("The display title of the inventory")
                 .build());
 
         api.events().register(api.events().builder("inventory_open").by("Lumen")
@@ -382,8 +435,10 @@ public final class DefaultEvents {
                                 } else {
                                     player = null;
                                 }""")
+                .varDescription("The player who opened the inventory, or null if the viewer is not a player (unlikely)")
                 .withMeta("nullable", true)
                 .addVar("inventory", Inventory.class.getName(), "event.getView().getTopInventory()")
+                .varDescription("The top inventory that was opened")
                 .addVar("name", null, Types.STRING,
                         """
                                 if (event.getView().getTopInventory().getHolder() instanceof dev.lumenlang.lumen.plugin.util.LumenInventoryHolder __lh) {
@@ -391,8 +446,10 @@ public final class DefaultEvents {
                                 } else {
                                     name = null;
                                 }""")
+                .varDescription("The Lumen inventory name, or null if not a Lumen inventory")
                 .withMeta("nullable", true)
                 .addVar("title", "String", "event.getView().getTitle()")
+                .varDescription("The display title of the inventory")
                 .build());
 
         api.events().register(api.events().builder("inventory_drag").by("Lumen")
@@ -409,8 +466,10 @@ public final class DefaultEvents {
                                 } else {
                                     player = null;
                                 }""")
+                .varDescription("The player who dragged items, or null if the dragger is not a player (unlikely)")
                 .withMeta("nullable", true)
                 .addVar("inventory", Inventory.class.getName(), "event.getView().getTopInventory()")
+                .varDescription("The top inventory being viewed")
                 .addVar("name", null, Types.STRING,
                         """
                                 if (event.getView().getTopInventory().getHolder() instanceof dev.lumenlang.lumen.plugin.util.LumenInventoryHolder __lh) {
@@ -418,8 +477,10 @@ public final class DefaultEvents {
                                 } else {
                                     name = null;
                                 }""")
+                .varDescription("The Lumen inventory name, or null if not a Lumen inventory")
                 .withMeta("nullable", true)
                 .addVar("title", "String", "event.getView().getTitle()")
+                .varDescription("The display title of the inventory")
                 .build());
 
         api.events().advanced(b -> b
@@ -433,7 +494,9 @@ public final class DefaultEvents {
                 .addImport(AsyncPlayerChatEvent.class.getName())
                 .addImport(Lumen.class.getName())
                 .addVar("player", Types.PLAYER, "player")
+                .varDescription("The player who sent the chat message")
                 .addVar("text", "String", "text")
+                .varDescription("The chat message content")
                 .handler(new BlockHandler() {
                     @Override
                     public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
@@ -461,17 +524,20 @@ public final class DefaultEvents {
                 .category(Categories.PLAYER)
                 .cancellable(true)
                 .addVar("player", Types.PLAYER, "event.getPlayer()")
+                .varDescription("The player who sent the chat message")
                 .addVar("text", "String", "event.getMessage()")
+                .varDescription("The chat message content")
                 .build());
 
         api.events().register(api.events().builder("fish").by("Lumen")
                 .className(PlayerFishEvent.class.getName())
-                .description("Fires when a player uses a fishing rod. The 'state' variable contains the fishing state as a string: FISHING, CAUGHT_FISH, CAUGHT_ENTITY, IN_GROUND, FAILED_ATTEMPT, REEL_IN, BITE, or LURED.")
+                .description("Fires when a player uses a fishing rod.")
                 .example("on fish:")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .cancellable(true)
                 .addVar("player", Types.PLAYER, "event.getPlayer()")
+                .varDescription("The player who used the fishing rod")
                 .addVar("entity", Types.ENTITY, Entity.class.getName(),
                         """
                                 if (event.getCaught() != null) {
@@ -479,9 +545,12 @@ public final class DefaultEvents {
                                 } else {
                                     entity = null;
                                 }""")
+                .varDescription("The caught entity, or null if nothing was caught")
                 .withMeta("nullable", true)
                 .addVar("hook", Types.ENTITY, "event.getHook()")
+                .varDescription("The fishing hook entity")
                 .addVar("state", "String", "event.getState().name()")
+                .varDescription("The fishing state: FISHING, CAUGHT_FISH, CAUGHT_ENTITY, IN_GROUND, FAILED_ATTEMPT, REEL_IN, BITE, or LURED")
                 .build());
 
         api.events().register(api.events().builder("projectile_launch").by("Lumen")
@@ -492,6 +561,7 @@ public final class DefaultEvents {
                 .category(Categories.ENTITY)
                 .cancellable(true)
                 .addVar("entity", Types.ENTITY, "event.getEntity()")
+                .varDescription("The projectile entity that was launched")
                 .addVar("shooter", Types.PLAYER, Player.class.getName(),
                         """
                                 if (event.getEntity().getShooter() instanceof Player __sp) {
@@ -499,6 +569,7 @@ public final class DefaultEvents {
                                 } else {
                                     shooter = null;
                                 }""")
+                .varDescription("The player who launched the projectile, or null if not launched by a player")
                 .withMeta("nullable", true)
                 .build());
 
@@ -510,6 +581,7 @@ public final class DefaultEvents {
                 .category(Categories.ENTITY)
                 .cancellable(true)
                 .addVar("entity", Types.ENTITY, "event.getEntity()")
+                .varDescription("The projectile entity")
                 .addVar("shooter", Types.PLAYER, Player.class.getName(),
                         """
                                 if (event.getEntity().getShooter() instanceof Player __sp) {
@@ -517,6 +589,7 @@ public final class DefaultEvents {
                                 } else {
                                     shooter = null;
                                 }""")
+                .varDescription("The player who shot the projectile, or null if not shot by a player")
                 .withMeta("nullable", true)
                 .addVar("hit_entity", Types.ENTITY, Entity.class.getName(),
                         """
@@ -525,6 +598,7 @@ public final class DefaultEvents {
                                 } else {
                                     hit_entity = null;
                                 }""")
+                .varDescription("The entity that was hit, or null if a block was hit")
                 .withMeta("nullable", true)
                 .addVar("hit_block", Types.BLOCK, Block.class.getName(),
                         """
@@ -533,6 +607,7 @@ public final class DefaultEvents {
                                 } else {
                                     hit_block = null;
                                 }""")
+                .varDescription("The block that was hit, or null if an entity was hit")
                 .withMeta("nullable", true)
                 .build());
     }
