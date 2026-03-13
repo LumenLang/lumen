@@ -2,7 +2,7 @@
 
 ### Simple scripting for Minecraft servers, built for modern performance
 
-Lumen is a high-performance scripting engine for Minecraft servers that compiles your scripts directly into native Java code, with full hot reload and on-the-fly updates.
+Lumen is a high-performance scripting language for Minecraft servers that compiles your scripts directly into native Java code, with full hot reload and on-the-fly updates.
 
 Visit the [documentation](https://docs.lumenlang.dev/) for guides, examples, and how-to's.
 
@@ -71,7 +71,36 @@ We also appreciate any feedback on the syntax, features, or anything else relate
 
 ---
 
-## Tradeoffs...
-Tradeoffs are inevitable with Lumen, as no scripting engine is perfect.
+## Independent Design
 
-- **Less IDE Support:** Traditional scripting engines often have plugins for syntax highlighting and autocompletion. Lumen currently lacks this support, making it more challenging to write, though we plan to address this in the future as soon as possible.
+Lumen is built from the ground up and is **not a fork, wrapper, or extension of any existing scripting engine**.
+
+The language, compiler pipeline, and runtime were designed specifically for Lumen. Scripts are not interpreted or translated directly into Java API calls. They go through a full compilation pipeline before they run.
+
+At a high level, this is how a script is processed:
+
+- **Tokenization:** Raw script text is split into tokens while indentation and comments are processed.
+- **Parsing:** Tokens are assembled into an abstract syntax tree that represents the structure of the script.
+- **Pattern matching:** Statements are matched against registered patterns using typed placeholders and recursive matching.
+- **Statement classification:** Matched statements are categorized so the compiler knows how code should be generated.
+- **Expression parsing and resolution:** Expressions are analyzed and resolved with compile time type information.
+- **Type binding execution:** Placeholder tokens are validated and converted into Java source fragments.
+- **Symbol tracking:** A compile time environment tracks local, global, and stored variables across scopes.
+- **Code emission:** The AST is walked and Java source code is generated.
+
+Following this, a new **Pipeline Documentation** will be released with detailed explanations of each stage for those interested in contributing to Lumen or understanding how it works internally.
+
+---
+
+## Tradeoffs
+
+Tradeoffs are inevitable with Lumen, as no scripting system is perfect.
+
+- **Smaller Ecosystem:**
+Lumen is still a relatively new project. Compared to more established scripting systems, the ecosystem is still growing.
+
+- **Different Scripting Model:**
+While Lumen may feel somewhat familiar to users coming from systems like Skript, its design and usage are fundamentally different. Scripts follow Lumen's own pattern system and compilation model, which may require adjusting to a new workflow.
+
+- **Documentation Is Still Expanding:**
+Documentation is continuously improving. If you encounter missing information, unclear behavior, or patterns that are not properly documented, please report it through the project's issue tracker so it can be addressed.
