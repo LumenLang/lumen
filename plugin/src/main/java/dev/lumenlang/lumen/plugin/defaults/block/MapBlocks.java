@@ -34,6 +34,10 @@ public final class MapBlocks {
                         secondly("broadcast \"%{k}%: %{v}%\"")))
                 .since("1.0.0")
                 .category(Categories.MAP)
+                .addVar("key", "Object")
+                    .varDescription("The current map key, named by the user (e.g. 'k' in 'loop k v in myMap')")
+                .addVar("val", "Object")
+                    .varDescription("The current map value, named by the user (e.g. 'v' in 'loop k v in myMap')")
                 .handler(new BlockHandler() {
                     @Override
                     public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {

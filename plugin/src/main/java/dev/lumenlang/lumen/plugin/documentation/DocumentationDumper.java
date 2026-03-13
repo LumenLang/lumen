@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import dev.lumenlang.lumen.api.event.AdvancedEventDefinition;
 import dev.lumenlang.lumen.api.event.EventDefinition;
+import dev.lumenlang.lumen.api.pattern.BlockVarInfo;
 import dev.lumenlang.lumen.api.pattern.PatternMeta;
 import dev.lumenlang.lumen.api.type.TypeBindingMeta;
 import dev.lumenlang.lumen.pipeline.conditions.registry.RegisteredCondition;
@@ -58,7 +59,7 @@ import java.util.concurrent.CompletableFuture;
  * }
  * }</pre>
  *
- * <h3>Pattern entry (statements, expressions, conditions, blocks)</h3>
+ * <h3>Pattern entry (statements, expressions, conditions)</h3>
  *
  * <p>Each pattern entry represents a single logical registration. When a
  * registration uses multiple patterns (via {@code .patterns()} or repeated
@@ -94,6 +95,43 @@ import java.util.concurrent.CompletableFuture;
  * category name.</td></tr>
  * <tr><td>{@code deprecated}</td><td>{@code boolean}</td><td>{@code true} if
  * this pattern is deprecated.</td></tr>
+ * </table>
+ *
+ * <h3>Block entry</h3>
+ *
+ * <p>Block entries share the same base fields as other pattern entries, but may
+ * also include a {@code "variables"} array describing variables the block
+ * provides to its child statements.
+ *
+ * <pre>{@code
+ * {
+ *   "patterns": ["command %name:EXPR%"],
+ *   "by": "Lumen",
+ *   "description": "Declares a custom command.",
+ *   "examples": ["command hello:"],
+ *   "since": "1.0.0",
+ *   "category": "Command",
+ *   "deprecated": false,
+ *   "variables": [
+ *     { "name": "player", "type": "Player", "nullable": true, "description": "The player who executed the command, or null if the console ran it" },
+ *     { "name": "sender", "type": "CommandSender", "nullable": false, "description": "The command sender (player or console)" }
+ *   ]
+ * }
+ * }</pre>
+ *
+ * <table>
+ * <caption>Block variable fields</caption>
+ * <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+ * <tr><td>{@code name}</td><td>{@code string}</td><td>The variable name
+ * accessible in script child statements.</td></tr>
+ * <tr><td>{@code type}</td><td>{@code string}</td><td>Human readable type
+ * string (e.g. "Player", "World").</td></tr>
+ * <tr><td>{@code nullable}</td><td>{@code boolean}</td><td>{@code true} if
+ * the variable can be {@code null}.</td></tr>
+ * <tr><td>{@code description}</td><td>{@code string | null}</td><td>Human readable
+ * description of what the variable represents.</td></tr>
+ * <tr><td>{@code metadata}</td><td>{@code object | absent}</td><td>Optional
+ * metadata map. Only present when the variable has metadata entries.</td></tr>
  * </table>
  *
  * <h3>Event entry</h3>
@@ -307,6 +345,7 @@ public final class DocumentationDumper {
             @NotNull List<RegisteredBlock> blocks) {
         IdentityHashMap<Object, List<String>> handlerToPatterns = new IdentityHashMap<>();
         IdentityHashMap<Object, PatternMeta> handlerToMeta = new IdentityHashMap<>();
+        IdentityHashMap<Object, List<BlockVarInfo>> handlerToVars = new IdentityHashMap<>();
         List<Object> handlerOrder = new ArrayList<>();
 
         for (RegisteredBlock rb : blocks) {
@@ -316,11 +355,30 @@ public final class DocumentationDumper {
                 return new ArrayList<>();
             }).add(rb.pattern().raw());
             handlerToMeta.putIfAbsent(handler, rb.meta());
+            handlerToVars.putIfAbsent(handler, rb.variables());
         }
 
         List<Map<String, Object>> result = new ArrayList<>();
         for (Object handler : handlerOrder) {
-            result.add(buildPatternEntry(handlerToPatterns.get(handler), handlerToMeta.get(handler)));
+            Map<String, Object> entry = buildPatternEntry(
+                    handlerToPatterns.get(handler), handlerToMeta.get(handler));
+            List<BlockVarInfo> vars = handlerToVars.get(handler);
+            if (vars != null && !vars.isEmpty()) {
+                List<Map<String, Object>> varList = new ArrayList<>();
+                for (BlockVarInfo v : vars) {
+                    Map<String, Object> varObj = new LinkedHashMap<>();
+                    varObj.put("name", v.name());
+                    varObj.put("type", v.type());
+                    varObj.put("nullable", v.metadata().getOrDefault("nullable", false));
+                    varObj.put("description", v.description());
+                    if (!v.metadata().isEmpty()) {
+                        varObj.put("metadata", v.metadata());
+                    }
+                    varList.add(varObj);
+                }
+                entry.put("variables", varList);
+            }
+            result.add(entry);
         }
         return result;
     }

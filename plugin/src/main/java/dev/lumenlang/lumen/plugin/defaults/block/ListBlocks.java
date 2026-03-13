@@ -84,6 +84,8 @@ public class ListBlocks {
                         secondly("broadcast item")))
                 .since("1.0.0")
                 .category(Categories.LIST)
+                .addVar("var", "Object")
+                    .varDescription("The current element in the list, named by the user (e.g. 'item' in 'loop item in myList'). Inherits the element type for typed lists.")
                 .handler(new BlockHandler() {
                     @Override
                     public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {

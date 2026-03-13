@@ -391,10 +391,11 @@ public final class PatternRegistry {
         builderConsumer.accept(builder);
         builder.validate();
         PatternMeta meta = builder.buildMeta();
+        var variables = builder.getVariables();
         for (String p : builder.getPatterns()) {
             Pattern compiled = PatternCompiler.compile(p);
             validateTypes(compiled);
-            blocks.add(new RegisteredBlock(compiled, builder.getHandler(), meta));
+            blocks.add(new RegisteredBlock(compiled, builder.getHandler(), meta, variables));
         }
     }
 

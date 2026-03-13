@@ -43,6 +43,8 @@ public final class LoopSourceBlock {
                         secondly("message p \"Hello!\"")))
                 .since("1.0.0")
                 .category(Categories.CONTROL_FLOW)
+                .addVar("var", "Object")
+                    .varDescription("The current element from the loop source, named by the user (e.g. 'p' in 'loop p in all players'). The type depends on the loop source; for example, 'all players' produces Player-typed elements.")
                 .handler(new BlockHandler() {
                     @Override
                     public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
