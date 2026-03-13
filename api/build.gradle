@@ -10,6 +10,10 @@ jar {
     archiveBaseName.set(rootProject.name + "-API" + (version.isEmpty() ? "" : "-${version}"))
 }
 
+java {
+    withSourcesJar()
+}
+
 publishing {
     publications {
         mavenJava(MavenPublication) {
