@@ -1,5 +1,6 @@
 package dev.lumenlang.lumen.api;
 
+import dev.lumenlang.lumen.api.binder.ScriptBinderRegistrar;
 import dev.lumenlang.lumen.api.emit.EmitRegistrar;
 import dev.lumenlang.lumen.api.event.EventRegistrar;
 import dev.lumenlang.lumen.api.pattern.PatternRegistrar;
@@ -38,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
  *   <li>{@link #refTypes()}  -  register new compile-time reference types</li>
  *   <li>{@link #placeholders()}  -  register placeholder properties for ref types</li>
  *   <li>{@link #emitters()}  -  register custom emit handlers (statement forms, block forms, hooks)</li>
+ *   <li>{@link #binders()}  -  register custom script annotation binders</li>
  * </ul>
  *
  * <p>Implementations of this interface are provided by Lumen's internal code. Addons should
@@ -93,4 +95,15 @@ public interface LumenAPI {
      * @return the emit registrar
      */
     @NotNull EmitRegistrar emitters();
+
+    /**
+     * Returns the binder registrar for registering custom script annotation binders.
+     *
+     * <p>Binders registered here are invoked automatically whenever a compiled script
+     * class is loaded or unloaded, allowing addons to define their own annotations
+     * and binding logic.
+     *
+     * @return the binder registrar
+     */
+    @NotNull ScriptBinderRegistrar binders();
 }

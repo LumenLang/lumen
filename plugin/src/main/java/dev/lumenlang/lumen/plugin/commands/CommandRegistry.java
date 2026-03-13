@@ -1,11 +1,11 @@
 package dev.lumenlang.lumen.plugin.commands;
 
-import dev.lumenlang.lumen.pipeline.annotations.LumenCmd;
 import dev.lumenlang.lumen.pipeline.java.compiled.LumenNullException;
 import dev.lumenlang.lumen.pipeline.java.compiled.LumenRuntimeException;
 import dev.lumenlang.lumen.pipeline.java.compiled.ScriptSourceMap;
 import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
 import dev.lumenlang.lumen.plugin.Lumen;
+import dev.lumenlang.lumen.plugin.annotations.LumenCmd;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;

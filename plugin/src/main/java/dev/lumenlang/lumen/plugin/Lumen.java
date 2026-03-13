@@ -8,6 +8,8 @@ import dev.lumenlang.lumen.api.scanner.RegistrationScanner;
 import dev.lumenlang.lumen.api.version.MinecraftVersion;
 import dev.lumenlang.lumen.pipeline.addon.AddonManager;
 import dev.lumenlang.lumen.pipeline.addon.LumenAPIImpl;
+import dev.lumenlang.lumen.pipeline.addon.ScriptBinderManager;
+import dev.lumenlang.lumen.pipeline.binder.ScriptBinder;
 import dev.lumenlang.lumen.pipeline.java.compiler.system.SystemCompiler;
 import dev.lumenlang.lumen.pipeline.language.emit.EmitRegistry;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
@@ -21,6 +23,7 @@ import dev.lumenlang.lumen.plugin.configuration.LumenConfiguration;
 import dev.lumenlang.lumen.plugin.defaults.type.BuiltinTypeBindings;
 import dev.lumenlang.lumen.plugin.documentation.DocumentationDumper;
 import dev.lumenlang.lumen.plugin.platform.ServerPlatform;
+import dev.lumenlang.lumen.plugin.scanner.RegistrationScannerBackend;
 import dev.lumenlang.lumen.plugin.scheduler.ScriptScheduler;
 import dev.lumenlang.lumen.plugin.scripts.ExampleCopier;
 import dev.lumenlang.lumen.plugin.scripts.ScriptManager;
@@ -122,6 +125,8 @@ public final class Lumen extends JavaPlugin {
         }
         ConfigWatcher.shutdown();
         ScriptManager.shutdownPool();
+        RegistrationScanner.teardown();
+        ScriptBinder.teardown();
         LumenProvider.teardown();
         if (addonManager != null) {
             addonManager.disableAll();
@@ -150,7 +155,11 @@ public final class Lumen extends JavaPlugin {
 
         EmitRegistry emitReg = new EmitRegistry();
         EmitRegistry.instance(emitReg);
-        lumenApi = new LumenAPIImpl(patternRegistry, types, emitReg);
+
+        ScriptBinderManager binderManager = new ScriptBinderManager();
+        ScriptBinder.init(binderManager);
+
+        lumenApi = new LumenAPIImpl(patternRegistry, types, emitReg, binderManager);
 
         PersistentVars.init(new FilePersistentStorage(getDataFolder().toPath().resolve("persist.dat")));
         PersistentVars.setValueResolver(BukkitValueResolver.INSTANCE);
@@ -161,7 +170,8 @@ public final class Lumen extends JavaPlugin {
         if (!addonsDir.exists() && !addonsDir.mkdirs()) throw new RuntimeException("Failed to create addons directory");
         addonManager.loadAddons(addonsDir);
 
-        RegistrationScanner.scan("dev.lumenlang.lumen.plugin.defaults", lumenApi);
+        RegistrationScanner.init(new RegistrationScannerBackend(lumenApi));
+        RegistrationScanner.scan("dev.lumenlang.lumen.plugin.defaults");
         addonManager.enableAll(lumenApi);
     }
 

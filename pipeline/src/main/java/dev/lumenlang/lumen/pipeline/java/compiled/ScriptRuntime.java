@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
  * source
  * from a {@link JavaBuilder}. Runtime binding of events and commands is handled
  * by
- * {@code ScriptBinder} in the plugin module.
+ * {@code ScriptBinder} in the pipeline module.
  */
 public final class ScriptRuntime {
 
@@ -36,11 +36,11 @@ public final class ScriptRuntime {
         ctx.addImport("dev.lumenlang.lumen.plugin.text.LumenText");
         ctx.addImport("dev.lumenlang.lumen.pipeline.java.compiled.ScriptRuntime");
         ctx.addImport("dev.lumenlang.lumen.pipeline.java.compiled.Coerce");
-        ctx.addImport("dev.lumenlang.lumen.pipeline.annotations.LumenEvent");
-        ctx.addImport("dev.lumenlang.lumen.pipeline.annotations.LumenCmd");
-        ctx.addImport("dev.lumenlang.lumen.pipeline.annotations.LumenInventory");
-        ctx.addImport("dev.lumenlang.lumen.pipeline.annotations.LumenPreload");
-        ctx.addImport("dev.lumenlang.lumen.pipeline.annotations.LumenLoad");
+        ctx.addImport("dev.lumenlang.lumen.plugin.annotations.LumenEvent");
+        ctx.addImport("dev.lumenlang.lumen.plugin.annotations.LumenCmd");
+        ctx.addImport("dev.lumenlang.lumen.plugin.annotations.LumenInventory");
+        ctx.addImport("dev.lumenlang.lumen.api.annotations.LumenPreload");
+        ctx.addImport("dev.lumenlang.lumen.api.annotations.LumenLoad");
         writeFormattedImports(sb, ctx.importLines());
 
         StringBuilder classDecl = new StringBuilder();

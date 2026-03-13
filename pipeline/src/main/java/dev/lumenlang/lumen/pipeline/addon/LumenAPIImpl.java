@@ -1,6 +1,7 @@
 package dev.lumenlang.lumen.pipeline.addon;
 
 import dev.lumenlang.lumen.api.LumenAPI;
+import dev.lumenlang.lumen.api.binder.ScriptBinderRegistrar;
 import dev.lumenlang.lumen.api.emit.BlockEnterHook;
 import dev.lumenlang.lumen.api.emit.BlockFormHandler;
 import dev.lumenlang.lumen.api.emit.EmitRegistrar;
@@ -54,10 +55,13 @@ public final class LumenAPIImpl implements LumenAPI {
     private final RefTypeRegistrar refTypes;
     private final PlaceholderRegistrar placeholders;
     private final EmitRegistrar emitters;
+    private final ScriptBinderManager binderManager;
 
     public LumenAPIImpl(@NotNull PatternRegistry patternRegistry,
                         @NotNull TypeRegistry typeRegistry,
-                        @NotNull EmitRegistry emitRegistry) {
+                        @NotNull EmitRegistry emitRegistry,
+                        @NotNull ScriptBinderManager binderManager) {
+        this.binderManager = binderManager;
         this.patterns = new PatternRegistrar() {
             @Override
             public void statement(@NotNull String pattern,
@@ -309,5 +313,10 @@ public final class LumenAPIImpl implements LumenAPI {
     @Override
     public @NotNull EmitRegistrar emitters() {
         return emitters;
+    }
+
+    @Override
+    public @NotNull ScriptBinderRegistrar binders() {
+        return binderManager;
     }
 }

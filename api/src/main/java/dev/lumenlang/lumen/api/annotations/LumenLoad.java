@@ -1,4 +1,4 @@
-package dev.lumenlang.lumen.pipeline.annotations;
+package dev.lumenlang.lumen.api.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
