@@ -64,11 +64,16 @@ Both `disable()` and `enable()` are supported.
 
 Each override has a persistence level that controls how long it lasts:
 
-| Level | Survives Config Reload | Survives Restart |
-|---|---|---|
-| `session` | No | No |
-| `lastingSession` | Yes | No |
-| `permanent` | Yes | Yes (written to `config.yml`) |
+- `session`
+  - Does **not** survive a config reload
+  - Does **not** survive a restart
+- `lastingSession`
+  - **Survives** a config reload
+  - Does **not** survive a restart
+- `permanent`
+  - **Survives** a config reload
+  - **Survives** a restart
+  - Written to `config.yml`
 
 ### Example
 

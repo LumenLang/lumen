@@ -88,13 +88,13 @@ public final class Lumen extends JavaPlugin {
         LumenLogger.init(this.getLogger());
         LSYAMLLogger.setAdapter(new JulLogAdapter("Lumen"));
         LumenConfiguration.load();
-        platformCheck();
         initApi();
     }
 
     @Override
     public void onEnable() {
         applyAddonSettings();
+        platformCheck();
         addonManager.enableAll(lumenApi);
         ExampleCopier.copyExamples(ScriptSourceLoader.scriptsDir());
         setupSystemCompiler();
@@ -211,7 +211,9 @@ public final class Lumen extends JavaPlugin {
     private void platformCheck() {
         if (ServerPlatform.isFolia()) {
             this.getLogger().warning("Folia detected. Folia is currently not officially supported, features such as entity, schedules, and additional issues may occur. Use at your own risk.");
-            LumenConfiguration.writeOption(ConfigOption.ENABLE_ALL_SCRIPTS_IMMEDIATELY, true); // Remove after folia support
+            LumenConfiguration.applyInMemory(ConfigOption.ENABLE_ALL_SCRIPTS_IMMEDIATELY, true); // Remove after folia support
+            LumenConfiguration.applyOverride(ConfigOverride.disable(ConfigOption.ENABLE_ALL_SCRIPTS_IMMEDIATELY)
+                    .lastingSession("Disabling ENABLE_ALL_SCRIPTS_IMMEDIATELY will make the code use runTask, which is not supported on folia"));
         }
         if (!ServerPlatform.isPaper() && LumenConfiguration.FEATURES.PAPER_ONLY_FEATURES) {
             this.getLogger().warning(
