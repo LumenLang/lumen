@@ -1,7 +1,39 @@
+plugins {
+    id 'maven-publish'
+}
+
 dependencies {
 }
 
 jar {
     archiveVersion.set('')
     archiveBaseName.set(rootProject.name + "-API" + (version.isEmpty() ? "" : "-${version}"))
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            groupId = rootProject.group
+            artifactId = 'lumen-api'
+            version = rootProject.version
+        }
+    }
+
+    repositories {
+        maven {
+            name = 'lumenrepo'
+            url = 'https://repo.lumenlang.dev'
+            credentials {
+                username = 'vansen'
+                password = System.getenv('PASSWORD') ?: ''
+            }
+        }
+    }
+}
+
+tasks.withType(PublishToMavenRepository).configureEach {
+    onlyIf {
+        System.getenv('PASSWORD') != null
+    }
 }

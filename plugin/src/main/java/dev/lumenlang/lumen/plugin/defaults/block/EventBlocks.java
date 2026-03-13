@@ -47,6 +47,8 @@ public final class EventBlocks {
                         secondly("send player \"Welcome!\"")))
                 .since("1.0.0")
                 .category(Categories.EVENT)
+                .addVar("event-variables", "varies")
+                    .varDescription("Variables are defined by the event definition. See the event documentation for details.")
                 .handler(new BlockHandler() {
                     @Override
                     public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
@@ -158,6 +160,16 @@ public final class EventBlocks {
                         secondly("send player \"Hello!\"")))
                 .since("1.0.0")
                 .category(Categories.COMMAND)
+                .addVar("player", "Player")
+                    .withMeta("nullable", true)
+                    .varDescription("The player who executed the command, or null if the console ran it")
+                .addVar("sender", "CommandSender")
+                    .varDescription("The command sender (player or console)")
+                .addVar("world", "World")
+                    .withMeta("nullable", true)
+                    .varDescription("The world the player is in, or null if the console ran it")
+                .addVar("args", "List<String>")
+                    .varDescription("The command arguments as a mutable list of strings")
                 .handler(new BlockHandler() {
                     @Override
                     public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
@@ -240,6 +252,10 @@ public final class EventBlocks {
                         secondly("var gui = new inventory \"shop\" with size 54 titled \"&6Shop\"")))
                 .since("1.0.0")
                 .category(Categories.INVENTORY)
+                .addVar("player", "Player")
+                    .varDescription("The target player who the inventory is being opened for")
+                .addVar("world", "World")
+                    .varDescription("The world the player is in")
                 .handler(new BlockHandler() {
                     @Override
                     public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {

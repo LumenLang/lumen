@@ -51,7 +51,7 @@ public final class MapStatements {
         }
         String storageClass = info.stored() ? "PersistentVars" : "GlobalVars";
         String storageKey = buildScopedKey(env, mapVarName, scopeVarName, info);
-        String tempVar = "__scoped_" + mapVarName;
+        String tempVar = "__scoped_" + mapVarName + "_" + out.lineNum();
         ctx.codegen().addImport(Map.class.getName());
         ctx.codegen().addImport(HashMap.class.getName());
         out.line("var " + tempVar + " = " + storageClass + ".get(" + storageKey + ", " + info.defaultJava() + ");");
@@ -70,7 +70,7 @@ public final class MapStatements {
         }
         String storageClass = info.stored() ? "PersistentVars" : "GlobalVars";
         String storageKey = buildScopedKey(env, mapVarName, scopeVarName, info);
-        String tempVar = "__scoped_" + mapVarName;
+        String tempVar = "__scoped_" + mapVarName + "_" + out.lineNum();
         ctx.codegen().addImport(Map.class.getName());
         ctx.codegen().addImport(HashMap.class.getName());
         out.line("var " + tempVar + " = " + storageClass + ".get(" + storageKey + ", " + info.defaultJava() + ");");

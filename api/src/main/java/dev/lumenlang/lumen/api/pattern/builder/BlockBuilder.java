@@ -1,6 +1,7 @@
 package dev.lumenlang.lumen.api.pattern.builder;
 
 import dev.lumenlang.lumen.api.handler.BlockHandler;
+import dev.lumenlang.lumen.api.pattern.BlockVarInfo;
 import dev.lumenlang.lumen.api.pattern.Category;
 import dev.lumenlang.lumen.api.pattern.PatternMeta;
 import dev.lumenlang.lumen.api.pattern.PatternRegistrar;
@@ -9,7 +10,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 /**
@@ -42,12 +46,14 @@ public final class BlockBuilder {
 
     private final List<String> patterns = new ArrayList<>();
     private final List<String> examples = new ArrayList<>();
+    private final LinkedHashMap<String, BlockVarInfo> variables = new LinkedHashMap<>();
     private @Nullable String by;
     private @Nullable String description;
     private @Nullable String since;
     private @Nullable Category category;
     private boolean deprecated;
     private @Nullable BlockHandler handler;
+    private @Nullable String lastVarName;
 
     /**
      * Sets the addon name that registers this block pattern.
@@ -163,6 +169,64 @@ public final class BlockBuilder {
         return this;
     }
 
+    /**
+     * Adds a variable that this block provides to its child statements.
+     *
+     * @param name the variable name accessible in script child statements
+     * @param type a human readable type string for documentation (e.g. "Player", "World")
+     * @return this builder
+     */
+    public @NotNull BlockBuilder addVar(@NotNull String name, @NotNull String type) {
+        variables.put(name, new BlockVarInfo(name, type));
+        this.lastVarName = name;
+        return this;
+    }
+
+    /**
+     * Attaches a metadata entry to the most recently added variable.
+     *
+     * <p>Common metadata keys include {@code "nullable"} (boolean) to indicate
+     * that the variable may be {@code null}.
+     *
+     * @param key   the metadata key
+     * @param value the metadata value
+     * @return this builder
+     * @throws IllegalStateException if no variable has been added yet
+     */
+    public @NotNull BlockBuilder withMeta(@NotNull String key, @NotNull Object value) {
+        if (lastVarName == null) {
+            throw new IllegalStateException("withMeta() must be called after addVar()");
+        }
+        BlockVarInfo existing = variables.get(lastVarName);
+        Map<String, Object> newMeta = new HashMap<>(existing.metadata());
+        newMeta.put(key, value);
+        variables.put(lastVarName, new BlockVarInfo(
+                existing.name(), existing.type(),
+                Collections.unmodifiableMap(newMeta), existing.description()));
+        return this;
+    }
+
+    /**
+     * Sets a human readable description on the most recently added variable.
+     *
+     * <p>This is used by documentation generators to describe what the variable
+     * represents for end users.
+     *
+     * @param description the variable description
+     * @return this builder
+     * @throws IllegalStateException if no variable has been added yet
+     */
+    public @NotNull BlockBuilder varDescription(@NotNull String description) {
+        if (lastVarName == null) {
+            throw new IllegalStateException("varDescription() must be called after addVar()");
+        }
+        BlockVarInfo existing = variables.get(lastVarName);
+        variables.put(lastVarName, new BlockVarInfo(
+                existing.name(), existing.type(),
+                existing.metadata(), description));
+        return this;
+    }
+
     public @NotNull List<String> getPatterns() {
         return patterns;
     }
@@ -171,6 +235,10 @@ public final class BlockBuilder {
         if (handler == null)
             throw new IllegalStateException("Block handler is required for pattern: " + patterns.get(0));
         return handler;
+    }
+
+    public @NotNull List<BlockVarInfo> getVariables() {
+        return List.copyOf(variables.values());
     }
 
     public @NotNull PatternMeta buildMeta() {

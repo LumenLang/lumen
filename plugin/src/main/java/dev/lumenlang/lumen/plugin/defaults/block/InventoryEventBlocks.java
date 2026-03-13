@@ -146,6 +146,26 @@ public final class InventoryEventBlocks {
                         secondly("message player \"You clicked the info button!\"")))
                 .since("1.0.0")
                 .category(Categories.INVENTORY)
+                .addVar("player", "Player")
+                    .varDescription("The player who clicked")
+                .addVar("world", "World")
+                    .varDescription("The world the player is in")
+                .addVar("inventory", "Inventory")
+                    .varDescription("The top inventory being interacted with")
+                .addVar("slot", "int")
+                    .varDescription("The raw slot index that was clicked")
+                .addVar("clickType", "String")
+                    .varDescription("The type of click performed (e.g. LEFT, RIGHT, SHIFT_LEFT)")
+                .addVar("action", "String")
+                    .varDescription("The inventory action triggered by the click")
+                .addVar("title", "String")
+                    .varDescription("The title of the inventory view")
+                .addVar("item", "ItemStack")
+                    .withMeta("nullable", true)
+                    .varDescription("The item in the clicked slot, or null if empty")
+                .addVar("cursor", "ItemStack")
+                    .withMeta("nullable", true)
+                    .varDescription("The item on the cursor, or null if empty or air")
                 .handler(new BlockHandler() {
                     @Override
                     public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
@@ -191,6 +211,26 @@ public final class InventoryEventBlocks {
                         secondly("cancel event")))
                 .since("1.0.0")
                 .category(Categories.INVENTORY)
+                .addVar("player", "Player")
+                    .varDescription("The player who clicked")
+                .addVar("world", "World")
+                    .varDescription("The world the player is in")
+                .addVar("inventory", "Inventory")
+                    .varDescription("The top inventory being interacted with")
+                .addVar("slot", "int")
+                    .varDescription("The raw slot index that was clicked")
+                .addVar("clickType", "String")
+                    .varDescription("The type of click performed (e.g. LEFT, RIGHT, SHIFT_LEFT)")
+                .addVar("action", "String")
+                    .varDescription("The inventory action triggered by the click")
+                .addVar("title", "String")
+                    .varDescription("The title of the inventory view")
+                .addVar("item", "ItemStack")
+                    .withMeta("nullable", true)
+                    .varDescription("The item in the clicked slot, or null if empty")
+                .addVar("cursor", "ItemStack")
+                    .withMeta("nullable", true)
+                    .varDescription("The item on the cursor, or null if empty or air")
                 .handler(new BlockHandler() {
                     @Override
                     public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
@@ -232,6 +272,14 @@ public final class InventoryEventBlocks {
                         secondly("message player \"Menu closed!\"")))
                 .since("1.0.0")
                 .category(Categories.INVENTORY)
+                .addVar("player", "Player")
+                    .varDescription("The player who closed the inventory")
+                .addVar("world", "World")
+                    .varDescription("The world the player is in")
+                .addVar("inventory", "Inventory")
+                    .varDescription("The top inventory that was closed")
+                .addVar("title", "String")
+                    .varDescription("The title of the inventory view")
                 .handler(new BlockHandler() {
                     @Override
                     public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
@@ -272,6 +320,14 @@ public final class InventoryEventBlocks {
                         secondly("message player \"Menu opened!\"")))
                 .since("1.0.0")
                 .category(Categories.INVENTORY)
+                .addVar("player", "Player")
+                    .varDescription("The player who opened the inventory")
+                .addVar("world", "World")
+                    .varDescription("The world the player is in")
+                .addVar("inventory", "Inventory")
+                    .varDescription("The top inventory that was opened")
+                .addVar("title", "String")
+                    .varDescription("The title of the inventory view")
                 .handler(new BlockHandler() {
                     @Override
                     public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {

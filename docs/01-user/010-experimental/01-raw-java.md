@@ -35,8 +35,6 @@ command test:
         System.out.println("Hello from raw Java!");
 ```
 
-This prints to the server console (not to the player's chat, since `System.out.println` writes to console output).
-
 ## Available Variables
 
 The variables available inside a `java:` block depend on which block it is nested in. Lumen generates real Java methods, and these variables are local parameters or fields on the generated class.

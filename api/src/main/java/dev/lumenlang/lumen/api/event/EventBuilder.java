@@ -232,7 +232,28 @@ public final class EventBuilder {
         newMeta.put(key, value);
         vars.put(lastVarName, new EventDefinition.VarEntry(
                 existing.refTypeId(), existing.javaType(), existing.expr(),
-                Collections.unmodifiableMap(newMeta)));
+                Collections.unmodifiableMap(newMeta), existing.description()));
+        return this;
+    }
+
+    /**
+     * Sets a human readable description on the most recently added variable.
+     *
+     * <p>This is used by documentation generators to describe what the variable
+     * represents for end users.
+     *
+     * @param description the variable description
+     * @return this builder
+     * @throws IllegalStateException if no variable has been added yet
+     */
+    public @NotNull EventBuilder varDescription(@NotNull String description) {
+        if (lastVarName == null) {
+            throw new IllegalStateException("varDescription() must be called after addVar()");
+        }
+        EventDefinition.VarEntry existing = vars.get(lastVarName);
+        vars.put(lastVarName, new EventDefinition.VarEntry(
+                existing.refTypeId(), existing.javaType(), existing.expr(),
+                existing.metadata(), description));
         return this;
     }
 

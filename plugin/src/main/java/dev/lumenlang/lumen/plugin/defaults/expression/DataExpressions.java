@@ -229,7 +229,7 @@ public final class DataExpressions {
 
         api.patterns().expression(b -> b
                 .by("Lumen")
-                .pattern("%obj:EXPR% field %field:STRING%")
+                .pattern("%obj:EXPR% field [of] %field:STRING%")
                 .description("Gets a field value from a data instance using postfix syntax.")
                 .example("var name = myArena field \"name\"")
                 .since("1.0.0")
