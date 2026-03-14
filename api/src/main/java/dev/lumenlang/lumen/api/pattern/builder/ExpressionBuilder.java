@@ -222,5 +222,8 @@ public final class ExpressionBuilder {
         if (by == null) {
             throw new IllegalStateException("Expression builder requires a 'by' (addon name)");
         }
+        if (returnRefTypeId != null && returnJavaType != null) {
+            throw new IllegalStateException("Only one of returnRefTypeId or returnJavaType may be set");
+        }
     }
 }
