@@ -49,8 +49,6 @@ public final class EventBlocks {
                 .category(Categories.EVENT)
                 .supportsRootLevel(true)
                 .supportsBlock(false)
-                .addVar("event-variables", "varies")
-                    .varDescription("Variables are defined by the event definition. See the event documentation for details.")
                 .handler(new BlockHandler() {
                     @Override
                     public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {

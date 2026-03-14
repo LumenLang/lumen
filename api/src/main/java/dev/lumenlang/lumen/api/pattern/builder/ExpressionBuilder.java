@@ -40,6 +40,8 @@ public final class ExpressionBuilder {
     private @Nullable String since;
     private @Nullable Category category;
     private boolean deprecated;
+    private @Nullable String returnRefTypeId;
+    private @Nullable String returnJavaType;
     private @Nullable ExpressionHandler handler;
 
     /**
@@ -147,6 +149,37 @@ public final class ExpressionBuilder {
     }
 
     /**
+     * Declares the ref type this expression statically produces.
+     *
+     * <p>When set, tooling can resolve the type of a variable assigned from
+     * this expression without executing the handler. Expressions whose return
+     * type depends on runtime input should leave this unset ({@code null}).
+     *
+     * @param returnRefTypeId the ref type id (e.g. {@code Types.PLAYER.id()}), or {@code null}
+     * @return this builder
+     */
+    public @NotNull ExpressionBuilder returnRefTypeId(@Nullable String returnRefTypeId) {
+        this.returnRefTypeId = returnRefTypeId;
+        return this;
+    }
+
+    /**
+     * Declares the Java type this expression statically produces for primitive
+     * or string results.
+     *
+     * <p>Use this for expressions that return values like {@code int},
+     * {@code double}, or {@code String}. For object types that have a ref type
+     * (e.g. PLAYER, LOCATION), use {@link #returnRefTypeId} instead.
+     *
+     * @param returnJavaType the Java type (e.g. {@code Types.INT}, {@code Types.STRING}), or {@code null}
+     * @return this builder
+     */
+    public @NotNull ExpressionBuilder returnJavaType(@Nullable String returnJavaType) {
+        this.returnJavaType = returnJavaType;
+        return this;
+    }
+
+    /**
      * Sets the handler that returns the Java expression result.
      *
      * @param handler the expression handler
@@ -165,6 +198,14 @@ public final class ExpressionBuilder {
         if (handler == null)
             throw new IllegalStateException("Expression handler is not set for pattern: " + patterns.get(0));
         return handler;
+    }
+
+    public @Nullable String getReturnRefTypeId() {
+        return returnRefTypeId;
+    }
+
+    public @Nullable String getReturnJavaType() {
+        return returnJavaType;
     }
 
     public @NotNull PatternMeta buildMeta() {

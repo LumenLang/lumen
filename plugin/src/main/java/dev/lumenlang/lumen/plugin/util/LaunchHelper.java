@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Runtime helper used by generated script code.
  */
-@SuppressWarnings("unused")
+@SuppressWarnings("unused") // Called by generated code
 public final class LaunchHelper {
 
     private LaunchHelper() {

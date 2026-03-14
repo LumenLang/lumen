@@ -22,6 +22,7 @@ public final class BlockExpressions {
                 .by("Lumen").pattern("[get] block at %loc:LOCATION%")
                 .description("Returns the block at a given location.")
                 .example("var b = block at loc").since("1.0.0").category(Categories.BLOCK)
+                .returnRefTypeId(Types.BLOCK.id())
                 .handler(ctx -> new ExpressionResult(
                         ctx.java("loc") + ".getBlock()",
                         Types.BLOCK.id())));
@@ -30,6 +31,7 @@ public final class BlockExpressions {
                 .by("Lumen").pattern("[get] %b:BLOCK% type")
                 .description("Returns the material name of a block's type.")
                 .example("var t = block type").since("1.0.0").category(Categories.BLOCK)
+                .returnJavaType(Types.STRING)
                 .handler(ctx -> new ExpressionResult(
                         ctx.java("b") + ".getType().name()",
                         null, Types.STRING)));
@@ -38,6 +40,7 @@ public final class BlockExpressions {
                 .by("Lumen").pattern("[get] %b:BLOCK% location")
                 .description("Returns the location of a block.")
                 .example("var loc = block location").since("1.0.0").category(Categories.BLOCK)
+                .returnRefTypeId(Types.LOCATION.id())
                 .handler(ctx -> new ExpressionResult(
                         ctx.java("b") + ".getLocation()",
                         Types.LOCATION.id())));
@@ -46,6 +49,7 @@ public final class BlockExpressions {
                 .by("Lumen").pattern("[get] %b:BLOCK% world")
                 .description("Returns the world the block is in.")
                 .example("var w = block world").since("1.0.0").category(Categories.BLOCK)
+                .returnRefTypeId(Types.WORLD.id())
                 .handler(ctx -> new ExpressionResult(
                         ctx.java("b") + ".getWorld()",
                         Types.WORLD.id())));
@@ -54,6 +58,7 @@ public final class BlockExpressions {
                 .by("Lumen").pattern("[get] %b:BLOCK% (x|y|z)")
                 .description("Returns the x, y, or z coordinate of a block.")
                 .example("var x = block x").since("1.0.0").category(Categories.BLOCK)
+                .returnJavaType(Types.INT)
                 .handler(ctx -> {
                     String matched = ctx.java("b");
                     String coord = ctx.choice(0);
@@ -71,6 +76,7 @@ public final class BlockExpressions {
                 .by("Lumen").pattern("[get] %b:BLOCK% light level")
                 .description("Returns the light level at a block's location.")
                 .example("var light = block light level").since("1.0.0").category(Categories.BLOCK)
+                .returnJavaType(Types.INT)
                 .handler(ctx -> new ExpressionResult(
                         ctx.java("b") + ".getLightLevel()",
                         null, Types.INT)));
@@ -79,6 +85,7 @@ public final class BlockExpressions {
                 .by("Lumen").pattern("[get] %b:BLOCK% data [string]")
                 .description("Returns the block data as a string representation.")
                 .example("var data = block data").since("1.0.0").category(Categories.BLOCK)
+                .returnJavaType(Types.STRING)
                 .handler(ctx -> new ExpressionResult(
                         ctx.java("b") + ".getBlockData().getAsString()",
                         null, Types.STRING)));

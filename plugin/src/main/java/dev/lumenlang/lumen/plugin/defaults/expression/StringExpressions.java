@@ -28,6 +28,7 @@ public final class StringExpressions {
                 .example("var len = length of \"hello\"")
                 .since("1.0.0")
                 .category(Categories.TEXT)
+                .returnJavaType(Types.INT)
                 .handler(ctx -> new ExpressionResult(
                         "String.valueOf(" + ctx.java("s") + ").length()", null, Types.INT)));
 
@@ -39,6 +40,7 @@ public final class StringExpressions {
                 .example("var lower = myVar to lowercase")
                 .since("1.0.0")
                 .category(Categories.TEXT)
+                .returnJavaType(Types.STRING)
                 .handler(ctx -> new ExpressionResult(
                         "String.valueOf(" + ctx.java("s") + ").toLowerCase()", null, Types.STRING)));
 
@@ -50,6 +52,7 @@ public final class StringExpressions {
                 .example("var upper = myVar to uppercase")
                 .since("1.0.0")
                 .category(Categories.TEXT)
+                .returnJavaType(Types.STRING)
                 .handler(ctx -> new ExpressionResult(
                         "String.valueOf(" + ctx.java("s") + ").toUpperCase()", null, Types.STRING)));
 
@@ -60,6 +63,7 @@ public final class StringExpressions {
                 .example("var clean = myVar trimmed")
                 .since("1.0.0")
                 .category(Categories.TEXT)
+                .returnJavaType(Types.STRING)
                 .handler(ctx -> new ExpressionResult(
                         "String.valueOf(" + ctx.java("s") + ").trim()", null, Types.STRING)));
 
@@ -70,6 +74,7 @@ public final class StringExpressions {
                 .example("var sub = substring of \"hello\" from 1 to 3")
                 .since("1.0.0")
                 .category(Categories.TEXT)
+                .returnJavaType(Types.STRING)
                 .handler(ctx -> new ExpressionResult(
                         "String.valueOf(" + ctx.java("s") + ").substring("
                                 + ctx.java("start") + ", " + ctx.java("end") + ")", null, Types.STRING)));
@@ -81,6 +86,7 @@ public final class StringExpressions {
                 .example("var sub = substring of \"hello\" from 2")
                 .since("1.0.0")
                 .category(Categories.TEXT)
+                .returnJavaType(Types.STRING)
                 .handler(ctx -> new ExpressionResult(
                         "String.valueOf(" + ctx.java("s") + ").substring("
                                 + ctx.java("start") + ")", null, Types.STRING)));
@@ -92,6 +98,7 @@ public final class StringExpressions {
                 .example("var fixed = myVar replaced \"bad\" with \"good\"")
                 .since("1.0.0")
                 .category(Categories.TEXT)
+                .returnJavaType(Types.STRING)
                 .handler(ctx -> new ExpressionResult(
                         "String.valueOf(" + ctx.java("s") + ").replace(String.valueOf("
                                 + ctx.java("old") + "), String.valueOf(" + ctx.java("new") + "))", null, Types.STRING)));
@@ -103,6 +110,7 @@ public final class StringExpressions {
                 .example("var parts = myVar split by \",\"")
                 .since("1.0.0")
                 .category(Categories.TEXT)
+                .returnRefTypeId(Types.LIST.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(Arrays.class.getName());
                     return new ExpressionResult(
@@ -118,6 +126,7 @@ public final class StringExpressions {
                 .example("var idx = index of \"l\" in \"hello\"")
                 .since("1.0.0")
                 .category(Categories.TEXT)
+                .returnJavaType(Types.INT)
                 .handler(ctx -> new ExpressionResult(
                         "String.valueOf(" + ctx.java("haystack") + ").indexOf(String.valueOf("
                                 + ctx.java("needle") + "))", null, Types.INT)));
@@ -130,6 +139,7 @@ public final class StringExpressions {
                 .example("var result = myList joined with \", \"")
                 .since("1.0.0")
                 .category(Categories.TEXT)
+                .returnJavaType(Types.STRING)
                 .handler(ctx -> {
                     ctx.codegen().addImport(List.class.getName());
                     ctx.codegen().addImport(Collectors.class.getName());
@@ -149,6 +159,7 @@ public final class StringExpressions {
                 .examples("var n = get args at index 0 as number", "var n = \"42.5\" as number")
                 .since("1.0.0")
                 .category(Categories.MATH)
+                .returnJavaType(Types.DOUBLE)
                 .handler(ctx -> {
                     String val = ctx.java("s");
                     return new ExpressionResult(
@@ -163,6 +174,7 @@ public final class StringExpressions {
                 .examples("var n = get args at index 0 as integer", "var n = \"42\" as integer")
                 .since("1.0.0")
                 .category(Categories.MATH)
+                .returnJavaType(Types.INT)
                 .handler(ctx -> {
                     String val = ctx.java("s");
                     return new ExpressionResult(

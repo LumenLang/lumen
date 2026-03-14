@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
  * Custom {@link InventoryHolder} used by all inventories created through Lumen scripts.
  *
  * <p>Every Lumen-created inventory carries a name that uniquely identifies the
- * GUI type (e.g. {@code "shop"}). This allows scripts to
+ * GUI type (e.g. {@code "settings"}). This allows scripts to
  * distinguish Lumen inventories from vanilla or third-party.
  *
  * <p>The name is not the display title. A GUI can have a colorful title shown

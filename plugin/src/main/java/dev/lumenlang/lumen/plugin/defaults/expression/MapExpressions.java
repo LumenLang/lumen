@@ -46,6 +46,7 @@ public final class MapExpressions {
                 .example("var myMap = new map")
                 .since("1.0.0")
                 .category(Categories.MAP)
+                .returnRefTypeId(Types.MAP.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(HashMap.class.getName());
                     return new ExpressionResult(
@@ -102,11 +103,12 @@ public final class MapExpressions {
                 .example("var count = size of myMap")
                 .since("1.0.0")
                 .category(Categories.MAP)
+                .returnJavaType(Types.INT)
                 .handler(ctx -> {
                     ctx.codegen().addImport(Map.class.getName());
                     return new ExpressionResult(
                             "((Map<?, ?>) " + ctx.java("map") + ").size()",
-                            null);
+                            null, Types.INT);
                 }));
 
         api.patterns().expression(b -> b
@@ -116,11 +118,12 @@ public final class MapExpressions {
                 .example("var count = myMap size")
                 .since("1.0.0")
                 .category(Categories.MAP)
+                .returnJavaType(Types.INT)
                 .handler(ctx -> {
                     ctx.codegen().addImport(Map.class.getName());
                     return new ExpressionResult(
                             "((Map<?, ?>) " + ctx.java("map") + ").size()",
-                            null);
+                            null, Types.INT);
                 }));
 
         api.patterns().expression(b -> b
@@ -130,6 +133,7 @@ public final class MapExpressions {
                 .example("var allKeys = keys of myMap")
                 .since("1.0.0")
                 .category(Categories.MAP)
+                .returnRefTypeId(Types.LIST.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(Map.class.getName());
                     ctx.codegen().addImport(ArrayList.class.getName());
@@ -146,6 +150,7 @@ public final class MapExpressions {
                 .example("var allValues = values of myMap")
                 .since("1.0.0")
                 .category(Categories.MAP)
+                .returnRefTypeId(Types.LIST.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(Map.class.getName());
                     ctx.codegen().addImport(ArrayList.class.getName());

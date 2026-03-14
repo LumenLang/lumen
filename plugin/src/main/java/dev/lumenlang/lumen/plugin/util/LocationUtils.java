@@ -6,9 +6,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 
 /**
- * Runtime helpers used by generated location condition code.
+ * Location-related helper methods.
  */
-@SuppressWarnings("unused")
+@SuppressWarnings("unused") // Called by generated code
 public final class LocationUtils {
 
     private LocationUtils() {

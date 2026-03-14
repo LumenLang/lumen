@@ -31,6 +31,7 @@ public final class ItemStackExpressions {
                 .description("Creates a new ItemStack from a material name with an amount of 1.")
                 .example("var sword = new item diamond_sword")
                 .since("1.0.0").category(Categories.ITEM)
+                .returnRefTypeId(Types.ITEMSTACK.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(ITEM_STACK);
                     return new ExpressionResult(
@@ -43,6 +44,7 @@ public final class ItemStackExpressions {
                 .description("Creates a new ItemStack from a material name with the specified amount.")
                 .example("var swords = new item diamond_sword 5")
                 .since("1.0.0").category(Categories.ITEM)
+                .returnRefTypeId(Types.ITEMSTACK.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(ITEM_STACK);
                     return new ExpressionResult(
@@ -67,6 +69,7 @@ public final class ItemStackExpressions {
                 .description("Returns the lore of an item stack as a list of strings.")
                 .example("var lore = get item's lore")
                 .since("1.0.0").category(Categories.ITEM)
+                .returnRefTypeId(Types.LIST.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(List.class.getName());
                     ctx.codegen().addImport(Collections.class.getName());
@@ -81,6 +84,7 @@ public final class ItemStackExpressions {
                 .description("Returns the stack amount of an item.")
                 .example("var amt = get item's amount")
                 .since("1.0.0").category(Categories.ITEM)
+                .returnJavaType(Types.INT)
                 .handler(ctx -> new ExpressionResult(ctx.java("i") + ".getAmount()", null, Types.INT)));
 
         api.patterns().expression(b -> b
@@ -88,6 +92,7 @@ public final class ItemStackExpressions {
                 .description("Returns the material type name of an item stack.")
                 .example("var mat = get item's type")
                 .since("1.0.0").category(Categories.ITEM)
+                .returnJavaType(Types.STRING)
                 .handler(ctx -> new ExpressionResult(ctx.java("i") + ".getType().name()", null, Types.STRING)));
 
         api.patterns().expression(b -> b
@@ -95,6 +100,7 @@ public final class ItemStackExpressions {
                 .description("Returns the durability damage of a damageable item, or 0 if not damageable.")
                 .example("var dmg = get item's durability")
                 .since("1.0.0").category(Categories.ITEM)
+                .returnJavaType(Types.INT)
                 .handler(ctx -> {
                     ctx.codegen().addImport(DAMAGEABLE);
                     String java = ctx.java("i");
@@ -108,6 +114,7 @@ public final class ItemStackExpressions {
                 .description("Returns the maximum durability of the item's material.")
                 .example("var maxDmg = get item's max durability")
                 .since("1.0.0").category(Categories.ITEM)
+                .returnJavaType(Types.INT)
                 .handler(ctx -> new ExpressionResult(ctx.java("i") + ".getType().getMaxDurability()", null, Types.INT)));
 
         api.patterns().expression(b -> b
@@ -115,6 +122,7 @@ public final class ItemStackExpressions {
                 .description("Returns the custom model data of an item, or 0 if not set.")
                 .example("var cmd = get item's custom model data")
                 .since("1.0.0").category(Categories.ITEM)
+                .returnJavaType(Types.INT)
                 .handler(ctx -> {
                     String java = ctx.java("i");
                     return new ExpressionResult(
