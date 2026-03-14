@@ -44,31 +44,6 @@ import java.util.concurrent.Executors;
 /**
  * Manages the lifecycle of Lumen scripts: parsing, compiling, loading, and
  * unloading.
- *
- * <p>
- * Each script goes through three phases:
- * <ol>
- * <li><b>Parse</b>: the {@code .luma} source is converted into Java source code
- * via
- * {@link CodeEmitter}.</li>
- * <li><b>Compile</b>: the generated Java source is compiled to bytecodes via
- * the
- * system compiler ({@code javac}).</li>
- * <li><b>Load</b>: the bytecodes are loaded into a {@link ScriptClassLoader},
- * the
- * class is instantiated, and event/command bindings are registered.</li>
- * </ol>
- *
- * <p>
- * Parsing and compilation run on a background thread pool. Only the binding
- * phase
- * (event registration, command registration, lifecycle hooks) runs on the main
- * server thread.
- *
- * <p>
- * The optional {@link CompiledClassCache} allows skipping the parse and compile
- * phases
- * entirely when a script has not changed since the last compilation.
  */
 @SuppressWarnings("resource")
 public final class ScriptManager {
@@ -347,9 +322,6 @@ public final class ScriptManager {
      * example script. The compiled output is discarded. This exercises the
      * parser, code emitter, and Java compiler so that the first real script
      * load has no cold-start penalty.
-     *
-     * <p>If the bundled script cannot be found (e.g. it was stripped from the jar),
-     * a warning is logged and the method falls back to a compiler-only warmup.
      */
     public static void warmup() {
         try (var in = ScriptManager.class.getClassLoader()

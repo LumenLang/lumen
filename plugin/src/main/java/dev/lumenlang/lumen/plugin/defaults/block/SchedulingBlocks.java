@@ -69,6 +69,7 @@ public class SchedulingBlocks {
                         secondly("broadcast \"1 second later!\"")))
                 .since("1.0.0")
                 .category(Categories.SCHEDULING)
+                .supportsRootLevel(true)
                 .handler(new BlockHandler() {
                     @Override
                     public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
@@ -101,6 +102,7 @@ public class SchedulingBlocks {
                         secondly("broadcast \"Done!\"")))
                 .since("1.0.0")
                 .category(Categories.SCHEDULING)
+                .supportsRootLevel(true)
                 .handler(new BlockHandler() {
                     @Override
                     public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
@@ -132,6 +134,7 @@ public class SchedulingBlocks {
                         secondly("broadcast \"Every 5 seconds!\"")))
                 .since("1.0.0")
                 .category(Categories.SCHEDULING)
+                .supportsRootLevel(true)
                 .handler(new BlockHandler() {
                     @Override
                     public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
@@ -161,6 +164,7 @@ public class SchedulingBlocks {
                         secondly("broadcast \"Tick!\"")))
                 .since("1.0.0")
                 .category(Categories.SCHEDULING)
+                .supportsRootLevel(true)
                 .handler(new BlockHandler() {
                     @Override
                     public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
@@ -192,6 +196,7 @@ public class SchedulingBlocks {
                         secondly("broadcast \"Server announcement\"")))
                 .since("1.0.0")
                 .category(Categories.SCHEDULING)
+                .supportsRootLevel(true)
                 .handler(new BlockHandler() {
                     @Override
                     public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
@@ -223,6 +228,7 @@ public class SchedulingBlocks {
                         secondly("broadcast \"Temporary!\"")))
                 .since("1.0.0")
                 .category(Categories.SCHEDULING)
+                .supportsRootLevel(true)
                 .handler(new BlockHandler() {
                     @Override
                     public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {

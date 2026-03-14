@@ -33,6 +33,7 @@ public final class ControlBlocks {
                         thirdly("send player \"You are sneaking!\"")))
                 .since("1.0.0")
                 .category(Categories.CONTROL_FLOW)
+                .supportsRootLevel(true)
                 .handler(new BlockHandler() {
                     @Override
                     public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {

@@ -24,7 +24,7 @@ import java.util.Set;
  * The compile-time symbol table for a Lumen script.
  *
  * <p>{@code TypeEnv} tracks what variable names are in scope and what Java expressions they
- * correspond to. It does <em>not</em> track runtime values  -  all information here is used
+ * correspond to. It does <em>not</em> track runtime values, all information here is used
  * solely to generate correct Java source code.
  *
  * <h2>Scope Stack</h2>

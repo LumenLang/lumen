@@ -392,10 +392,13 @@ public final class PatternRegistry {
         builder.validate();
         PatternMeta meta = builder.buildMeta();
         var variables = builder.getVariables();
+        boolean rootLevel = builder.isSupportsRootLevel();
+        boolean inBlock = builder.isSupportsBlock();
         for (String p : builder.getPatterns()) {
             Pattern compiled = PatternCompiler.compile(p);
             validateTypes(compiled);
-            blocks.add(new RegisteredBlock(compiled, builder.getHandler(), meta, variables));
+            blocks.add(new RegisteredBlock(compiled, builder.getHandler(), meta, variables,
+                    rootLevel, inBlock));
         }
     }
 

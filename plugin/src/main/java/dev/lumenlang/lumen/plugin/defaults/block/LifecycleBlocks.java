@@ -31,6 +31,8 @@ public final class LifecycleBlocks {
                         secondly("broadcast \"Plugin loaded!\"")))
                 .since("1.0.0")
                 .category(Categories.LIFECYCLE)
+                .supportsRootLevel(true)
+                .supportsBlock(false)
                 .handler(new BlockHandler() {
                     @Override
                     public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
@@ -57,6 +59,8 @@ public final class LifecycleBlocks {
                         secondly("log \"Pre-loading...\"")))
                 .since("1.0.0")
                 .category(Categories.LIFECYCLE)
+                .supportsRootLevel(true)
+                .supportsBlock(false)
                 .handler(new BlockHandler() {
                     @Override
                     public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {

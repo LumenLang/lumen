@@ -58,6 +58,11 @@ public final class Types {
     public static final @NotNull RefTypeHandle ITEMSTACK = fixed("ITEMSTACK", "org.bukkit.inventory.ItemStack");
 
     /**
+     * The {@code INVENTORY} ref type ({@code org.bukkit.inventory.Inventory}).
+     */
+    public static final @NotNull RefTypeHandle INVENTORY = fixed("INVENTORY", "org.bukkit.inventory.Inventory");
+
+    /**
      * The {@code WORLD} ref type ({@code org.bukkit.World}).
      */
     public static final @NotNull RefTypeHandle WORLD = fixed("WORLD", "org.bukkit.World");
