@@ -25,7 +25,7 @@ public final class TameableExpressions {
                         "[get] %e:ENTITY% owner",
                         "Returns the tameable entity's owner, or null if not tamed.",
                         "var owner = mob owner",
-                        Types.PLAYER.id(),
+                        Types.OFFLINE_PLAYER.id(),
                         ctx -> {
                             VarHandle h = (VarHandle) ctx.value("e");
                             String java = ctx.java("e");
@@ -34,7 +34,7 @@ public final class TameableExpressions {
                             return new ExpressionResult(
                                     "(" + java + " instanceof Tameable _tm && _tm.getOwner() != null"
                                             + " ? _tm.getOwner() : null)",
-                                    Types.PLAYER.id());
+                                    Types.OFFLINE_PLAYER.id());
                         });
     }
 }
