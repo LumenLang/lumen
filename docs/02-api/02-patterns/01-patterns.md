@@ -219,7 +219,7 @@ The builder provides two flags that control where a block can be used:
 - `.supportsRootLevel(boolean)` controls whether the block can appear at the top level of a script, outside any other block. Defaults to `false`.
 - `.supportsBlock(boolean)` controls whether the block can be nested inside another block. Defaults to `true`.
 
-For example, event blocks like `on join:` or `click in "menu":` are root level only:
+For example, blocks like `on join:` are root level only:
 
 ```java
 api.patterns().block(b -> b
