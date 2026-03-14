@@ -30,6 +30,7 @@ public final class MathExpressions {
                         "var n = random from low to high")
                 .since("1.0.0")
                 .category(Categories.MATH)
+                .returnJavaType(Types.INT)
                 .handler(ctx -> {
                     ctx.codegen().addImport(ThreadLocalRandom.class.getName());
                     String min = ctx.java("min");
@@ -49,6 +50,7 @@ public final class MathExpressions {
                         "var dmg = random decimal 1.5 to 10.0")
                 .since("1.0.0")
                 .category(Categories.MATH)
+                .returnJavaType(Types.DOUBLE)
                 .handler(ctx -> {
                     ctx.codegen().addImport(ThreadLocalRandom.class.getName());
                     String min = ctx.java("min");
@@ -67,6 +69,7 @@ public final class MathExpressions {
                         "if chance 50: message player \"Heads!\"")
                 .since("1.0.0")
                 .category(Categories.MATH)
+                .returnJavaType(Types.BOOLEAN)
                 .handler(ctx -> {
                     ctx.codegen().addImport(ThreadLocalRandom.class.getName());
                     String pct = ctx.java("pct");
@@ -85,6 +88,7 @@ public final class MathExpressions {
                         "var lowest = minimum between 10 and 20")
                 .since("1.0.0")
                 .category(Categories.MATH)
+                .returnJavaType(Types.DOUBLE)
                 .handler(ctx -> new ExpressionResult(
                         "Math.min(" + ctx.java("x") + ", " + ctx.java("y") + ")",
                         null, Types.DOUBLE)));
@@ -98,6 +102,7 @@ public final class MathExpressions {
                         "var highest = maximum between 10 and 20")
                 .since("1.0.0")
                 .category(Categories.MATH)
+                .returnJavaType(Types.DOUBLE)
                 .handler(ctx -> new ExpressionResult(
                         "Math.max(" + ctx.java("x") + ", " + ctx.java("y") + ")",
                         null, Types.DOUBLE)));
@@ -109,6 +114,7 @@ public final class MathExpressions {
                 .example("var positive = abs of difference")
                 .since("1.0.0")
                 .category(Categories.MATH)
+                .returnJavaType(Types.DOUBLE)
                 .handler(ctx -> new ExpressionResult(
                         "Math.abs(" + ctx.java("x") + ")",
                         null, Types.DOUBLE)));
@@ -120,6 +126,7 @@ public final class MathExpressions {
                 .example("var rounded = round 3.7")
                 .since("1.0.0")
                 .category(Categories.MATH)
+                .returnJavaType(Types.LONG)
                 .handler(ctx -> new ExpressionResult(
                         "Math.round(((Number) ((Object) " + ctx.java("x") + ")).doubleValue())",
                         null, Types.LONG)));
@@ -131,6 +138,7 @@ public final class MathExpressions {
                 .example("var floored = floor 3.7")
                 .since("1.0.0")
                 .category(Categories.MATH)
+                .returnJavaType(Types.INT)
                 .handler(ctx -> new ExpressionResult(
                         "(int) Math.floor(((Number) ((Object) " + ctx.java("x") + ")).doubleValue())",
                         null, Types.INT)));
@@ -142,6 +150,7 @@ public final class MathExpressions {
                 .example("var ceiled = ceil 3.2")
                 .since("1.0.0")
                 .category(Categories.MATH)
+                .returnJavaType(Types.INT)
                 .handler(ctx -> new ExpressionResult(
                         "(int) Math.ceil(((Number) ((Object) " + ctx.java("x") + ")).doubleValue())",
                         null, Types.INT)));
@@ -153,6 +162,7 @@ public final class MathExpressions {
                 .example("var clamped = clamp health between 0 and 20")
                 .since("1.0.0")
                 .category(Categories.MATH)
+                .returnJavaType(Types.DOUBLE)
                 .handler(ctx -> new ExpressionResult(
                         "Math.max(" + ctx.java("min") + ", Math.min(" + ctx.java("x")
                                 + ", " + ctx.java("max") + "))",

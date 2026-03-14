@@ -138,6 +138,7 @@ public final class DataExpressions {
                         "var a = new arena with name \"PvP\" x1 0 y1 0 z1 0 x2 100 y2 100 z2 100")
                 .since("1.0.0")
                 .category(Categories.DATA)
+                .returnRefTypeId(Types.DATA.id())
                 .handler(ctx -> {
                     List<String> tokens = ctx.tokens("body");
                     if (tokens.isEmpty()) {

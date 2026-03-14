@@ -427,10 +427,13 @@ public final class PatternRegistry {
         builderConsumer.accept(builder);
         builder.validate();
         PatternMeta meta = builder.buildMeta();
+        String returnRefTypeId = builder.getReturnRefTypeId();
+        String returnJavaType = builder.getReturnJavaType();
         for (String p : builder.getPatterns()) {
             Pattern compiled = PatternCompiler.compile(p);
             validateTypes(compiled);
-            expressions.add(new RegisteredExpression(compiled, builder.getHandler(), meta));
+            expressions.add(new RegisteredExpression(compiled, builder.getHandler(), meta,
+                    returnRefTypeId, returnJavaType));
         }
     }
 

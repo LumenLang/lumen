@@ -72,6 +72,7 @@ public final class DefaultExpressions {
                 .example("var loc = get location player")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
+                .returnRefTypeId(Types.LOCATION.id())
                 .handler(ctx -> new ExpressionResult(ctx.java("who") + ".getLocation()",
                         Types.LOCATION.id())));
 
@@ -82,6 +83,7 @@ public final class DefaultExpressions {
                 .example("var loc = get player's location")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
+                .returnRefTypeId(Types.LOCATION.id())
                 .handler(ctx -> new ExpressionResult(ctx.java("who") + ".getLocation()",
                         Types.LOCATION.id())));
 
@@ -92,6 +94,7 @@ public final class DefaultExpressions {
                 .example("var w = get player's world")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
+                .returnRefTypeId(Types.WORLD.id())
                 .handler(ctx -> new ExpressionResult(ctx.java("who") + ".getWorld()",
                         Types.WORLD.id())));
 
@@ -102,6 +105,7 @@ public final class DefaultExpressions {
                 .example("var p = get player by name \"Notch\"")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
+                .returnRefTypeId(Types.PLAYER.id())
                 .handler(ctx -> new ExpressionResult(
                         "Bukkit.getPlayer(" + ctx.java("name") + ")",
                         Types.PLAYER.id())));
@@ -113,6 +117,7 @@ public final class DefaultExpressions {
                 .example("var p = get player by name target_name")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
+                .returnRefTypeId(Types.PLAYER.id())
                 .handler(ctx -> new ExpressionResult(
                         "Bukkit.getPlayer(String.valueOf(" + ctx.java("name") + "))",
                         Types.PLAYER.id())));
@@ -124,6 +129,7 @@ public final class DefaultExpressions {
                 .example("var p = get player by uuid \"069a79f4-44e9-4726-a5be-fca90e38aaf5\"")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
+                .returnRefTypeId(Types.PLAYER.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(UUID.class.getName());
                     return new ExpressionResult(
@@ -138,6 +144,7 @@ public final class DefaultExpressions {
                 .example("var w = get world \"world_nether\"")
                 .since("1.0.0")
                 .category(Categories.WORLD)
+                .returnRefTypeId(Types.WORLD.id())
                 .handler(ctx -> new ExpressionResult(
                         "Bukkit.getWorld(" + ctx.java("name") + ")",
                         Types.WORLD.id())));
@@ -149,6 +156,7 @@ public final class DefaultExpressions {
                 .example("var op = get offline player by name \"Notch\"")
                 .since("1.0.0")
                 .category(Categories.OFFLINE_PLAYER)
+                .returnRefTypeId(Types.OFFLINE_PLAYER.id())
                 .handler(ctx -> {
                     String nameJava = ctx.java("name");
                     ctx.codegen().addImport(OfflinePlayer.class.getName());
@@ -164,6 +172,7 @@ public final class DefaultExpressions {
                 .example("var op = get offline player by uuid \"069a79f4-44e9-4726-a5be-fca90e38aaf5\"")
                 .since("1.0.0")
                 .category(Categories.OFFLINE_PLAYER)
+                .returnRefTypeId(Types.OFFLINE_PLAYER.id())
                 .handler(ctx -> {
                     String uuidJava = ctx.java("uuid");
                     ctx.codegen().addImport(OfflinePlayer.class.getName());
@@ -181,6 +190,7 @@ public final class DefaultExpressions {
                 .example("var name = get player's name")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
+                .returnJavaType(Types.STRING)
                 .handler(ctx -> new ExpressionResult(ctx.java("op") + ".getName()", null, Types.STRING)));
 
         api.patterns().expression(b -> b
@@ -190,6 +200,7 @@ public final class DefaultExpressions {
                 .example("var name = get offlinePlayer's name")
                 .since("1.0.0")
                 .category(Categories.OFFLINE_PLAYER)
+                .returnJavaType(Types.STRING)
                 .handler(ctx -> new ExpressionResult(ctx.java("op") + ".getName()", null, Types.STRING)));
 
         api.patterns().expression(b -> b
@@ -199,6 +210,7 @@ public final class DefaultExpressions {
                 .example("var id = get offlinePlayer's uuid")
                 .since("1.0.0")
                 .category(Categories.OFFLINE_PLAYER)
+                .returnJavaType(Types.STRING)
                 .handler(ctx -> new ExpressionResult(ctx.java("op") + ".getUniqueId().toString()",
                         null, Types.STRING)));
 
@@ -209,6 +221,7 @@ public final class DefaultExpressions {
                 .example("var time = get offlinePlayer's first played")
                 .since("1.0.0")
                 .category(Categories.OFFLINE_PLAYER)
+                .returnJavaType(Types.LONG)
                 .handler(ctx -> new ExpressionResult(ctx.java("op") + ".getFirstPlayed()", null, Types.LONG)));
 
         api.patterns().expression(b -> b
@@ -218,6 +231,7 @@ public final class DefaultExpressions {
                 .example("var time = get offlinePlayer's last played")
                 .since("1.0.0")
                 .category(Categories.OFFLINE_PLAYER)
+                .returnJavaType(Types.LONG)
                 .handler(ctx -> new ExpressionResult(ctx.java("op") + ".getLastPlayed()", null, Types.LONG)));
 
         api.patterns().expression(b -> b
@@ -227,6 +241,7 @@ public final class DefaultExpressions {
                 .example("var loc = get offlinePlayer's bed spawn location")
                 .since("1.0.0")
                 .category(Categories.OFFLINE_PLAYER)
+                .returnRefTypeId(Types.LOCATION.id())
                 .handler(ctx -> new ExpressionResult(ctx.java("op") + ".getBedSpawnLocation()",
                         Types.LOCATION.id())));
 
@@ -237,6 +252,7 @@ public final class DefaultExpressions {
                 .example("var px = get player's x")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
+                .returnJavaType(Types.DOUBLE)
                 .handler(ctx -> new ExpressionResult(ctx.java("who") + ".getLocation().getX()", null, Types.DOUBLE)));
 
         api.patterns().expression(b -> b
@@ -246,6 +262,7 @@ public final class DefaultExpressions {
                 .example("var py = get player's y")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
+                .returnJavaType(Types.DOUBLE)
                 .handler(ctx -> new ExpressionResult(ctx.java("who") + ".getLocation().getY()", null, Types.DOUBLE)));
 
         api.patterns().expression(b -> b
@@ -255,6 +272,7 @@ public final class DefaultExpressions {
                 .example("var pz = get player's z")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
+                .returnJavaType(Types.DOUBLE)
                 .handler(ctx -> new ExpressionResult(ctx.java("who") + ".getLocation().getZ()", null, Types.DOUBLE)));
 
         api.patterns().expression(b -> b
@@ -264,6 +282,7 @@ public final class DefaultExpressions {
                 .example("var id = get player's uuid")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
+                .returnJavaType(Types.STRING)
                 .handler(ctx -> new ExpressionResult(ctx.java("who") + ".getUniqueId().toString()",
                         null, Types.STRING)));
 
@@ -274,6 +293,7 @@ public final class DefaultExpressions {
                 .example("var lv = get player's xp level")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
+                .returnJavaType(Types.INT)
                 .handler(ctx -> new ExpressionResult(ctx.java("who") + ".getLevel()",
                         null, Types.INT)));
 
@@ -284,6 +304,7 @@ public final class DefaultExpressions {
                 .example("var loc = get player's eye location")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
+                .returnRefTypeId(Types.LOCATION.id())
                 .handler(ctx -> new ExpressionResult(ctx.java("who") + ".getEyeLocation()",
                         Types.LOCATION.id())));
 
@@ -294,6 +315,7 @@ public final class DefaultExpressions {
                 .example("var dx = get player's direction x")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
+                .returnJavaType(Types.DOUBLE)
                 .handler(ctx -> new ExpressionResult(
                         ctx.java("who") + ".getLocation().getDirection().getX()", null, Types.DOUBLE)));
 
@@ -304,6 +326,7 @@ public final class DefaultExpressions {
                 .example("var dy = get player's direction y")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
+                .returnJavaType(Types.DOUBLE)
                 .handler(ctx -> new ExpressionResult(
                         ctx.java("who") + ".getLocation().getDirection().getY()", null, Types.DOUBLE)));
 
@@ -314,6 +337,7 @@ public final class DefaultExpressions {
                 .example("var dz = get player's direction z")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
+                .returnJavaType(Types.DOUBLE)
                 .handler(ctx -> new ExpressionResult(
                         ctx.java("who") + ".getLocation().getDirection().getZ()", null, Types.DOUBLE)));
     }
@@ -336,6 +360,7 @@ public final class DefaultExpressions {
                 .example("var loc = new location in myWorld at 100 64 -200")
                 .since("1.0.0")
                 .category(Categories.LOCATION)
+                .returnRefTypeId(Types.LOCATION.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(Location.class.getName());
                     return new ExpressionResult(
@@ -351,6 +376,7 @@ public final class DefaultExpressions {
                 .example("var loc = new location at 100 64 -200 in myWorld")
                 .since("1.0.0")
                 .category(Categories.LOCATION)
+                .returnRefTypeId(Types.LOCATION.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(Location.class.getName());
                     return new ExpressionResult(
@@ -375,6 +401,7 @@ public final class DefaultExpressions {
                 .example("var mob = spawn zombie at player")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
+                .returnRefTypeId(Types.ENTITY.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(Entity.class.getName());
                     String typeEnum = ctx.java("type");
@@ -395,6 +422,7 @@ public final class DefaultExpressions {
                 .example("var mob = spawn zombie at myLoc")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
+                .returnRefTypeId(Types.ENTITY.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(Entity.class.getName());
                     String typeEnum = ctx.java("type");
@@ -413,6 +441,7 @@ public final class DefaultExpressions {
                 .example("var mob = spawn zombie at get player's location")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
+                .returnRefTypeId(Types.ENTITY.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(Entity.class.getName());
                     String typeEnum = ctx.java("type");
@@ -446,6 +475,7 @@ public final class DefaultExpressions {
                 .example("var proj = launch snowball from player")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
+                .returnRefTypeId(Types.ENTITY.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(Entity.class.getName());
                     ctx.codegen().addImport(Projectile.class.getName());
@@ -463,6 +493,7 @@ public final class DefaultExpressions {
                 .example("var proj = launch snowball from myLoc")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
+                .returnRefTypeId(Types.ENTITY.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(Entity.class.getName());
                     String type = ctx.java("type");
@@ -496,6 +527,7 @@ public final class DefaultExpressions {
                 .example("global var pos1 for ref type player default no location")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
+                .returnRefTypeId(Types.LOCATION.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(Location.class.getName());
                     return new ExpressionResult("(Location) null", Types.LOCATION.id());
@@ -508,6 +540,7 @@ public final class DefaultExpressions {
                 .example("global var target for ref type player default no player")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
+                .returnRefTypeId(Types.PLAYER.id())
                 .handler(ctx -> new ExpressionResult("(Player) null", Types.PLAYER.id())));
 
         api.patterns().expression(b -> b
@@ -517,6 +550,7 @@ public final class DefaultExpressions {
                 .example("global var target for ref type player default no entity")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
+                .returnRefTypeId(Types.ENTITY.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(Entity.class.getName());
                     return new ExpressionResult("(Entity) null", Types.ENTITY.id());
@@ -529,6 +563,7 @@ public final class DefaultExpressions {
                 .example("global var w for ref type player default no world")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
+                .returnRefTypeId(Types.WORLD.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(World.class.getName());
                     return new ExpressionResult("(World) null", Types.WORLD.id());
@@ -541,6 +576,7 @@ public final class DefaultExpressions {
                 .example("global var target_block for ref type player default no block")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
+                .returnRefTypeId(Types.BLOCK.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(Block.class.getName());
                     return new ExpressionResult("(Block) null", Types.BLOCK.id());

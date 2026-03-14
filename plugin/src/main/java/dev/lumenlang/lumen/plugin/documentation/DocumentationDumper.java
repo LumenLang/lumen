@@ -59,7 +59,7 @@ import java.util.concurrent.CompletableFuture;
  * }
  * }</pre>
  *
- * <h3>Pattern entry (statements, expressions, conditions)</h3>
+ * <h3>Pattern entry (statements, conditions)</h3>
  *
  * <p>Each pattern entry represents a single logical registration. When a
  * registration uses multiple patterns (via {@code .patterns()} or repeated
@@ -95,6 +95,40 @@ import java.util.concurrent.CompletableFuture;
  * category name.</td></tr>
  * <tr><td>{@code deprecated}</td><td>{@code boolean}</td><td>{@code true} if
  * this pattern is deprecated.</td></tr>
+ * </table>
+ *
+ * <h3>Expression entry</h3>
+ *
+ * <p>Expression entries share the same base fields as other pattern entries, but
+ * add an optional {@code "returnRefTypeId"} that declares the ref type this
+ * expression statically produces, and an optional {@code "returnJavaType"} that
+ * declares the Java type for primitive or string results. Tooling can use these
+ * to resolve the type of a variable assigned from this expression without
+ * executing the handler.
+ *
+ * <pre>{@code
+ * {
+ *   "patterns": ["get player by name %name:STRING%"],
+ *   "by": "Lumen",
+ *   "description": "Looks up an online player by name.",
+ *   "examples": ["var target = get player by name \"Notch\""],
+ *   "since": "1.0.0",
+ *   "category": "Player",
+ *   "deprecated": false,
+ *   "returnRefTypeId": "PLAYER",
+ *   "returnJavaType": null
+ * }
+ * }</pre>
+ *
+ * <table>
+ * <caption>Expression entry fields (in addition to pattern entry fields)</caption>
+ * <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+ * <tr><td>{@code returnRefTypeId}</td><td>{@code string | null}</td><td>The ref
+ * type id this expression always returns (e.g. "PLAYER", "LOCATION"), or
+ * {@code null} if the return type depends on runtime input or is a primitive.</td></tr>
+ * <tr><td>{@code returnJavaType}</td><td>{@code string | null}</td><td>The Java
+ * type this expression always returns (e.g. "int", "String", "double"), or
+ * {@code null} if the return type depends on runtime input or is a ref type.</td></tr>
  * </table>
  *
  * <h3>Block entry</h3>
@@ -319,6 +353,8 @@ public final class DocumentationDumper {
             @NotNull List<RegisteredExpression> expressions) {
         IdentityHashMap<Object, List<String>> handlerToPatterns = new IdentityHashMap<>();
         IdentityHashMap<Object, PatternMeta> handlerToMeta = new IdentityHashMap<>();
+        IdentityHashMap<Object, String> handlerToReturnRefType = new IdentityHashMap<>();
+        IdentityHashMap<Object, String> handlerToReturnJavaType = new IdentityHashMap<>();
         List<Object> handlerOrder = new ArrayList<>();
 
         for (RegisteredExpression re : expressions) {
@@ -328,11 +364,21 @@ public final class DocumentationDumper {
                 return new ArrayList<>();
             }).add(re.pattern().raw());
             handlerToMeta.putIfAbsent(handler, re.meta());
+            if (re.returnRefTypeId() != null) {
+                handlerToReturnRefType.putIfAbsent(handler, re.returnRefTypeId());
+            }
+            if (re.returnJavaType() != null) {
+                handlerToReturnJavaType.putIfAbsent(handler, re.returnJavaType());
+            }
         }
 
         List<Map<String, Object>> result = new ArrayList<>();
         for (Object handler : handlerOrder) {
-            result.add(buildPatternEntry(handlerToPatterns.get(handler), handlerToMeta.get(handler)));
+            Map<String, Object> entry = buildPatternEntry(
+                    handlerToPatterns.get(handler), handlerToMeta.get(handler));
+            entry.put("returnRefTypeId", handlerToReturnRefType.get(handler));
+            entry.put("returnJavaType", handlerToReturnJavaType.get(handler));
+            result.add(entry);
         }
         return result;
     }

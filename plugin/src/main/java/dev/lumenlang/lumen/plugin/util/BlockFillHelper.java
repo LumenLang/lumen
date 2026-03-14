@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
  * Runtime helper used by generated script code to fill a cuboid region of blocks
  * with a given material.
  */
-@SuppressWarnings("unused")
+@SuppressWarnings("unused") // Called by generated code
 public final class BlockFillHelper {
 
     private BlockFillHelper() {

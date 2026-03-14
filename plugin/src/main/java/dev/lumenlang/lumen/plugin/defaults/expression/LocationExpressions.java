@@ -27,6 +27,7 @@ public final class LocationExpressions {
                 .example("var px = player location x")
                 .since("1.0.0")
                 .category(Categories.LOCATION)
+                .returnJavaType(Types.DOUBLE)
                 .handler(ctx -> new ExpressionResult(ctx.java("loc") + ".getX()", null, Types.DOUBLE)));
 
         api.patterns().expression(b -> b
@@ -36,6 +37,7 @@ public final class LocationExpressions {
                 .example("var py = player location y")
                 .since("1.0.0")
                 .category(Categories.LOCATION)
+                .returnJavaType(Types.DOUBLE)
                 .handler(ctx -> new ExpressionResult(ctx.java("loc") + ".getY()", null, Types.DOUBLE)));
 
         api.patterns().expression(b -> b
@@ -45,6 +47,7 @@ public final class LocationExpressions {
                 .example("var pz = player location z")
                 .since("1.0.0")
                 .category(Categories.LOCATION)
+                .returnJavaType(Types.DOUBLE)
                 .handler(ctx -> new ExpressionResult(ctx.java("loc") + ".getZ()", null, Types.DOUBLE)));
 
         api.patterns().expression(b -> b
@@ -54,6 +57,7 @@ public final class LocationExpressions {
                 .example("var dist = distance between player location and targetLoc")
                 .since("1.0.0")
                 .category(Categories.LOCATION)
+                .returnJavaType(Types.DOUBLE)
                 .handler(ctx -> new ExpressionResult(ctx.java("a") + ".distance(" + ctx.java("b") + ")", null, Types.DOUBLE)));
 
         api.patterns().expression(b -> b
@@ -63,6 +67,7 @@ public final class LocationExpressions {
                 .example("var b = block at player location")
                 .since("1.0.0")
                 .category(Categories.BLOCK)
+                .returnRefTypeId(Types.BLOCK.id())
                 .handler(ctx -> new ExpressionResult(ctx.java("loc") + ".getBlock()", Types.BLOCK.id())));
 
         api.patterns().expression(b -> b
@@ -72,6 +77,7 @@ public final class LocationExpressions {
                 .example("var w = myLocation world")
                 .since("1.0.0")
                 .category(Categories.LOCATION)
+                .returnRefTypeId(Types.WORLD.id())
                 .handler(ctx -> new ExpressionResult(ctx.java("loc") + ".getWorld()", Types.WORLD.id())));
     }
 }

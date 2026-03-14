@@ -28,6 +28,7 @@ public final class ListExpressions {
                 .example("var myList = new list")
                 .since("1.0.0")
                 .category(Categories.LIST)
+                .returnRefTypeId(Types.LIST.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(ArrayList.class.getName());
                     return new ExpressionResult(
@@ -43,6 +44,7 @@ public final class ListExpressions {
                 .examples("var arenas = new list of arena", "var scores = new list of number")
                 .since("1.0.0")
                 .category(Categories.LIST)
+                .returnRefTypeId(Types.LIST.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(ArrayList.class.getName());
                     String elementType = ctx.tokens("type").get(0).toLowerCase();
@@ -59,6 +61,7 @@ public final class ListExpressions {
                 .example("var count = size of myList")
                 .since("1.0.0")
                 .category(Categories.LIST)
+                .returnJavaType(Types.INT)
                 .handler(ctx -> {
                     ctx.codegen().addImport(List.class.getName());
                     return new ExpressionResult(
@@ -73,6 +76,7 @@ public final class ListExpressions {
                 .example("var count = myList size")
                 .since("1.0.0")
                 .category(Categories.LIST)
+                .returnJavaType(Types.INT)
                 .handler(ctx -> {
                     ctx.codegen().addImport(List.class.getName());
                     return new ExpressionResult(
@@ -101,6 +105,7 @@ public final class ListExpressions {
                 .example("var idx = myList index of \"hello\"")
                 .since("1.0.0")
                 .category(Categories.LIST)
+                .returnJavaType(Types.INT)
                 .handler(ctx -> {
                     ctx.codegen().addImport(List.class.getName());
                     return new ExpressionResult(

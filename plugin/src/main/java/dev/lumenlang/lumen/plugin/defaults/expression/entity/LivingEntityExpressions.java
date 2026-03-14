@@ -31,6 +31,7 @@ public final class LivingEntityExpressions {
                 .example("var hp = get mob's health")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
+                .returnJavaType(Types.DOUBLE)
                 .handler(ctx -> {
                     VarHandle h = (VarHandle) ctx.value("e");
                     String java = ctx.java("e");
@@ -50,6 +51,7 @@ public final class LivingEntityExpressions {
                 .example("var maxHp = get mob's max health")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
+                .returnJavaType(Types.DOUBLE)
                 .handler(ctx -> {
                     VarHandle h = (VarHandle) ctx.value("e");
                     String java = ctx.java("e");
