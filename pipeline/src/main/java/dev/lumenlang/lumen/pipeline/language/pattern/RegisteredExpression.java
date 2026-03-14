@@ -31,14 +31,4 @@ public record RegisteredExpression(@NotNull Pattern pattern, @NotNull Expression
     public RegisteredExpression(@NotNull Pattern pattern, @NotNull ExpressionHandler handler) {
         this(pattern, handler, PatternMeta.EMPTY, null, null);
     }
-
-    public RegisteredExpression(@NotNull Pattern pattern, @NotNull ExpressionHandler handler,
-                                @NotNull PatternMeta meta) {
-        this(pattern, handler, meta, null, null);
-    }
-
-    public RegisteredExpression(@NotNull Pattern pattern, @NotNull ExpressionHandler handler,
-                                @NotNull PatternMeta meta, @Nullable String returnRefTypeId) {
-        this(pattern, handler, meta, returnRefTypeId, null);
-    }
 }
