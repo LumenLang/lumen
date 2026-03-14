@@ -231,7 +231,7 @@ api.patterns().block(b -> b
 );
 ```
 
-Control flow blocks like `if` or `repeat` are block level only (they can only appear inside another block):
+Most control-flow blocks, such as typical `repeat` loops, are block level only (they can only appear inside another block). Blocks that need to be allowed at the root can opt in by setting `.supportsRootLevel(true)`. For a block-only control-flow block, you would configure it like this:
 
 ```java
 api.patterns().block(b -> b
