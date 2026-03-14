@@ -405,7 +405,8 @@ public final class EntityHelper {
                     return new ExpressionResult(
                             "(" + java + " instanceof " + simpleName + " " + alias
                                     + " ? " + alias + "." + getterCall + " : 0)",
-                            null);
+                            null,
+                            Types.INT);
                 }));
         return this;
     }
@@ -413,52 +414,14 @@ public final class EntityHelper {
     /**
      * Registers an expression that gets a string property, returning null as a fallback.
      *
-     * @param pattern     the expression pattern
-     * @param getterCall  the getter method call
-     * @param description the description
-     * @param example     the example
-     * @return this builder
-     */
-    public @NotNull EntityHelper stringGetter(@NotNull String pattern,
-                                              @NotNull String getterCall,
-                                              @NotNull String description,
-                                              @NotNull String example) {
-        return stringGetter(pattern, getterCall, null, Types.STRING, description, example);
-    }
-
-    /**
-     * Registers an expression that gets a string property with a specific result ref type.
-     *
-     * @param pattern     the expression pattern
-     * @param getterCall  the getter method call
-     * @param refTypeId   the ref type id for the result, or null
-     * @param description the description
-     * @param example     the example
-     * @return this builder
-     */
-    public @NotNull EntityHelper stringGetter(@NotNull String pattern,
-                                              @NotNull String getterCall,
-                                              @Nullable String refTypeId,
-                                              @NotNull String description,
-                                              @NotNull String example) {
-        return stringGetter(pattern, getterCall, refTypeId, null, description, example);
-    }
-
-    /**
-     * Registers an expression that gets a string property with optional ref type and Java type.
-     *
      * @param pattern        the expression pattern
      * @param getterCall     the getter method call
-     * @param refTypeId      the ref type id for the result, or null
-     * @param returnJavaType the Java type for the result, or null
      * @param description    the description
      * @param example        the example
      * @return this builder
      */
     public @NotNull EntityHelper stringGetter(@NotNull String pattern,
                                               @NotNull String getterCall,
-                                              @Nullable String refTypeId,
-                                              @Nullable String returnJavaType,
                                               @NotNull String description,
                                               @NotNull String example) {
         api.patterns().expression(b -> b
@@ -468,8 +431,7 @@ public final class EntityHelper {
                 .example(example)
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .returnRefTypeId(refTypeId)
-                .returnJavaType(returnJavaType)
+                .returnJavaType(Types.STRING)
                 .handler(ctx -> {
                     String java = ctx.java("e");
                     EntityValidation.requireSubtype((VarHandle) ctx.value("e"), fqcn, pattern);
@@ -477,8 +439,8 @@ public final class EntityHelper {
                     return new ExpressionResult(
                             "(" + java + " instanceof " + simpleName + " " + alias
                                     + " ? " + alias + "." + getterCall + " : null)",
-                            refTypeId,
-                            returnJavaType);
+                            null,
+                            Types.STRING);
                 }));
         return this;
     }
@@ -511,7 +473,8 @@ public final class EntityHelper {
                     return new ExpressionResult(
                             "(" + java + " instanceof " + simpleName + " " + alias
                                     + " && " + alias + "." + getterCall + ")",
-                            null);
+                            null,
+                            Types.BOOLEAN);
                 }));
         return this;
     }
