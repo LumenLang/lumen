@@ -5,6 +5,7 @@ import dev.lumenlang.lumen.api.pattern.BlockVarInfo;
 import dev.lumenlang.lumen.api.pattern.Category;
 import dev.lumenlang.lumen.api.pattern.PatternMeta;
 import dev.lumenlang.lumen.api.pattern.PatternRegistrar;
+import dev.lumenlang.lumen.api.type.RefTypeHandle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,6 +53,8 @@ public final class BlockBuilder {
     private @Nullable String since;
     private @Nullable Category category;
     private boolean deprecated;
+    private boolean supportsRootLevel;
+    private boolean supportsBlock = true;
     private @Nullable BlockHandler handler;
     private @Nullable String lastVarName;
 
@@ -159,6 +162,34 @@ public final class BlockBuilder {
     }
 
     /**
+     * Sets whether this block can be used at the root level of a script.
+     *
+     * <p>When {@code true}, the block can appear as a top level statement
+     * without being nested inside another block. Defaults to {@code false}.
+     *
+     * @param supportsRootLevel true if this block supports root level usage
+     * @return this builder
+     */
+    public @NotNull BlockBuilder supportsRootLevel(boolean supportsRootLevel) {
+        this.supportsRootLevel = supportsRootLevel;
+        return this;
+    }
+
+    /**
+     * Sets whether this block can be used inside another block.
+     *
+     * <p>When {@code true}, the block can appear nested inside other blocks.
+     * Defaults to {@code true}.
+     *
+     * @param supportsBlock true if this block can be nested inside other blocks
+     * @return this builder
+     */
+    public @NotNull BlockBuilder supportsBlock(boolean supportsBlock) {
+        this.supportsBlock = supportsBlock;
+        return this;
+    }
+
+    /**
      * Sets the handler that generates Java code for the block's begin and end.
      *
      * @param handler the block handler
@@ -183,6 +214,23 @@ public final class BlockBuilder {
     }
 
     /**
+     * Adds a typed variable that this block provides to its child statements.
+     *
+     * <p>The human readable type string is derived from the ref type's Java class
+     * simple name. The {@link RefTypeHandle} is stored so that any tool
+     * can resolve the actual compile time type of this variable.
+     *
+     * @param name    the variable name accessible in script child statements
+     * @param refType the typed reference handle (e.g. {@code Types.PLAYER})
+     * @return this builder
+     */
+    public @NotNull BlockBuilder addVar(@NotNull String name, @NotNull RefTypeHandle refType) {
+        variables.put(name, new BlockVarInfo(name, refType));
+        this.lastVarName = name;
+        return this;
+    }
+
+    /**
      * Attaches a metadata entry to the most recently added variable.
      *
      * <p>Common metadata keys include {@code "nullable"} (boolean) to indicate
@@ -201,7 +249,7 @@ public final class BlockBuilder {
         Map<String, Object> newMeta = new HashMap<>(existing.metadata());
         newMeta.put(key, value);
         variables.put(lastVarName, new BlockVarInfo(
-                existing.name(), existing.type(),
+                existing.name(), existing.type(), existing.refType(),
                 Collections.unmodifiableMap(newMeta), existing.description()));
         return this;
     }
@@ -222,7 +270,7 @@ public final class BlockBuilder {
         }
         BlockVarInfo existing = variables.get(lastVarName);
         variables.put(lastVarName, new BlockVarInfo(
-                existing.name(), existing.type(),
+                existing.name(), existing.type(), existing.refType(),
                 existing.metadata(), description));
         return this;
     }
@@ -239,6 +287,14 @@ public final class BlockBuilder {
 
     public @NotNull List<BlockVarInfo> getVariables() {
         return List.copyOf(variables.values());
+    }
+
+    public boolean isSupportsRootLevel() {
+        return supportsRootLevel;
+    }
+
+    public boolean isSupportsBlock() {
+        return supportsBlock;
     }
 
     public @NotNull PatternMeta buildMeta() {

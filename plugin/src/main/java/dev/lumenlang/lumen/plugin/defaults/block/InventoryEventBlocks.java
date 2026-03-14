@@ -98,7 +98,7 @@ public final class InventoryEventBlocks {
 
         env.defineVar("player", Types.PLAYER, "player");
         env.defineVar("world", Types.WORLD, "world");
-        env.defineVar("inventory", null, "inventory");
+        env.defineVar("inventory", Types.INVENTORY, "inventory");
         env.defineVar("slot", null, "slot");
         env.defineVar("clickType", null, "clickType");
         env.defineVar("action", null, "action");
@@ -121,7 +121,7 @@ public final class InventoryEventBlocks {
 
         env.defineVar("player", Types.PLAYER, "player");
         env.defineVar("world", Types.WORLD, "world");
-        env.defineVar("inventory", null, "inventory");
+        env.defineVar("inventory", Types.INVENTORY, "inventory");
         env.defineVar("title", null, "title");
     }
 
@@ -146,24 +146,26 @@ public final class InventoryEventBlocks {
                         secondly("message player \"You clicked the info button!\"")))
                 .since("1.0.0")
                 .category(Categories.INVENTORY)
-                .addVar("player", "Player")
+                .supportsRootLevel(true)
+                .supportsBlock(false)
+                .addVar("player", Types.PLAYER)
                     .varDescription("The player who clicked")
-                .addVar("world", "World")
+                .addVar("world", Types.WORLD)
                     .varDescription("The world the player is in")
-                .addVar("inventory", "Inventory")
+                .addVar("inventory", Types.INVENTORY)
                     .varDescription("The top inventory being interacted with")
-                .addVar("slot", "int")
+                .addVar("slot", Types.INT)
                     .varDescription("The raw slot index that was clicked")
-                .addVar("clickType", "String")
+                .addVar("clickType", Types.STRING)
                     .varDescription("The type of click performed (e.g. LEFT, RIGHT, SHIFT_LEFT)")
-                .addVar("action", "String")
+                .addVar("action", Types.STRING)
                     .varDescription("The inventory action triggered by the click")
-                .addVar("title", "String")
+                .addVar("title", Types.STRING)
                     .varDescription("The title of the inventory view")
-                .addVar("item", "ItemStack")
+                .addVar("item", Types.ITEMSTACK)
                     .withMeta("nullable", true)
                     .varDescription("The item in the clicked slot, or null if empty")
-                .addVar("cursor", "ItemStack")
+                .addVar("cursor", Types.ITEMSTACK)
                     .withMeta("nullable", true)
                     .varDescription("The item on the cursor, or null if empty or air")
                 .handler(new BlockHandler() {
@@ -211,24 +213,26 @@ public final class InventoryEventBlocks {
                         secondly("cancel event")))
                 .since("1.0.0")
                 .category(Categories.INVENTORY)
-                .addVar("player", "Player")
+                .supportsRootLevel(true)
+                .supportsBlock(false)
+                .addVar("player", Types.PLAYER)
                     .varDescription("The player who clicked")
-                .addVar("world", "World")
+                .addVar("world", Types.WORLD)
                     .varDescription("The world the player is in")
-                .addVar("inventory", "Inventory")
+                .addVar("inventory", Types.INVENTORY)
                     .varDescription("The top inventory being interacted with")
-                .addVar("slot", "int")
+                .addVar("slot", Types.INT)
                     .varDescription("The raw slot index that was clicked")
-                .addVar("clickType", "String")
+                .addVar("clickType", Types.STRING)
                     .varDescription("The type of click performed (e.g. LEFT, RIGHT, SHIFT_LEFT)")
-                .addVar("action", "String")
+                .addVar("action", Types.STRING)
                     .varDescription("The inventory action triggered by the click")
-                .addVar("title", "String")
+                .addVar("title", Types.STRING)
                     .varDescription("The title of the inventory view")
-                .addVar("item", "ItemStack")
+                .addVar("item", Types.ITEMSTACK)
                     .withMeta("nullable", true)
                     .varDescription("The item in the clicked slot, or null if empty")
-                .addVar("cursor", "ItemStack")
+                .addVar("cursor", Types.ITEMSTACK)
                     .withMeta("nullable", true)
                     .varDescription("The item on the cursor, or null if empty or air")
                 .handler(new BlockHandler() {
@@ -272,13 +276,15 @@ public final class InventoryEventBlocks {
                         secondly("message player \"Menu closed!\"")))
                 .since("1.0.0")
                 .category(Categories.INVENTORY)
-                .addVar("player", "Player")
+                .supportsRootLevel(true)
+                .supportsBlock(false)
+                .addVar("player", Types.PLAYER)
                     .varDescription("The player who closed the inventory")
-                .addVar("world", "World")
+                .addVar("world", Types.WORLD)
                     .varDescription("The world the player is in")
-                .addVar("inventory", "Inventory")
+                .addVar("inventory", Types.INVENTORY)
                     .varDescription("The top inventory that was closed")
-                .addVar("title", "String")
+                .addVar("title", Types.STRING)
                     .varDescription("The title of the inventory view")
                 .handler(new BlockHandler() {
                     @Override
@@ -320,13 +326,15 @@ public final class InventoryEventBlocks {
                         secondly("message player \"Menu opened!\"")))
                 .since("1.0.0")
                 .category(Categories.INVENTORY)
-                .addVar("player", "Player")
+                .supportsRootLevel(true)
+                .supportsBlock(false)
+                .addVar("player", Types.PLAYER)
                     .varDescription("The player who opened the inventory")
-                .addVar("world", "World")
+                .addVar("world", Types.WORLD)
                     .varDescription("The world the player is in")
-                .addVar("inventory", "Inventory")
+                .addVar("inventory", Types.INVENTORY)
                     .varDescription("The top inventory that was opened")
-                .addVar("title", "String")
+                .addVar("title", Types.STRING)
                     .varDescription("The title of the inventory view")
                 .handler(new BlockHandler() {
                     @Override

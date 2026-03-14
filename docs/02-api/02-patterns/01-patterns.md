@@ -166,6 +166,11 @@ api.patterns().block(b -> b
 
 Blocks can declare which variables they provide to child statements using `addVar()`. This is purely for documentation: the actual variable emission is still handled by the `BlockHandler`. These declarations tell documentation generators what variables are available and their types.
 
+There are two overloads of `addVar()`:
+
+- `addVar(name, type)` takes a variable name and a human readable type string (e.g. `"Player"`, `"int"`). You can use `Types.STRING`, `Types.INT`, and other primitive constants from `Types` as the type string.
+- `addVar(name, refType)` takes a variable name and a `RefTypeHandle` (e.g. `Types.PLAYER`, `Types.INVENTORY`). The human readable type string is derived automatically from the Java class simple name, and the ref type is stored for tooling.
+
 ```java
 api.patterns().block(b -> b
     .by("MyAddon")
@@ -174,12 +179,14 @@ api.patterns().block(b -> b
     .example("command hello:")
     .since("1.0.0")
     .category(Categories.COMMAND)
-    .addVar("player", "Player")
+    .supportsRootLevel(true)
+    .supportsBlock(false)
+    .addVar("player", Types.PLAYER)
         .withMeta("nullable", true)
         .varDescription("The player who executed the command, or null if the console ran it")
-    .addVar("sender", "CommandSender")
+    .addVar("sender", Types.SENDER)
         .varDescription("The command sender (player or console)")
-    .addVar("world", "World")
+    .addVar("world", Types.WORLD)
         .withMeta("nullable", true)
         .varDescription("The world the player is in, or null if the console ran it")
     .addVar("args", "List<String>")
@@ -198,12 +205,45 @@ api.patterns().block(b -> b
 );
 ```
 
-Each `addVar(name, type)` call takes the variable name and a human readable type string. After `addVar()`, you can chain:
+After `addVar()`, you can chain:
 
 - `.withMeta(key, value)` to attach metadata (such as `"nullable"` set to `true`)
 - `.varDescription(description)` to set a human readable description
 
 These are recorded in `BlockVarInfo` objects and stored in the `RegisteredBlock`. The documentation dumper serializes them into the JSON output under a `"variables"` array for each block entry.
+
+### Root Level and Block Nesting
+
+The builder provides two flags that control where a block can be used:
+
+- `.supportsRootLevel(boolean)` controls whether the block can appear at the top level of a script, outside any other block. Defaults to `false`.
+- `.supportsBlock(boolean)` controls whether the block can be nested inside another block. Defaults to `true`.
+
+For example, event blocks like `on join:` or `click in "menu":` are root level only:
+
+```java
+api.patterns().block(b -> b
+    .by("MyAddon")
+    .pattern("click in %inv:EXPR%")
+    .supportsRootLevel(true)
+    .supportsBlock(false)
+    // ...
+);
+```
+
+Control flow blocks like `if` or `repeat` are block level only (they can only appear inside another block):
+
+```java
+api.patterns().block(b -> b
+    .by("MyAddon")
+    .pattern("repeat %n:INT% times")
+    .supportsRootLevel(false)
+    .supportsBlock(true)
+    // ...
+);
+```
+
+Both flags default to their most common values (`supportsRootLevel = false`, `supportsBlock = true`), so most blocks only need to set these when they deviate from the defaults.
 
 ## Conditions
 

@@ -99,9 +99,10 @@ import java.util.concurrent.CompletableFuture;
  *
  * <h3>Block entry</h3>
  *
- * <p>Block entries share the same base fields as other pattern entries, but may
- * also include a {@code "variables"} array describing variables the block
- * provides to its child statements.
+ * <p>Block entries share the same base fields as other pattern entries, but add
+ * {@code "supportsRootLevel"} and {@code "supportsBlock"} flags, and may include
+ * a {@code "variables"} array describing variables the block provides to its
+ * child statements.
  *
  * <pre>{@code
  * {
@@ -112,12 +113,26 @@ import java.util.concurrent.CompletableFuture;
  *   "since": "1.0.0",
  *   "category": "Command",
  *   "deprecated": false,
+ *   "supportsRootLevel": true,
+ *   "supportsBlock": false,
  *   "variables": [
- *     { "name": "player", "type": "Player", "nullable": true, "description": "The player who executed the command, or null if the console ran it" },
- *     { "name": "sender", "type": "CommandSender", "nullable": false, "description": "The command sender (player or console)" }
+ *     { "name": "player", "type": "Player", "refType": "PLAYER", "nullable": true, "description": "The player who executed the command, or null if the console ran it" },
+ *     { "name": "sender", "type": "CommandSender", "refType": "SENDER", "nullable": false, "description": "The command sender (player or console)" }
  *   ]
  * }
  * }</pre>
+ *
+ * <table>
+ * <caption>Block entry fields</caption>
+ * <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+ * <tr><td>{@code supportsRootLevel}</td><td>{@code boolean}</td><td>{@code true} if
+ * this block can appear at the top level of a script (not nested).</td></tr>
+ * <tr><td>{@code supportsBlock}</td><td>{@code boolean}</td><td>{@code true} if
+ * this block can be nested inside other blocks.</td></tr>
+ * <tr><td>{@code variables}</td><td>{@code object[] | absent}</td><td>Variables
+ * the block exposes to child statements. Only present when the block declares
+ * variables.</td></tr>
+ * </table>
  *
  * <table>
  * <caption>Block variable fields</caption>
@@ -126,6 +141,9 @@ import java.util.concurrent.CompletableFuture;
  * accessible in script child statements.</td></tr>
  * <tr><td>{@code type}</td><td>{@code string}</td><td>Human readable type
  * string (e.g. "Player", "World").</td></tr>
+ * <tr><td>{@code refType}</td><td>{@code string | null}</td><td>The ref type
+ * identifier (e.g. "PLAYER", "WORLD"), or {@code null} if the variable has no
+ * ref type.</td></tr>
  * <tr><td>{@code nullable}</td><td>{@code boolean}</td><td>{@code true} if
  * the variable can be {@code null}.</td></tr>
  * <tr><td>{@code description}</td><td>{@code string | null}</td><td>Human readable
@@ -346,6 +364,8 @@ public final class DocumentationDumper {
         IdentityHashMap<Object, List<String>> handlerToPatterns = new IdentityHashMap<>();
         IdentityHashMap<Object, PatternMeta> handlerToMeta = new IdentityHashMap<>();
         IdentityHashMap<Object, List<BlockVarInfo>> handlerToVars = new IdentityHashMap<>();
+        IdentityHashMap<Object, Boolean> handlerToRootLevel = new IdentityHashMap<>();
+        IdentityHashMap<Object, Boolean> handlerToSupportsBlock = new IdentityHashMap<>();
         List<Object> handlerOrder = new ArrayList<>();
 
         for (RegisteredBlock rb : blocks) {
@@ -356,12 +376,16 @@ public final class DocumentationDumper {
             }).add(rb.pattern().raw());
             handlerToMeta.putIfAbsent(handler, rb.meta());
             handlerToVars.putIfAbsent(handler, rb.variables());
+            handlerToRootLevel.putIfAbsent(handler, rb.supportsRootLevel());
+            handlerToSupportsBlock.putIfAbsent(handler, rb.supportsBlock());
         }
 
         List<Map<String, Object>> result = new ArrayList<>();
         for (Object handler : handlerOrder) {
             Map<String, Object> entry = buildPatternEntry(
                     handlerToPatterns.get(handler), handlerToMeta.get(handler));
+            entry.put("supportsRootLevel", handlerToRootLevel.get(handler));
+            entry.put("supportsBlock", handlerToSupportsBlock.get(handler));
             List<BlockVarInfo> vars = handlerToVars.get(handler);
             if (vars != null && !vars.isEmpty()) {
                 List<Map<String, Object>> varList = new ArrayList<>();
@@ -369,6 +393,7 @@ public final class DocumentationDumper {
                     Map<String, Object> varObj = new LinkedHashMap<>();
                     varObj.put("name", v.name());
                     varObj.put("type", v.type());
+                    varObj.put("refType", v.refType() != null ? v.refType().id() : null);
                     varObj.put("nullable", v.metadata().getOrDefault("nullable", false));
                     varObj.put("description", v.description());
                     if (!v.metadata().isEmpty()) {
