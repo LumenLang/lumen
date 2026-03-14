@@ -18,7 +18,7 @@ Instead, it:
 
 1. Parses your `.luma` files on load
 2. Generates native Java code
-3. Executes that code like a normal plugin
+3. Makes that code execute like a normal plugin
 
 There is no continuously running interpreter.
 There are no runtime logic trees evaluated on every event.
