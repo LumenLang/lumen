@@ -477,7 +477,8 @@ public final class EntityHelper {
                     return new ExpressionResult(
                             "(" + java + " instanceof " + simpleName + " " + alias
                                     + " ? " + alias + "." + getterCall + " : null)",
-                            refTypeId);
+                            refTypeId,
+                            returnJavaType);
                 }));
         return this;
     }
