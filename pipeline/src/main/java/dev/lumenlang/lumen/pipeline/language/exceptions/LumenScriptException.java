@@ -1,6 +1,6 @@
 package dev.lumenlang.lumen.pipeline.language.exceptions;
 
-import dev.lumenlang.lumen.pipeline.language.LumenCore;
+import dev.lumenlang.lumen.pipeline.language.emit.CodeEmitter;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -11,7 +11,7 @@ import java.util.List;
  * Thrown when a Lumen script contains an error that is detected during parsing or code generation.
  *
  * <p>This exception carries the source line number and (when available) the raw source text so
- * that error messages include precise location information, similar to Java compiler errors:
+ * that error messages include precise location information:
  *
  * <pre>
  * Script error on line 5: Variable 'whatever' does not exist
@@ -23,10 +23,10 @@ import java.util.List;
  * offending tokens to make the error location visually clear.
  *
  * <p>Handlers should throw a plain {@link RuntimeException} with a descriptive message; the
- * code-generation loop in {@link LumenCore} will catch it and wrap it in a
+ * code generation loop in {@link CodeEmitter} will catch it and wrap it in a
  * {@code LumenScriptException} that includes line context automatically.
  *
- * @see LumenCore
+ * @see CodeEmitter
  */
 @SuppressWarnings("unused")
 public final class LumenScriptException extends RuntimeException {

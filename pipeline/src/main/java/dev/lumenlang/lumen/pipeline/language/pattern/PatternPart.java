@@ -1,6 +1,6 @@
 package dev.lumenlang.lumen.pipeline.language.pattern;
 
-import dev.lumenlang.lumen.pipeline.language.LumenCore;
+import dev.lumenlang.lumen.pipeline.language.compile.PatternCompiler;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -9,7 +9,7 @@ import java.util.List;
  * A single element within a compiled {@link Pattern}.
  *
  * <p>Pattern parts are the building blocks of Lumen's pattern matching system.
- * The pattern compiler ({@link LumenCore#compile(String)})
+ * The pattern compiler ({@link PatternCompiler#compile(String)})
  * produces a list of these parts from a raw pattern string.
  *
  * <h2>Part Types</h2>
