@@ -44,5 +44,6 @@ public final class CommandAnnotationBinder implements ScriptAnnotationBinder {
 
     @Override
     public void unbind(@NotNull Object instance) {
+        CommandRegistry.unregisterByInstance(instance);
     }
 }

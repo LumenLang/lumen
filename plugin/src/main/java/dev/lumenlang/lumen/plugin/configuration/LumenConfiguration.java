@@ -178,6 +178,9 @@ public final class LumenConfiguration {
 
         @Key("reduce-classpath")
         public boolean REDUCE_CLASSPATH = false;
+
+        @Key("async-define-class")
+        public boolean ASYNC_DEFINE_CLASS = true;
     }
 
     public static final class Language {

@@ -84,6 +84,11 @@ performance:
   # This shouldn't cause any issues unless some addon relies on shaded libraries that are excluded by this, in that case, they are allowed to disable this feature automatically.
   reduce-classpath: true
 
+  # Define compiled script classes on a background thread instead of the main server thread.
+  # This reduces main thread usage during script loading and reloading.
+  # The class activation (instantiation and lifecycle hooks) still runs on the main thread.
+  async-define-class: true
+
 # Language-level behavior
 language:
   experimental:

@@ -91,7 +91,13 @@ public final class Slot {
         for (Entry e : old) if (e.target() != target) n++;
         Entry[] next = new Entry[n];
         int i = 0;
-        for (Entry e : old) if (e.target() != target) next[i++] = e;
+        for (Entry e : old) {
+            if (e.target() != target) {
+                next[i++] = e;
+            } else {
+                e.clear();
+            }
+        }
         entries = next;
     }
 
@@ -104,16 +110,19 @@ public final class Slot {
     public void dispatch(@NotNull Event ev) {
         if (!event.isInstance(ev)) return;
         for (Entry e : entries) {
+            Object target = e.target();
+            MethodHandle handle = e.handle();
+            if (target == null || handle == null) continue;
             try {
-                e.handle().invokeExact(e.target(), ev);
+                handle.invokeExact(target, ev);
             } catch (LumenRuntimeException lre) {
-                logLumenException(lre, e.target());
+                logLumenException(lre, target);
             } catch (Throwable t) {
                 Throwable cause = t instanceof RuntimeException && t.getCause() != null ? t.getCause() : t;
                 if (cause instanceof LumenRuntimeException lre) {
-                    logLumenException(lre, e.target());
+                    logLumenException(lre, target);
                 } else {
-                    String scriptClass = e.target().getClass().getSimpleName();
+                    String scriptClass = target.getClass().getSimpleName();
                     ScriptSourceMap.ScriptLineMapping mapping = ScriptSourceMap.findFromException(cause);
                     if (cause instanceof LumenNullException lne) {
                         LumenLogger.severe("[Script " + scriptClass + "] NullPointerException in events handler");
