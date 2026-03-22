@@ -21,12 +21,12 @@ import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
 import dev.lumenlang.lumen.pipeline.persist.GlobalVars;
 import dev.lumenlang.lumen.plugin.Lumen;
-import dev.lumenlang.lumen.plugin.commands.CommandRegistry;
 import dev.lumenlang.lumen.plugin.configuration.LumenConfiguration;
 import dev.lumenlang.lumen.plugin.scheduler.ScriptScheduler;
 import dev.lumenlang.lumen.plugin.util.InventoryRegistry;
 import org.bukkit.Bukkit;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -73,21 +73,29 @@ public final class ScriptManager {
      * thread
      */
     public static @NotNull CompletableFuture<CompileTimings> load(@NotNull String name, @NotNull String source) {
-        return CompletableFuture.supplyAsync(() -> prepareScript(name, source), COMPILE_POOL)
-                .thenCompose(prepared -> {
-                    CompletableFuture<CompileTimings> future = new CompletableFuture<>();
-                    Bukkit.getScheduler().runTask(Lumen.instance(), () -> {
-                        try {
-                            reload(name);
-                            loadBytecodes(name, prepared.fqcn(), prepared.bytecodes());
-                            future.complete(prepared.timings());
-                        } catch (Throwable t) {
-                            unload(name);
-                            future.completeExceptionally(t);
-                        }
-                    });
-                    return future;
-                });
+        boolean asyncDefine = LumenConfiguration.PERFORMANCE.ASYNC_DEFINE_CLASS;
+        return CompletableFuture.supplyAsync(() -> {
+            PreparedScript prepared = prepareScript(name, source);
+            ScriptClassLoader loader = asyncDefine ? createLoader(prepared.bytecodes()) : null;
+            return new AsyncPreparedScript(prepared, loader);
+        }, COMPILE_POOL).thenCompose(async -> {
+            CompletableFuture<CompileTimings> future = new CompletableFuture<>();
+            Bukkit.getScheduler().runTask(Lumen.instance(), () -> {
+                try {
+                    reload(name);
+                    if (async.loader() != null) {
+                        activateScript(name, async.prepared().fqcn(), async.loader());
+                    } else {
+                        loadBytecodes(name, async.prepared().fqcn(), async.prepared().bytecodes());
+                    }
+                    future.complete(async.prepared().timings());
+                } catch (Throwable t) {
+                    unload(name);
+                    future.completeExceptionally(t);
+                }
+            });
+            return future;
+        });
     }
 
     /**
@@ -106,7 +114,6 @@ public final class ScriptManager {
         String fqcn = "dev.lumenlang.lumen.java.compiled." + normalized;
         ScriptSourceMap.unregisterByClassName(normalized);
         ScriptBinder.unbindAll(s.instance());
-        CommandRegistry.unregisterScript(name);
         ScriptScheduler.handleUnload(fqcn);
     }
 
@@ -126,10 +133,8 @@ public final class ScriptManager {
         String fqcn = "dev.lumenlang.lumen.java.compiled." + normalized;
         ScriptSourceMap.unregisterByClassName(normalized);
         ScriptBinder.unbindAll(s.instance());
-        CommandRegistry.unregisterScript(name);
         ScriptScheduler.handleReload(fqcn);
         GlobalVars.deleteByPrefix(normalized + ".");
-        InventoryRegistry.clearInstance(s.instance());
     }
 
     /**
@@ -212,22 +217,36 @@ public final class ScriptManager {
                 }
             }
 
-            return allPrepared;
-        }, COMPILE_POOL).thenCompose(prepared -> {
+            boolean asyncDefine = LumenConfiguration.PERFORMANCE.ASYNC_DEFINE_CLASS;
+            List<AsyncPreparedScript> asyncScripts = new ArrayList<>();
+            if (asyncDefine) {
+                for (PreparedScript p : allPrepared) {
+                    asyncScripts.add(new AsyncPreparedScript(p, createLoader(p.bytecodes())));
+                }
+            }
+
+            return asyncDefine ? asyncScripts : allPrepared.stream()
+                    .map(p -> new AsyncPreparedScript(p, null))
+                    .toList();
+        }, COMPILE_POOL).thenCompose(asyncScripts -> {
             CompletableFuture<List<PreparedScript>> future = new CompletableFuture<>();
             Bukkit.getScheduler().runTask(Lumen.instance(), () -> {
                 try {
                     GlobalVars.clear();
                     InventoryRegistry.clear();
                     names.forEach(ScriptManager::reload);
-                    for (PreparedScript p : prepared) {
+                    for (AsyncPreparedScript a : asyncScripts) {
                         try {
-                            loadBytecodes(p.name(), p.fqcn(), p.bytecodes());
+                            if (a.loader() != null) {
+                                activateScript(a.prepared().name(), a.prepared().fqcn(), a.loader());
+                            } else {
+                                loadBytecodes(a.prepared().name(), a.prepared().fqcn(), a.prepared().bytecodes());
+                            }
                         } catch (Throwable t) {
-                            LumenLogger.severe("Failed to load script: " + p.name(), t);
+                            LumenLogger.severe("Failed to load script: " + a.prepared().name(), t);
                         }
                     }
-                    future.complete(prepared);
+                    future.complete(asyncScripts.stream().map(AsyncPreparedScript::prepared).toList());
                 } catch (Throwable t) {
                     future.completeExceptionally(t);
                 }
@@ -556,13 +575,17 @@ public final class ScriptManager {
         return result;
     }
 
-    private static void loadBytecodes(@NotNull String scriptName,
-                                      @NotNull String fqcn,
-                                      @NotNull Map<String, byte[]> bytecodes) {
+    private static @NotNull ScriptClassLoader createLoader(@NotNull Map<String, byte[]> bytecodes) {
         ScriptClassLoader loader = new ScriptClassLoader(ClassBuilder.class.getClassLoader());
         for (var entry : bytecodes.entrySet()) {
             loader.define(entry.getKey(), entry.getValue());
         }
+        return loader;
+    }
+
+    private static void activateScript(@NotNull String scriptName,
+                                       @NotNull String fqcn,
+                                       @NotNull ScriptClassLoader loader) {
         try {
             Class<?> main = loader.loadClass(fqcn);
             Object inst = main.getDeclaredConstructor().newInstance();
@@ -573,6 +596,12 @@ public final class ScriptManager {
         } catch (Throwable t) {
             throw new RuntimeException("Failed to load compiled script: " + scriptName, t);
         }
+    }
+
+    private static void loadBytecodes(@NotNull String scriptName,
+                                      @NotNull String fqcn,
+                                      @NotNull Map<String, byte[]> bytecodes) {
+        activateScript(scriptName, fqcn, createLoader(bytecodes));
     }
 
     private static void cacheIfEnabled(@NotNull String scriptName,
@@ -673,5 +702,24 @@ public final class ScriptManager {
             @NotNull String fqcn,
             @NotNull Map<String, byte[]> bytecodes,
             @NotNull CompileTimings timings) {
+    }
+
+    /**
+     * Wraps a {@link PreparedScript} together with an optionally pre-created
+     * {@link ScriptClassLoader}. When {@code async-define-class} is enabled, the
+     * loader is created on the compile thread so that {@code defineClass} calls
+     * do not run on the main server thread. The main thread then only needs to
+     * instantiate the class and run lifecycle hooks via the already populated
+     * loader. When the option is disabled, {@code loader} is {@code null} and
+     * the main thread creates the loader itself through
+     * {@link #loadBytecodes(String, String, Map)}.
+     *
+     * @param prepared the compiled script data (name, bytecodes, timings)
+     * @param loader   the pre-populated class loader, or {@code null} when
+     *                 async class definition is disabled
+     */
+    private record AsyncPreparedScript(
+            @NotNull PreparedScript prepared,
+            @Nullable ScriptClassLoader loader) {
     }
 }

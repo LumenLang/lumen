@@ -22,6 +22,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -40,6 +41,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class CommandRegistry {
 
     private static final Map<String, List<String>> scriptCommands = new HashMap<>();
+    private static final Map<Object, String> instanceToScript = new IdentityHashMap<>();
     private static final List<String> pluginCommands = new ArrayList<>();
     private static final AtomicBoolean syncPending = new AtomicBoolean(false);
     private static CommandMap commandMap;
@@ -162,6 +164,7 @@ public final class CommandRegistry {
         if (aliases != null) {
             tracked.addAll(aliases);
         }
+        instanceToScript.put(instance, scriptName);
         LumenLogger.debug("CommandRegistry", "Registered command: /" + name + " (script: " + scriptName + ")");
     }
 
@@ -227,6 +230,8 @@ public final class CommandRegistry {
         List<String> tracked = scriptCommands.remove(scriptName);
         if (tracked == null) return;
 
+        instanceToScript.values().removeIf(s -> s.equals(scriptName));
+
         ensureCommandMap();
         for (String name : tracked) {
             Command existing = knownCommands.get(name);
@@ -239,6 +244,18 @@ public final class CommandRegistry {
         }
         syncCommands();
         LumenLogger.debug("CommandRegistry", "Unregistered " + tracked.size() + " command(s) for script: " + scriptName);
+    }
+
+    /**
+     * Unregisters all commands associated with a specific script instance.
+     *
+     * @param instance the script instance
+     */
+    public static void unregisterByInstance(@NotNull Object instance) {
+        String scriptName = instanceToScript.remove(instance);
+        if (scriptName != null) {
+            unregisterScript(scriptName);
+        }
     }
 
     /**
@@ -258,6 +275,7 @@ public final class CommandRegistry {
             }
         }
         scriptCommands.clear();
+        instanceToScript.clear();
         for (String name : pluginCommands) {
             removeFromMap(name, "lumen");
         }
@@ -274,19 +292,38 @@ public final class CommandRegistry {
      */
     private static void removeFromMap(@NotNull String name, @Nullable String namespace) {
         if (knownCommands == null) return;
+
+        clearCommandInstance(name);
         knownCommands.remove(name);
+
         if (namespace != null) {
+            clearCommandInstance(namespace + ":" + name);
             knownCommands.remove(namespace + ":" + name);
         } else {
+            clearCommandInstance("lumen:" + name);
             knownCommands.remove("lumen:" + name);
-            knownCommands.entrySet().removeIf(entry ->
-                    entry.getKey().endsWith(":" + name) && entry.getValue().getName().equalsIgnoreCase(name));
+            knownCommands.entrySet().removeIf(entry -> {
+                if (entry.getKey().endsWith(":" + name) && entry.getValue().getName().equalsIgnoreCase(name)) {
+                    if (entry.getValue() instanceof ScriptCommand sc) {
+                        sc.clearReferences();
+                    }
+                    return true;
+                }
+                return false;
+            });
+        }
+    }
+
+    private static void clearCommandInstance(@NotNull String key) {
+        Command cmd = knownCommands.get(key);
+        if (cmd instanceof ScriptCommand sc) {
+            sc.clearReferences();
         }
     }
 
     private static class ScriptCommand extends Command {
-        private final Object instance;
-        private final MethodHandle handler;
+        private volatile Object instance;
+        private volatile MethodHandle handler;
 
         ScriptCommand(@NotNull String name,
                       @Nullable String description,
@@ -299,6 +336,11 @@ public final class CommandRegistry {
             this.handler = handler;
         }
 
+        private void clearReferences() {
+            this.instance = null;
+            this.handler = null;
+        }
+
         private static void logSourceMapping(@Nullable ScriptSourceMap.ScriptLineMapping mapping) {
             if (mapping == null) return;
             LumenLogger.severe("  Script line " + mapping.scriptLine() + ": " + mapping.scriptSource());
@@ -307,18 +349,24 @@ public final class CommandRegistry {
 
         @Override
         public boolean execute(@NotNull CommandSender sender, @NotNull String commandLabel, @NotNull String[] args) {
+            Object inst = this.instance;
+            MethodHandle mh = this.handler;
+            if (inst == null || mh == null) {
+                sender.sendMessage("Command no longer available.");
+                return true;
+            }
             try {
-                handler.invoke(instance, sender, args);
+                mh.invoke(inst, sender, args);
                 return true;
             } catch (LumenRuntimeException lre) {
-                logLumenException(lre);
+                logLumenException(lre, inst);
                 return false;
             } catch (Throwable t) {
                 Throwable cause = t.getCause() != null ? t.getCause() : t;
                 if (cause instanceof LumenRuntimeException lre) {
-                    logLumenException(lre);
+                    logLumenException(lre, inst);
                 } else {
-                    String scriptClass = instance.getClass().getSimpleName();
+                    String scriptClass = inst.getClass().getSimpleName();
                     ScriptSourceMap.ScriptLineMapping mapping = ScriptSourceMap.findFromException(cause);
                     if (cause instanceof LumenNullException lne) {
                         LumenLogger.severe("[Script " + scriptClass + "] NullPointerException in command /" + getName());
@@ -337,8 +385,8 @@ public final class CommandRegistry {
             }
         }
 
-        private void logLumenException(LumenRuntimeException lre) {
-            String scriptClass = instance.getClass().getSimpleName();
+        private void logLumenException(LumenRuntimeException lre, Object inst) {
+            String scriptClass = inst.getClass().getSimpleName();
             ScriptSourceMap.ScriptLineMapping mapping = lre.scriptLine() > 0
                     ? null
                     : ScriptSourceMap.findFromException(lre);

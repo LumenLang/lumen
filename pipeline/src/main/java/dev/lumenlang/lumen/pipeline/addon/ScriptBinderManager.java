@@ -2,6 +2,7 @@ package dev.lumenlang.lumen.pipeline.addon;
 
 import dev.lumenlang.lumen.api.binder.ScriptAnnotationBinder;
 import dev.lumenlang.lumen.api.binder.ScriptBinderRegistrar;
+import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -39,7 +40,12 @@ public final class ScriptBinderManager implements ScriptBinderRegistrar {
      */
     public void unbindAll(@NotNull Object instance) {
         for (ScriptAnnotationBinder binder : binders) {
-            binder.unbind(instance);
+            try {
+                binder.unbind(instance);
+            } catch (Throwable t) {
+                LumenLogger.severe("Failed to unbind " + binder.getClass().getSimpleName()
+                        + " for " + instance.getClass().getSimpleName(), t);
+            }
         }
     }
 }

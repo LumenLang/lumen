@@ -361,6 +361,7 @@ public final class ScriptScheduler {
                     if (!se.task.isCancelled()) se.task.cancel();
                     return true;
                 }
+                se.code.clearDelegate();
                 return false;
             });
         }
@@ -496,6 +497,10 @@ public final class ScriptScheduler {
 
         private void swap(@NotNull Runnable newDelegate) {
             this.delegate = newDelegate;
+        }
+
+        private void clearDelegate() {
+            this.delegate = () -> {};
         }
 
         private boolean hasRun() {
