@@ -1,5 +1,8 @@
-package dev.lumenlang.lumen.plugin.defaults.emit;
+package dev.lumenlang.lumen.plugin.defaults.emit.form;
 
+import dev.lumenlang.lumen.api.LumenAPI;
+import dev.lumenlang.lumen.api.annotations.Call;
+import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.emit.EmitContext;
 import dev.lumenlang.lumen.api.emit.ScriptToken;
 import dev.lumenlang.lumen.api.emit.StatementFormHandler;
@@ -30,8 +33,14 @@ import java.util.Map;
  * <p>Handles both the new syntax ({@code global [stored] var x [for [ref type] refType] default expr})
  * and the shorthand syntax ({@code global x [for refType] default expr}).
  */
-@SuppressWarnings("DataFlowIssue")
+@Registration(order = -2000)
+@SuppressWarnings({"unused", "DataFlowIssue"})
 public final class GlobalVarStatementForm implements StatementFormHandler {
+
+    @Call
+    public void register(@NotNull LumenAPI api) {
+        api.emitters().statementForm(this);
+    }
 
     private static boolean isNewGlobalStatement(@NotNull List<Token> t) {
         if (t.size() < 5 || !t.get(0).text().equalsIgnoreCase("global")) {
@@ -134,6 +143,16 @@ public final class GlobalVarStatementForm implements StatementFormHandler {
         String nameError = VarNameValidator.validate(name);
         if (nameError != null) {
             throw new LumenScriptException(ctx.line(), ctx.raw(), nameError);
+        }
+
+        if (env.isGlobal(name)) {
+            throw new LumenScriptException(ctx.line(), ctx.raw(),
+                    "Global variable '" + name + "' is already declared");
+        }
+
+        if (env.lookupVar(name) != null) {
+            throw new LumenScriptException(ctx.line(), ctx.raw(),
+                    "Variable '" + name + "' is already defined in this scope");
         }
 
         String className = ctx.codegen().className();

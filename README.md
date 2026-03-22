@@ -1,12 +1,19 @@
-# Lumen
-
-### Simple scripting for Minecraft servers, built for modern performance
-
-Lumen is a high-performance scripting language for Minecraft servers that compiles your scripts directly into native Java code, with full hot reload and on-the-fly updates.
-
-Visit the [Documentation](https://docs.lumenlang.dev/) for guides, examples, and how-to's.
-
-Visit the [Reference Documentation](https://lumenlang.dev) for a full list of features, syntax, and examples.
+<h1 align="center">Lumen</h1>
+<p align="center">
+  <a href="https://github.com/LumenLang">
+    <img src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white"/>
+  </a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=lumenlang.lumenlang">
+    <img src="https://img.shields.io/badge/VS%20Code-007ACC?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU+VmlzdWFsIFN0dWRpbyBDb2RlPC90aXRsZT48cGF0aCBmaWxsPSJ3aGl0ZSIgZD0iTTIzLjE1IDIuNTg3TDE4LjIxLjIxYTEuNDk0IDEuNDk0IDAgMCAwLTEuNzA1LjI5bC05LjQ2IDguNjMtNC4xMi0zLjEyOGEuOTk5Ljk5OSAwIDAgMC0xLjI3Ni4wNTdMLjMyNyA3LjI2MUExIDEgMCAwIDAgLjMyNiA4Ljc0TDMuODk5IDEyIC4zMjYgMTUuMjZhMSAxIDAgMCAwIC4wMDEgMS40NzlMMS42NSAxNy45NGEuOTk5Ljk5OSAwIDAgMCAxLjI3Ni4wNTdsNC4xMi0zLjEyOCA5LjQ2IDguNjNhMS40OTIgMS40OTIgMCAwIDAgMS43MDQuMjlsNC45NDItMi4zNzdBMS41IDEuNSAwIDAgMCAyNCAyMC4wNlYzLjkzOWExLjUgMS41IDAgMCAwLS44NS0xLjM1MnptLTUuMTQ2IDE0Ljg2MUwxMC44MjYgMTJsNy4xNzgtNS40NDh2MTAuODk2eiIvPjwvc3ZnPg=="/>
+  </a>
+  <a href="https://lumenlang.dev">
+    <img src="https://img.shields.io/badge/Website-000000?style=for-the-badge&logo=googlechrome&logoColor=white"/>
+  </a>
+  <a href="https://www.spigotmc.org/resources/133091/">
+    <img src="https://img.shields.io/badge/SpigotMC-ED8106?style=for-the-badge&logo=spigotmc&logoColor=white"/>
+  </a>
+</p>
+<p align="center">Lumen is a high-performance scripting language for Minecraft servers that compiles your scripts directly into native Java code, with full hot reload and on-the-fly updates.</p>
 
 ---
 
@@ -24,13 +31,6 @@ There is no continuously running interpreter.
 There are no runtime logic trees evaluated on every event.
 
 Once processed, scripts behave like compiled server code, enabling near-native performance.
-
-### What That Means
-
-- No script engine running every tick or event
-- No persistent execution graphs in memory
-- Significantly lower memory usage
-- JVM optimizations apply naturally
 
 Which means you can write complex scripts without worrying about performance degradation as your server grows.
 

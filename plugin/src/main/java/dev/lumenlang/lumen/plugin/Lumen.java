@@ -13,6 +13,7 @@ import dev.lumenlang.lumen.pipeline.addon.ScriptBinderManager;
 import dev.lumenlang.lumen.pipeline.binder.ScriptBinder;
 import dev.lumenlang.lumen.pipeline.java.compiler.system.SystemCompiler;
 import dev.lumenlang.lumen.pipeline.language.emit.EmitRegistry;
+import dev.lumenlang.lumen.pipeline.language.emit.TransformerRegistry;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
 import dev.lumenlang.lumen.pipeline.persist.PersistentVars;
@@ -47,11 +48,6 @@ import java.io.File;
  * custom server behavior without requiring Java knowledge. Unlike traditional
  * scripting plugins that interpret scripts at runtime, Lumen processes scripts
  * once and converts them into native Java code that runs directly on the server.
- *
- * <h2>Addon API</h2>
- * <p>Other plugins extend Lumen through the {@code dev.lumenlang.lumen.api} package.
- * They call {@link LumenProvider#registerAddon} or access the API directly via
- * {@link LumenProvider#api()}.
  */
 @SuppressWarnings("unused")
 public final class Lumen extends JavaPlugin {
@@ -149,10 +145,13 @@ public final class Lumen extends JavaPlugin {
         EmitRegistry emitReg = new EmitRegistry();
         EmitRegistry.instance(emitReg);
 
+        TransformerRegistry transformerReg = new TransformerRegistry();
+        TransformerRegistry.instance(transformerReg);
+
         ScriptBinderManager binderManager = new ScriptBinderManager();
         ScriptBinder.init(binderManager);
 
-        lumenApi = new LumenAPIImpl(patternRegistry, types, emitReg, binderManager);
+        lumenApi = new LumenAPIImpl(patternRegistry, types, emitReg, transformerReg, binderManager);
 
         PersistentVars.init(new FilePersistentStorage(getDataFolder().toPath().resolve("persist.dat")));
         PersistentVars.setValueResolver(BukkitValueResolver.INSTANCE);
@@ -198,7 +197,7 @@ public final class Lumen extends JavaPlugin {
         for (LumenAddon addon : addonManager.addons()) {
             for (ConfigOverride override : addon.configOverrides()) {
                 LumenLogger.info("Addon " + addon.name() + " v" + addon.version() +
-                        " is " + (override.value() ? "enabling" : "disabling") + " " + override.option().key() + ": " + override.reason());
+                        " is " + (override.value() ? "enabling" : "disabling") + " " + override.option().path() + ": " + override.reason());
                 LumenConfiguration.applyOverride(override);
             }
         }

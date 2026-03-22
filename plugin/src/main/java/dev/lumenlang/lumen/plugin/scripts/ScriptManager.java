@@ -6,15 +6,16 @@ import dev.lumenlang.lumen.pipeline.binder.ScriptBinder;
 import dev.lumenlang.lumen.pipeline.codegen.CodegenContext;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.pipeline.java.JavaBuilder;
-import dev.lumenlang.lumen.pipeline.java.compiled.ScriptRuntime;
+import dev.lumenlang.lumen.pipeline.java.compiled.ClassBuilder;
 import dev.lumenlang.lumen.pipeline.java.compiled.ScriptSourceMap;
 import dev.lumenlang.lumen.pipeline.java.compiler.ScriptClassLoader;
 import dev.lumenlang.lumen.pipeline.java.compiler.system.CompilationFailedException;
 import dev.lumenlang.lumen.pipeline.java.compiler.system.InMemoryFileManager;
 import dev.lumenlang.lumen.pipeline.java.compiler.system.SourceFile;
 import dev.lumenlang.lumen.pipeline.java.compiler.system.SystemCompiler;
-import dev.lumenlang.lumen.pipeline.java.formatter.MiniJavaFormatter;
+import dev.lumenlang.lumen.pipeline.java.formatter.MiniJavaCleaner;
 import dev.lumenlang.lumen.pipeline.language.emit.CodeEmitter;
+import dev.lumenlang.lumen.pipeline.language.emit.TransformerRegistry;
 import dev.lumenlang.lumen.pipeline.language.exceptions.LumenScriptException;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
@@ -101,7 +102,7 @@ public final class ScriptManager {
         if (s == null)
             return;
 
-        String normalized = ScriptRuntime.normalize(new CodegenContext(name).className());
+        String normalized = ClassBuilder.normalize(new CodegenContext(name).className());
         String fqcn = "dev.lumenlang.lumen.java.compiled." + normalized;
         ScriptSourceMap.unregisterByClassName(normalized);
         ScriptBinder.unbindAll(s.instance());
@@ -121,7 +122,7 @@ public final class ScriptManager {
         if (s == null)
             return;
 
-        String normalized = ScriptRuntime.normalize(new CodegenContext(name).className());
+        String normalized = ClassBuilder.normalize(new CodegenContext(name).className());
         String fqcn = "dev.lumenlang.lumen.java.compiled." + normalized;
         ScriptSourceMap.unregisterByClassName(normalized);
         ScriptBinder.unbindAll(s.instance());
@@ -172,7 +173,7 @@ public final class ScriptManager {
                         Map<String, byte[]> cached = CompiledClassCache.load(name, src);
                         if (cached != null) {
                             String fqcn = "dev.lumenlang.lumen.java.compiled." +
-                                    ScriptRuntime.normalize(new CodegenContext(name).className());
+                                    ClassBuilder.normalize(new CodegenContext(name).className());
                             String cachedJavaSource = CompiledClassCache.loadJavaSource(name);
                             if (cachedJavaSource != null) {
                                 ScriptSourceMap.register(fqcn, cachedJavaSource);
@@ -261,7 +262,7 @@ public final class ScriptManager {
                 if (cacheEnabled) {
                     Map<String, byte[]> cached = CompiledClassCache.load(name, src);
                     if (cached != null) {
-                        String fqcn = "dev.lumenlang.lumen.java.compiled." + ScriptRuntime.normalize(new CodegenContext(name).className());
+                        String fqcn = "dev.lumenlang.lumen.java.compiled." + ClassBuilder.normalize(new CodegenContext(name).className());
                         String cachedJavaSource = CompiledClassCache.loadJavaSource(name);
                         if (cachedJavaSource != null) {
                             ScriptSourceMap.register(fqcn, cachedJavaSource);
@@ -358,7 +359,7 @@ public final class ScriptManager {
             Map<String, byte[]> cached = CompiledClassCache.load(name, source);
             if (cached != null) {
                 String fqcn = "dev.lumenlang.lumen.java.compiled." +
-                        ScriptRuntime.normalize(new CodegenContext(name).className());
+                        ClassBuilder.normalize(new CodegenContext(name).className());
 
                 if (LumenConfiguration.DEBUG.LOG_COMPILATION) {
                     LumenLogger.info("[Compilation] Loaded " + name + " from cache");
@@ -400,8 +401,12 @@ public final class ScriptManager {
 
         CodeEmitter.generate(source, PatternRegistry.instance(), env, gen, output);
 
-        String javaSource = ScriptRuntime.buildClass(gen.className(), gen, output);
-        String fqcn = "dev.lumenlang.lumen.java.compiled." + ScriptRuntime.normalize(gen.className());
+        if (LumenConfiguration.LANGUAGE.EXPERIMENTAL.CODE_TRANSFORM) {
+            TransformerRegistry.instance().transform(output);
+        }
+
+        String javaSource = ClassBuilder.buildClass(gen.className(), gen, output);
+        String fqcn = "dev.lumenlang.lumen.java.compiled." + ClassBuilder.normalize(gen.className());
 
         ScriptSourceMap.register(fqcn, javaSource);
 
@@ -425,13 +430,15 @@ public final class ScriptManager {
     private static @NotNull Map<String, byte[]> compile(@NotNull GeneratedSource source) {
         try {
             return SystemCompiler.compileAll(
-                    ScriptRuntime.class.getClassLoader(),
+                    ClassBuilder.class.getClassLoader(),
                     List.of(new SourceFile(source.fqcn(), source.javaSource()))).classes;
         } catch (CompilationFailedException e) {
+            dumpSource(source);
             logCompileErrors(e.errors(), source.scriptName());
             throw new RuntimeException(
                     "Compilation failed for script: " + source.scriptName() + " (see error log above for details)", e);
         } catch (Exception e) {
+            dumpSource(source);
             LumenLogger.severe("[Script " + source.scriptName() + "] Unexpected compiler error: " + e.getMessage());
             throw new RuntimeException("Compilation failed for script: " + source.scriptName(), e);
         }
@@ -505,7 +512,7 @@ public final class ScriptManager {
         long compileStart = System.nanoTime();
         InMemoryFileManager fm;
         try {
-            fm = SystemCompiler.compileAll(ScriptRuntime.class.getClassLoader(), files);
+            fm = SystemCompiler.compileAll(ClassBuilder.class.getClassLoader(), files);
         } catch (CompilationFailedException e) {
             logCompileErrors(e.errors(), generated);
             LumenLogger.severe("Batch compilation failed due to script errors, falling back to individual compilation...");
@@ -521,7 +528,7 @@ public final class ScriptManager {
         long parsePerScript = generated.isEmpty() ? 0 : parseTotalNanos / generated.size();
         long compilePerScript = generated.isEmpty() ? 0 : compileTotal / generated.size();
         for (GeneratedSource s : generated) {
-            String normalized = ScriptRuntime.normalize(s.className());
+            String normalized = ClassBuilder.normalize(s.className());
             Map<String, byte[]> bytecodes = extractBytecodes(fm.classes, normalized);
             if (LumenConfiguration.DEBUG.LOG_COMPILATION) {
                 LumenLogger.info(
@@ -552,7 +559,7 @@ public final class ScriptManager {
     private static void loadBytecodes(@NotNull String scriptName,
                                       @NotNull String fqcn,
                                       @NotNull Map<String, byte[]> bytecodes) {
-        ScriptClassLoader loader = new ScriptClassLoader(ScriptRuntime.class.getClassLoader());
+        ScriptClassLoader loader = new ScriptClassLoader(ClassBuilder.class.getClassLoader());
         for (var entry : bytecodes.entrySet()) {
             loader.define(entry.getKey(), entry.getValue());
         }
@@ -582,19 +589,20 @@ public final class ScriptManager {
         if (!LumenConfiguration.DEBUG.DUMP_GENERATED_JAVA)
             return;
 
+        dumpSource(source);
+    }
+
+    private static void dumpSource(@NotNull GeneratedSource source) {
         String safeName = source.scriptName().replace('/', '_').replace('\\', '_');
         Path dumpDir = CompiledClassCache.compiledRoot().resolve(safeName).resolve("dump");
         try {
             Files.createDirectories(dumpDir);
 
-            String baseName = ScriptRuntime.normalize(source.className());
+            String baseName = ClassBuilder.normalize(source.className());
             String raw = source.javaSource();
 
-            Files.writeString(dumpDir.resolve(baseName + "-raw.java"), raw);
-            Files.writeString(dumpDir.resolve(baseName + "-formatted.java"),
-                    MiniJavaFormatter.format(raw));
-            Files.writeString(dumpDir.resolve(baseName + "-readable.java"),
-                    MiniJavaFormatter.formatReadable(raw));
+            Files.writeString(dumpDir.resolve(baseName + ".java"), raw);
+            Files.writeString(dumpDir.resolve(baseName + "-readable.java"), MiniJavaCleaner.formatReadable(raw));
         } catch (IOException e) {
             LumenLogger.severe("Failed to dump generated Java for " + source.scriptName() + ": " + e.getMessage());
         }

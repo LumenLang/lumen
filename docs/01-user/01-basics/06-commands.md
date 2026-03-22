@@ -79,21 +79,21 @@ Useful operations on `args`:
 Check the first argument to branch into different actions:
 
 ```luma
-command todo:
-    description "Manage your todo list"
+command note:
+    description "Manage your notes"
 
     if args size < 1:
-        message player "&7Usage: /todo <add|clear>"
+        message player "&7Usage: /note <add|clear>"
     else:
         var action = get args at index 0
 
         if action is "add":
             if args size < 2:
-                message player "&cUsage: /todo add <task>"
+                message player "&cUsage: /note add <text>"
             else:
-                var task = get args at index 1
-                message player "&aAdded task: {task}"
+                var text = get args at index 1
+                message player "&aAdded note: {text}"
 
         else if action is "clear":
-            message player "&eTodo list cleared!"
+            message player "&eNotes cleared!"
 ```

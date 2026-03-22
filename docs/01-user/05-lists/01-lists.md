@@ -15,7 +15,7 @@ var items = new list
 For a global or stored list:
 
 ```luma
-global stored var todos for ref type player default new list
+global stored var notes for ref type player default new list
 ```
 
 This creates a per-player list that is saved across restarts, starting empty for each new player.
@@ -50,8 +50,8 @@ message player "&eYou have {count} items."
 ## Checking if Empty
 
 ```luma
-if todos is empty:
-    message player "&7No tasks yet."
+if notes is empty:
+    message player "&7No notes yet."
 ```
 
 ## Checking if a List Contains a Value
@@ -84,8 +84,8 @@ Practical example where a player provides a 1-based number that needs converting
 var num = get args at index 1
 var idx = num as integer
 subtract 1 from idx
-remove index idx from todos
-message player "&aRemoved task #{num}."
+remove index idx from notes
+message player "&aRemoved note #{num}."
 ```
 
 ## Clearing
@@ -93,7 +93,7 @@ message player "&aRemoved task #{num}."
 Remove all items at once:
 
 ```luma
-clear todos
+clear notes
 ```
 
 ## Looping
@@ -101,10 +101,10 @@ clear todos
 You can loop over a list and remove items during iteration:
 
 ```luma
-loop entry in arenas:
+loop entry in warps:
     var name = get field "name" of entry
     if name is target:
-        remove entry from arenas
+        remove entry from warps
 ```
 
 For more on looping syntax, including loop sources and maps, see the [Loops](../01-basics/05-loops.md) page.
@@ -118,22 +118,22 @@ Typed lists are usually recommended over untyped lists for safety, support for u
 :::
 
 ```luma
-data arena:
+data warp:
     name text
-    x1 number
-    y1 number
-    z1 number
+    x number
+    y number
+    z number
 
-global stored var arenas default new list of arena
+global stored var warps default new list of warp
 ```
 
 You can then add data instances and loop over them, reading fields:
 
 ```luma
-var entry = new arena with name "PvP Pit" x1 10 y1 60 z1 10
-add entry to arenas
+var entry = new warp with name "Spawn" x 0 y 64 z 0
+add entry to warps
 
-loop entry in arenas:
-    var arenaname = get field "name" of entry
-    message player "&e{arenaname}"
+loop entry in warps:
+    var warpname = get field "name" of entry
+    message player "&e{warpname}"
 ```

@@ -52,23 +52,28 @@ public final class RegistrationScannerBackend implements RegistrationScanner.Bac
                 collectFromJar(path, basePath, classNames);
             }
 
-            classNames.sort(Comparator.comparingInt(this::order));
-
+            List<Class<?>> registrables = new ArrayList<>();
             for (String className : classNames) {
-                processClass(className);
+                try {
+                    Class<?> clazz = Class.forName(className);
+                    if (clazz.isAnnotationPresent(Registration.class)) {
+                        registrables.add(clazz);
+                    }
+                } catch (Exception e) {
+                    LOGGER.log(Level.WARNING, "Failed to load class: " + className, e);
+                }
+            }
+
+            registrables.sort(Comparator.comparingInt(clazz -> {
+                Registration reg = clazz.getAnnotation(Registration.class);
+                return reg != null ? reg.order() : 0;
+            }));
+
+            for (Class<?> clazz : registrables) {
+                processClass(clazz);
             }
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Failed to scan registrations in package " + basePackage, e);
-        }
-    }
-
-    private int order(@NotNull String className) {
-        try {
-            Class<?> clazz = Class.forName(className);
-            Registration reg = clazz.getAnnotation(Registration.class);
-            return reg != null ? reg.order() : 0;
-        } catch (Exception e) {
-            return 0;
         }
     }
 
@@ -100,15 +105,12 @@ public final class RegistrationScannerBackend implements RegistrationScanner.Bac
         }
     }
 
-    private void processClass(@NotNull String className) {
+    private void processClass(@NotNull Class<?> clazz) {
         try {
-            Class<?> clazz = Class.forName(className);
-            if (!clazz.isAnnotationPresent(Registration.class)) return;
-
             try {
                 clazz.getDeclaredConstructor();
             } catch (NoSuchMethodException e) {
-                LOGGER.warning("@Registration class " + className
+                LOGGER.warning("@Registration class " + clazz.getName()
                         + " has no default (no-arg) constructor, skipping");
                 return;
             }
@@ -118,7 +120,7 @@ public final class RegistrationScannerBackend implements RegistrationScanner.Bac
                 if (!method.isAnnotationPresent(Call.class)) continue;
                 Class<?>[] params = method.getParameterTypes();
                 if (params.length != 1 || !LumenAPI.class.isAssignableFrom(params[0])) {
-                    LOGGER.warning("@Call method " + className + "#" + method.getName()
+                    LOGGER.warning("@Call method " + clazz.getName() + "#" + method.getName()
                             + " must accept exactly one LumenAPI parameter");
                     continue;
                 }
@@ -126,7 +128,7 @@ public final class RegistrationScannerBackend implements RegistrationScanner.Bac
                 method.invoke(instance, api);
             }
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Failed to process registration class: " + className, e);
+            LOGGER.log(Level.SEVERE, "Failed to process registration class: " + clazz.getName(), e);
         }
     }
 }

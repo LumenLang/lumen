@@ -22,25 +22,14 @@ import java.util.List;
  *
  * <h2>Pattern Syntax</h2>
  * <pre>
- * literal           -  exact match (case-insensitive)
- * %name:TYPE%       -  placeholders with explicit type
- * %name%            -  placeholders with default EXPR type
- * (a|b|c)           -  required choice: one alternative must match
- * [text]            -  optional: may or may not be present
- * [a|b|c]           -  optional choice: zero or one alternative matches
- * word[suffix]      -  optional suffix: matches "word" or "wordsuffix"
- * [prefix]word      -  optional prefix: matches "word" or "prefixword"
- * </pre>
- *
- * <h2>Examples</h2>
- * <pre>
- * Pattern: "(show|reveal|hide) %who:PLAYER% info[rmation]"
- *   → Choice(["show","reveal","hide"]) + Placeholder("who",PLAYER) + FlexLiteral(["info","information"])
- *
- * Pattern: "[un]hide %players:PLAYER%'[s] info[rmation] (in|on|from) [the] server list"
- *   → FlexLiteral(["hide","unhide"]) + Placeholder + FlexLiteral(["'","'s"])
- *     + FlexLiteral(["info","information"]) + Choice(["in","on","from"])
- *     + Optional(["the"]) + Literal("server") + Literal("list")
+ * literal           - exact match (case-insensitive)
+ * %name:TYPE%       - placeholders with explicit type
+ * %name%            - placeholders with default EXPR type
+ * (a|b|c)           - required choice: one alternative must match
+ * [text]            - optional: may or may not be present
+ * [a|b|c]           - optional choice: zero or one alternative matches
+ * word[suffix]      - optional suffix: matches "word" or "wordsuffix"
+ * [prefix]word      - optional prefix: matches "word" or "prefixword"
  * </pre>
  *
  * @see Pattern

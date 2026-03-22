@@ -1,5 +1,8 @@
-package dev.lumenlang.lumen.plugin.defaults.emit;
+package dev.lumenlang.lumen.plugin.defaults.emit.form;
 
+import dev.lumenlang.lumen.api.LumenAPI;
+import dev.lumenlang.lumen.api.annotations.Call;
+import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.emit.EmitContext;
 import dev.lumenlang.lumen.api.emit.ScriptToken;
 import dev.lumenlang.lumen.api.emit.StatementFormHandler;
@@ -30,8 +33,14 @@ import java.util.List;
  * <p>Handles both the {@code stored var x [for [ref type] scope] default expr}
  * syntax and the {@code store x [for scope] default expr} syntax.
  */
-@SuppressWarnings("DataFlowIssue")
+@Registration(order = -1999)
+@SuppressWarnings({"unused", "DataFlowIssue"})
 public final class StoreVarStatementForm implements StatementFormHandler {
+
+    @Call
+    public void register(@NotNull LumenAPI api) {
+        api.emitters().statementForm(this);
+    }
 
     private static boolean isStoreStatement(@NotNull List<Token> t) {
         if (t.size() < 4 || !t.get(0).text().equalsIgnoreCase("store")) {

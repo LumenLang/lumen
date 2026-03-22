@@ -49,18 +49,23 @@ Each player has their own `swap_enabled` value. Enabling swap mode for one playe
 When a variable is per-player, use `for <player>` to read or write a specific player's copy:
 
 ```luma
-global var streak for ref type player default 0
+global var coins for ref type player default 0
 
-on entity_death:
-    if killer is set:
-        add 1 to streak for killer
-        message killer "&aKill streak: {streak}"
+command earn:
+    add 10 to coins
+    message player "&a+10 coins! Balance: {coins}"
 
-on player_death:
-    set streak to 0 for player
+command pay:
+    if args size < 1:
+        message player "&cUsage: /pay <player>"
+    else:
+        var target = get args at index 0
+        subtract 10 from coins
+        add 10 to coins for target
+        message player "&eSent 10 coins to {target}!"
 ```
 
-Without `for`, the variable defaults to the player who triggered the current event. With `for killer`, you are explicitly accessing the killer's copy.
+With `for target`, you are explicitly accessing another player's copy of the variable.
 
 ## No Default
 

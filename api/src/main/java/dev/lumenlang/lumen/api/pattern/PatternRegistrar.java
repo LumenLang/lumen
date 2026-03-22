@@ -21,7 +21,7 @@ import java.util.function.Consumer;
  *
  * <p>Patterns can be registered in two ways:
  * <ol>
- *   <li><b>Simple (legacy):</b> directly passing a pattern string and handler</li>
+ *   <li><b>Simple:</b> directly passing a pattern string and handler</li>
  *   <li><b>Builder (recommended):</b> using a consumer that configures a builder with
  *       documentation metadata such as description, examples, category, and version</li>
  * </ol>

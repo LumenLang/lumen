@@ -1,5 +1,8 @@
-package dev.lumenlang.lumen.plugin.defaults.emit;
+package dev.lumenlang.lumen.plugin.defaults.emit.form;
 
+import dev.lumenlang.lumen.api.LumenAPI;
+import dev.lumenlang.lumen.api.annotations.Call;
+import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.emit.BlockFormHandler;
 import dev.lumenlang.lumen.api.emit.EmitContext;
 import dev.lumenlang.lumen.api.emit.ScriptLine;
@@ -18,7 +21,14 @@ import java.util.List;
  * <p>Parses field definitions from the block's children and registers a
  * {@link DataSchema} in the type environment.
  */
+@Registration(order = -2000)
+@SuppressWarnings("unused")
 public final class DataBlockForm implements BlockFormHandler {
+
+    @Call
+    public void register(@NotNull LumenAPI api) {
+        api.emitters().blockForm(this);
+    }
 
     @Override
     public boolean matches(@NotNull List<? extends ScriptToken> headTokens) {
