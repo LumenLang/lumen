@@ -138,8 +138,8 @@ public final class StringConditions {
         api.patterns().condition(b -> b
                 .by("Lumen")
                 .pattern("%a:STRING% (is|equals) true")
-                .description("Checks if a string or config value is truthy (\"true\", \"on\"), \"yes\" or \"1\").")
-                .example("if \"{myFlag}\" is true:")
+                .description("Checks if a string is truthy (\"true\", \"on\"), \"yes\" or \"1\").")
+                .example("if \"{enabled}\" is true:")
                 .since("1.0.0")
                 .category(Categories.TEXT)
                 .handler((match, env, ctx) -> {
@@ -151,8 +151,8 @@ public final class StringConditions {
         api.patterns().condition(b -> b
                 .by("Lumen")
                 .pattern("%a:STRING% (is|equals) false")
-                .description("Checks if a string or config value is falsy.")
-                .example("if \"{myFlag}\" is false:")
+                .description("Checks if a string is falsy.")
+                .example("if \"{enabled}\" is false:")
                 .since("1.0.0")
                 .category(Categories.TEXT)
                 .handler((match, env, ctx) -> {

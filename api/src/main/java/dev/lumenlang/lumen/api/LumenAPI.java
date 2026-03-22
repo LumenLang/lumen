@@ -2,6 +2,7 @@ package dev.lumenlang.lumen.api;
 
 import dev.lumenlang.lumen.api.binder.ScriptBinderRegistrar;
 import dev.lumenlang.lumen.api.emit.EmitRegistrar;
+import dev.lumenlang.lumen.api.emit.transform.TransformerRegistrar;
 import dev.lumenlang.lumen.api.event.EventRegistrar;
 import dev.lumenlang.lumen.api.pattern.PatternRegistrar;
 import dev.lumenlang.lumen.api.placeholder.PlaceholderRegistrar;
@@ -40,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
  *   <li>{@link #placeholders()}  -  register placeholder properties for ref types</li>
  *   <li>{@link #emitters()}  -  register custom emit handlers (statement forms, block forms, hooks)</li>
  *   <li>{@link #binders()}  -  register custom script annotation binders</li>
+    <li>{@link #transformers()}  -  register code transformers (experimental)</li>
  * </ul>
  *
  * <p>Implementations of this interface are provided by Lumen's internal code. Addons should
@@ -106,4 +108,17 @@ public interface LumenAPI {
      * @return the binder registrar
      */
     @NotNull ScriptBinderRegistrar binders();
+
+    /**
+     * Returns the transformer registrar for registering code transformers.
+     *
+     * <p>Transformers registered here run after code generation to inspect and
+     * modify the emitted Java source. Each transformer owns a specific tag and
+     * can only modify lines emitted with that tag.
+     *
+     * <p>This is an experimental feature.
+     *
+     * @return the transformer registrar
+     */
+    @NotNull TransformerRegistrar transformers();
 }

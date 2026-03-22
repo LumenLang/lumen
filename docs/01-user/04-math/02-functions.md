@@ -1,5 +1,5 @@
 ---
-description: "Built-in math functions: min, max, abs, clamp, random, and chance."
+description: "Built-in math functions"
 ---
 
 # Math Functions

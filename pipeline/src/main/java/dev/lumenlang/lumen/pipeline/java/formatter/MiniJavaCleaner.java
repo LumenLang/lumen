@@ -1,7 +1,6 @@
 package dev.lumenlang.lumen.pipeline.java.formatter;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,235 +8,24 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * A lightweight Java code formatter providing multiple levels of source transformation.
- *
- * <ul>
- *   <li>{@link #format} - formatted, with identical branches merged</li>
- *   <li>{@link #formatReadable} - same as {@link #format} but also strips all cast expressions,
- *       producing output that may not compile but is easier to read quickly</li>
- * </ul>
+ * A lightweight Java code cleaner providing post-processing transformations.
  */
 @SuppressWarnings("unused")
-public final class MiniJavaFormatter {
+public final class MiniJavaCleaner {
 
-    private static final Pattern CAST_PATTERN =
-            Pattern.compile("\\((?:int|long|double|float|short|byte|char|boolean|[A-Z]\\w*(?:\\.\\w+)*(?:<[^)]*>)?(?:\\[])*)\\)");
-
-    /**
-     * Formats the source and merges consecutive identical if-blocks. The result is still valid Java.
-     *
-     * @param source raw Java source
-     * @return formatted and cleaned Java source
-     */
-    public static @NotNull String format(@NotNull String source) {
-        String indented = applyIndentation(source,
-                """
-                        // Formatted by MiniJavaFormatter (branches merged).
-                        """);
-        return mergeIdenticalBranches(indented);
-    }
+    private static final Pattern CAST_PATTERN = Pattern.compile("\\((?:int|long|double|float|short|byte|char|boolean|[A-Z]\\w*(?:\\.\\w+)*(?:<[^)]*>)?(?:\\[])*)\\)");
 
     /**
-     * Formats the source, merges identical branches, and additionally removes all cast expressions
-     * such as {@code (long)}, {@code (Object)}, {@code (Player)}, etc.
+     * Merges identical branches and additionally removes all cast expressions,
+     * {@code String.valueOf()}, and {@code .toString()} calls.
      * The resulting source is intended for human reading only and may not compile.
      *
-     * @param source raw Java source
-     * @return human-readable source with casts removed
+     * @param source Java source
+     * @return source code that's easier to read
      */
     public static @NotNull String formatReadable(@NotNull String source) {
-        String indented = applyIndentation(source,
-                """
-                        // Formatted by MiniJavaFormatter (readable: branches merged, casts removed, no String.valueOf or .toString).
-                        // This file is for reading only - it may not compile.
-                        """);
-        String merged = mergeIdenticalBranches(indented);
-        return stripCasts(stripToString(stripStringValueOf(merged)));
-    }
-
-    /**
-     * Applies indentation and brace normalization to the source, prepending the provided header comment.
-     * This is the shared formatting core used by all public format variants.
-     *
-     * @param source raw Java source
-     * @param header comment lines to prepend (already newline-terminated)
-     * @return indentation-normalized source with the header prepended
-     */
-    private static @NotNull String applyIndentation(@NotNull String source, @NotNull String header) {
-        String[] lines = normalizeLines(source.split("\\R"));
-        StringBuilder out = new StringBuilder(source.length() * 2);
-        out.append(header);
-        int indent = 0;
-        boolean lastLineBlank = false;
-
-        for (int i = 0; i < lines.length; i++) {
-            String line = lines[i].trim();
-
-            if (line.isEmpty()) {
-                if (!lastLineBlank && !out.isEmpty()) {
-                    out.append('\n');
-                    lastLineBlank = true;
-                }
-                continue;
-            }
-
-            lastLineBlank = false;
-
-            if (line.startsWith("public class") && !out.isEmpty()
-                    && !endsWithBlankLine(out)) {
-                out.append('\n');
-            }
-
-            if (isOnlyClosingBraces(line)) {
-                for (int j = 0; j < line.length(); j++) {
-                    indent = Math.max(0, indent - 1);
-                    out.append(" ".repeat(indent * 4));
-                    out.append('}');
-                    out.append('\n');
-                }
-                if (indent == 1 && i + 1 < lines.length) {
-                    String next = lines[i + 1].trim();
-                    if (!next.equals("}")) {
-                        out.append('\n');
-                    }
-                }
-                continue;
-            }
-
-            String expanded = expandSingleLineBlock(line);
-            if (expanded != null) {
-                String[] parts = expanded.split("\\R");
-                for (String s : parts) {
-                    String part = s.trim();
-                    if (part.isEmpty()) continue;
-
-                    int pOpens = countCodeBraces(part, '{');
-                    int pCloses = countCodeBraces(part, '}');
-
-                    applyBraceIndent(out, part, pOpens, pCloses, indent);
-                    indent = nextIndent(indent, pOpens, pCloses, part);
-                }
-
-                if (indent == 1 && i + 1 < lines.length) {
-                    String next = lines[i + 1].trim();
-                    if (!next.equals("}")) {
-                        out.append('\n');
-                    }
-                }
-                continue;
-            }
-
-            int opens = countCodeBraces(line, '{');
-            int closes = countCodeBraces(line, '}');
-
-            indent = preWriteIndent(indent, opens, closes, line);
-
-            out.append(" ".repeat(indent * 4));
-            out.append(line);
-            out.append('\n');
-
-            indent = postWriteIndent(indent, opens, closes, line);
-
-            if (opens > 0 && line.startsWith("public class")) {
-                if (!endsWithBlankLine(out)) {
-                    out.append('\n');
-                }
-                lastLineBlank = true;
-            }
-
-            if (line.equals("}") && indent == 1 && i + 1 < lines.length) {
-                String next = lines[i + 1].trim();
-                if (!next.equals("}")) {
-                    out.append('\n');
-                }
-            }
-        }
-
-        return out.toString().trim();
-    }
-
-    /**
-     * Returns the indent level to use when writing {@code line}, accounting for closing braces.
-     * Balanced braces on lines that do not start with {@code '}'} (e.g. annotation array values)
-     * do not cause a pre-write dedent.
-     *
-     * @param indent current indent level
-     * @param opens  open-brace count on the line
-     * @param closes close-brace count on the line
-     * @param line   trimmed source line
-     * @return indent level to use when writing this line
-     */
-    private static int preWriteIndent(int indent, int opens, int closes, @NotNull String line) {
-        boolean startsWithClose = line.startsWith("}");
-        if (closes > 0 && (closes != opens || startsWithClose)) {
-            return Math.max(0, indent - closes);
-        }
-        return indent;
-    }
-
-    /**
-     * Returns the indent level after writing {@code line}.
-     *
-     * @param indent indent level that was used when writing
-     * @param opens  open-brace count on the line
-     * @param closes close-brace count on the line
-     * @param line   trimmed source line
-     * @return updated indent level
-     */
-    private static int postWriteIndent(int indent, int opens, int closes, @NotNull String line) {
-        boolean startsWithClose = line.startsWith("}");
-        if (opens > 0 && (opens != closes || startsWithClose)) {
-            return indent + opens;
-        }
-        return indent;
-    }
-
-    /**
-     * Writes {@code part} to {@code out} at the correct indentation for the expanded-block path,
-     * then updates the indent tracker {@code indent[0]}.
-     */
-    private static void applyBraceIndent(@NotNull StringBuilder out, @NotNull String part,
-                                         int opens, int closes, int indent) {
-        int writeIndent = preWriteIndent(indent, opens, closes, part);
-        out.append(" ".repeat(writeIndent * 4));
-        out.append(part);
-        out.append('\n');
-    }
-
-    /**
-     * Returns the updated indent after writing a part of an expanded block.
-     */
-    private static int nextIndent(int indent, int opens, int closes, @NotNull String part) {
-        int writeIndent = preWriteIndent(indent, opens, closes, part);
-        return postWriteIndent(writeIndent, opens, closes, part);
-    }
-
-    /**
-     * Checks if a line is a single-line block (e.g. {@code if (x) { foo(); }})
-     * and expands it to multiple lines. Returns null if the line is not a single-line block.
-     *
-     * @param line trimmed source line
-     * @return expanded multi-line string, or null if not applicable
-     */
-    private static @Nullable String expandSingleLineBlock(@NotNull String line) {
-        int openBrace = line.indexOf('{');
-        if (openBrace < 0) return null;
-
-        int closeBrace = line.lastIndexOf('}');
-        if (closeBrace <= openBrace) return null;
-        if (closeBrace != line.length() - 1) return null;
-
-        String before = line.substring(0, openBrace + 1).trim();
-        String body = line.substring(openBrace + 1, closeBrace).trim();
-        String after = "}";
-
-        StringBuilder sb = new StringBuilder();
-        sb.append(before).append('\n');
-        if (!body.isEmpty()) {
-            sb.append(body).append('\n');
-        }
-        sb.append(after).append('\n');
-        return sb.toString();
+        return "// Readable view (branches merged, casts removed, no String.valueOf or .toString).\n"
+                + "// This file is for reading only, it may not compile.\n\n" + stripCasts(stripToString(stripStringValueOf(mergeIdenticalBranches(source))));
     }
 
     /**
@@ -369,7 +157,7 @@ public final class MiniJavaFormatter {
      * @return source with String.valueOf unwrapped
      */
     private static @NotNull String stripStringValueOf(@NotNull String source) {
-        return processLines(source, MiniJavaFormatter::stripStringValueOfFromLine);
+        return processLines(source, MiniJavaCleaner::stripStringValueOfFromLine);
     }
 
     private static @NotNull String stripStringValueOfFromLine(@NotNull String line) {
@@ -454,7 +242,7 @@ public final class MiniJavaFormatter {
      * @return source with .toString() calls removed
      */
     private static @NotNull String stripToString(@NotNull String source) {
-        return processLines(source, MiniJavaFormatter::stripToStringFromLine);
+        return processLines(source, MiniJavaCleaner::stripToStringFromLine);
     }
 
     private static @NotNull String stripToStringFromLine(@NotNull String line) {
@@ -538,7 +326,7 @@ public final class MiniJavaFormatter {
      * @return source with cast expressions removed
      */
     private static @NotNull String stripCasts(@NotNull String source) {
-        return processLines(source, MiniJavaFormatter::stripCastsFromLine);
+        return processLines(source, MiniJavaCleaner::stripCastsFromLine);
     }
 
     /**
@@ -623,116 +411,6 @@ public final class MiniJavaFormatter {
         return Character.isLetterOrDigit(next)
                 || next == '(' || next == '"' || next == '\''
                 || next == '-' || next == '!' || next == '~';
-    }
-
-    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
-    private static boolean endsWithBlankLine(@NotNull StringBuilder sb) {
-        int len = sb.length();
-        if (len < 2) return false;
-        return sb.charAt(len - 1) == '\n' && sb.charAt(len - 2) == '\n';
-    }
-
-    /**
-     * Pre-processes raw lines by splitting lines where block-level braces should
-     * stand alone. A line like {@code "{ content;"} becomes two lines: {@code "{"}
-     * and {@code "content;"}. Similarly {@code "content; }"} splits into
-     * {@code "content;"} and {@code "}"}. This handles both single-line and
-     * multi-line inline blocks.
-     *
-     * @param rawLines the original source lines
-     * @return normalized array with split lines
-     */
-    private static @NotNull String[] normalizeLines(@NotNull String[] rawLines) {
-        List<String> result = new ArrayList<>();
-        for (String rawLine : rawLines) {
-            String trimmed = rawLine.trim();
-            if (trimmed.isEmpty()) {
-                result.add(trimmed);
-                continue;
-            }
-            splitBracketedLines(trimmed, result);
-        }
-        return result.toArray(new String[0]);
-    }
-
-    /**
-     * Recursively splits a line at unmatched block-level braces.
-     * If the line starts with {@code \{} and has more openers than closers, the
-     * {@code \{} is emitted on its own and the rest is recursed. If the line ends
-     * with {@code \}} and has more closers than openers, the trailing {@code \}}
-     * is split off.
-     *
-     * @param line the trimmed source line
-     * @param out  list to collect the resulting lines
-     */
-    private static void splitBracketedLines(@NotNull String line, @NotNull List<String> out) {
-        int opens = countCodeBraces(line, '{');
-        int closes = countCodeBraces(line, '}');
-
-        if (line.startsWith("{") && opens > closes) {
-            String rest = line.substring(1).trim();
-            if (!rest.isEmpty()) {
-                out.add("{");
-                splitBracketedLines(rest, out);
-                return;
-            }
-        }
-
-        if (line.endsWith("}") && !isOnlyClosingBraces(line) && closes > opens) {
-            String before = line.substring(0, line.length() - 1).trim();
-            if (!before.isEmpty()) {
-                splitBracketedLines(before, out);
-                out.add("}");
-                return;
-            }
-        }
-
-        out.add(line);
-    }
-
-    /**
-     * Checks if a line consists only of closing brace characters.
-     *
-     * @param line the trimmed source line
-     * @return true if the line is two or more consecutive {@code '}'} only
-     */
-    private static boolean isOnlyClosingBraces(@NotNull String line) {
-        if (line.length() < 2) return false;
-        for (int i = 0; i < line.length(); i++) {
-            if (line.charAt(i) != '}') return false;
-        }
-        return true;
-    }
-
-    /**
-     * Counts occurrences of the specified brace character in a line of code,
-     * ignoring braces inside string literals, char literals, and comments.
-     *
-     * @param line  the source line
-     * @param brace the brace character to count ({@code '&#123;'} or {@code '&#125;'})
-     * @return the number of code-level brace occurrences
-     */
-    private static int countCodeBraces(@NotNull String line, char brace) {
-        String trimmed = line.trim();
-        if (trimmed.startsWith("//")) return 0;
-        int count = 0;
-        boolean inString = false;
-        boolean inChar = false;
-        for (int i = 0; i < line.length(); i++) {
-            char c = line.charAt(i);
-            if (c == '\\' && (inString || inChar) && i + 1 < line.length()) {
-                i++;
-                continue;
-            }
-            if (c == '"' && !inChar) {
-                inString = !inString;
-            } else if (c == '\'' && !inString) {
-                inChar = !inChar;
-            } else if (!inString && !inChar && c == brace) {
-                count++;
-            }
-        }
-        return count;
     }
 
     @FunctionalInterface

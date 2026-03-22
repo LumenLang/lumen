@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * This uses LSYAML's binding system to load configuration values from a YAML file into static fields.
@@ -102,6 +101,7 @@ public final class LumenConfiguration {
             case PAPER_ONLY_FEATURES -> FEATURES.PAPER_ONLY_FEATURES = value;
             case REDUCE_CLASSPATH -> PERFORMANCE.REDUCE_CLASSPATH = value;
             case ENABLE_ALL_SCRIPTS_IMMEDIATELY -> SCRIPTS.ENABLE_ALL_SCRIPTS_IMMEDIATELY_ON_STARTUP = value;
+            case CODE_TRANSFORM -> LANGUAGE.EXPERIMENTAL.CODE_TRANSFORM = value;
         }
     }
 
@@ -117,12 +117,8 @@ public final class LumenConfiguration {
         if (node == null) {
             throw new RuntimeException("writeOption called before startup");
         }
-        MapNode sectionNode = Objects.requireNonNull(
-                node.getMap(option.section()),
-                "No '" + option.section() + "' section in the YAML file?"
-        );
-        if (Boolean.valueOf(value).equals(sectionNode.getBoolean(option.key()))) return;
-        sectionNode.modify(option.key()).value(value);
+        if (Boolean.valueOf(value).equals(node.getBoolean(option.path()))) return;
+        node.setBoolean(option.path(), value);
         LSYAML.writeToFile(node, Lumen.instance().getDataFolder().toPath().resolve("config.yml"));
     }
 
@@ -192,6 +188,9 @@ public final class LumenConfiguration {
 
             @Key("raw-java")
             public boolean RAW_JAVA = false;
+
+            @Key("code-transform")
+            public boolean CODE_TRANSFORM = false;
         }
     }
 

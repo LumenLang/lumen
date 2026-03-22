@@ -31,6 +31,7 @@ import java.util.Map;
 public class JavaBuilder implements JavaOutput {
     private final List<String> out = new ArrayList<>();
     private final Map<Integer, ScriptLineInfo> lineMap = new HashMap<>();
+    private final Map<Integer, String> tagMap = new HashMap<>();
 
     /**
      * Appends a single Java source line.
@@ -40,6 +41,14 @@ public class JavaBuilder implements JavaOutput {
     @Override
     public void line(@NotNull String s) {
         out.add(s);
+    }
+
+    @Override
+    public void taggedLine(@Nullable String tag, @NotNull String code) {
+        if (tag != null) {
+            tagMap.put(out.size(), tag);
+        }
+        out.add(code);
     }
 
     /**
@@ -83,6 +92,14 @@ public class JavaBuilder implements JavaOutput {
         }
         lineMap.clear();
         lineMap.putAll(shifted);
+
+        Map<Integer, String> shiftedTags = new HashMap<>();
+        for (var entry : tagMap.entrySet()) {
+            int key = entry.getKey();
+            shiftedTags.put(key >= index ? key + 1 : key, entry.getValue());
+        }
+        tagMap.clear();
+        tagMap.putAll(shiftedTags);
     }
 
     /**
@@ -93,6 +110,25 @@ public class JavaBuilder implements JavaOutput {
      */
     public @Nullable ScriptLineInfo scriptLineAt(int javaLineIndex) {
         return lineMap.get(javaLineIndex);
+    }
+
+    /**
+     * Returns the ownership tag for the given Java line index, or null if no tag exists.
+     *
+     * @param javaLineIndex the 0-based index in the accumulated line list
+     * @return the tag, or null
+     */
+    public @Nullable String tagAt(int javaLineIndex) {
+        return tagMap.get(javaLineIndex);
+    }
+
+    /**
+     * Returns the full map of Java line indices to ownership tags.
+     *
+     * @return the tag map
+     */
+    public @NotNull Map<Integer, String> tagMap() {
+        return tagMap;
     }
 
     /**

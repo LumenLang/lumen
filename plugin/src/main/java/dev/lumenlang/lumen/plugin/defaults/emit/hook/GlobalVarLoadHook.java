@@ -1,5 +1,8 @@
-package dev.lumenlang.lumen.plugin.defaults.emit;
+package dev.lumenlang.lumen.plugin.defaults.emit.hook;
 
+import dev.lumenlang.lumen.api.LumenAPI;
+import dev.lumenlang.lumen.api.annotations.Call;
+import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.emit.BlockEnterHook;
 import dev.lumenlang.lumen.api.emit.EmitContext;
@@ -22,8 +25,15 @@ import java.util.Map;
  * to the first variable matching that type in the current scope. If no matching variable
  * is available, the global is silently skipped.
  */
-@SuppressWarnings("DataFlowIssue")
+@Registration(order = -2000)
+@SuppressWarnings({"unused", "DataFlowIssue"})
 public final class GlobalVarLoadHook implements BlockEnterHook {
+    public static final String TAG = "global-var-load";
+
+    @Call
+    public void register(@NotNull LumenAPI api) {
+        api.emitters().blockEnterHook(this);
+    }
 
     /**
      * Infers the Java field type from the default value expression.
@@ -119,7 +129,7 @@ public final class GlobalVarLoadHook implements BlockEnterHook {
                 fieldType = inferFieldType(defaultJava);
             }
             ctx.codegen().addField(fieldType + " " + name + ";");
-            ctx.out().line(name + " = " + storageClass + ".get(" + keyExpr + ", " + defaultJava + ");");
+            ctx.out().taggedLine(TAG, name + " = " + storageClass + ".get(" + keyExpr + ", " + defaultJava + ");");
 
             VarRef varRef = new VarRef(exprRefType, name, exprMetadata);
             env.defineVar(name, varRef);

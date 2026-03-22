@@ -12,11 +12,7 @@ scripts:
   # When combined with cached compiled classes, startup can be nearly instant.
   load-all-on-startup: true
 
-  # When enabled, Lumen initialises its full API (patterns, type bindings, emitters)
-  # during onLoad rather than onEnable. This allows other plugins that depend on
-  # Lumen to register their own patterns and type bindings from their own onLoad.
-  # Scripts are then compiled and loaded immediately in onEnable instead of being
-  # deferred to the first tick.
+  # When enabled, scripts are compiled and loaded immediately in onEnable instead of being deferred to the first tick.
   # Disabled by default because most setups do not need early-load behaviour.
   enable-all-scripts-immediately-on-startup: false
 
@@ -88,7 +84,7 @@ performance:
   # This shouldn't cause any issues unless some addon relies on shaded libraries that are excluded by this, in that case, they are allowed to disable this feature automatically.
   reduce-classpath: true
 
-# Language-level behavior and experimental features
+# Language-level behavior
 language:
   experimental:
     # Allow raw Java code inside scripts.
@@ -104,6 +100,18 @@ language:
     # Only enable this if you fully trust the script source.
     # Always read scripts before running them when this is enabled.
     raw-java: false
+
+    # Enable code transformation (experimental).
+    #
+    # WARNING: This is an experimental feature. Transformers may modify
+    # lines that are actually needed at runtime. Only enable this if you
+    # understand the risks and have tested your scripts thoroughly.
+    #
+    # When enabled, the compiler runs registered code transformers after
+    # code generation. Each transformer can remove, replace, or insert
+    # lines it owns. Lumen ships with built in transformers, and addons
+    # can register their own through the API.
+    code-transform: false
 
 # Optional platform integrations
 features:

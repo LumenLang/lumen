@@ -22,15 +22,6 @@ loop fruit in fruits:
 
 The variable `fruit` takes on each value in order. The block runs once per item.
 
-You can also use a counter for numbered output:
-
-```luma
-var i = 1
-loop item in todos:
-    message player "  &e{i}. &f{item}"
-    add 1 to i
-```
-
 ## Looping Over Maps
 
 For maps, you get both the key and the value:

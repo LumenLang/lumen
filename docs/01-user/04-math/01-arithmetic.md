@@ -43,11 +43,11 @@ multiply count by 2
 These work with per-player variables too:
 
 ```luma
-global stored var streak for ref type player default 0
+global var points for ref type player default 0
 
-on entity_death:
-    if killer is set:
-        add 1 to streak for killer
+command earn:
+    add 25 to points
+    message player "&a+25 points! Total: {points}"
 ```
 
 ## Comparison Operators

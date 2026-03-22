@@ -1,5 +1,8 @@
-package dev.lumenlang.lumen.plugin.defaults.emit;
+package dev.lumenlang.lumen.plugin.defaults.emit.form;
 
+import dev.lumenlang.lumen.api.LumenAPI;
+import dev.lumenlang.lumen.api.annotations.Call;
+import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.emit.EmitContext;
 import dev.lumenlang.lumen.api.emit.ScriptToken;
 import dev.lumenlang.lumen.api.emit.StatementFormHandler;
@@ -36,8 +39,14 @@ import java.util.Map;
  * refType from the {@link ExpressionResult}), then falls back to
  * {@link ExprResolver} for nested sub-expressions and arithmetic.
  */
-@SuppressWarnings("DataFlowIssue")
+@Registration(order = -1998)
+@SuppressWarnings({"unused", "DataFlowIssue"})
 public final class VarStatementForm implements StatementFormHandler {
+
+    @Call
+    public void register(@NotNull LumenAPI api) {
+        api.emitters().statementForm(this);
+    }
 
     /**
      * Tries to match the given tokens against a registered expression pattern,

@@ -4,6 +4,10 @@ description: "How Lumen scripts are structured, including blocks, indentation, c
 
 # Scripts and Blocks
 
+:::alert note
+For the best experience writing Lumen scripts, install the [Lumen VSCode extension](https://marketplace.visualstudio.com/items?itemName=lumenlang.lumenlang). It provides completions, hovers, syntax highlighting, error checking, and other tools that make development significantly better. Writing scripts without it is possible but noticeably harder.
+:::
+
 Lumen scripts are plain text files with the `.luma` extension. You place them in the `scripts` folder inside your Lumen plugin directory, and they are automatically loaded when the server starts. If hot-reloading is enabled (the default), saving a script file will instantly reload it without restarting the server.
 
 ## Indentation and Blocks

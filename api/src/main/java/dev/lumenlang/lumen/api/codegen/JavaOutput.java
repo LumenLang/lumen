@@ -3,6 +3,7 @@ package dev.lumenlang.lumen.api.codegen;
 import dev.lumenlang.lumen.api.handler.BlockHandler;
 import dev.lumenlang.lumen.api.handler.StatementHandler;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Builder for emitting Java source lines during code generation.
@@ -37,4 +38,18 @@ public interface JavaOutput {
      * @param code  the Java source line to insert
      */
     void insertLine(int index, @NotNull String code);
+
+    /**
+     * Appends a line of Java source code with an ownership tag.
+     *
+     * <p>The tag identifies which system emitted this line. Code transformers
+     * use the tag to determine which lines they own and whether those lines
+     * can safely be modified or removed.
+     *
+     * @param tag  the ownership tag, or null
+     * @param code the Java source line to append
+     */
+    default void taggedLine(@Nullable String tag, @NotNull String code) {
+        line(code);
+    }
 }

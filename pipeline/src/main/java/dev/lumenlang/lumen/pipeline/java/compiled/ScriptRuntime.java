@@ -4,8 +4,11 @@ import dev.lumenlang.lumen.pipeline.codegen.CodegenContext;
 import dev.lumenlang.lumen.pipeline.java.JavaBuilder;
 import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -58,18 +61,215 @@ public final class ScriptRuntime {
             sb.append("\n");
         }
 
-        for (int i = 0; i < code.lines().size(); i++) {
-            JavaBuilder.ScriptLineInfo info = code.scriptLineAt(i);
-            if (info != null) {
-                sb.append("    // @lumen:").append(info.line()).append(": ")
-                        .append(info.source().replace("*/", "* /")).append("\n");
-            }
-            sb.append("    ").append(code.lines().get(i)).append("\n");
+        List<String> bodyLines = formatBody(code);
+        for (String line : bodyLines) {
+            sb.append(line).append("\n");
         }
 
         sb.append("}\n");
 
         return sb.toString();
+    }
+
+    /**
+     * Formats the raw code builder output into properly indented body lines.
+     *
+     * @param code the accumulated raw Java lines
+     * @return formatted lines with proper indentation
+     */
+    private static @NotNull List<String> formatBody(@NotNull JavaBuilder code) {
+        List<RawLine> rawLines = new ArrayList<>();
+        for (int i = 0; i < code.lines().size(); i++) {
+            JavaBuilder.ScriptLineInfo info = code.scriptLineAt(i);
+            String codeLine = code.lines().get(i);
+            if (info != null) {
+                rawLines.add(new RawLine(
+                        "// @lumen:" + info.line() + ": " + info.source().replace("*/", "* /"),
+                        true));
+            }
+            rawLines.add(new RawLine(codeLine, false));
+        }
+
+        List<RawLine> normalized = normalize(rawLines);
+        return indent(normalized);
+    }
+
+    /**
+     * Splits lines at braces and expands single line blocks into multi line form.
+     */
+    private static @NotNull List<RawLine> normalize(@NotNull List<RawLine> lines) {
+        List<RawLine> result = new ArrayList<>();
+        for (RawLine raw : lines) {
+            if (raw.comment) {
+                result.add(raw);
+                continue;
+            }
+            String trimmed = raw.code.trim();
+            if (trimmed.isEmpty()) {
+                result.add(new RawLine("", false));
+                continue;
+            }
+            String expanded = expandInline(trimmed);
+            if (expanded != null) {
+                for (String part : expanded.split("\\R")) {
+                    String p = part.trim();
+                    if (!p.isEmpty()) {
+                        result.add(new RawLine(p, false));
+                    }
+                }
+                continue;
+            }
+            splitBraces(trimmed, result);
+        }
+        return result;
+    }
+
+    /**
+     * Expands a single line block into multiple lines if applicable.
+     */
+    private static @Nullable String expandInline(@NotNull String line) {
+        int openBrace = line.indexOf('{');
+        if (openBrace < 0) return null;
+
+        int closeBrace = line.lastIndexOf('}');
+        if (closeBrace <= openBrace) return null;
+        if (closeBrace != line.length() - 1) return null;
+
+        String before = line.substring(0, openBrace + 1).trim();
+        String body = line.substring(openBrace + 1, closeBrace).trim();
+        String after = "}";
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(before).append('\n');
+        if (!body.isEmpty()) {
+            sb.append(body).append('\n');
+        }
+        sb.append(after).append('\n');
+        return sb.toString();
+    }
+
+    private static void splitBraces(@NotNull String line, @NotNull List<RawLine> out) {
+        int opens = countBraces(line, '{');
+        int closes = countBraces(line, '}');
+
+        if (line.startsWith("{") && opens > closes) {
+            String rest = line.substring(1).trim();
+            if (!rest.isEmpty()) {
+                out.add(new RawLine("{", false));
+                splitBraces(rest, out);
+                return;
+            }
+        }
+
+        if (line.endsWith("}") && !onlyClosers(line) && closes > opens) {
+            String before = line.substring(0, line.length() - 1).trim();
+            if (!before.isEmpty()) {
+                splitBraces(before, out);
+                out.add(new RawLine("}", false));
+                return;
+            }
+        }
+
+        out.add(new RawLine(line, false));
+    }
+
+    private static @NotNull List<String> indent(@NotNull List<RawLine> lines) {
+        List<String> result = new ArrayList<>();
+        int indent = 1;
+        boolean lastBlank = false;
+
+        for (int i = 0; i < lines.size(); i++) {
+            RawLine raw = lines.get(i);
+            String line = raw.comment ? raw.code : raw.code.trim();
+
+            if (line.isEmpty()) {
+                if (!lastBlank && !result.isEmpty()) {
+                    result.add("");
+                    lastBlank = true;
+                }
+                continue;
+            }
+
+            lastBlank = false;
+
+            if (raw.comment) {
+                result.add(" ".repeat(indent * 4) + line);
+                continue;
+            }
+
+            if (onlyClosers(line)) {
+                for (int j = 0; j < line.length(); j++) {
+                    indent = Math.max(0, indent - 1);
+                    result.add(" ".repeat(indent * 4) + "}");
+                }
+                if (indent == 1 && i + 1 < lines.size()) {
+                    String next = lines.get(i + 1).code.trim();
+                    if (!next.equals("}")) {
+                        result.add("");
+                        lastBlank = true;
+                    }
+                }
+                continue;
+            }
+
+            int opens = countBraces(line, '{');
+            int closes = countBraces(line, '}');
+
+            boolean startsWithClose = line.startsWith("}");
+            if (closes > 0 && (closes != opens || startsWithClose)) {
+                indent = Math.max(0, indent - closes);
+            }
+
+            result.add(" ".repeat(indent * 4) + line);
+
+            if (opens > 0 && (opens != closes || startsWithClose)) {
+                indent = indent + opens;
+            }
+
+            if (line.equals("}") && indent == 1 && i + 1 < lines.size()) {
+                String next = lines.get(i + 1).code.trim();
+                if (!next.equals("}")) {
+                    result.add("");
+                    lastBlank = true;
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private static boolean onlyClosers(@NotNull String line) {
+        if (line.length() < 2) return false;
+        for (int i = 0; i < line.length(); i++) {
+            if (line.charAt(i) != '}') return false;
+        }
+        return true;
+    }
+
+    private static int countBraces(@NotNull String line, char brace) {
+        String trimmed = line.trim();
+        if (trimmed.startsWith("//")) return 0;
+        int count = 0;
+        boolean inString = false;
+        boolean inChar = false;
+        for (int i = 0; i < line.length(); i++) {
+            char c = line.charAt(i);
+            if (c == '\\' && (inString || inChar) && i + 1 < line.length()) {
+                i++;
+                continue;
+            }
+            if (c == '"' && !inChar) {
+                inString = !inString;
+            } else if (c == '\'' && !inString) {
+                inChar = !inChar;
+            } else if (!inString && !inChar && c == brace) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private record RawLine(@NotNull String code, boolean comment) {
     }
 
     public static String normalize(String input) {

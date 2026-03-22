@@ -13,8 +13,9 @@ import dev.lumenlang.lumen.pipeline.java.compiler.system.CompilationFailedExcept
 import dev.lumenlang.lumen.pipeline.java.compiler.system.InMemoryFileManager;
 import dev.lumenlang.lumen.pipeline.java.compiler.system.SourceFile;
 import dev.lumenlang.lumen.pipeline.java.compiler.system.SystemCompiler;
-import dev.lumenlang.lumen.pipeline.java.formatter.MiniJavaFormatter;
+import dev.lumenlang.lumen.pipeline.java.formatter.MiniJavaCleaner;
 import dev.lumenlang.lumen.pipeline.language.emit.CodeEmitter;
+import dev.lumenlang.lumen.pipeline.language.emit.TransformerRegistry;
 import dev.lumenlang.lumen.pipeline.language.exceptions.LumenScriptException;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
@@ -400,6 +401,10 @@ public final class ScriptManager {
 
         CodeEmitter.generate(source, PatternRegistry.instance(), env, gen, output);
 
+        if (LumenConfiguration.LANGUAGE.EXPERIMENTAL.CODE_TRANSFORM) {
+            TransformerRegistry.instance().transform(output);
+        }
+
         String javaSource = ScriptRuntime.buildClass(gen.className(), gen, output);
         String fqcn = "dev.lumenlang.lumen.java.compiled." + ScriptRuntime.normalize(gen.className());
 
@@ -428,10 +433,12 @@ public final class ScriptManager {
                     ScriptRuntime.class.getClassLoader(),
                     List.of(new SourceFile(source.fqcn(), source.javaSource()))).classes;
         } catch (CompilationFailedException e) {
+            dumpSource(source);
             logCompileErrors(e.errors(), source.scriptName());
             throw new RuntimeException(
                     "Compilation failed for script: " + source.scriptName() + " (see error log above for details)", e);
         } catch (Exception e) {
+            dumpSource(source);
             LumenLogger.severe("[Script " + source.scriptName() + "] Unexpected compiler error: " + e.getMessage());
             throw new RuntimeException("Compilation failed for script: " + source.scriptName(), e);
         }
@@ -582,6 +589,10 @@ public final class ScriptManager {
         if (!LumenConfiguration.DEBUG.DUMP_GENERATED_JAVA)
             return;
 
+        dumpSource(source);
+    }
+
+    private static void dumpSource(@NotNull GeneratedSource source) {
         String safeName = source.scriptName().replace('/', '_').replace('\\', '_');
         Path dumpDir = CompiledClassCache.compiledRoot().resolve(safeName).resolve("dump");
         try {
@@ -590,11 +601,8 @@ public final class ScriptManager {
             String baseName = ScriptRuntime.normalize(source.className());
             String raw = source.javaSource();
 
-            Files.writeString(dumpDir.resolve(baseName + "-raw.java"), raw);
-            Files.writeString(dumpDir.resolve(baseName + "-formatted.java"),
-                    MiniJavaFormatter.format(raw));
-            Files.writeString(dumpDir.resolve(baseName + "-readable.java"),
-                    MiniJavaFormatter.formatReadable(raw));
+            Files.writeString(dumpDir.resolve(baseName + ".java"), raw);
+            Files.writeString(dumpDir.resolve(baseName + "-readable.java"), MiniJavaCleaner.formatReadable(raw));
         } catch (IOException e) {
             LumenLogger.severe("Failed to dump generated Java for " + source.scriptName() + ": " + e.getMessage());
         }

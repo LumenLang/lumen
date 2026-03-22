@@ -1,5 +1,8 @@
-package dev.lumenlang.lumen.plugin.defaults.emit;
+package dev.lumenlang.lumen.plugin.defaults.emit.form;
 
+import dev.lumenlang.lumen.api.LumenAPI;
+import dev.lumenlang.lumen.api.annotations.Call;
+import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.emit.BlockFormHandler;
 import dev.lumenlang.lumen.api.emit.EmitContext;
 import dev.lumenlang.lumen.api.emit.ScriptLine;
@@ -15,7 +18,14 @@ import java.util.List;
  * <p>Parses key-value pairs from the block's children and registers them as
  * config entries and class-level fields.
  */
+@Registration(order = -2000)
+@SuppressWarnings("unused")
 public final class ConfigBlockForm implements BlockFormHandler {
+
+    @Call
+    public void register(@NotNull LumenAPI api) {
+        api.emitters().blockForm(this);
+    }
 
     @Override
     public boolean matches(@NotNull List<? extends ScriptToken> headTokens) {
@@ -42,6 +52,17 @@ public final class ConfigBlockForm implements BlockFormHandler {
             }
 
             String name = tokens.get(0).text();
+
+            if (ctx.env().isGlobal(name)) {
+                throw new LumenScriptException(child.lineNumber(), child.raw(),
+                        "Config entry '" + name + "' conflicts with an existing global variable");
+            }
+
+            if (ctx.env().lookupVar(name) != null) {
+                throw new LumenScriptException(child.lineNumber(), child.raw(),
+                        "Config entry '" + name + "' is already defined");
+            }
+
             List<? extends ScriptToken> valueTokens = tokens.subList(2, tokens.size());
 
             String java;

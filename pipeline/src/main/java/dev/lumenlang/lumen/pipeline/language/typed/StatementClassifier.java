@@ -19,11 +19,11 @@ import java.util.List;
  * <ol>
  * <li>{@code global [stored] var x [for [ref type] refType] default expr} &rarr;
  * {@link TypedStatement.GlobalVarStmt}</li>
- * <li>{@code global x [for refType] default expr} (legacy) &rarr;
+ * <li>{@code global x [for refType] default expr} &rarr;
  * {@link TypedStatement.GlobalVarStmt}</li>
  * <li>{@code stored var x [for [ref type] scope] default expr} &rarr;
  * {@link TypedStatement.StoreVarStmt}</li>
- * <li>{@code store x [for scope] default expr} (legacy) &rarr;
+ * <li>{@code store x [for scope] default expr} &rarr;
  * {@link TypedStatement.StoreVarStmt}</li>
  * <li>{@code var x = expr} &rarr; {@link TypedStatement.ExprVarStmt} or
  * {@link TypedStatement.VarStmt}</li>
@@ -193,7 +193,7 @@ public final class StatementClassifier {
     /**
      * Classifies a {@code global [stored] var} statement into a {@link TypedStatement.GlobalVarStmt}.
      *
-     * <p>Supports both {@code for <name>} (legacy) and {@code for ref type <name>} syntax.
+     * <p>Supports both {@code for <name>} and {@code for ref type <name>} syntax.
      */
     private static @NotNull TypedStatement classifyNewGlobal(
             @NotNull StatementNode st,
@@ -237,7 +237,7 @@ public final class StatementClassifier {
     /**
      * Classifies a {@code stored var} statement into a {@link TypedStatement.StoreVarStmt}.
      *
-     * <p>Supports both {@code for <name>} (legacy) and {@code for ref type <name>} syntax.
+     * <p>Supports both {@code for <name>} and {@code for ref type <name>} syntax.
      */
     private static @NotNull TypedStatement classifyStoredVar(
             @NotNull StatementNode st,

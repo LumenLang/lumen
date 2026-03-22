@@ -11,36 +11,31 @@ Stored variables persist across server restarts. Their values are saved to disk 
 Use `global stored var` to create a variable that is both shared across all blocks and saved permanently:
 
 ```luma
-global stored var current_bounty default none
+global stored var total_joins default 0
 
-command bounty:
-    if current_bounty is not set:
-        message player "&7No active bounty."
-    else:
-        message player "&6There is an active bounty!"
+on join:
+    add 1 to total_joins
+    broadcast "&7[Server] Total joins: {total_joins}"
 ```
 
-Even after a server restart, `current_bounty` retains its value.
+Even after a server restart, `total_joins` retains its value.
 
 ## Per-Player Stored Variables
 
 Combine `global stored var` with `for ref type player` so each player has their own persistent value:
 
 ```luma
-global stored var streak for ref type player default 0
+global stored var coins for ref type player default 0
 
-on entity_death:
-    if killer is set:
-        add 1 to streak for killer
-        message killer "&aKill streak: {streak}"
+command earn:
+    add 10 to coins
+    message player "&a+10 coins! Total: {coins}"
 
-on player_death:
-    if streak >= 3:
-        message player "&cYour streak of {streak} has been ended!"
-    set streak to 0 for player
+command balance:
+    message player "&6Your coins: {coins}"
 ```
 
-Every player's streak is saved independently and survives restarts.
+Every player's coins are saved independently and survive restarts.
 
 ## Inline Store
 
@@ -77,9 +72,9 @@ Deleting stored data is permanent. Once deleted, the values cannot be recovered.
 Stored variables can hold complex types too, including lists and maps:
 
 ```luma
-global stored var todos for ref type player default new list
+global stored var notes for ref type player default new list
 global stored var balances for ref type player default new map
-global stored var arenas default new list of arena
+global stored var warps default new list of warp
 ```
 
 All entries in these collections are saved to disk along with the variable itself.

@@ -5,10 +5,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Enumerates Lumen configuration options that addons can override.
  *
- * <p>Each option corresponds to a boolean flag in Lumen's {@code config.yml}.
- * Addons return {@link ConfigOverride} instances referencing these options from
- * {@link LumenAddon#configOverrides()}.
- *
  * @see ConfigOverride
  * @see LumenAddon#configOverrides()
  */
@@ -17,7 +13,7 @@ public enum ConfigOption {
     /**
      * Controls whether Paper specific APIs are enabled.
      */
-    PAPER_ONLY_FEATURES("features", "paper-only-features"),
+    PAPER_ONLY_FEATURES("features.paper-only-features"),
 
     /**
      * Controls whether the compiler classpath is stripped for faster compilation.
@@ -25,7 +21,7 @@ public enum ConfigOption {
      * <p>When enabled, Lumen removes unnecessary classes from the compiler's classpath.
      * Addons that need those internal classes should set this to false.
      */
-    REDUCE_CLASSPATH("performance", "reduce-classpath"),
+    REDUCE_CLASSPATH("performance.reduce-classpath"),
 
     /**
      * Controls whether scripts load immediately on startup instead of waiting for the first tick.
@@ -34,31 +30,29 @@ public enum ConfigOption {
      * patterns during the Bukkit plugin enable phase (which runs later) should disable this
      * so scripts wait until all addons are ready.
      */
-    ENABLE_ALL_SCRIPTS_IMMEDIATELY("scripts", "enable-all-scripts-immediately-on-startup");
+    ENABLE_ALL_SCRIPTS_IMMEDIATELY("scripts.enable-all-scripts-immediately-on-startup"),
 
-    private final String section;
-    private final String key;
+    /**
+     * Controls whether the experimental code transform system runs after code generation.
+     *
+     * <p>When enabled, registered code transformers can inspect and modify the emitted
+     * Java source. Transformers may remove, replace, or insert lines based on their
+     * own logic.
+     */
+    CODE_TRANSFORM("language.experimental.code-transform");
 
-    ConfigOption(@NotNull String section, @NotNull String key) {
-        this.section = section;
-        this.key = key;
+    private final String path;
+
+    ConfigOption(@NotNull String path) {
+        this.path = path;
     }
 
     /**
-     * Returns the YAML section name that contains this option.
+     * Returns the full dot separated path to this option in {@code config.yml}.
      *
-     * @return the section name (e.g. {@code "features"}, {@code "performance"})
+     * @return the config path
      */
-    public @NotNull String section() {
-        return section;
-    }
-
-    /**
-     * Returns the YAML key name within its section.
-     *
-     * @return the config key (e.g. {@code "paper-only-features"})
-     */
-    public @NotNull String key() {
-        return key;
+    public @NotNull String path() {
+        return path;
     }
 }

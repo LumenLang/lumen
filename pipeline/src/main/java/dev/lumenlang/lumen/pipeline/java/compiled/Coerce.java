@@ -2,10 +2,6 @@ package dev.lumenlang.lumen.pipeline.java.compiled;
 
 /**
  * Provides runtime type coercion for generated script classes.
- *
- * <p>
- * Used by the {@code set x to y} statement to allow reassignment across
- * compatible types at runtime.
  */
 @SuppressWarnings("unused") // Used inside of generated code
 public final class Coerce {
@@ -15,11 +11,6 @@ public final class Coerce {
 
     /**
      * Coerces a value to match the type of the current variable value at runtime.
-     *
-     * <p>
-     * This is used by the {@code set x to y} statement to allow reassignment
-     * across compatible types. For example, setting a {@code String} variable to an
-     * {@code int} will automatically convert via {@link String#valueOf(Object)}.
      *
      * @param value   the new value to assign
      * @param current the current value of the variable (used for type inference)
@@ -67,10 +58,6 @@ public final class Coerce {
     /**
      * Converts an arbitrary value to a double.
      *
-     * <p>If the value is already a {@link Number}, its double value is returned.
-     * Otherwise, the value is converted to a string and parsed. Returns {@code 0.0}
-     * if parsing fails.
-     *
      * @param value the value to convert
      * @return the double representation, or {@code 0.0} if not parseable
      */
@@ -85,10 +72,6 @@ public final class Coerce {
 
     /**
      * Converts an arbitrary value to an integer.
-     *
-     * <p>If the value is already a {@link Number}, its int value is returned.
-     * Otherwise, the value is converted to a string and parsed. Returns {@code 0}
-     * if parsing fails.
      *
      * @param value the value to convert
      * @return the int representation, or {@code 0} if not parseable

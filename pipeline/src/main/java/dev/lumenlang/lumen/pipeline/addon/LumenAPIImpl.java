@@ -6,6 +6,8 @@ import dev.lumenlang.lumen.api.emit.BlockEnterHook;
 import dev.lumenlang.lumen.api.emit.BlockFormHandler;
 import dev.lumenlang.lumen.api.emit.EmitRegistrar;
 import dev.lumenlang.lumen.api.emit.StatementFormHandler;
+import dev.lumenlang.lumen.api.emit.transform.CodeTransformer;
+import dev.lumenlang.lumen.api.emit.transform.TransformerRegistrar;
 import dev.lumenlang.lumen.api.event.AdvancedEventBuilder;
 import dev.lumenlang.lumen.api.event.AdvancedEventDefinition;
 import dev.lumenlang.lumen.api.event.EventBuilder;
@@ -32,6 +34,7 @@ import dev.lumenlang.lumen.pipeline.addon.bridge.TypeBindingBridge;
 import dev.lumenlang.lumen.pipeline.events.EventDefRegistry;
 import dev.lumenlang.lumen.pipeline.events.def.EventDef;
 import dev.lumenlang.lumen.pipeline.language.emit.EmitRegistry;
+import dev.lumenlang.lumen.pipeline.language.emit.TransformerRegistry;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.placeholder.PlaceholderRegistry;
 import dev.lumenlang.lumen.pipeline.typebinding.TypeRegistry;
@@ -55,11 +58,13 @@ public final class LumenAPIImpl implements LumenAPI {
     private final RefTypeRegistrar refTypes;
     private final PlaceholderRegistrar placeholders;
     private final EmitRegistrar emitters;
+    private final TransformerRegistrar transformerRegistrar;
     private final ScriptBinderManager binderManager;
 
     public LumenAPIImpl(@NotNull PatternRegistry patternRegistry,
                         @NotNull TypeRegistry typeRegistry,
                         @NotNull EmitRegistry emitRegistry,
+                        @NotNull TransformerRegistry transformerRegistry,
                         @NotNull ScriptBinderManager binderManager) {
         this.binderManager = binderManager;
         this.patterns = new PatternRegistrar() {
@@ -283,6 +288,18 @@ public final class LumenAPIImpl implements LumenAPI {
                 emitRegistry.addBlockEnterHook(hook);
             }
         };
+
+        this.transformerRegistrar = new TransformerRegistrar() {
+            @Override
+            public void register(@NotNull CodeTransformer transformer) {
+                transformerRegistry.addTransformer(transformer);
+            }
+
+            @Override
+            public void unregister(@NotNull String tag) {
+                transformerRegistry.removeTransformer(tag);
+            }
+        };
     }
 
     @Override
@@ -318,5 +335,10 @@ public final class LumenAPIImpl implements LumenAPI {
     @Override
     public @NotNull ScriptBinderRegistrar binders() {
         return binderManager;
+    }
+
+    @Override
+    public @NotNull TransformerRegistrar transformers() {
+        return transformerRegistrar;
     }
 }
