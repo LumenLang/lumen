@@ -9,7 +9,6 @@ import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.codegen.JavaOutput;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.api.type.RefTypeHandle;
-import dev.lumenlang.lumen.pipeline.java.compiled.ScriptRuntime;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -260,7 +259,6 @@ public final class VariableStatements {
                     EnvironmentAccess.VarHandle ref = env.lookupVar(varName);
                     if (ref == null)
                         throw new RuntimeException("Variable not found: " + varName);
-                    ctx.codegen().addImport(ScriptRuntime.class.getName());
                     out.line(ref.java() + " = Coerce.coerce(" + ctx.java("val") + ", " + ref.java() + ");");
                     emitAutoSave(env, varName, ref, out);
                 }));

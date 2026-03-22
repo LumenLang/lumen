@@ -12,16 +12,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Provides compile-time utilities for generated script classes.
- *
- * <p>
- * This class handles class name normalization and assembling the final Java
- * source
- * from a {@link JavaBuilder}. Runtime binding of events and commands is handled
- * by
- * {@code ScriptBinder} in the pipeline module.
+ * Builds the final class of a Lumen script.
  */
-public final class ScriptRuntime {
+public final class ClassBuilder {
 
     public static String buildClass(@NotNull String className,
                                     @NotNull CodegenContext ctx,
@@ -37,7 +30,6 @@ public final class ScriptRuntime {
         ctx.addImport("org.bukkit.plugin.Plugin");
         ctx.addImport("org.bukkit.Bukkit");
         ctx.addImport("dev.lumenlang.lumen.plugin.text.LumenText");
-        ctx.addImport("dev.lumenlang.lumen.pipeline.java.compiled.ScriptRuntime");
         ctx.addImport("dev.lumenlang.lumen.pipeline.java.compiled.Coerce");
         ctx.addImport("dev.lumenlang.lumen.plugin.annotations.LumenEvent");
         ctx.addImport("dev.lumenlang.lumen.plugin.annotations.LumenCmd");

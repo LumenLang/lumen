@@ -1,7 +1,7 @@
 package dev.lumenlang.lumen.pipeline.java;
 
 import dev.lumenlang.lumen.api.codegen.JavaOutput;
-import dev.lumenlang.lumen.pipeline.java.compiled.ScriptRuntime;
+import dev.lumenlang.lumen.pipeline.java.compiled.ClassBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,15 +17,15 @@ import java.util.Map;
  * <p>Handlers call {@link #line(String)} to append individual Java statements or structural
  * tokens (method signatures, braces, etc.). The accumulated lines are later assembled into a
  * complete compilable class by
- * {@link ScriptRuntime}.
+ * {@link ClassBuilder}.
  *
  * <p>No indentation is added by this class; indentation within the generated class body is
- * applied uniformly by {@code ScriptRuntime.buildClass}.
+ * applied uniformly by {@code ClassBuilder.buildClass}.
  *
  * <p>Script source line markers can be attached via {@link #markScriptLine(int, String)} so
  * that runtime errors can be mapped back to the original {@code .luma} source.
  *
- * @see ScriptRuntime
+ * @see ClassBuilder
  */
 @SuppressWarnings("unused")
 public class JavaBuilder implements JavaOutput {

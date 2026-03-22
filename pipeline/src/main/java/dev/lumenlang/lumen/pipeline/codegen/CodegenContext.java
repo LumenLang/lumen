@@ -1,7 +1,7 @@
 package dev.lumenlang.lumen.pipeline.codegen;
 
 import dev.lumenlang.lumen.api.codegen.CodegenAccess;
-import dev.lumenlang.lumen.pipeline.java.compiled.ScriptRuntime;
+import dev.lumenlang.lumen.pipeline.java.compiled.ClassBuilder;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -24,7 +24,7 @@ import java.util.Set;
  * <p>Handlers that emit code referencing types not in the default import list must call
  * {@link #addImport(String)} to ensure the generated class compiles correctly.
  *
- * @see ScriptRuntime
+ * @see ClassBuilder
  */
 public final class CodegenContext implements CodegenAccess {
 
@@ -39,13 +39,13 @@ public final class CodegenContext implements CodegenAccess {
      * Creates a new {@code CodegenContext} for the given script file name.
      *
      * <p>The class name is normalised from the script name via
-     * {@link ScriptRuntime#normalize(String)}.
+     * {@link ClassBuilder#normalize(String)}.
      *
      * @param scriptName the raw script file name (e.g. {@code "hello.luma"})
      */
     public CodegenContext(@NotNull String scriptName) {
         this.scriptName = scriptName;
-        this.className = ScriptRuntime.normalize(scriptName);
+        this.className = ClassBuilder.normalize(scriptName);
     }
 
     /**
