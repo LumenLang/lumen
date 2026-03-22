@@ -51,7 +51,9 @@ public interface TransformContext {
     /**
      * Inserts a new line before the specified index.
      *
-     * <p>The inserted line inherits the tag of the calling transformer.
+     * <p>If the calling transformer declares exactly one tag, the inserted
+     * line is automatically tagged with that tag. Otherwise the inserted
+     * line is untagged.
      *
      * @param index the 0-based index to insert before
      * @param code  the Java source line to insert
@@ -61,7 +63,9 @@ public interface TransformContext {
     /**
      * Inserts a new line after the specified index.
      *
-     * <p>The inserted line inherits the tag of the calling transformer.
+     * <p>If the calling transformer declares exactly one tag, the inserted
+     * line is automatically tagged with that tag. Otherwise the inserted
+     * line is untagged.
      *
      * @param index the 0-based index to insert after
      * @param code  the Java source line to insert
@@ -72,7 +76,9 @@ public interface TransformContext {
      * Inserts multiple lines before the specified index.
      *
      * <p>Lines are inserted in order, so the first element ends up closest
-     * to the top. All inserted lines inherit the tag of the calling transformer.
+     * to the top. If the calling transformer declares exactly one tag, all
+     * inserted lines are automatically tagged with that tag. Otherwise
+     * they are untagged.
      *
      * @param index the 0-based index to insert before
      * @param lines the Java source lines to insert
@@ -83,7 +89,9 @@ public interface TransformContext {
      * Inserts multiple lines after the specified index.
      *
      * <p>Lines are inserted in order, so the first element ends up immediately
-     * after the anchor. All inserted lines inherit the tag of the calling transformer.
+     * after the anchor. If the calling transformer declares exactly one tag,
+     * all inserted lines are automatically tagged with that tag. Otherwise
+     * they are untagged.
      *
      * @param index the 0-based index to insert after
      * @param lines the Java source lines to insert

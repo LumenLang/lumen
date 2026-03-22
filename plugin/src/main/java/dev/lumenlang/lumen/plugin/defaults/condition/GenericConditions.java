@@ -50,7 +50,11 @@ public final class GenericConditions {
                 .example("if myVar is set:")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
-                .handler((match, env, ctx) -> match.java("v", ctx, env) + " != null"));
+                .handler((match, env, ctx) -> {
+                    String java = match.java("v", ctx, env);
+                    validateExprIdentifier(java, env);
+                    return java + " != null";
+                }));
 
         api.patterns().condition(b -> b
                 .by("Lumen")
@@ -59,7 +63,11 @@ public final class GenericConditions {
                 .example("if myVar is not set:")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
-                .handler((match, env, ctx) -> match.java("v", ctx, env) + " == null"));
+                .handler((match, env, ctx) -> {
+                    String java = match.java("v", ctx, env);
+                    validateExprIdentifier(java, env);
+                    return java + " == null";
+                }));
 
         api.patterns().condition(b -> b
                 .by("Lumen")

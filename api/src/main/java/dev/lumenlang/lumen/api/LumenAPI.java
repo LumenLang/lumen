@@ -41,7 +41,7 @@ import org.jetbrains.annotations.NotNull;
  *   <li>{@link #placeholders()}  -  register placeholder properties for ref types</li>
  *   <li>{@link #emitters()}  -  register custom emit handlers (statement forms, block forms, hooks)</li>
  *   <li>{@link #binders()}  -  register custom script annotation binders</li>
-    <li>{@link #transformers()}  -  register code transformers (experimental)</li>
+ *   <li>{@link #transformers()}  -  register code transformers (experimental)</li>
  * </ul>
  *
  * <p>Implementations of this interface are provided by Lumen's internal code. Addons should

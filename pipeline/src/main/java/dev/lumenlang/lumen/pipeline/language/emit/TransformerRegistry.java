@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Stores registered code transformers and runs them against emitted Java code.
@@ -26,9 +27,11 @@ import java.util.TreeMap;
  */
 public final class TransformerRegistry {
 
+    private static final int MAX_PASSES = 50;
+
     private static TransformerRegistry INSTANCE;
 
-    private final List<CodeTransformer> transformers = new ArrayList<>();
+    private final List<CodeTransformer> transformers = new CopyOnWriteArrayList<>();
 
     /**
      * Sets the global singleton instance.
@@ -93,20 +96,28 @@ public final class TransformerRegistry {
             return;
         }
 
+        List<CodeTransformer> snapshot = List.copyOf(transformers);
+
         boolean changed = true;
+        int pass = 0;
         while (changed) {
+            if (++pass > MAX_PASSES) {
+                LumenLogger.warning("[CodeTransform] Reached " + MAX_PASSES
+                        + " transformation passes, aborting to prevent an infinite loop");
+                break;
+            }
             changed = false;
 
-            for (CodeTransformer transformer : transformers) {
+            for (CodeTransformer transformer : snapshot) {
                 List<String> lines = builder.lines();
                 Map<Integer, String> tags = builder.tagMap();
 
-                List<TaggedLine> snapshot = new ArrayList<>(lines.size());
+                List<TaggedLine> lineSnapshot = new ArrayList<>(lines.size());
                 for (int i = 0; i < lines.size(); i++) {
-                    snapshot.add(new TaggedLineImpl(lines.get(i), tags.get(i), i));
+                    lineSnapshot.add(new TaggedLineImpl(lines.get(i), tags.get(i), i));
                 }
 
-                TransformContextImpl ctx = new TransformContextImpl(Collections.unmodifiableList(snapshot));
+                TransformContextImpl ctx = new TransformContextImpl(Collections.unmodifiableList(lineSnapshot));
                 transformer.transform(ctx);
 
                 if (applyModifications(builder, transformer.tags(), ctx)) {

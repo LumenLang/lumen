@@ -95,6 +95,15 @@ api.patterns().statement(b -> b
 
 The first line is tagged with your transformer's tag. If `health` is never used elsewhere, your transformer can remove it. The second line is untagged and cannot be touched by your transformer.
 
+## Insertion Tagging
+
+When a transformer inserts new lines, the pipeline decides the tag of each inserted line based on the transformer's `tags()` return value:
+
+- **Exactly one tag:** inserted lines are automatically tagged with that tag, so the transformer owns them in later passes.
+- **Otherwise (null, empty, or multiple tags):** inserted lines are untagged.
+
+If your transformer needs to insert lines and modify them in a later pass, declare exactly one tag.
+
 ## Best Practices
 
 - Always use a unique, descriptive tag string for your transformer. A good convention is `"addon-name-feature"`.
