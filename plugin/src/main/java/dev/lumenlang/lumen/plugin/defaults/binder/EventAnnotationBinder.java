@@ -38,8 +38,7 @@ public final class EventAnnotationBinder implements ScriptAnnotationBinder {
                         MethodType.methodType(void.class, evt.value()));
                 MethodHandle adapted = mh.asType(
                         MethodType.methodType(void.class, Object.class, Event.class));
-                // noinspection unchecked
-                EventSlots.bind((Class<? extends Event>) evt.value(), instance, adapted);
+                EventSlots.bind(evt.value().asSubclass(Event.class), instance, adapted);
             } catch (Throwable t) {
                 throw new RuntimeException(t);
             }

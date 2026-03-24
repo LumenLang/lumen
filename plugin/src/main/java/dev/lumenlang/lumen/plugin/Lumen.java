@@ -99,13 +99,13 @@ public final class Lumen extends JavaPlugin {
             loadScripts();
             scriptWatcher = new ScriptWatcher();
             scriptWatcher.start(ScriptSourceLoader.scriptsDir());
-            if (LumenConfiguration.EXTRA.ENABLE_DOCUMENTATION_TOOL) DocumentationDumper.dump(patternRegistry);
+            if (LumenConfiguration.EXTRA.ENABLE_DOCUMENTATION_TOOL) DocumentationDumper.dump(patternRegistry, addonManager);
         } else {
             Bukkit.getScheduler().runTask(this, () -> {
                 loadScripts();
                 scriptWatcher = new ScriptWatcher();
                 scriptWatcher.start(ScriptSourceLoader.scriptsDir());
-                if (LumenConfiguration.EXTRA.ENABLE_DOCUMENTATION_TOOL) DocumentationDumper.dump(patternRegistry);
+                if (LumenConfiguration.EXTRA.ENABLE_DOCUMENTATION_TOOL) DocumentationDumper.dump(patternRegistry, addonManager);
             });
         }
     }
@@ -196,8 +196,7 @@ public final class Lumen extends JavaPlugin {
     private void applyAddonSettings() {
         for (LumenAddon addon : addonManager.addons()) {
             for (ConfigOverride override : addon.configOverrides()) {
-                LumenLogger.info("Addon " + addon.name() + " v" + addon.version() +
-                        " is " + (override.value() ? "enabling" : "disabling") + " " + override.option().path() + ": " + override.reason());
+                LumenLogger.warning("Addon " + addon.name() + " v" + addon.version() + " is " + (override.value() ? "enabling" : "disabling") + " " + override.option().path() + ": " + override.reason());
                 LumenConfiguration.applyOverride(override);
             }
         }

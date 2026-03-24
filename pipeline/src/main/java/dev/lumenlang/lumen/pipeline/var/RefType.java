@@ -17,9 +17,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * corresponding Bukkit type. This information is used during code generation to emit correct
  * type declarations and, when needed, to automatically produce import statement.
  *
- * <p>Third-party addons can
- * register additional types via {@link #register(String, String)}:
- *
  * <pre>{@code
  * RefType BLOCK = RefType.register("BLOCK", "org.bukkit.block.Block");
  * }</pre>

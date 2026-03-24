@@ -2,12 +2,15 @@ package dev.lumenlang.lumen.plugin.documentation;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import dev.lumenlang.lumen.api.LumenAddon;
 import dev.lumenlang.lumen.api.event.AdvancedEventDefinition;
 import dev.lumenlang.lumen.api.event.EventDefinition;
 import dev.lumenlang.lumen.api.pattern.BlockVarInfo;
 import dev.lumenlang.lumen.api.pattern.PatternMeta;
 import dev.lumenlang.lumen.api.type.TypeBindingMeta;
+import dev.lumenlang.lumen.pipeline.addon.AddonManager;
 import dev.lumenlang.lumen.pipeline.conditions.registry.RegisteredCondition;
+import dev.lumenlang.lumen.pipeline.documentation.LumenDoc;
 import dev.lumenlang.lumen.pipeline.events.EventDefRegistry;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.language.pattern.RegisteredBlock;
@@ -18,244 +21,93 @@ import dev.lumenlang.lumen.pipeline.loop.RegisteredLoop;
 import dev.lumenlang.lumen.pipeline.typebinding.TypeRegistry;
 import dev.lumenlang.lumen.plugin.Lumen;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.Writer;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Generates a comprehensive JSON documentation file describing every registered
- * pattern, expression, condition, block, loop source, event, and type binding in a Lumen instance.
+ * Generates per-addon documentation files ({@code .ldoc}).
  *
- * <p>This tool is enabled via the {@code extra.enable-documentation-tool}
- * configuration option. When active, it writes {@code documentation.json} and
- * {@code documentation-raw.json} into the documentation folder of the plugin's
- * data directory.
+ * <p>Enabled via {@code extra.enable-documentation-tool}. Writes one file per
+ * addon (and one for Lumen itself) into {@code plugins/Lumen/documentation/}.
+ * Each file is named {@code {AddonName}-documentation.ldoc}. The file name
+ * encodes addon identity, so individual entries never carry an owner field.
  *
- * <h2>JSON Schema</h2>
+ * <h2>Root fields</h2>
+ * <ul>
+ *   <li>{@code version} - the addon or plugin version string.</li>
+ *   <li>{@code generatedAt} - ISO-8601 timestamp of when the file was written.</li>
+ *   <li>{@code statements} - registered statement patterns.</li>
+ *   <li>{@code expressions} - registered expression patterns.</li>
+ *   <li>{@code conditions} - registered condition patterns.</li>
+ *   <li>{@code blocks} - registered block patterns.</li>
+ *   <li>{@code loopSources} - registered loop-source patterns.</li>
+ *   <li>{@code events} - registered event definitions.</li>
+ *   <li>{@code typeBindings} - registered type bindings; only present on the Lumen file (subject to change in the future).</li>
+ * </ul>
  *
- * <p>The root object has the following top-level keys:
+ * <h2>Pattern entry fields (statements, expressions, conditions, blocks, loopSources)</h2>
+ * <ul>
+ *   <li>{@code patterns} - list of raw pattern strings that match this entry.</li>
+ *   <li>{@code description} - human-readable explanation of what the pattern does.</li>
+ *   <li>{@code examples} - list of example usage strings.</li>
+ *   <li>{@code since} - version string when this pattern was first available, or {@code null}.</li>
+ *   <li>{@code category} - category name from {@code PatternMeta}, or {@code null}.</li>
+ *   <li>{@code deprecated} - {@code true} if the pattern is deprecated.</li>
+ * </ul>
  *
- * <pre>{@code
- * {
- *   "version": "1.0.0",
- *   "generatedAt": "2025-06-15T12:00:00Z",
- *   "statements": [ ... ],
- *   "expressions": [ ... ],
- *   "conditions": [ ... ],
- *   "blocks": [ ... ],
- *   "loopSources": [ ... ],
- *   "events": [ ... ],
- *   "typeBindings": [ ... ]
- * }
- * }</pre>
+ * <h2>Extra fields for expressions</h2>
+ * <ul>
+ *   <li>{@code returnRefTypeId} - the ref-type ID of the return value (e.g. {@code "PLAYER"}), or {@code null} if Java-typed.</li>
+ *   <li>{@code returnJavaType} - the fully qualified Java return type, or {@code null} if ref-typed.</li>
+ * </ul>
  *
- * <h3>Pattern entry (statements, conditions)</h3>
+ * <h2>Extra fields for blocks</h2>
+ * <ul>
+ *   <li>{@code supportsRootLevel} - {@code true} if the block is allowed at script root level.</li>
+ *   <li>{@code supportsBlock} - {@code true} if the block is allowed inside another block.</li>
+ *   <li>{@code variables} - list of variables injected into the block scope, each with:
+ *     {@code name}, {@code type}, {@code refType} (ref-type ID or {@code null}),
+ *     {@code nullable}, {@code description}, and optionally {@code metadata}.</li>
+ * </ul>
  *
- * <p>Each pattern entry represents a single logical registration. When a
- * registration uses multiple patterns (via {@code .patterns()} or repeated
- * {@code .pattern()} calls), they are grouped into a single entry with a
- * {@code "patterns"} array.
+ * <h2>Event entry fields</h2>
+ * <ul>
+ *   <li>{@code name} - the event identifier used in scripts.</li>
+ *   <li>{@code className} - the backing Java class name, or {@code null} for advanced events.</li>
+ *   <li>{@code description} - human-readable explanation.</li>
+ *   <li>{@code examples} - list of example usage strings.</li>
+ *   <li>{@code since} - version string, or {@code null}.</li>
+ *   <li>{@code category} - category string, or {@code null}.</li>
+ *   <li>{@code deprecated} - {@code true} if the event is deprecated.</li>
+ *   <li>{@code advanced} - {@code true} for {@link AdvancedEventDefinition} entries.</li>
+ *   <li>{@code interfaces} - list of implemented interface names (advanced events only).</li>
+ *   <li>{@code fields} - map of field name to value (advanced events only).</li>
+ *   <li>{@code variables} - list of event variables, each with:
+ *     {@code name}, {@code javaType}, {@code refTypeId}, {@code description},
+ *     {@code nullable}, and optionally {@code metadata}.</li>
+ * </ul>
  *
- * <pre>{@code
- * {
- *   "patterns": ["give %who:PLAYER% %item:MATERIAL% %amt:INT%"],
- *   "by": "Lumen",
- *   "description": "Gives items to a player.",
- *   "examples": ["give player diamond 1"],
- *   "since": "1.0.0",
- *   "category": "Player",
- *   "deprecated": false
- * }
- * }</pre>
- *
- * <table>
- * <caption>Pattern entry fields</caption>
- * <tr><th>Field</th><th>Type</th><th>Description</th></tr>
- * <tr><td>{@code patterns}</td><td>{@code string[]}</td><td>One or more raw
- * pattern strings. Never empty.</td></tr>
- * <tr><td>{@code by}</td><td>{@code string | null}</td><td>The addon name that
- * registered this pattern (e.g. "Lumen").</td></tr>
- * <tr><td>{@code description}</td><td>{@code string |
- * null}</td><td>Human-readable description.</td></tr>
- * <tr><td>{@code examples}</td><td>{@code string[]}</td><td>Lumen script
- * examples. May be empty.</td></tr>
- * <tr><td>{@code since}</td><td>{@code string | null}</td><td>Version
- * introduced.</td></tr>
- * <tr><td>{@code category}</td><td>{@code string | null}</td><td>Documentation
- * category name.</td></tr>
- * <tr><td>{@code deprecated}</td><td>{@code boolean}</td><td>{@code true} if
- * this pattern is deprecated.</td></tr>
- * </table>
- *
- * <h3>Expression entry</h3>
- *
- * <p>Expression entries share the same base fields as other pattern entries, but
- * add an optional {@code "returnRefTypeId"} that declares the ref type this
- * expression statically produces, and an optional {@code "returnJavaType"} that
- * declares the Java type for primitive or string results. Tooling can use these
- * to resolve the type of a variable assigned from this expression without
- * executing the handler.
- *
- * <pre>{@code
- * {
- *   "patterns": ["get player by name %name:STRING%"],
- *   "by": "Lumen",
- *   "description": "Looks up an online player by name.",
- *   "examples": ["var target = get player by name \"Notch\""],
- *   "since": "1.0.0",
- *   "category": "Player",
- *   "deprecated": false,
- *   "returnRefTypeId": "PLAYER",
- *   "returnJavaType": null
- * }
- * }</pre>
- *
- * <table>
- * <caption>Expression entry fields (in addition to pattern entry fields)</caption>
- * <tr><th>Field</th><th>Type</th><th>Description</th></tr>
- * <tr><td>{@code returnRefTypeId}</td><td>{@code string | null}</td><td>The ref
- * type id this expression always returns (e.g. "PLAYER", "LOCATION"), or
- * {@code null} if the return type depends on runtime input or is a primitive.</td></tr>
- * <tr><td>{@code returnJavaType}</td><td>{@code string | null}</td><td>The Java
- * type this expression always returns (e.g. "int", "String", "double"), or
- * {@code null} if the return type depends on runtime input or is a ref type.</td></tr>
- * </table>
- *
- * <h3>Block entry</h3>
- *
- * <p>Block entries share the same base fields as other pattern entries, but add
- * {@code "supportsRootLevel"} and {@code "supportsBlock"} flags, and may include
- * a {@code "variables"} array describing variables the block provides to its
- * child statements.
- *
- * <pre>{@code
- * {
- *   "patterns": ["command %name:EXPR%"],
- *   "by": "Lumen",
- *   "description": "Declares a custom command.",
- *   "examples": ["command hello:"],
- *   "since": "1.0.0",
- *   "category": "Command",
- *   "deprecated": false,
- *   "supportsRootLevel": true,
- *   "supportsBlock": false,
- *   "variables": [
- *     { "name": "player", "type": "Player", "refType": "PLAYER", "nullable": true, "description": "The player who executed the command, or null if the console ran it" },
- *     { "name": "sender", "type": "CommandSender", "refType": "SENDER", "nullable": false, "description": "The command sender (player or console)" }
- *   ]
- * }
- * }</pre>
- *
- * <table>
- * <caption>Block entry fields</caption>
- * <tr><th>Field</th><th>Type</th><th>Description</th></tr>
- * <tr><td>{@code supportsRootLevel}</td><td>{@code boolean}</td><td>{@code true} if
- * this block can appear at the top level of a script (not nested).</td></tr>
- * <tr><td>{@code supportsBlock}</td><td>{@code boolean}</td><td>{@code true} if
- * this block can be nested inside other blocks.</td></tr>
- * <tr><td>{@code variables}</td><td>{@code object[] | absent}</td><td>Variables
- * the block exposes to child statements. Only present when the block declares
- * variables.</td></tr>
- * </table>
- *
- * <table>
- * <caption>Block variable fields</caption>
- * <tr><th>Field</th><th>Type</th><th>Description</th></tr>
- * <tr><td>{@code name}</td><td>{@code string}</td><td>The variable name
- * accessible in script child statements.</td></tr>
- * <tr><td>{@code type}</td><td>{@code string}</td><td>Human readable type
- * string (e.g. "Player", "World").</td></tr>
- * <tr><td>{@code refType}</td><td>{@code string | null}</td><td>The ref type
- * identifier (e.g. "PLAYER", "WORLD"), or {@code null} if the variable has no
- * ref type.</td></tr>
- * <tr><td>{@code nullable}</td><td>{@code boolean}</td><td>{@code true} if
- * the variable can be {@code null}.</td></tr>
- * <tr><td>{@code description}</td><td>{@code string | null}</td><td>Human readable
- * description of what the variable represents.</td></tr>
- * <tr><td>{@code metadata}</td><td>{@code object | absent}</td><td>Optional
- * metadata map. Only present when the variable has metadata entries.</td></tr>
- * </table>
- *
- * <h3>Event entry</h3>
- *
- * <pre>{@code
- * {
- *   "name": "join",
- *   "by": "Lumen",
- *   "className": "org.bukkit.event.player.PlayerJoinEvent",
- *   "description": "Fires when a player joins the server.",
- *   "examples": ["on join:"],
- *   "since": "1.0.0",
- *   "category": "Player",
- *   "deprecated": false,
- *   "variables": [
- *     { "name": "player", "javaType": "org.bukkit.entity.Player", "refTypeId": "PLAYER", "description": "The player who joined" }
- *   ]
- * }
- * }</pre>
- *
- * <table>
- * <caption>Event entry fields</caption>
- * <tr><th>Field</th><th>Type</th><th>Description</th></tr>
- * <tr><td>{@code name}</td><td>{@code string}</td><td>The script-level event
- * name used in {@code on <name>:} blocks.</td></tr>
- * <tr><td>{@code by}</td><td>{@code string | null}</td><td>The addon name that
- * registered this event.</td></tr>
- * <tr><td>{@code className}</td><td>{@code string}</td><td>Fully qualified
- * Bukkit event class.</td></tr>
- * <tr><td>{@code description}</td><td>{@code string | null}</td><td>Human-readable
- * description.</td></tr>
- * <tr><td>{@code examples}</td><td>{@code string[]}</td><td>Usage examples.</td></tr>
- * <tr><td>{@code since}</td><td>{@code string | null}</td><td>Version
- * introduced.</td></tr>
- * <tr><td>{@code category}</td><td>{@code string | null}</td><td>Documentation
- * category.</td></tr>
- * <tr><td>{@code deprecated}</td><td>{@code boolean}</td><td>{@code true} if
- * this event is deprecated.</td></tr>
- * <tr><td>{@code variables}</td><td>{@code object[]}</td><td>Variables exposed to
- * child statements, each with {@code name}, {@code javaType}, optional
- * {@code refTypeId}, optional {@code description}, {code nullable}, and {code metadata}</td></tr>
- * </table>
- *
- * <h3>Type binding entry</h3>
- *
- * <pre>{@code
- * {
- *   "id": "PLAYER",
- *   "description": "Resolves a player reference from a variable name.",
- *   "javaType": "org.bukkit.entity.Player",
- *   "examples": ["message %who:PLAYER% \"Hello!\""],
- *   "since": "1.0.0",
- *   "deprecated": false
- * }
- * }</pre>
- *
- * <table>
- * <caption>Type binding entry fields</caption>
- * <tr><th>Field</th><th>Type</th><th>Description</th></tr>
- * <tr><td>{@code id}</td><td>{@code string}</td><td>The type identifier used in
- * patterns (e.g. {@code "PLAYER"}).</td></tr>
- * <tr><td>{@code description}</td><td>{@code string | null}</td><td>What this
- * type binding represents.</td></tr>
- * <tr><td>{@code javaType}</td><td>{@code string | null}</td><td>Fully
- * qualified Java type this resolves to.</td></tr>
- * <tr><td>{@code examples}</td><td>{@code string[]}</td><td>Usage examples. May
- * be empty.</td></tr>
- * <tr><td>{@code since}</td><td>{@code string | null}</td><td>Version
- * introduced.</td></tr>
- * <tr><td>{@code deprecated}</td><td>{@code boolean}</td><td>{@code true} if
- * this type binding is deprecated.</td></tr>
- * </table>
+ * <h2>Type binding entry fields</h2>
+ * <ul>
+ *   <li>{@code id} - the unique ref-type identifier (e.g. {@code "PLAYER"}).</li>
+ *   <li>{@code description} - human-readable explanation, or {@code null}.</li>
+ *   <li>{@code javaType} - the fully qualified Java type this ID maps to, or {@code null}.</li>
+ *   <li>{@code examples} - list of example usage strings.</li>
+ *   <li>{@code since} - version string, or {@code null}.</li>
+ *   <li>{@code deprecated} - {@code true} if the type is deprecated.</li>
+ * </ul>
  *
  * @see PatternRegistry
  * @see TypeRegistry
@@ -263,21 +115,18 @@ import java.util.concurrent.CompletableFuture;
  */
 public final class DocumentationDumper {
 
+    private static final String LUMEN = "Lumen";
+
     private DocumentationDumper() {
     }
 
     /**
-     * Collects all registered patterns and type bindings from the given registries
-     * and writes them as a single JSON file to the specified path.
+     * Dumps all registrations into per-addon {@code .ldoc} files.
      *
-     * <p>
-     * Patterns that share the same handler (registered via multi-pattern builders)
-     * are grouped into a single documentation entry with multiple pattern strings.
-     *
-     * @param patternRegistry the pattern registry containing all statements,
-     *                        blocks, expressions, and conditions
+     * @param patternRegistry the pattern registry
+     * @param addonManager    the addon manager
      */
-    public static void dump(@NotNull PatternRegistry patternRegistry) {
+    public static void dump(@NotNull PatternRegistry patternRegistry, @NotNull AddonManager addonManager) {
         Path outputPath = Lumen.instance().getDataFolder().toPath().resolve("documentation");
         try {
             Files.createDirectories(outputPath);
@@ -288,47 +137,61 @@ public final class DocumentationDumper {
         TypeRegistry typeRegistry = patternRegistry.getTypeRegistry();
 
         CompletableFuture.runAsync(() -> {
-            Map<String, Object> root = new LinkedHashMap<>();
-            root.put("version", Lumen.instance().getDescription().getVersion());
-            root.put("generatedAt", Instant.now().toString());
-            root.put("statements", groupStatements(patternRegistry.getStatements()));
-            root.put("expressions", groupExpressions(patternRegistry.getExpressions()));
-            root.put("conditions", groupConditions(patternRegistry.getConditionRegistry().getConditions()));
-            root.put("blocks", groupBlocks(patternRegistry.getBlocks()));
-            root.put("loopSources", groupLoops(patternRegistry.getLoopRegistry().getLoops()));
-            root.put("events", collectEvents());
-            root.put("typeBindings", collectTypeBindings(typeRegistry));
+            Map<String, List<Map<String, Object>>> statements = groupStatements(patternRegistry.getStatements());
+            Map<String, List<Map<String, Object>>> expressions = groupExpressions(patternRegistry.getExpressions());
+            Map<String, List<Map<String, Object>>> conditions = groupConditions(patternRegistry.getConditionRegistry().getConditions());
+            Map<String, List<Map<String, Object>>> blocks = groupBlocks(patternRegistry.getBlocks());
+            Map<String, List<Map<String, Object>>> loops = groupLoops(patternRegistry.getLoopRegistry().getLoops());
+            Map<String, List<Map<String, Object>>> events = collectEvents();
+
+            Set<String> addonNames = new LinkedHashSet<>();
+            addonNames.add(LUMEN);
+            addonNames.addAll(statements.keySet());
+            addonNames.addAll(expressions.keySet());
+            addonNames.addAll(conditions.keySet());
+            addonNames.addAll(blocks.keySet());
+            addonNames.addAll(loops.keySet());
+            addonNames.addAll(events.keySet());
 
             Gson gson = new GsonBuilder()
-                    .setPrettyPrinting()
-                    .serializeNulls()
-                    .disableHtmlEscaping()
-                    .create();
-            Gson raw = new GsonBuilder()
                     .serializeNulls()
                     .disableHtmlEscaping()
                     .create();
 
-            try {
-                try (Writer writer = Files.newBufferedWriter(outputPath.resolve("documentation.json"),
-                        StandardCharsets.UTF_8)) {
-                    gson.toJson(root, writer);
-                    LumenLogger.debug("DocumentationDumper", "Formatted Documentation JSON written to " + outputPath.resolve("documentation.json"));
+            for (String name : addonNames) {
+                Map<String, Object> root = new LinkedHashMap<>();
+                if (LUMEN.equals(name)) {
+                    root.put("version", Lumen.instance().getDescription().getVersion());
+                } else {
+                    LumenAddon addon = addonManager.get(name);
+                    root.put("version", addon != null ? addon.version() : null);
                 }
+                root.put("generatedAt", Instant.now().toString());
+                root.put("statements", statements.getOrDefault(name, List.of()));
+                root.put("expressions", expressions.getOrDefault(name, List.of()));
+                root.put("conditions", conditions.getOrDefault(name, List.of()));
+                root.put("blocks", blocks.getOrDefault(name, List.of()));
+                root.put("loopSources", loops.getOrDefault(name, List.of()));
+                root.put("events", events.getOrDefault(name, List.of()));
+                root.put("typeBindings", LUMEN.equals(name) ? collectTypeBindings(typeRegistry) : List.of());
 
-                try (Writer writer = Files.newBufferedWriter(outputPath.resolve("documentation-raw.json"),
-                        StandardCharsets.UTF_8)) {
-                    raw.toJson(root, writer);
-                    LumenLogger.debug("DocumentationDumper", "Raw Documentation JSON written to " + outputPath.resolve("documentation-raw.json"));
+                try {
+                    LumenDoc.write(outputPath.resolve(LumenDoc.resourceName(name)), gson.toJson(root));
+                    LumenLogger.debug("DocumentationDumper", "Written " + LumenDoc.resourceName(name));
+                } catch (IOException e) {
+                    LumenLogger.warning("Failed to write documentation for " + name + ": " + e.getMessage());
                 }
-            } catch (IOException e) {
-                LumenLogger.warning("Failed to write documentation JSON: " + e.getMessage());
             }
+
+            LumenLogger.info("Documentation dumped for " + addonNames.size() + " source(s): " + String.join(", ", addonNames));
         });
     }
 
-    private static @NotNull List<Map<String, Object>> groupStatements(
-            @NotNull List<RegisteredPattern> statements) {
+    private static @NotNull String ownerOf(@Nullable String by) {
+        return by != null ? by : LUMEN;
+    }
+
+    private static @NotNull Map<String, List<Map<String, Object>>> groupStatements(@NotNull List<RegisteredPattern> statements) {
         IdentityHashMap<Object, List<String>> handlerToPatterns = new IdentityHashMap<>();
         IdentityHashMap<Object, PatternMeta> handlerToMeta = new IdentityHashMap<>();
         List<Object> handlerOrder = new ArrayList<>();
@@ -342,15 +205,16 @@ public final class DocumentationDumper {
             handlerToMeta.putIfAbsent(handler, rp.meta());
         }
 
-        List<Map<String, Object>> result = new ArrayList<>();
+        Map<String, List<Map<String, Object>>> result = new LinkedHashMap<>();
         for (Object handler : handlerOrder) {
-            result.add(buildPatternEntry(handlerToPatterns.get(handler), handlerToMeta.get(handler)));
+            PatternMeta meta = handlerToMeta.get(handler);
+            result.computeIfAbsent(ownerOf(meta.by()), k -> new ArrayList<>())
+                    .add(buildPatternEntry(handlerToPatterns.get(handler), meta));
         }
         return result;
     }
 
-    private static @NotNull List<Map<String, Object>> groupExpressions(
-            @NotNull List<RegisteredExpression> expressions) {
+    private static @NotNull Map<String, List<Map<String, Object>>> groupExpressions(@NotNull List<RegisteredExpression> expressions) {
         IdentityHashMap<Object, List<String>> handlerToPatterns = new IdentityHashMap<>();
         IdentityHashMap<Object, PatternMeta> handlerToMeta = new IdentityHashMap<>();
         IdentityHashMap<Object, String> handlerToReturnRefType = new IdentityHashMap<>();
@@ -372,19 +236,18 @@ public final class DocumentationDumper {
             }
         }
 
-        List<Map<String, Object>> result = new ArrayList<>();
+        Map<String, List<Map<String, Object>>> result = new LinkedHashMap<>();
         for (Object handler : handlerOrder) {
-            Map<String, Object> entry = buildPatternEntry(
-                    handlerToPatterns.get(handler), handlerToMeta.get(handler));
+            PatternMeta meta = handlerToMeta.get(handler);
+            Map<String, Object> entry = buildPatternEntry(handlerToPatterns.get(handler), meta);
             entry.put("returnRefTypeId", handlerToReturnRefType.get(handler));
             entry.put("returnJavaType", handlerToReturnJavaType.get(handler));
-            result.add(entry);
+            result.computeIfAbsent(ownerOf(meta.by()), k -> new ArrayList<>()).add(entry);
         }
         return result;
     }
 
-    private static @NotNull List<Map<String, Object>> groupConditions(
-            @NotNull List<RegisteredCondition> conditions) {
+    private static @NotNull Map<String, List<Map<String, Object>>> groupConditions(@NotNull List<RegisteredCondition> conditions) {
         IdentityHashMap<Object, List<String>> handlerToPatterns = new IdentityHashMap<>();
         IdentityHashMap<Object, PatternMeta> handlerToMeta = new IdentityHashMap<>();
         List<Object> handlerOrder = new ArrayList<>();
@@ -398,15 +261,16 @@ public final class DocumentationDumper {
             handlerToMeta.putIfAbsent(handler, rc.meta());
         }
 
-        List<Map<String, Object>> result = new ArrayList<>();
+        Map<String, List<Map<String, Object>>> result = new LinkedHashMap<>();
         for (Object handler : handlerOrder) {
-            result.add(buildPatternEntry(handlerToPatterns.get(handler), handlerToMeta.get(handler)));
+            PatternMeta meta = handlerToMeta.get(handler);
+            result.computeIfAbsent(ownerOf(meta.by()), k -> new ArrayList<>())
+                    .add(buildPatternEntry(handlerToPatterns.get(handler), meta));
         }
         return result;
     }
 
-    private static @NotNull List<Map<String, Object>> groupBlocks(
-            @NotNull List<RegisteredBlock> blocks) {
+    private static @NotNull Map<String, List<Map<String, Object>>> groupBlocks(@NotNull List<RegisteredBlock> blocks) {
         IdentityHashMap<Object, List<String>> handlerToPatterns = new IdentityHashMap<>();
         IdentityHashMap<Object, PatternMeta> handlerToMeta = new IdentityHashMap<>();
         IdentityHashMap<Object, List<BlockVarInfo>> handlerToVars = new IdentityHashMap<>();
@@ -426,10 +290,10 @@ public final class DocumentationDumper {
             handlerToSupportsBlock.putIfAbsent(handler, rb.supportsBlock());
         }
 
-        List<Map<String, Object>> result = new ArrayList<>();
+        Map<String, List<Map<String, Object>>> result = new LinkedHashMap<>();
         for (Object handler : handlerOrder) {
-            Map<String, Object> entry = buildPatternEntry(
-                    handlerToPatterns.get(handler), handlerToMeta.get(handler));
+            PatternMeta meta = handlerToMeta.get(handler);
+            Map<String, Object> entry = buildPatternEntry(handlerToPatterns.get(handler), meta);
             entry.put("supportsRootLevel", handlerToRootLevel.get(handler));
             entry.put("supportsBlock", handlerToSupportsBlock.get(handler));
             List<BlockVarInfo> vars = handlerToVars.get(handler);
@@ -449,13 +313,12 @@ public final class DocumentationDumper {
                 }
                 entry.put("variables", varList);
             }
-            result.add(entry);
+            result.computeIfAbsent(ownerOf(meta.by()), k -> new ArrayList<>()).add(entry);
         }
         return result;
     }
 
-    private static @NotNull List<Map<String, Object>> groupLoops(
-            @NotNull List<RegisteredLoop> loops) {
+    private static @NotNull Map<String, List<Map<String, Object>>> groupLoops(@NotNull List<RegisteredLoop> loops) {
         IdentityHashMap<Object, List<String>> handlerToPatterns = new IdentityHashMap<>();
         IdentityHashMap<Object, PatternMeta> handlerToMeta = new IdentityHashMap<>();
         List<Object> handlerOrder = new ArrayList<>();
@@ -469,19 +332,18 @@ public final class DocumentationDumper {
             handlerToMeta.putIfAbsent(handler, rl.meta());
         }
 
-        List<Map<String, Object>> result = new ArrayList<>();
+        Map<String, List<Map<String, Object>>> result = new LinkedHashMap<>();
         for (Object handler : handlerOrder) {
-            result.add(buildPatternEntry(handlerToPatterns.get(handler), handlerToMeta.get(handler)));
+            PatternMeta meta = handlerToMeta.get(handler);
+            result.computeIfAbsent(ownerOf(meta.by()), k -> new ArrayList<>())
+                    .add(buildPatternEntry(handlerToPatterns.get(handler), meta));
         }
         return result;
     }
 
-    private static @NotNull Map<String, Object> buildPatternEntry(
-            @NotNull List<String> patterns,
-            @NotNull PatternMeta meta) {
+    private static @NotNull Map<String, Object> buildPatternEntry(@NotNull List<String> patterns, @NotNull PatternMeta meta) {
         Map<String, Object> entry = new LinkedHashMap<>();
         entry.put("patterns", patterns);
-        entry.put("by", meta.by());
         entry.put("description", meta.description());
         entry.put("examples", meta.examples());
         entry.put("since", meta.since());
@@ -490,13 +352,12 @@ public final class DocumentationDumper {
         return entry;
     }
 
-    private static @NotNull List<Map<String, Object>> collectEvents() {
-        List<Map<String, Object>> result = new ArrayList<>();
+    private static @NotNull Map<String, List<Map<String, Object>>> collectEvents() {
+        Map<String, List<Map<String, Object>>> result = new LinkedHashMap<>();
 
         for (EventDefinition def : EventDefRegistry.apiDefinitions().values()) {
             Map<String, Object> entry = new LinkedHashMap<>();
             entry.put("name", def.name());
-            entry.put("by", def.by());
             entry.put("className", def.className());
             entry.put("description", def.description());
             entry.put("examples", def.examples());
@@ -520,13 +381,12 @@ public final class DocumentationDumper {
                 varList.add(varObj);
             }
             entry.put("variables", varList);
-            result.add(entry);
+            result.computeIfAbsent(ownerOf(def.by()), k -> new ArrayList<>()).add(entry);
         }
 
         for (AdvancedEventDefinition def : EventDefRegistry.advancedDefs().values()) {
             Map<String, Object> entry = new LinkedHashMap<>();
             entry.put("name", def.name());
-            entry.put("by", def.by());
             entry.put("className", null);
             entry.put("description", def.description());
             entry.put("examples", def.examples());
@@ -548,14 +408,13 @@ public final class DocumentationDumper {
                 varList.add(varObj);
             }
             entry.put("variables", varList);
-            result.add(entry);
+            result.computeIfAbsent(ownerOf(def.by()), k -> new ArrayList<>()).add(entry);
         }
 
         return result;
     }
 
-    private static @NotNull List<Map<String, Object>> collectTypeBindings(
-            @NotNull TypeRegistry typeRegistry) {
+    private static @NotNull List<Map<String, Object>> collectTypeBindings(@NotNull TypeRegistry typeRegistry) {
         List<Map<String, Object>> result = new ArrayList<>();
 
         for (Map.Entry<String, TypeBindingMeta> entry : typeRegistry.allMeta().entrySet()) {

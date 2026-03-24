@@ -2,6 +2,7 @@ package dev.lumenlang.lumen.pipeline.addon;
 
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.LumenAddon;
+import dev.lumenlang.lumen.pipeline.documentation.LumenDoc;
 import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,26 +17,6 @@ import java.util.ServiceLoader;
 
 /**
  * Manages discovery, registration, and lifecycle of {@link LumenAddon} instances.
- *
- * <p>Addons can be registered in two ways:
- * <ul>
- *   <li><b>Plugin-based:</b> A Bukkit plugin that depends on Lumen calls
- *       {@link #registerAddon(LumenAddon)} during its {@code onEnable()}. The addon
- *       is enabled immediately if the API is already available, or queued until
- *       {@link #enableAll(LumenAPI)} is called.</li>
- *   <li><b>Jar-based:</b> Stand-alone jar files placed in the
- *       {@code plugins/Lumen/addons/} directory are scanned via {@link ServiceLoader}
- *       during {@link #loadAddons(File)}.</li>
- * </ul>
- *
- * <h2>Lifecycle</h2>
- * <ol>
- *   <li>Lumen's {@code onEnable()} creates the manager and calls {@link #loadAddons(File)}.</li>
- *   <li>{@link #enableAll(LumenAPI)} enables all jar-based addons and queued plugin addons.</li>
- *   <li>After Lumen enables, other plugin-based addons may call {@link #registerAddon(LumenAddon)}
- *       and are enabled on the spot.</li>
- *   <li>{@link #disableAll()} calls {@link LumenAddon#onDisable()} on each in reverse order.</li>
- * </ol>
  */
 @SuppressWarnings("unused")
 public final class AddonManager {
@@ -84,11 +65,12 @@ public final class AddonManager {
                 for (LumenAddon addon : sl) {
                     addons.add(addon);
                     callOnLoad(addon);
+                    validateDocumentation(loader, addon);
                     LumenLogger.info("Discovered addon jar: " + addon.name()
                             + " v" + addon.version()
                             + " (" + addon.description() + ")");
                 }
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 LumenLogger.warning("Failed to load addon jar: " + jar.getName() + "  -  " + e.getMessage());
             }
         }
@@ -179,5 +161,18 @@ public final class AddonManager {
         } catch (Exception e) {
             LumenLogger.warning("Error calling onLoad for addon " + addon.name() + " v" + addon.version() + ": " + e.getMessage());
         }
+    }
+
+    private void validateDocumentation(@NotNull URLClassLoader loader, @NotNull LumenAddon addon) {
+        String expected = LumenDoc.resourceName(addon.name());
+        if (loader.getResource(expected) != null) return;
+        LumenLogger.severe("=================================================");
+        LumenLogger.severe("Addon '" + addon.name() + "' v" + addon.version() + " is missing its documentation file!");
+        LumenLogger.severe("Expected resource: " + expected);
+        LumenLogger.severe("If you are the addon developer, enable the documentation tool in Lumen's config.yml");
+        LumenLogger.severe("run the server, and include the generated " + expected + " file in your addon jar.");
+        LumenLogger.severe(" ");
+        LumenLogger.severe("If you are a user, please report this to the addon developer.");
+        LumenLogger.severe("=================================================");
     }
 }
