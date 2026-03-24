@@ -54,6 +54,7 @@ import java.util.concurrent.CompletableFuture;
  *   <li>{@code blocks} - registered block patterns.</li>
  *   <li>{@code loopSources} - registered loop-source patterns.</li>
  *   <li>{@code events} - registered event definitions.</li>
+ *   <li>{@code empty} - {@code true} if this addon registered nothing; tooling should mark it as unused and treat the version as potentially outdated.</li>
  *   <li>{@code typeBindings} - registered type bindings; only present on the Lumen file (subject to change in the future).</li>
  * </ul>
  *
@@ -152,6 +153,9 @@ public final class DocumentationDumper {
             addonNames.addAll(blocks.keySet());
             addonNames.addAll(loops.keySet());
             addonNames.addAll(events.keySet());
+            for (LumenAddon addon : addonManager.addons()) {
+                addonNames.add(addon.name());
+            }
 
             Gson gson = new GsonBuilder()
                     .serializeNulls()
@@ -166,14 +170,25 @@ public final class DocumentationDumper {
                     LumenAddon addon = addonManager.get(name);
                     root.put("version", addon != null ? addon.version() : null);
                 }
+                List<Map<String, Object>> stmts = statements.getOrDefault(name, List.of());
+                List<Map<String, Object>> exprs = expressions.getOrDefault(name, List.of());
+                List<Map<String, Object>> conds = conditions.getOrDefault(name, List.of());
+                List<Map<String, Object>> blks = blocks.getOrDefault(name, List.of());
+                List<Map<String, Object>> lps = loops.getOrDefault(name, List.of());
+                List<Map<String, Object>> evts = events.getOrDefault(name, List.of());
+                List<Map<String, Object>> types = LUMEN.equals(name) ? collectTypeBindings(typeRegistry) : List.of();
+
+                boolean empty = stmts.isEmpty() && exprs.isEmpty() && conds.isEmpty() && blks.isEmpty() && lps.isEmpty() && evts.isEmpty() && types.isEmpty();
+
+                root.put("empty", empty);
                 root.put("generatedAt", Instant.now().toString());
-                root.put("statements", statements.getOrDefault(name, List.of()));
-                root.put("expressions", expressions.getOrDefault(name, List.of()));
-                root.put("conditions", conditions.getOrDefault(name, List.of()));
-                root.put("blocks", blocks.getOrDefault(name, List.of()));
-                root.put("loopSources", loops.getOrDefault(name, List.of()));
-                root.put("events", events.getOrDefault(name, List.of()));
-                root.put("typeBindings", LUMEN.equals(name) ? collectTypeBindings(typeRegistry) : List.of());
+                root.put("statements", stmts);
+                root.put("expressions", exprs);
+                root.put("conditions", conds);
+                root.put("blocks", blks);
+                root.put("loopSources", lps);
+                root.put("events", evts);
+                root.put("typeBindings", types);
 
                 try {
                     LumenDoc.write(outputPath.resolve(LumenDoc.resourceName(name)), gson.toJson(root));
@@ -405,6 +420,10 @@ public final class DocumentationDumper {
                 varObj.put("javaType", ve.javaType());
                 varObj.put("refTypeId", ve.refTypeId());
                 varObj.put("description", ve.description());
+                varObj.put("nullable", ve.metadata().getOrDefault("nullable", false));
+                if (!ve.metadata().isEmpty()) {
+                    varObj.put("metadata", ve.metadata());
+                }
                 varList.add(varObj);
             }
             entry.put("variables", varList);

@@ -37,6 +37,7 @@ public final class AddonManager {
     public void registerAddon(@NotNull LumenAddon addon) {
         addons.add(addon);
         callOnLoad(addon);
+        validateDocumentation(addon.getClass().getClassLoader(), addon);
         if (api != null) {
             enableSingle(addon);
         }
@@ -163,7 +164,7 @@ public final class AddonManager {
         }
     }
 
-    private void validateDocumentation(@NotNull URLClassLoader loader, @NotNull LumenAddon addon) {
+    private void validateDocumentation(@NotNull ClassLoader loader, @NotNull LumenAddon addon) {
         String expected = LumenDoc.resourceName(addon.name());
         if (loader.getResource(expected) != null) return;
         LumenLogger.severe("=================================================");
