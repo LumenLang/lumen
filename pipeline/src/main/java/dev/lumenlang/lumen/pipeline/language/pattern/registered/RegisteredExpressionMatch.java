@@ -1,4 +1,4 @@
-package dev.lumenlang.lumen.pipeline.language.pattern;
+package dev.lumenlang.lumen.pipeline.language.pattern.registered;
 
 import dev.lumenlang.lumen.pipeline.language.match.Match;
 import org.jetbrains.annotations.NotNull;

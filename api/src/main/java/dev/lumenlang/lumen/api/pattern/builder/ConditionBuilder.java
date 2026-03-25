@@ -1,6 +1,7 @@
 package dev.lumenlang.lumen.api.pattern.builder;
 
 import dev.lumenlang.lumen.api.handler.ConditionHandler;
+import dev.lumenlang.lumen.api.inject.body.InjectableCondition;
 import dev.lumenlang.lumen.api.pattern.Category;
 import dev.lumenlang.lumen.api.pattern.PatternMeta;
 import dev.lumenlang.lumen.api.pattern.PatternRegistrar;
@@ -41,6 +42,9 @@ public final class ConditionBuilder {
     private @Nullable Category category;
     private boolean deprecated;
     private @Nullable ConditionHandler handler;
+    private @Nullable InjectableCondition injectableCondition;
+    private @Nullable Class<?> injectableClass;
+    private @Nullable String injectableMethodName;
 
     /**
      * Sets the addon name that registers this condition pattern.
@@ -157,6 +161,32 @@ public final class ConditionBuilder {
         return this;
     }
 
+    /**
+     * Sets an injectable condition whose bytecode will be extracted and injected
+     * into the compiled script class. This is an alternative to {@link #handler}.
+     *
+     * @param condition the injectable condition
+     * @return this builder
+     */
+    public @NotNull ConditionBuilder injectableHandler(@NotNull InjectableCondition condition) {
+        this.injectableCondition = condition;
+        return this;
+    }
+
+    /**
+     * Sets a static method whose bytecode will be extracted and injected
+     * into the compiled script class. This is an alternative to {@link #handler}.
+     *
+     * @param clazz the class containing the static method
+     * @param methodName the name of the static method
+     * @return this builder
+     */
+    public @NotNull ConditionBuilder injectableHandler(@NotNull Class<?> clazz, @NotNull String methodName) {
+        this.injectableClass = clazz;
+        this.injectableMethodName = methodName;
+        return this;
+    }
+
     public @NotNull List<String> getPatterns() {
         return patterns;
     }
@@ -167,6 +197,18 @@ public final class ConditionBuilder {
         return handler;
     }
 
+    public @Nullable InjectableCondition getInjectableCondition() {
+        return injectableCondition;
+    }
+
+    public @Nullable Class<?> getInjectableClass() {
+        return injectableClass;
+    }
+
+    public @Nullable String getInjectableMethodName() {
+        return injectableMethodName;
+    }
+
     public @NotNull PatternMeta buildMeta() {
         return new PatternMeta(by, description, List.copyOf(examples), since, category, deprecated);
     }
@@ -175,8 +217,8 @@ public final class ConditionBuilder {
         if (patterns.isEmpty()) {
             throw new IllegalStateException("Condition builder requires at least one pattern");
         }
-        if (handler == null) {
-            throw new IllegalStateException("Condition builder requires a handler");
+        if (handler == null && injectableCondition == null && injectableClass == null) {
+            throw new IllegalStateException("Condition builder requires a handler or injectableHandler");
         }
         if (by == null) {
             throw new IllegalStateException("Condition builder requires a 'by' (addon name)");

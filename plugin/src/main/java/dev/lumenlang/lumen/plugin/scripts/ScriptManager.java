@@ -5,6 +5,7 @@ import dev.lumenlang.lumen.api.annotations.LumenPreload;
 import dev.lumenlang.lumen.pipeline.binder.ScriptBinder;
 import dev.lumenlang.lumen.pipeline.codegen.CodegenContext;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
+import dev.lumenlang.lumen.pipeline.inject.bytecode.BytecodeInjector;
 import dev.lumenlang.lumen.pipeline.java.JavaBuilder;
 import dev.lumenlang.lumen.pipeline.java.compiled.ClassBuilder;
 import dev.lumenlang.lumen.pipeline.java.compiled.ScriptSourceMap;
@@ -400,6 +401,7 @@ public final class ScriptManager {
         long compileStart = System.nanoTime();
         dumpIfEnabled(generated);
         Map<String, byte[]> bytecodes = compile(generated);
+        BytecodeInjector.inject(bytecodes);
         cacheIfEnabled(name, source, generated.javaSource(), bytecodes);
         long compileTime = System.nanoTime() - compileStart;
 
@@ -475,6 +477,7 @@ public final class ScriptManager {
         for (GeneratedSource gs : generated) {
             try {
                 Map<String, byte[]> bytecodes = compile(gs);
+                BytecodeInjector.inject(bytecodes);
                 cacheIfEnabled(gs.scriptName(), gs.originalSource(), gs.javaSource(), bytecodes);
                 result.add(new PreparedScript(gs.scriptName(), gs.fqcn(), bytecodes,
                         new CompileTimings(0L, 0L)));
@@ -549,6 +552,7 @@ public final class ScriptManager {
         for (GeneratedSource s : generated) {
             String normalized = ClassBuilder.normalize(s.className());
             Map<String, byte[]> bytecodes = extractBytecodes(fm.classes, normalized);
+            BytecodeInjector.inject(bytecodes);
             if (LumenConfiguration.DEBUG.LOG_COMPILATION) {
                 LumenLogger.info(
                         "[Compilation] Extracted " + bytecodes.size() + " bytecode classes for " + s.scriptName());

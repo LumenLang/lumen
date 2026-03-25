@@ -46,7 +46,7 @@ public final class ItemStackStatements {
         api.patterns().statement(b -> b
                 .by("Lumen")
                 .pattern("set %i:ITEMSTACK_POSSESSIVE% lore [to] %lore:STRING%")
-                .description("Sets the lore of an item stack. Use | to separate lines. Supports color codes via LumenText.")
+                .description("Sets the lore of an item stack. Use | to separate lines. Supports MiniColorize.")
                 .example("set item's lore to \"&7A legendary weapon|&eCrafted by the gods\"")
                 .since("1.0.0")
                 .category(Categories.ITEM)
@@ -65,7 +65,7 @@ public final class ItemStackStatements {
         api.patterns().statement(b -> b
                 .by("Lumen")
                 .pattern("add lore %line:STRING% to %i:ITEMSTACK%")
-                .description("Appends a single lore line to an item stack. Supports color codes via LumenText.")
+                .description("Appends a single lore line to an item stack. Supports MiniColorize.")
                 .example("add lore \"&aThis item is special\" to item")
                 .since("1.0.0")
                 .category(Categories.ITEM)

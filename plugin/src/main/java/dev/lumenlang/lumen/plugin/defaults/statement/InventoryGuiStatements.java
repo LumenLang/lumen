@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
  */
 @Registration
 @SuppressWarnings("unused")
+// TODO: Make better
 public final class InventoryGuiStatements {
 
     private static final String INVENTORY = Inventory.class.getName();

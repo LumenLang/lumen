@@ -64,8 +64,7 @@ public final class InventoryStatements {
                 .example("give player myItem")
                 .since("1.0.0")
                 .category(Categories.INVENTORY)
-                .handler((line, ctx, out) -> out.line(ctx.java("who") + ".getInventory().addItem("
-                        + ctx.java("item") + ");")));
+                .handler((line, ctx, out) -> out.line(ctx.java("who") + ".getInventory().addItem(" + ctx.java("item") + ");")));
 
         api.patterns().statement(b -> b
                 .by("Lumen")
@@ -76,9 +75,8 @@ public final class InventoryStatements {
                 .category(Categories.INVENTORY)
                 .handler((line, ctx, out) -> {
                     ctx.codegen().addImport(ItemStack.class.getName());
-                    String itemJava = ctx.java("item");
                     out.line("{");
-                    out.line("ItemStack __item = " + itemJava + ";");
+                    out.line("ItemStack __item = " + ctx.java("item") + ";");
                     out.line("__item.setAmount(" + ctx.java("amt") + ");");
                     out.line(ctx.java("who") + ".getInventory().addItem(__item);");
                     out.line("}");

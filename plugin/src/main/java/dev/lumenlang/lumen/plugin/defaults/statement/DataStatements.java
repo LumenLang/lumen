@@ -34,10 +34,7 @@ public final class DataStatements {
                 .category(Categories.DATA)
                 .handler((line, ctx, out) -> {
                     ctx.codegen().addImport(DataInstance.class.getName());
-                    String objJava2 = ctx.java("obj");
-                    String fieldJava2 = ctx.java("field");
-                    String valJava = ctx.java("val");
-                    out.line("((DataInstance) " + objJava2 + ").set(" + fieldJava2 + ", " + valJava + ");");
+                    out.line("((DataInstance) " + ctx.java("obj") + ").set(" + ctx.java("field") + ", " + ctx.java("val") + ");");
                 }));
     }
 }

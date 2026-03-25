@@ -3,8 +3,8 @@ package dev.lumenlang.lumen.pipeline.language.typed;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.pipeline.language.nodes.StatementNode;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
-import dev.lumenlang.lumen.pipeline.language.pattern.RegisteredExpressionMatch;
-import dev.lumenlang.lumen.pipeline.language.pattern.RegisteredPatternMatch;
+import dev.lumenlang.lumen.pipeline.language.pattern.registered.RegisteredExpressionMatch;
+import dev.lumenlang.lumen.pipeline.language.pattern.registered.RegisteredPatternMatch;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import org.jetbrains.annotations.NotNull;
 

@@ -1,8 +1,10 @@
-package dev.lumenlang.lumen.pipeline.language.pattern;
+package dev.lumenlang.lumen.pipeline.language.pattern.registered;
 
 import dev.lumenlang.lumen.api.handler.BlockHandler;
 import dev.lumenlang.lumen.api.pattern.BlockVarInfo;
 import dev.lumenlang.lumen.api.pattern.PatternMeta;
+import dev.lumenlang.lumen.pipeline.language.pattern.Pattern;
+import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

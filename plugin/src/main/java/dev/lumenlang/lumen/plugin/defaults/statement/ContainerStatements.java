@@ -30,11 +30,8 @@ public final class ContainerStatements {
                 .handler((line, ctx, out) -> {
                     ctx.codegen().addImport(ItemStack.class.getName());
                     ctx.codegen().addImport(CONTAINER);
-                    String block = ctx.java("b");
-                    String mat = ctx.java("item");
-                    String amt = ctx.java("amt");
-                    out.line("if (" + block + ".getState() instanceof Container __container) {");
-                    out.line("    __container.getInventory().addItem(new ItemStack(" + mat + ", " + amt + "));");
+                    out.line("if (" + ctx.java("b") + ".getState() instanceof Container __container) {");
+                    out.line("    __container.getInventory().addItem(new ItemStack(" + ctx.java("item") + ", " + ctx.java("amt") + "));");
                     out.line("}");
                 }));
 
@@ -47,10 +44,8 @@ public final class ContainerStatements {
                 .category(Categories.INVENTORY)
                 .handler((line, ctx, out) -> {
                     ctx.codegen().addImport(CONTAINER);
-                    String block = ctx.java("b");
-                    String item = ctx.java("item");
-                    out.line("if (" + block + ".getState() instanceof Container __container) {");
-                    out.line("    __container.getInventory().addItem(" + item + ");");
+                    out.line("if (" + ctx.java("b") + ".getState() instanceof Container __container) {");
+                    out.line("    __container.getInventory().addItem(" + ctx.java("item") + ");");
                     out.line("}");
                 }));
 
@@ -63,8 +58,7 @@ public final class ContainerStatements {
                 .category(Categories.INVENTORY)
                 .handler((line, ctx, out) -> {
                     ctx.codegen().addImport(CONTAINER);
-                    String block = ctx.java("b");
-                    out.line("if (" + block + ".getState() instanceof Container __container) {");
+                    out.line("if (" + ctx.java("b") + ".getState() instanceof Container __container) {");
                     out.line("    __container.getInventory().clear();");
                     out.line("}");
                 }));

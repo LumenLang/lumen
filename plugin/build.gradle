@@ -41,8 +41,8 @@ processResources {
 shadowJar {
     archiveClassifier.set('')
     archiveBaseName.set(rootProject.name)
-    configurations = [project.configurations.runtimeClasspath]
     exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
+    destinationDirectory.set(rootProject.layout.buildDirectory.dir("libs"))
 }
 
 build {

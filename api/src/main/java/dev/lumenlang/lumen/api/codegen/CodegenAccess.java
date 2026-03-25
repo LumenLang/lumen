@@ -47,6 +47,16 @@ public interface CodegenAccess {
     void addInterface(@NotNull String fqcn);
 
     /**
+     * Adds a complete method declaration to the generated script class.
+     *
+     * <p>The method source is rendered as a top-level member of the class, alongside
+     * fields and the main body methods.
+     *
+     * @param methodSource the full method source code including signature and body
+     */
+    void addMethod(@NotNull String methodSource);
+
+    /**
      * Returns the raw script file name.
      *
      * @return the original script file name (e.g. {@code "hello.luma"})
