@@ -15,7 +15,8 @@ import org.jetbrains.annotations.NotNull;
  */
 @Registration
 @SuppressWarnings("unused")
-// TODO: Make better
+// TODO: Add INVENTORY type binding and use it here.
+// TODO: Cleanup this class
 public final class InventoryGuiStatements {
 
     private static final String INVENTORY = Inventory.class.getName();

@@ -8,7 +8,7 @@ import java.io.Serializable;
  *
  * <p>Example:
  * <pre>{@code
- * api.patterns().injectableExpression(b -> b
+ * api.patterns().expression(b -> b
  *     .by("MyAddon")
  *     .pattern("location of %who:PLAYER%")
  *     .returnRefTypeId(Types.LOCATION.id())

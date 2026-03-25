@@ -103,7 +103,9 @@ public final class BytecodeInjector {
                 }
 
                 if (isBoxingCall(methodInsn) && targetReturnOpcode != Opcodes.ARETURN) {
-                    continue;
+                    AbstractInsnNode next = insn.getNext();
+                    while (next != null && (next instanceof LabelNode || next.getOpcode() == -1)) next = next.getNext();
+                    if (next != null && next.getOpcode() >= Opcodes.IRETURN && next.getOpcode() <= Opcodes.RETURN) continue;
                 }
 
                 if (methodInsn.owner.equals(body.sourceClass())) {

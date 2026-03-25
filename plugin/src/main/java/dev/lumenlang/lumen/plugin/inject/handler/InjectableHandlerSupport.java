@@ -9,9 +9,9 @@ import org.objectweb.asm.Type;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -24,7 +24,7 @@ final class InjectableHandlerSupport {
     private final ExtractedBody extractedBody;
     private final String methodName;
     private final String returnType;
-    private final Set<CodegenAccess> emittedContexts = Collections.synchronizedSet(Collections.newSetFromMap(new IdentityHashMap<>()));
+    private final Set<CodegenAccess> emittedContexts = Collections.synchronizedSet(Collections.newSetFromMap(new WeakHashMap<>()));
 
     InjectableHandlerSupport(@NotNull ExtractedBody extractedBody, @NotNull String returnType) {
         this.extractedBody = extractedBody;
@@ -50,12 +50,13 @@ final class InjectableHandlerSupport {
 
                 for (ExtractedBody.FakeBinding binding : bindings) {
                     String javaType = descriptorToJavaType(binding.returnDescriptor());
-                    if (javaType.contains(".") && !javaType.startsWith("java.lang.")) codegen.addImport(javaType);
+                    String importType = javaType.replace("[]", "");
+                    if (importType.contains(".") && !importType.startsWith("java.lang.")) codegen.addImport(importType);
                     paramTypes.add(javaType);
                     paramBindings.add(binding.bindingName());
                 }
 
-                String returnTypeImport = returnType;
+                String returnTypeImport = returnType.replace("[]", "");
                 if (returnTypeImport.contains(".") && !returnTypeImport.startsWith("java.lang.")) codegen.addImport(returnTypeImport);
 
                 StringBuilder sig = new StringBuilder();

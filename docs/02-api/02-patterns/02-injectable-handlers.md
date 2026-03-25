@@ -152,8 +152,6 @@ public static Object test() {
 }
 ```
 
-The method return type must be `Object` for reference types when declared as a static method.
-
 ### Condition
 
 ```java

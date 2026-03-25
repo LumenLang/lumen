@@ -31,9 +31,8 @@ import java.util.Objects;
  *         ctx -> { ... }
  *     );
  * }</pre>
- *
- * @see EntityHelper
  */
+// TODO: Cleanup this class, avoid hard coded version
 public final class InventoryHelper {
 
     private final LumenAPI api;
