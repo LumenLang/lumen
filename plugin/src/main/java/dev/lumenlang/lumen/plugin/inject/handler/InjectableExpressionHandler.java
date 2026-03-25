@@ -1,10 +1,10 @@
-package dev.lumenlang.lumen.pipeline.inject.handler;
+package dev.lumenlang.lumen.plugin.inject.handler;
 
 import dev.lumenlang.lumen.api.codegen.BindingAccess;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler;
 import dev.lumenlang.lumen.api.inject.body.InjectableExpression;
-import dev.lumenlang.lumen.pipeline.inject.bytecode.BytecodeExtractor;
-import dev.lumenlang.lumen.pipeline.inject.bytecode.ExtractedBody;
+import dev.lumenlang.lumen.plugin.inject.bytecode.BytecodeExtractor;
+import dev.lumenlang.lumen.plugin.inject.bytecode.ExtractedBody;
 import dev.lumenlang.lumen.pipeline.var.RefType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

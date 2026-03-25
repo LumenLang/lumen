@@ -1,9 +1,9 @@
-package dev.lumenlang.lumen.pipeline.inject.handler;
+package dev.lumenlang.lumen.plugin.inject.handler;
 
 import dev.lumenlang.lumen.api.codegen.CodegenAccess;
-import dev.lumenlang.lumen.pipeline.inject.bytecode.ExtractedBody;
-import dev.lumenlang.lumen.pipeline.inject.bytecode.InjectableMethod;
-import dev.lumenlang.lumen.pipeline.inject.bytecode.InjectableRegistry;
+import dev.lumenlang.lumen.plugin.inject.bytecode.ExtractedBody;
+import dev.lumenlang.lumen.plugin.inject.bytecode.InjectableMethod;
+import dev.lumenlang.lumen.plugin.inject.bytecode.InjectableRegistry;
 import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.Type;
 

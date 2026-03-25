@@ -36,9 +36,7 @@ import dev.lumenlang.lumen.api.type.TypeRegistrar;
 import dev.lumenlang.lumen.pipeline.addon.bridge.TypeBindingBridge;
 import dev.lumenlang.lumen.pipeline.events.EventDefRegistry;
 import dev.lumenlang.lumen.pipeline.events.def.EventDef;
-import dev.lumenlang.lumen.pipeline.inject.handler.InjectableConditionHandler;
-import dev.lumenlang.lumen.pipeline.inject.handler.InjectableExpressionHandler;
-import dev.lumenlang.lumen.pipeline.inject.handler.InjectableStatementHandler;
+import dev.lumenlang.lumen.pipeline.inject.InjectableHandlers;
 import dev.lumenlang.lumen.pipeline.language.emit.EmitRegistry;
 import dev.lumenlang.lumen.pipeline.language.emit.TransformerRegistry;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
@@ -167,12 +165,12 @@ public final class LumenAPIImpl implements LumenAPI {
 
             @Override
             public void injectable(@NotNull String pattern, @NotNull InjectableBody body) {
-                patternRegistry.statement(pattern, new InjectableStatementHandler(body));
+                patternRegistry.statement(pattern, InjectableHandlers.statement(body));
             }
 
             @Override
             public void injectable(@NotNull List<String> patterns, @NotNull InjectableBody body) {
-                InjectableStatementHandler handler = new InjectableStatementHandler(body);
+                StatementHandler handler = InjectableHandlers.statement(body);
                 for (String pattern : patterns) {
                     patternRegistry.statement(pattern, handler);
                 }
@@ -180,12 +178,12 @@ public final class LumenAPIImpl implements LumenAPI {
 
             @Override
             public void injectableExpression(@NotNull String pattern, @Nullable String refTypeId, @Nullable String javaType, @NotNull InjectableExpression expression) {
-                patternRegistry.expression(pattern, new InjectableExpressionHandler(expression, refTypeId, javaType));
+                patternRegistry.expression(pattern, InjectableHandlers.expression(expression, refTypeId, javaType));
             }
 
             @Override
             public void injectableExpression(@NotNull List<String> patterns, @Nullable String refTypeId, @Nullable String javaType, @NotNull InjectableExpression expression) {
-                InjectableExpressionHandler handler = new InjectableExpressionHandler(expression, refTypeId, javaType);
+                ExpressionHandler handler = InjectableHandlers.expression(expression, refTypeId, javaType);
                 for (String pattern : patterns) {
                     patternRegistry.expression(pattern, handler);
                 }
@@ -193,12 +191,12 @@ public final class LumenAPIImpl implements LumenAPI {
 
             @Override
             public void injectableCondition(@NotNull String pattern, @NotNull InjectableCondition condition) {
-                patternRegistry.condition(pattern, new InjectableConditionHandler(condition));
+                patternRegistry.condition(pattern, InjectableHandlers.condition(condition));
             }
 
             @Override
             public void injectableCondition(@NotNull List<String> patterns, @NotNull InjectableCondition condition) {
-                InjectableConditionHandler handler = new InjectableConditionHandler(condition);
+                ConditionHandler handler = InjectableHandlers.condition(condition);
                 for (String pattern : patterns) {
                     patternRegistry.condition(pattern, handler);
                 }

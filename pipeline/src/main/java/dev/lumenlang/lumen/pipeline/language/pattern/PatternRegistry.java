@@ -13,9 +13,7 @@ import dev.lumenlang.lumen.api.pattern.builder.LoopBuilder;
 import dev.lumenlang.lumen.api.pattern.builder.StatementBuilder;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.pipeline.conditions.registry.ConditionRegistry;
-import dev.lumenlang.lumen.pipeline.inject.handler.InjectableConditionHandler;
-import dev.lumenlang.lumen.pipeline.inject.handler.InjectableExpressionHandler;
-import dev.lumenlang.lumen.pipeline.inject.handler.InjectableStatementHandler;
+import dev.lumenlang.lumen.pipeline.inject.InjectableHandlers;
 import dev.lumenlang.lumen.pipeline.language.compile.PatternCompiler;
 import dev.lumenlang.lumen.pipeline.language.match.InlineExprValidator;
 import dev.lumenlang.lumen.pipeline.language.match.Match;
@@ -384,8 +382,8 @@ public final class PatternRegistry {
         builder.validate();
         PatternMeta meta = builder.buildMeta();
         StatementHandler handler = builder.getInjectableBody() != null
-                ? new InjectableStatementHandler(builder.getInjectableBody()) : builder.getInjectableClass() != null
-                ? new InjectableStatementHandler(builder.getInjectableClass(), builder.getInjectableMethodName()) : builder.getHandler();
+                ? InjectableHandlers.statement(builder.getInjectableBody()) : builder.getInjectableClass() != null
+                ? InjectableHandlers.statement(builder.getInjectableClass(), builder.getInjectableMethodName()) : builder.getHandler();
         for (String p : builder.getPatterns()) {
             Pattern compiled = PatternCompiler.compile(p);
             validateTypes(compiled);
@@ -424,7 +422,9 @@ public final class PatternRegistry {
         builderConsumer.accept(builder);
         builder.validate();
         PatternMeta meta = builder.buildMeta();
-        ConditionHandler handler = builder.getInjectableCondition() != null ? new InjectableConditionHandler(builder.getInjectableCondition()) : builder.getInjectableClass() != null ? new InjectableConditionHandler(builder.getInjectableClass(), builder.getInjectableMethodName()) : builder.getHandler();
+        ConditionHandler handler = builder.getInjectableCondition() != null
+                ? InjectableHandlers.condition(builder.getInjectableCondition()) : builder.getInjectableClass() != null
+                ? InjectableHandlers.condition(builder.getInjectableClass(), builder.getInjectableMethodName()) : builder.getHandler();
         for (String p : builder.getPatterns()) {
             conditionRegistry.register(p, handler, meta);
         }
@@ -442,7 +442,9 @@ public final class PatternRegistry {
         PatternMeta meta = builder.buildMeta();
         String returnRefTypeId = builder.getReturnRefTypeId();
         String returnJavaType = builder.getReturnJavaType();
-        ExpressionHandler handler = builder.getInjectableExpression() != null ? new InjectableExpressionHandler(builder.getInjectableExpression(), returnRefTypeId, returnJavaType) : builder.getInjectableClass() != null ? new InjectableExpressionHandler(builder.getInjectableClass(), builder.getInjectableMethodName(), returnRefTypeId, returnJavaType) : builder.getHandler();
+        ExpressionHandler handler = builder.getInjectableExpression() != null
+                ? InjectableHandlers.expression(builder.getInjectableExpression(), returnRefTypeId, returnJavaType) : builder.getInjectableClass() != null
+                ? InjectableHandlers.expression(builder.getInjectableClass(), builder.getInjectableMethodName(), returnRefTypeId, returnJavaType) : builder.getHandler();
         for (String p : builder.getPatterns()) {
             Pattern compiled = PatternCompiler.compile(p);
             validateTypes(compiled);

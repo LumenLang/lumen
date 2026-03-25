@@ -4,8 +4,6 @@ plugins {
 
 dependencies {
     api project(':api')
-    api "org.ow2.asm:asm:9.9.1"
-    api "org.ow2.asm:asm-commons:9.9.1"
 }
 
 jar {

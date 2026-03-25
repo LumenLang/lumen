@@ -5,7 +5,7 @@ import dev.lumenlang.lumen.api.annotations.LumenPreload;
 import dev.lumenlang.lumen.pipeline.binder.ScriptBinder;
 import dev.lumenlang.lumen.pipeline.codegen.CodegenContext;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
-import dev.lumenlang.lumen.pipeline.inject.bytecode.BytecodeInjector;
+import dev.lumenlang.lumen.plugin.inject.bytecode.BytecodeInjector;
 import dev.lumenlang.lumen.pipeline.java.JavaBuilder;
 import dev.lumenlang.lumen.pipeline.java.compiled.ClassBuilder;
 import dev.lumenlang.lumen.pipeline.java.compiled.ScriptSourceMap;

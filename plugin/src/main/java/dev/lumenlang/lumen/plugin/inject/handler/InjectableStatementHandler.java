@@ -1,11 +1,11 @@
-package dev.lumenlang.lumen.pipeline.inject.handler;
+package dev.lumenlang.lumen.plugin.inject.handler;
 
 import dev.lumenlang.lumen.api.codegen.BindingAccess;
 import dev.lumenlang.lumen.api.codegen.JavaOutput;
 import dev.lumenlang.lumen.api.handler.StatementHandler;
 import dev.lumenlang.lumen.api.inject.body.InjectableBody;
-import dev.lumenlang.lumen.pipeline.inject.bytecode.BytecodeExtractor;
-import dev.lumenlang.lumen.pipeline.inject.bytecode.ExtractedBody;
+import dev.lumenlang.lumen.plugin.inject.bytecode.BytecodeExtractor;
+import dev.lumenlang.lumen.plugin.inject.bytecode.ExtractedBody;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

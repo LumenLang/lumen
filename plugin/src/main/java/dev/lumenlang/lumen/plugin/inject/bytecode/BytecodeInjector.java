@@ -1,4 +1,4 @@
-package dev.lumenlang.lumen.pipeline.inject.bytecode;
+package dev.lumenlang.lumen.plugin.inject.bytecode;
 
 import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
 import org.jetbrains.annotations.NotNull;

@@ -1,4 +1,4 @@
-package dev.lumenlang.lumen.pipeline.inject.bytecode;
+package dev.lumenlang.lumen.plugin.inject.bytecode;
 
 import dev.lumenlang.lumen.api.inject.Fakes;
 import dev.lumenlang.lumen.api.inject.body.InjectableBody;

@@ -1,4 +1,4 @@
-package dev.lumenlang.lumen.pipeline.inject.bytecode;
+package dev.lumenlang.lumen.plugin.inject.bytecode;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
