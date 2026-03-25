@@ -179,9 +179,6 @@ public final class ConditionParser {
             return new ConditionAtom(slowM);
         }
 
-        throw new TokenCarryingException(
-                "Unknown condition: " + joinTokens(tokens) + ". Raw: " + tokens,
-                tokens
-        );
+        throw new TokenCarryingException("Unknown condition: " + joinTokens(tokens), tokens);
     }
 }

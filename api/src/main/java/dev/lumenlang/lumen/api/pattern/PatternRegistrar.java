@@ -182,12 +182,11 @@ public interface PatternRegistrar {
      * Registers a statement pattern with an injectable body.
      *
      * <p>The body's bytecode is extracted at registration time and injected into
-     * the compiled script class after compilation. Use {@link dev.lumenlang.lumen.api.inject.Fakes}
-     * methods inside the body to reference pattern bindings.
+     * the compiled script class after compilation.
      *
      * <pre>{@code
      * api.patterns().injectable("greet %who:PLAYER%", () -> {
-     *     Player player = Fakes.fakeVar("who");
+     *     Player player = Fakes.fake("who");
      *     player.sendMessage("Hello " + player.getName() + "!");
      * });
      * }</pre>

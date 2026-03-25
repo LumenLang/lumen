@@ -267,6 +267,9 @@ public final class ExpressionBuilder {
         if (handler == null && injectableExpression == null && injectableClass == null) {
             throw new IllegalStateException("Expression builder requires a handler or injectableHandler");
         }
+        if (handler != null && (injectableExpression != null || injectableClass != null)) {
+            throw new IllegalStateException("Only one of handler or injectableHandler may be set");
+        }
         if (by == null) {
             throw new IllegalStateException("Expression builder requires a 'by' (addon name)");
         }

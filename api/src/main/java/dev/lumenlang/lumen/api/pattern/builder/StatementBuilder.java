@@ -220,6 +220,9 @@ public final class StatementBuilder {
         if (handler == null && injectableBody == null && injectableClass == null) {
             throw new IllegalStateException("Statement builder requires a handler or injectableHandler");
         }
+        if (handler != null && (injectableBody != null || injectableClass != null)) {
+            throw new IllegalStateException("Only one of handler or injectableHandler may be set");
+        }
         if (by == null) {
             throw new IllegalStateException("Statement builder requires a 'by' (addon name)");
         }

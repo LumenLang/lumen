@@ -158,7 +158,7 @@ The method return type must be `Object` for reference types when declared as a s
 
 ```java
 
-api.patterns().expression(b -> b
+api.patterns().condition(b -> b
     // ...
     .injectableHandler(MyAddon.class, "test")
 );

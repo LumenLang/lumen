@@ -24,7 +24,7 @@ final class InjectableHandlerSupport {
     private final ExtractedBody extractedBody;
     private final String methodName;
     private final String returnType;
-    private final Set<CodegenAccess> emittedContexts = Collections.newSetFromMap(new IdentityHashMap<>());
+    private final Set<CodegenAccess> emittedContexts = Collections.synchronizedSet(Collections.newSetFromMap(new IdentityHashMap<>()));
 
     InjectableHandlerSupport(@NotNull ExtractedBody extractedBody, @NotNull String returnType) {
         this.extractedBody = extractedBody;
@@ -44,36 +44,38 @@ final class InjectableHandlerSupport {
         List<ExtractedBody.FakeBinding> bindings = extractedBody.fakeBindings();
 
         if (emittedContexts.add(codegen)) {
-            List<String> paramTypes = new ArrayList<>();
-            List<String> paramBindings = new ArrayList<>();
+            synchronized (this) {
+                List<String> paramTypes = new ArrayList<>();
+                List<String> paramBindings = new ArrayList<>();
 
-            for (ExtractedBody.FakeBinding binding : bindings) {
-                String javaType = descriptorToJavaType(binding.returnDescriptor());
-                if (javaType.contains(".") && !javaType.startsWith("java.lang.")) codegen.addImport(javaType);
-                paramTypes.add(javaType);
-                paramBindings.add(binding.bindingName());
+                for (ExtractedBody.FakeBinding binding : bindings) {
+                    String javaType = descriptorToJavaType(binding.returnDescriptor());
+                    if (javaType.contains(".") && !javaType.startsWith("java.lang.")) codegen.addImport(javaType);
+                    paramTypes.add(javaType);
+                    paramBindings.add(binding.bindingName());
+                }
+
+                String returnTypeImport = returnType;
+                if (returnTypeImport.contains(".") && !returnTypeImport.startsWith("java.lang.")) codegen.addImport(returnTypeImport);
+
+                StringBuilder sig = new StringBuilder();
+                sig.append("// Injected from: ").append(extractedBody.sourceClass().replace('/', '.')).append("\n");
+                sig.append("private static ").append(simpleClassName(returnType)).append(" ").append(methodName).append("(");
+                for (int i = 0; i < paramTypes.size(); i++) {
+                    if (i > 0) sig.append(", ");
+                    sig.append(simpleClassName(paramTypes.get(i))).append(" ").append(paramBindings.get(i));
+                }
+                sig.append(") {");
+                if (!"void".equals(returnType)) {
+                    sig.append(" return ").append(defaultReturn(returnType)).append(";");
+                }
+                sig.append(" }");
+                codegen.addMethod(sig.toString());
+
+                String fqcn = "dev.lumenlang.lumen.java.compiled." + codegen.className();
+                InjectableMethod injectable = new InjectableMethod(methodName, returnType, paramTypes, paramBindings, extractedBody);
+                InjectableRegistry.register(fqcn, injectable);
             }
-
-            String returnTypeImport = returnType;
-            if (returnTypeImport.contains(".") && !returnTypeImport.startsWith("java.lang.")) codegen.addImport(returnTypeImport);
-
-            StringBuilder sig = new StringBuilder();
-            sig.append("// Injected from: ").append(extractedBody.sourceClass().replace('/', '.')).append("\n");
-            sig.append("private static ").append(simpleClassName(returnType)).append(" ").append(methodName).append("(");
-            for (int i = 0; i < paramTypes.size(); i++) {
-                if (i > 0) sig.append(", ");
-                sig.append(simpleClassName(paramTypes.get(i))).append(" ").append(paramBindings.get(i));
-            }
-            sig.append(") {");
-            if (!"void".equals(returnType)) {
-                sig.append(" return ").append(defaultReturn(returnType)).append(";");
-            }
-            sig.append(" }");
-            codegen.addMethod(sig.toString());
-
-            String fqcn = "dev.lumenlang.lumen.java.compiled." + codegen.className();
-            InjectableMethod injectable = new InjectableMethod(methodName, returnType, paramTypes, paramBindings, extractedBody);
-            InjectableRegistry.register(fqcn, injectable);
         }
 
         return bindings;
@@ -86,9 +88,17 @@ final class InjectableHandlerSupport {
             case "D" -> "double";
             case "F" -> "float";
             case "Z" -> "boolean";
+            case "B" -> "byte";
+            case "S" -> "short";
+            case "C" -> "char";
             case "V" -> "void";
             default -> {
                 Type type = Type.getType(descriptor);
+                if (type.getSort() == Type.ARRAY) {
+                    Type element = type.getElementType();
+                    String base = element.getSort() == Type.OBJECT ? element.getClassName().replace('$', '.') : descriptorToJavaType(element.getDescriptor());
+                    yield base + "[]".repeat(type.getDimensions());
+                }
                 yield type.getSort() == Type.OBJECT ? type.getClassName().replace('$', '.') : "Object";
             }
         };

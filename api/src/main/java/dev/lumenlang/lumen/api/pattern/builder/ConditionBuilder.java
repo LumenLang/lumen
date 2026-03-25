@@ -220,6 +220,9 @@ public final class ConditionBuilder {
         if (handler == null && injectableCondition == null && injectableClass == null) {
             throw new IllegalStateException("Condition builder requires a handler or injectableHandler");
         }
+        if (handler != null && (injectableCondition != null || injectableClass != null)) {
+            throw new IllegalStateException("Only one of handler or injectableHandler may be set");
+        }
         if (by == null) {
             throw new IllegalStateException("Condition builder requires a 'by' (addon name)");
         }

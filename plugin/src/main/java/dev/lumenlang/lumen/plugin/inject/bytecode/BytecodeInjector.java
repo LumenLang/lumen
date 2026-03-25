@@ -15,6 +15,7 @@ import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.TryCatchBlockNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
 import java.util.HashMap;
@@ -135,6 +136,12 @@ public final class BytecodeInjector {
         target.instructions.clear();
         target.instructions.add(newBody);
         target.tryCatchBlocks.clear();
+        for (TryCatchBlockNode tcb : body.tryCatchBlocks()) {
+            LabelNode start = labelMap.getOrDefault(tcb.start, tcb.start);
+            LabelNode end = labelMap.getOrDefault(tcb.end, tcb.end);
+            LabelNode handler = labelMap.getOrDefault(tcb.handler, tcb.handler);
+            target.tryCatchBlocks.add(new TryCatchBlockNode(start, end, handler, tcb.type));
+        }
         if (target.localVariables != null) target.localVariables.clear();
         target.maxStack = Math.max(body.maxStack(), 4);
         target.maxLocals = body.maxLocals() + paramSlotCount;

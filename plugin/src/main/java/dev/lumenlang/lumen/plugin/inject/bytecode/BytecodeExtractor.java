@@ -13,6 +13,7 @@ import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.TryCatchBlockNode;
 import org.objectweb.asm.tree.TypeInsnNode;
 
 import java.io.IOException;
@@ -47,6 +48,9 @@ public final class BytecodeExtractor {
      */
     public static @NotNull ExtractedBody extract(@NotNull Serializable body) {
         SerializedLambda serialized = serializeLambda(body);
+        if (serialized.getCapturedArgCount() > 0) {
+            throw new IllegalArgumentException("Injectable lambdas must not capture any variables (found " + serialized.getCapturedArgCount() + " captured args). Use only Fakes bindings and static state.");
+        }
         String declaringClassName = serialized.getImplClass().replace('/', '.');
         String implMethodName = serialized.getImplMethodName();
 
@@ -59,15 +63,14 @@ public final class BytecodeExtractor {
 
         ClassNode classNode = readClassNode(declaringClass);
         MethodNode target = findMethod(classNode, implMethodName);
-        if (target == null) {
-            throw new IllegalArgumentException("Could not locate lambda method '" + implMethodName + "' in " + declaringClassName);
-        }
 
         List<ExtractedBody.FakeBinding> fakeBindings = detectFakeBindings(target.instructions);
-        InsnList cloned = cloneInstructions(target.instructions);
+        Map<LabelNode, LabelNode> labelMap = buildLabelMap(target.instructions);
+        InsnList cloned = cloneInstructions(target.instructions, labelMap);
+        List<TryCatchBlockNode> clonedTryCatch = cloneTryCatchBlocks(target.tryCatchBlocks, labelMap);
         String returnDescriptor = Type.getReturnType(target.desc).getDescriptor();
 
-        return new ExtractedBody(cloned, fakeBindings, classNode.name, returnDescriptor, target.maxStack, target.maxLocals);
+        return new ExtractedBody(cloned, fakeBindings, clonedTryCatch, classNode.name, returnDescriptor, target.maxStack, target.maxLocals);
     }
 
     /**
@@ -81,15 +84,14 @@ public final class BytecodeExtractor {
     public static @NotNull ExtractedBody extractMethod(@NotNull Class<?> clazz, @NotNull String methodName) {
         ClassNode classNode = readClassNode(clazz);
         MethodNode target = findMethod(classNode, methodName);
-        if (target == null) {
-            throw new IllegalArgumentException("Method '" + methodName + "' not found in " + clazz.getName());
-        }
 
         List<ExtractedBody.FakeBinding> fakeBindings = detectFakeBindings(target.instructions);
-        InsnList cloned = cloneInstructions(target.instructions);
+        Map<LabelNode, LabelNode> labelMap = buildLabelMap(target.instructions);
+        InsnList cloned = cloneInstructions(target.instructions, labelMap);
+        List<TryCatchBlockNode> clonedTryCatch = cloneTryCatchBlocks(target.tryCatchBlocks, labelMap);
         String returnDescriptor = Type.getReturnType(target.desc).getDescriptor();
 
-        return new ExtractedBody(cloned, fakeBindings, classNode.name, returnDescriptor, target.maxStack, target.maxLocals);
+        return new ExtractedBody(cloned, fakeBindings, clonedTryCatch, classNode.name, returnDescriptor, target.maxStack, target.maxLocals);
     }
 
     private static @NotNull SerializedLambda serializeLambda(@NotNull Serializable lambda) {
@@ -102,11 +104,23 @@ public final class BytecodeExtractor {
         }
     }
 
-    private static MethodNode findMethod(@NotNull ClassNode classNode, @NotNull String methodName) {
+    private static @NotNull MethodNode findMethod(@NotNull ClassNode classNode, @NotNull String methodName) {
+        MethodNode found = null;
         for (MethodNode mn : classNode.methods) {
-            if (mn.name.equals(methodName)) return mn;
+            if (mn.name.equals(methodName)) {
+                if (found != null) {
+                    throw new IllegalArgumentException("Overloaded methods are not supported for injection: multiple methods named '" + methodName + "' in " + classNode.name.replace('/', '.'));
+                }
+                found = mn;
+            }
         }
-        return null;
+        if (found == null) {
+            throw new IllegalArgumentException("Method '" + methodName + "' not found in " + classNode.name.replace('/', '.'));
+        }
+        if ((found.access & Opcodes.ACC_STATIC) == 0) {
+            throw new IllegalArgumentException("Injectable method '" + methodName + "' in " + classNode.name.replace('/', '.') + " must be static");
+        }
+        return found;
     }
 
     private static @NotNull ClassNode readClassNode(@NotNull Class<?> clazz) {
@@ -132,30 +146,46 @@ public final class BytecodeExtractor {
             if (!isFakeCall(methodInsn)) continue;
 
             AbstractInsnNode prev = insn.getPrevious();
-            if (prev instanceof LdcInsnNode ldc && ldc.cst instanceof String bindingName) {
-                String returnDescriptor = Type.getReturnType(methodInsn.desc).getDescriptor();
-                AbstractInsnNode next = insn.getNext();
-                while (next != null && next.getOpcode() == -1) next = next.getNext();
-                if (next instanceof TypeInsnNode typeInsn && typeInsn.getOpcode() == Opcodes.CHECKCAST) {
-                    returnDescriptor = "L" + typeInsn.desc + ";";
-                }
-                bindings.add(new ExtractedBody.FakeBinding(bindingName, methodInsn.name, returnDescriptor));
+            if (!(prev instanceof LdcInsnNode ldc) || !(ldc.cst instanceof String)) {
+                throw new IllegalArgumentException("Fakes." + methodInsn.name + "() call must receive a constant string argument. Dynamic binding names are not supported.");
             }
+            String bindingName = (String) ldc.cst;
+            String returnDescriptor = Type.getReturnType(methodInsn.desc).getDescriptor();
+            AbstractInsnNode next = insn.getNext();
+            while (next != null && next.getOpcode() == -1) next = next.getNext();
+            if (next instanceof TypeInsnNode typeInsn && typeInsn.getOpcode() == Opcodes.CHECKCAST) {
+                returnDescriptor = "L" + typeInsn.desc + ";";
+            }
+            bindings.add(new ExtractedBody.FakeBinding(bindingName, methodInsn.name, returnDescriptor));
         }
         return bindings;
     }
 
-    private static @NotNull InsnList cloneInstructions(@NotNull InsnList original) {
+    private static @NotNull Map<LabelNode, LabelNode> buildLabelMap(@NotNull InsnList instructions) {
         Map<LabelNode, LabelNode> labelMap = new HashMap<>();
-        for (AbstractInsnNode insn : original) {
+        for (AbstractInsnNode insn : instructions) {
             if (insn instanceof LabelNode label) {
                 labelMap.put(label, new LabelNode());
             }
         }
+        return labelMap;
+    }
 
+    private static @NotNull InsnList cloneInstructions(@NotNull InsnList original, @NotNull Map<LabelNode, LabelNode> labelMap) {
         InsnList cloned = new InsnList();
         for (AbstractInsnNode abstractInsnNode : original) {
             cloned.add(abstractInsnNode.clone(labelMap));
+        }
+        return cloned;
+    }
+
+    private static @NotNull List<TryCatchBlockNode> cloneTryCatchBlocks(@NotNull List<TryCatchBlockNode> original, @NotNull Map<LabelNode, LabelNode> labelMap) {
+        List<TryCatchBlockNode> cloned = new ArrayList<>(original.size());
+        for (TryCatchBlockNode tcb : original) {
+            LabelNode start = labelMap.getOrDefault(tcb.start, tcb.start);
+            LabelNode end = labelMap.getOrDefault(tcb.end, tcb.end);
+            LabelNode handler = labelMap.getOrDefault(tcb.handler, tcb.handler);
+            cloned.add(new TryCatchBlockNode(start, end, handler, tcb.type));
         }
         return cloned;
     }
