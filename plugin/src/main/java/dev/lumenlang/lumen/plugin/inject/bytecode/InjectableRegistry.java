@@ -24,7 +24,7 @@ public final class InjectableRegistry {
      * Registers an injectable method for the given script class.
      *
      * @param scriptClassName the fully qualified name of the script class
-     * @param method the injectable method descriptor
+     * @param method          the injectable method descriptor
      */
     public static void register(@NotNull String scriptClassName, @NotNull InjectableMethod method) {
         METHODS.computeIfAbsent(scriptClassName, k -> Collections.synchronizedList(new ArrayList<>())).add(method);

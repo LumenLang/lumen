@@ -11,6 +11,7 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.LdcInsnNode;
+import org.objectweb.asm.tree.LocalVariableNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TryCatchBlockNode;
@@ -61,37 +62,25 @@ public final class BytecodeExtractor {
             throw new IllegalArgumentException("Cannot find declaring class: " + declaringClassName, e);
         }
 
-        ClassNode classNode = readClassNode(declaringClass);
-        MethodNode target = findMethod(classNode, implMethodName);
-
-        List<ExtractedBody.FakeBinding> fakeBindings = detectFakeBindings(target.instructions);
-        Map<LabelNode, LabelNode> labelMap = buildLabelMap(target.instructions);
-        InsnList cloned = cloneInstructions(target.instructions, labelMap);
-        List<TryCatchBlockNode> clonedTryCatch = cloneTryCatchBlocks(target.tryCatchBlocks, labelMap);
-        String returnDescriptor = Type.getReturnType(target.desc).getDescriptor();
-
-        return new ExtractedBody(cloned, fakeBindings, clonedTryCatch, classNode.name, returnDescriptor, target.maxStack, target.maxLocals);
+        return buildBody(readClassNode(declaringClass), implMethodName);
     }
 
     /**
      * Extracts bytecode from a named static method in the given class.
      *
-     * @param clazz the class containing the method
+     * @param clazz      the class containing the method
      * @param methodName the name of the static method to extract
      * @return the extracted body
      * @throws IllegalArgumentException if the method cannot be found
      */
     public static @NotNull ExtractedBody extractMethod(@NotNull Class<?> clazz, @NotNull String methodName) {
-        ClassNode classNode = readClassNode(clazz);
+        return buildBody(readClassNode(clazz), methodName);
+    }
+
+    private static @NotNull ExtractedBody buildBody(@NotNull ClassNode classNode, @NotNull String methodName) {
         MethodNode target = findMethod(classNode, methodName);
-
-        List<ExtractedBody.FakeBinding> fakeBindings = detectFakeBindings(target.instructions);
         Map<LabelNode, LabelNode> labelMap = buildLabelMap(target.instructions);
-        InsnList cloned = cloneInstructions(target.instructions, labelMap);
-        List<TryCatchBlockNode> clonedTryCatch = cloneTryCatchBlocks(target.tryCatchBlocks, labelMap);
-        String returnDescriptor = Type.getReturnType(target.desc).getDescriptor();
-
-        return new ExtractedBody(cloned, fakeBindings, clonedTryCatch, classNode.name, returnDescriptor, target.maxStack, target.maxLocals);
+        return new ExtractedBody(cloneInstructions(target.instructions, labelMap), detectFakeBindings(target.instructions), cloneTryCatchBlocks(target.tryCatchBlocks, labelMap), cloneLocalVariables(target, labelMap), classNode.name, methodName, Type.getReturnType(target.desc).getDescriptor(), target.maxStack, target.maxLocals);
     }
 
     private static @NotNull SerializedLambda serializeLambda(@NotNull Serializable lambda) {
@@ -145,18 +134,16 @@ public final class BytecodeExtractor {
             MethodInsnNode methodInsn = (MethodInsnNode) insn;
             if (!isFakeCall(methodInsn)) continue;
 
-            AbstractInsnNode prev = insn.getPrevious();
-            if (!(prev instanceof LdcInsnNode ldc) || !(ldc.cst instanceof String)) {
+            if (!(insn.getPrevious() instanceof LdcInsnNode ldc) || !(ldc.cst instanceof String)) {
                 throw new IllegalArgumentException("Fakes." + methodInsn.name + "() call must receive a constant string argument. Dynamic binding names are not supported.");
             }
-            String bindingName = (String) ldc.cst;
             String returnDescriptor = Type.getReturnType(methodInsn.desc).getDescriptor();
             AbstractInsnNode next = insn.getNext();
             while (next != null && next.getOpcode() == -1) next = next.getNext();
             if (next instanceof TypeInsnNode typeInsn && typeInsn.getOpcode() == Opcodes.CHECKCAST) {
                 returnDescriptor = "L" + typeInsn.desc + ";";
             }
-            bindings.add(new ExtractedBody.FakeBinding(bindingName, methodInsn.name, returnDescriptor));
+            bindings.add(new ExtractedBody.FakeBinding((String) ldc.cst, methodInsn.name, returnDescriptor));
         }
         return bindings;
     }
@@ -190,7 +177,18 @@ public final class BytecodeExtractor {
         return cloned;
     }
 
-    static boolean isFakeCall(@NotNull MethodInsnNode insn) {
+    private static @NotNull List<LocalVariableNode> cloneLocalVariables(@NotNull MethodNode method, @NotNull Map<LabelNode, LabelNode> labelMap) {
+        if (method.localVariables == null) return List.of();
+        List<LocalVariableNode> cloned = new ArrayList<>(method.localVariables.size());
+        for (LocalVariableNode lv : method.localVariables) {
+            LabelNode start = labelMap.getOrDefault(lv.start, lv.start);
+            LabelNode end = labelMap.getOrDefault(lv.end, lv.end);
+            cloned.add(new LocalVariableNode(lv.name, lv.desc, lv.signature, start, end, lv.index));
+        }
+        return cloned;
+    }
+
+    public static boolean isFakeCall(@NotNull MethodInsnNode insn) {
         return FAKES_CLASSES.contains(insn.owner) && insn.name.startsWith("fake") && insn.desc.startsWith(FAKE_DESCRIPTOR);
     }
 }

@@ -3,6 +3,7 @@ package dev.lumenlang.lumen.plugin.inject.handler;
 import dev.lumenlang.lumen.api.codegen.BindingAccess;
 import dev.lumenlang.lumen.api.codegen.JavaOutput;
 import dev.lumenlang.lumen.api.handler.StatementHandler;
+import dev.lumenlang.lumen.pipeline.inject.PatternHinted;
 import dev.lumenlang.lumen.api.inject.body.InjectableBody;
 import dev.lumenlang.lumen.plugin.inject.bytecode.BytecodeExtractor;
 import dev.lumenlang.lumen.plugin.inject.bytecode.ExtractedBody;
@@ -14,7 +15,7 @@ import java.util.List;
  * A {@link StatementHandler} that extracts bytecode from an {@link InjectableBody} and
  * generates a bridge method call in the script class.
  */
-public final class InjectableStatementHandler implements StatementHandler {
+public final class InjectableStatementHandler implements StatementHandler, PatternHinted {
 
     private final InjectableHandlerSupport support;
 
@@ -30,11 +31,16 @@ public final class InjectableStatementHandler implements StatementHandler {
     /**
      * Creates a handler from a named static method in the given class.
      *
-     * @param clazz the class containing the method
+     * @param clazz      the class containing the method
      * @param methodName the name of the static method
      */
     public InjectableStatementHandler(@NotNull Class<?> clazz, @NotNull String methodName) {
         this.support = new InjectableHandlerSupport(BytecodeExtractor.extractMethod(clazz, methodName), "void");
+    }
+
+    @Override
+    public void patternHint(@NotNull String pattern) {
+        support.patternHint(pattern);
     }
 
     @Override

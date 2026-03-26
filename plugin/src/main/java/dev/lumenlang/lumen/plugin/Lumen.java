@@ -135,8 +135,7 @@ public final class Lumen extends JavaPlugin {
 
     /**
      * Initialises the Lumen API: creates registries, scans all built-in defaults,
-     * loads jar-based addons, enables them, and exposes the API via
-     * {@link LumenProvider} so that other plugins can access it.
+     * loads jar-based addons, and enables them.
      */
     private void initApi() {
         InjectableHandlers.factory(new InjectableHandlerFactoryImpl());

@@ -15,21 +15,6 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class InjectableHandlers {
 
-    public interface Factory {
-
-        @NotNull StatementHandler statement(@NotNull InjectableBody body);
-
-        @NotNull StatementHandler statement(@NotNull Class<?> clazz, @NotNull String methodName);
-
-        @NotNull ExpressionHandler expression(@NotNull InjectableExpression expression, @Nullable String refTypeId, @Nullable String javaType);
-
-        @NotNull ExpressionHandler expression(@NotNull Class<?> clazz, @NotNull String methodName, @Nullable String refTypeId, @Nullable String javaType);
-
-        @NotNull ConditionHandler condition(@NotNull InjectableCondition condition);
-
-        @NotNull ConditionHandler condition(@NotNull Class<?> clazz, @NotNull String methodName);
-    }
-
     private static Factory factory;
 
     public static void factory(@NotNull Factory factory) {
@@ -58,5 +43,20 @@ public final class InjectableHandlers {
 
     public static @NotNull ConditionHandler condition(@NotNull Class<?> clazz, @NotNull String methodName) {
         return factory.condition(clazz, methodName);
+    }
+
+    public interface Factory {
+
+        @NotNull StatementHandler statement(@NotNull InjectableBody body);
+
+        @NotNull StatementHandler statement(@NotNull Class<?> clazz, @NotNull String methodName);
+
+        @NotNull ExpressionHandler expression(@NotNull InjectableExpression expression, @Nullable String refTypeId, @Nullable String javaType);
+
+        @NotNull ExpressionHandler expression(@NotNull Class<?> clazz, @NotNull String methodName, @Nullable String refTypeId, @Nullable String javaType);
+
+        @NotNull ConditionHandler condition(@NotNull InjectableCondition condition);
+
+        @NotNull ConditionHandler condition(@NotNull Class<?> clazz, @NotNull String methodName);
     }
 }

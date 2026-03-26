@@ -133,7 +133,8 @@ public final class Slot {
                         logSourceMapping(mapping);
                         LumenLogger.severe("  -> " + ScriptSourceMap.formatNpeHint(npe));
                     } else {
-                        LumenLogger.severe("[Script " + scriptClass + "] Runtime error in events handler: " + cause.getMessage());
+                        String message = cause.getMessage() != null ? cause.getMessage() : cause.getClass().getSimpleName();
+                        LumenLogger.severe("[Script " + scriptClass + "] Runtime error in events handler: " + message);
                         logSourceMapping(mapping);
                     }
                 }

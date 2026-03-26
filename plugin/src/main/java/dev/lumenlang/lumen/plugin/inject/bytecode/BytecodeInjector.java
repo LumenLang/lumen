@@ -13,11 +13,14 @@ import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.LdcInsnNode;
+import org.objectweb.asm.tree.LineNumberNode;
+import org.objectweb.asm.tree.LocalVariableNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TryCatchBlockNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +30,8 @@ import java.util.Set;
  * Performs post-compilation bytecode injection on script classes.
  */
 public final class BytecodeInjector {
+
+    private static final Set<String> BOXING_OWNERS = Set.of("java/lang/Integer", "java/lang/Double", "java/lang/Long", "java/lang/Float", "java/lang/Boolean", "java/lang/Byte", "java/lang/Short", "java/lang/Character");
 
     /**
      * Processes all bytecodes in the given map, applying bytecode injection where needed.
@@ -88,15 +93,15 @@ public final class BytecodeInjector {
 
         InsnList newBody = new InsnList();
         for (AbstractInsnNode insn : body.instructions()) {
+            if (insn instanceof LineNumberNode) continue;
+
             if (insn.getType() == AbstractInsnNode.METHOD_INSN) {
                 MethodInsnNode methodInsn = (MethodInsnNode) insn;
                 if (BytecodeExtractor.isFakeCall(methodInsn)) {
-                    AbstractInsnNode prev = insn.getPrevious();
-                    if (prev instanceof LdcInsnNode ldc && ldc.cst instanceof String bindingName) {
+                    if (insn.getPrevious() instanceof LdcInsnNode ldc && ldc.cst instanceof String bindingName) {
                         Integer paramIdx = bindingToParam.get(bindingName);
                         if (paramIdx != null) {
-                            int loadOpcode = loadOpcodeForDescriptor(Type.getReturnType(methodInsn.desc).getDescriptor());
-                            newBody.add(new VarInsnNode(loadOpcode, paramIdx));
+                            newBody.add(new VarInsnNode(loadOpcodeForDescriptor(Type.getReturnType(methodInsn.desc).getDescriptor()), paramIdx));
                             continue;
                         }
                     }
@@ -105,7 +110,8 @@ public final class BytecodeInjector {
                 if (isBoxingCall(methodInsn) && targetReturnOpcode != Opcodes.ARETURN) {
                     AbstractInsnNode next = insn.getNext();
                     while (next != null && (next instanceof LabelNode || next.getOpcode() == -1)) next = next.getNext();
-                    if (next != null && next.getOpcode() >= Opcodes.IRETURN && next.getOpcode() <= Opcodes.RETURN) continue;
+                    if (next != null && next.getOpcode() >= Opcodes.IRETURN && next.getOpcode() <= Opcodes.RETURN)
+                        continue;
                 }
 
                 if (methodInsn.owner.equals(body.sourceClass())) {
@@ -144,7 +150,23 @@ public final class BytecodeInjector {
             LabelNode handler = labelMap.getOrDefault(tcb.handler, tcb.handler);
             target.tryCatchBlocks.add(new TryCatchBlockNode(start, end, handler, tcb.type));
         }
-        if (target.localVariables != null) target.localVariables.clear();
+        if (target.localVariables == null) target.localVariables = new ArrayList<>();
+        else target.localVariables.clear();
+        LabelNode paramStart = new LabelNode();
+        LabelNode paramEnd = new LabelNode();
+        target.instructions.insert(paramStart);
+        target.instructions.add(paramEnd);
+        int slot = 0;
+        for (int i = 0; i < injectable.parameterBindings().size(); i++) {
+            String type = injectable.parameterTypes().get(i);
+            target.localVariables.add(new LocalVariableNode(injectable.parameterBindings().get(i), Type.getType(typeToDescriptor(type)).getDescriptor(), null, paramStart, paramEnd, slot));
+            slot += ("long".equals(type) || "double".equals(type)) ? 2 : 1;
+        }
+        for (LocalVariableNode lv : body.localVariables()) {
+            LabelNode start = labelMap.getOrDefault(lv.start, lv.start);
+            LabelNode end = labelMap.getOrDefault(lv.end, lv.end);
+            target.localVariables.add(new LocalVariableNode(lv.name, lv.desc, lv.signature, start, end, lv.index + paramSlotCount));
+        }
         target.maxStack = Math.max(body.maxStack(), 4);
         target.maxLocals = body.maxLocals() + paramSlotCount;
     }
@@ -153,8 +175,6 @@ public final class BytecodeInjector {
         if (insn.getOpcode() != Opcodes.INVOKESTATIC || !"valueOf".equals(insn.name)) return false;
         return BOXING_OWNERS.contains(insn.owner);
     }
-
-    private static final Set<String> BOXING_OWNERS = Set.of("java/lang/Integer", "java/lang/Double", "java/lang/Long", "java/lang/Float", "java/lang/Boolean", "java/lang/Byte", "java/lang/Short", "java/lang/Character");
 
     private static int returnOpcodeForType(@NotNull String type) {
         return switch (type) {
@@ -174,6 +194,21 @@ public final class BytecodeInjector {
             case "F" -> Opcodes.FLOAD;
             case "D" -> Opcodes.DLOAD;
             default -> Opcodes.ALOAD;
+        };
+    }
+
+    private static @NotNull String typeToDescriptor(@NotNull String javaType) {
+        return switch (javaType) {
+            case "int" -> "I";
+            case "long" -> "J";
+            case "double" -> "D";
+            case "float" -> "F";
+            case "boolean" -> "Z";
+            case "byte" -> "B";
+            case "short" -> "S";
+            case "char" -> "C";
+            case "void" -> "V";
+            default -> "L" + javaType.replace('.', '/') + ";";
         };
     }
 }

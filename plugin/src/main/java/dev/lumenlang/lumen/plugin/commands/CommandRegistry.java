@@ -377,7 +377,8 @@ public final class CommandRegistry {
                         logSourceMapping(mapping);
                         LumenLogger.severe("  -> " + ScriptSourceMap.formatNpeHint(npe));
                     } else {
-                        LumenLogger.severe("[Script " + scriptClass + "] Runtime error in command /" + getName() + ": " + cause.getMessage());
+                        String message = cause.getMessage() != null ? cause.getMessage() : cause.getClass().getSimpleName();
+                        LumenLogger.severe("[Script " + scriptClass + "] Runtime error in command /" + getName() + ": " + message);
                         logSourceMapping(mapping);
                     }
                 }

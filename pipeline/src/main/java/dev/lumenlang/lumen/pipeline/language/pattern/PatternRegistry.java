@@ -5,6 +5,7 @@ import dev.lumenlang.lumen.api.handler.ConditionHandler;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler;
 import dev.lumenlang.lumen.api.handler.LoopHandler;
 import dev.lumenlang.lumen.api.handler.StatementHandler;
+import dev.lumenlang.lumen.pipeline.inject.PatternHinted;
 import dev.lumenlang.lumen.api.pattern.PatternMeta;
 import dev.lumenlang.lumen.api.pattern.builder.BlockBuilder;
 import dev.lumenlang.lumen.api.pattern.builder.ConditionBuilder;
@@ -108,7 +109,7 @@ import java.util.function.Consumer;
  * @see #block(String, BlockHandler)
  * @see #condition(String, ConditionHandler)
  */
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "DataFlowIssue"})
 public final class PatternRegistry {
     private static PatternRegistry INSTANCE;
     private final List<RegisteredBlock> blocks = new ArrayList<>();
@@ -247,11 +248,7 @@ public final class PatternRegistry {
     /**
      * Registers a block pattern with its handler.
      *
-     * <p>
-     * Block patterns represent multi-line structures that contain child statement.
-     * Examples include event handlers, if statements, and command definitions.
-     *
-     * @param pattern the pattern string (e.g., "on %events:EXPR%")
+     * @param pattern the pattern string
      * @param h       the handler that generates Java code for this block
      */
     public void block(String pattern, BlockHandler h) {
@@ -277,20 +274,11 @@ public final class PatternRegistry {
     /**
      * Registers a statement pattern with its handler.
      *
-     * <p>
-     * Statement patterns represent single-line actions like giving items, sending
-     * messages,
-     * or modifying player properties.
-     *
-     * <p>
-     * The handler is called once when the statement is encountered during code
-     * generation.
-     *
-     * @param pattern the pattern string (e.g., "give %who:PLAYER% %item:MATERIAL%
-     *                %amt:INT%")
+     * @param pattern the pattern string
      * @param h       the handler that generates Java code for this statement
      */
     public void statement(String pattern, StatementHandler h) {
+        if (h instanceof PatternHinted ph) ph.patternHint(pattern);
         Pattern compiled = PatternCompiler.compile(pattern);
         validateTypes(compiled);
         statements.add(new RegisteredPattern(compiled, h));
@@ -304,6 +292,7 @@ public final class PatternRegistry {
      * @param h        the handler that generates Java code for these statements
      */
     public void statement(@NotNull List<String> patterns, @NotNull StatementHandler h) {
+        if (h instanceof PatternHinted ph && !patterns.isEmpty()) ph.patternHint(patterns.get(0));
         for (String pattern : patterns) {
             Pattern compiled = PatternCompiler.compile(pattern);
             validateTypes(compiled);
@@ -314,26 +303,22 @@ public final class PatternRegistry {
     /**
      * Registers a condition pattern with its handler.
      *
-     * <p>
-     * Condition patterns represent boolean expressions used in if/else-if
-     * statement.
-     * The handler must return a Java boolean expression as a string.
-     *
-     * @param pattern the pattern string (e.g., "%p:PLAYER% health > %n:INT%")
+     * @param pattern the pattern string
      * @param handler the handler that generates a Java boolean expression
      */
     public void condition(@NotNull String pattern, @NotNull ConditionHandler handler) {
+        if (handler instanceof PatternHinted ph) ph.patternHint(pattern);
         conditionRegistry.register(pattern, handler);
     }
 
     /**
-     * Registers multiple condition pattern strings that all map to the same
-     * handler.
+     * Registers multiple condition pattern strings that all map to the same handler.
      *
      * @param patterns the list of pattern strings
      * @param handler  the handler that generates a Java boolean expression
      */
     public void condition(@NotNull List<String> patterns, @NotNull ConditionHandler handler) {
+        if (handler instanceof PatternHinted ph && !patterns.isEmpty()) ph.patternHint(patterns.get(0));
         for (String pattern : patterns) {
             conditionRegistry.register(pattern, handler);
         }
@@ -342,28 +327,24 @@ public final class PatternRegistry {
     /**
      * Registers an expression pattern with its handler.
      *
-     * <p>
-     * Expression patterns are used in {@code var x = <pattern>} contexts where the
-     * pattern handler returns a Java expression that evaluates to the variable's
-     * value.
-     *
-     * @param pattern the pattern string (e.g., "get player %name:STRING%")
+     * @param pattern the pattern string
      * @param handler the handler that returns a Java expression string
      */
     public void expression(@NotNull String pattern, @NotNull ExpressionHandler handler) {
+        if (handler instanceof PatternHinted ph) ph.patternHint(pattern);
         Pattern compiled = PatternCompiler.compile(pattern);
         validateTypes(compiled);
         expressions.add(new RegisteredExpression(compiled, handler));
     }
 
     /**
-     * Registers multiple expression pattern strings that all map to the same
-     * handler.
+     * Registers multiple expression pattern strings that all map to the same handler.
      *
      * @param patterns the list of pattern strings
      * @param handler  the handler that returns a Java expression result
      */
     public void expression(@NotNull List<String> patterns, @NotNull ExpressionHandler handler) {
+        if (handler instanceof PatternHinted ph && !patterns.isEmpty()) ph.patternHint(patterns.get(0));
         for (String pattern : patterns) {
             Pattern compiled = PatternCompiler.compile(pattern);
             validateTypes(compiled);
@@ -384,6 +365,7 @@ public final class PatternRegistry {
         StatementHandler handler = builder.getInjectableBody() != null
                 ? InjectableHandlers.statement(builder.getInjectableBody()) : builder.getInjectableClass() != null
                 ? InjectableHandlers.statement(builder.getInjectableClass(), builder.getInjectableMethodName()) : builder.getHandler();
+        if (handler instanceof PatternHinted ph) ph.patternHint(builder.getPatterns().get(0));
         for (String p : builder.getPatterns()) {
             Pattern compiled = PatternCompiler.compile(p);
             validateTypes(compiled);
@@ -407,8 +389,7 @@ public final class PatternRegistry {
         for (String p : builder.getPatterns()) {
             Pattern compiled = PatternCompiler.compile(p);
             validateTypes(compiled);
-            blocks.add(new RegisteredBlock(compiled, builder.getHandler(), meta, variables,
-                    rootLevel, inBlock));
+            blocks.add(new RegisteredBlock(compiled, builder.getHandler(), meta, variables, rootLevel, inBlock));
         }
     }
 
@@ -425,6 +406,7 @@ public final class PatternRegistry {
         ConditionHandler handler = builder.getInjectableCondition() != null
                 ? InjectableHandlers.condition(builder.getInjectableCondition()) : builder.getInjectableClass() != null
                 ? InjectableHandlers.condition(builder.getInjectableClass(), builder.getInjectableMethodName()) : builder.getHandler();
+        if (handler instanceof PatternHinted ph) ph.patternHint(builder.getPatterns().get(0));
         for (String p : builder.getPatterns()) {
             conditionRegistry.register(p, handler, meta);
         }
@@ -445,6 +427,7 @@ public final class PatternRegistry {
         ExpressionHandler handler = builder.getInjectableExpression() != null
                 ? InjectableHandlers.expression(builder.getInjectableExpression(), returnRefTypeId, returnJavaType) : builder.getInjectableClass() != null
                 ? InjectableHandlers.expression(builder.getInjectableClass(), builder.getInjectableMethodName(), returnRefTypeId, returnJavaType) : builder.getHandler();
+        if (handler instanceof PatternHinted ph) ph.patternHint(builder.getPatterns().get(0));
         for (String p : builder.getPatterns()) {
             Pattern compiled = PatternCompiler.compile(p);
             validateTypes(compiled);
@@ -485,7 +468,6 @@ public final class PatternRegistry {
 
     /**
      * Slow path for loop matching that supports inline expressions.
-     * Should only be called when the fast path ({@link #matchLoop}) returned null.
      *
      * @param tokens the loop source tokens
      * @param env    the type environment for variable lookups
@@ -546,10 +528,6 @@ public final class PatternRegistry {
     /**
      * Attempts to match tokens against all registered block patterns.
      *
-     * <p>
-     * Block patterns are tried in registration order. The first successful match is
-     * returned.
-     *
      * @param tokens the tokens to match
      * @param env    the type environment for variable lookups
      * @return a RegisteredBlockMatch if successful, null otherwise
@@ -566,14 +544,6 @@ public final class PatternRegistry {
     /**
      * Attempts to match tokens against all registered statement patterns.
      *
-     * <p>
-     * Statement patterns are tried in registration order. The first successful
-     * match is returned.
-     *
-     * <p>
-     * <b>Debug Output:</b> This method logs each pattern that is attempted and
-     * whether it matched.
-     *
      * @param tokens the tokens to match
      * @param env    the type environment for variable lookups
      * @return a RegisteredPatternMatch if successful, null otherwise
@@ -588,7 +558,6 @@ public final class PatternRegistry {
 
     /**
      * Slow path for statement matching that supports inline expressions.
-     * Should only be called when the fast path ({@link #matchStatement}) returned null.
      *
      * @param tokens the tokens to match
      * @param env    the type environment for variable lookups
@@ -620,12 +589,6 @@ public final class PatternRegistry {
     /**
      * Attempts to match tokens against all registered expression patterns.
      *
-     * <p>
-     * Expression patterns are tried in registration order. The first successful
-     * match
-     * is returned. Used for resolving {@code var x = <expression pattern>}
-     * statement.
-     *
      * @param tokens the tokens to match
      * @param env    the type environment for variable lookups
      * @return a RegisteredExpressionMatch if successful, null otherwise
@@ -640,7 +603,6 @@ public final class PatternRegistry {
 
     /**
      * Slow path for expression matching that supports inline expressions.
-     * Should only be called when the fast path ({@link #matchExpression}) returned null.
      *
      * @param tokens the tokens to match
      * @param env    the type environment for variable lookups
@@ -677,8 +639,7 @@ public final class PatternRegistry {
      * @param env    the type environment for variable lookups
      * @return a RegisteredExpressionMatch if successful, null otherwise
      */
-    private @Nullable RegisteredExpressionMatch matchExpressionFast(
-            @NotNull List<Token> tokens, @NotNull TypeEnv env) {
+    private @Nullable RegisteredExpressionMatch matchExpressionFast(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
         for (RegisteredExpression re : ensureExpressionsSorted()) {
             Match m = PatternMatcher.match(tokens, re.pattern(), types, env);
             if (m != null)

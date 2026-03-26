@@ -3,6 +3,7 @@ package dev.lumenlang.lumen.plugin.inject.handler;
 import dev.lumenlang.lumen.api.codegen.CodegenAccess;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.handler.ConditionHandler;
+import dev.lumenlang.lumen.pipeline.inject.PatternHinted;
 import dev.lumenlang.lumen.api.inject.body.InjectableCondition;
 import dev.lumenlang.lumen.plugin.inject.bytecode.BytecodeExtractor;
 import dev.lumenlang.lumen.plugin.inject.bytecode.ExtractedBody;
@@ -14,7 +15,7 @@ import java.util.List;
  * A {@link ConditionHandler} that extracts bytecode from an {@link InjectableCondition}
  * and generates a bridge method call that returns a boolean.
  */
-public final class InjectableConditionHandler implements ConditionHandler {
+public final class InjectableConditionHandler implements ConditionHandler, PatternHinted {
 
     private final InjectableHandlerSupport support;
 
@@ -30,11 +31,16 @@ public final class InjectableConditionHandler implements ConditionHandler {
     /**
      * Creates a handler from a named static method in the given class.
      *
-     * @param clazz the class containing the method
+     * @param clazz      the class containing the method
      * @param methodName the name of the static method
      */
     public InjectableConditionHandler(@NotNull Class<?> clazz, @NotNull String methodName) {
         this.support = new InjectableHandlerSupport(BytecodeExtractor.extractMethod(clazz, methodName), "boolean");
+    }
+
+    @Override
+    public void patternHint(@NotNull String pattern) {
+        support.patternHint(pattern);
     }
 
     @Override
