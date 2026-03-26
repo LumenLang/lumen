@@ -8,7 +8,7 @@ import java.io.Serializable;
  *
  * <p>Example:
  * <pre>{@code
- * api.patterns().injectableCondition(b -> b
+ * api.patterns().condition(b -> b
  *     .by("MyAddon")
  *     .pattern("%p:PLAYER% is swimming")
  *     .injectableHandler(() -> {

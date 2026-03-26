@@ -44,10 +44,13 @@ public final class BytecodeInjector {
             List<InjectableMethod> methods = InjectableRegistry.methods(className);
             if (methods == null || methods.isEmpty()) continue;
 
-            byte[] transformed = injectMethods(entry.getValue(), methods);
-            entry.setValue(transformed);
-            InjectableRegistry.clear(className);
-            LumenLogger.debug("BytecodeInjector", "Injected " + methods.size() + " method(s) into " + className);
+            try {
+                byte[] transformed = injectMethods(entry.getValue(), methods);
+                entry.setValue(transformed);
+                LumenLogger.debug("BytecodeInjector", "Injected " + methods.size() + " method(s) into " + className);
+            } finally {
+                InjectableRegistry.clear(className);
+            }
         }
     }
 
@@ -198,6 +201,9 @@ public final class BytecodeInjector {
     }
 
     private static @NotNull String typeToDescriptor(@NotNull String javaType) {
+        if (javaType.endsWith("[]")) {
+            return "[" + typeToDescriptor(javaType.substring(0, javaType.length() - 2));
+        }
         return switch (javaType) {
             case "int" -> "I";
             case "long" -> "J";

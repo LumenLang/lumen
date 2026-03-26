@@ -170,10 +170,7 @@ public final class LumenAPIImpl implements LumenAPI {
 
             @Override
             public void injectable(@NotNull List<String> patterns, @NotNull InjectableBody body) {
-                StatementHandler handler = InjectableHandlers.statement(body);
-                for (String pattern : patterns) {
-                    patternRegistry.statement(pattern, handler);
-                }
+                patternRegistry.statement(patterns, InjectableHandlers.statement(body));
             }
 
             @Override
@@ -183,10 +180,7 @@ public final class LumenAPIImpl implements LumenAPI {
 
             @Override
             public void injectableExpression(@NotNull List<String> patterns, @Nullable String refTypeId, @Nullable String javaType, @NotNull InjectableExpression expression) {
-                ExpressionHandler handler = InjectableHandlers.expression(expression, refTypeId, javaType);
-                for (String pattern : patterns) {
-                    patternRegistry.expression(pattern, handler);
-                }
+                patternRegistry.expression(patterns, InjectableHandlers.expression(expression, refTypeId, javaType));
             }
 
             @Override
@@ -196,10 +190,7 @@ public final class LumenAPIImpl implements LumenAPI {
 
             @Override
             public void injectableCondition(@NotNull List<String> patterns, @NotNull InjectableCondition condition) {
-                ConditionHandler handler = InjectableHandlers.condition(condition);
-                for (String pattern : patterns) {
-                    patternRegistry.condition(pattern, handler);
-                }
+                patternRegistry.condition(patterns, InjectableHandlers.condition(condition));
             }
         };
 

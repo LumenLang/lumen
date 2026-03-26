@@ -114,7 +114,8 @@ public final class BytecodeExtractor {
 
     private static @NotNull ClassNode readClassNode(@NotNull Class<?> clazz) {
         String resourceName = clazz.getName().replace('.', '/') + ".class";
-        try (InputStream is = clazz.getClassLoader().getResourceAsStream(resourceName)) {
+        ClassLoader loader = clazz.getClassLoader();
+        try (InputStream is = loader != null ? loader.getResourceAsStream(resourceName) : ClassLoader.getSystemResourceAsStream(resourceName)) {
             if (is == null) {
                 throw new IllegalArgumentException("Cannot read class file for " + clazz.getName());
             }
