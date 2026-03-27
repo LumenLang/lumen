@@ -119,6 +119,7 @@ public final class Lumen extends JavaPlugin {
             scriptWatcher = null;
         }
         ConfigWatcher.shutdown();
+        ScriptManager.unloadAllSync();
         ScriptManager.shutdownPool();
         RegistrationScanner.teardown();
         ScriptBinder.teardown();

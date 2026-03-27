@@ -334,6 +334,16 @@ public final class ScriptManager {
     }
 
     /**
+     * Synchronously unloads all loaded scripts.
+     */
+    public static void unloadAllSync() {
+        List<String> loadedNames = new ArrayList<>(scripts.keySet());
+        for (String name : loadedNames) {
+            unload(name);
+        }
+    }
+
+    /**
      * Shuts down the script compilation thread pool.
      */
     public static void shutdownPool() {
