@@ -165,32 +165,32 @@ public final class LumenAPIImpl implements LumenAPI {
 
             @Override
             public void injectable(@NotNull String pattern, @NotNull InjectableBody body) {
-                patternRegistry.statement(pattern, InjectableHandlers.statement(body));
+                patternRegistry.statement(pattern, InjectableHandlers.statement(body, false));
             }
 
             @Override
             public void injectable(@NotNull List<String> patterns, @NotNull InjectableBody body) {
-                patternRegistry.statement(patterns, InjectableHandlers.statement(body));
+                patternRegistry.statement(patterns, InjectableHandlers.statement(body, false));
             }
 
             @Override
             public void injectableExpression(@NotNull String pattern, @Nullable String refTypeId, @Nullable String javaType, @NotNull InjectableExpression expression) {
-                patternRegistry.expression(pattern, InjectableHandlers.expression(expression, refTypeId, javaType));
+                patternRegistry.expression(pattern, InjectableHandlers.expression(expression, refTypeId, javaType, false));
             }
 
             @Override
             public void injectableExpression(@NotNull List<String> patterns, @Nullable String refTypeId, @Nullable String javaType, @NotNull InjectableExpression expression) {
-                patternRegistry.expression(patterns, InjectableHandlers.expression(expression, refTypeId, javaType));
+                patternRegistry.expression(patterns, InjectableHandlers.expression(expression, refTypeId, javaType, false));
             }
 
             @Override
             public void injectableCondition(@NotNull String pattern, @NotNull InjectableCondition condition) {
-                patternRegistry.condition(pattern, InjectableHandlers.condition(condition));
+                patternRegistry.condition(pattern, InjectableHandlers.condition(condition, false));
             }
 
             @Override
             public void injectableCondition(@NotNull List<String> patterns, @NotNull InjectableCondition condition) {
-                patternRegistry.condition(patterns, InjectableHandlers.condition(condition));
+                patternRegistry.condition(patterns, InjectableHandlers.condition(condition, false));
             }
         };
 

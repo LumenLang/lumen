@@ -200,7 +200,13 @@ public final class BytecodeInjector {
         };
     }
 
-    private static @NotNull String typeToDescriptor(@NotNull String javaType) {
+    /**
+     * Converts a Java type name to its JVM descriptor.
+     *
+     * @param javaType the Java type name (e.g. "int", "org.bukkit.entity.Player")
+     * @return the JVM descriptor (e.g. "I", "Lorg/bukkit/entity/Player;")
+     */
+    public static @NotNull String typeToDescriptor(@NotNull String javaType) {
         if (javaType.endsWith("[]")) {
             return "[" + typeToDescriptor(javaType.substring(0, javaType.length() - 2));
         }

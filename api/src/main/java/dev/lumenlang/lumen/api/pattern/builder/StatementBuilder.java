@@ -45,6 +45,7 @@ public final class StatementBuilder {
     private @Nullable InjectableBody injectableBody;
     private @Nullable Class<?> injectableClass;
     private @Nullable String injectableMethodName;
+    private boolean methodBased;
 
     /**
      * Sets the addon name that registers this statement pattern.
@@ -187,6 +188,20 @@ public final class StatementBuilder {
         return this;
     }
 
+    /**
+     * Forces method based injection instead of inline.
+     *
+     * <p>By default, injectable handlers use inline mode where the decompiled body
+     * is emitted directly at the call site. Calling this forces the handler to
+     * generate a bridge method with bytecode injection instead.
+     *
+     * @return this builder
+     */
+    public @NotNull StatementBuilder methodBased() {
+        this.methodBased = true;
+        return this;
+    }
+
     public @NotNull List<String> getPatterns() {
         return patterns;
     }
@@ -207,6 +222,10 @@ public final class StatementBuilder {
 
     public @Nullable String getInjectableMethodName() {
         return injectableMethodName;
+    }
+
+    public boolean isMethodBased() {
+        return methodBased;
     }
 
     public @NotNull PatternMeta buildMeta() {

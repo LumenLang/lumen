@@ -363,8 +363,8 @@ public final class PatternRegistry {
         builder.validate();
         PatternMeta meta = builder.buildMeta();
         StatementHandler handler = builder.getInjectableBody() != null
-                ? InjectableHandlers.statement(builder.getInjectableBody()) : builder.getInjectableClass() != null
-                ? InjectableHandlers.statement(builder.getInjectableClass(), builder.getInjectableMethodName()) : builder.getHandler();
+                ? InjectableHandlers.statement(builder.getInjectableBody(), builder.isMethodBased()) : builder.getInjectableClass() != null
+                ? InjectableHandlers.statement(builder.getInjectableClass(), builder.getInjectableMethodName(), builder.isMethodBased()) : builder.getHandler();
         if (handler instanceof PatternHinted ph) ph.patternHint(builder.getPatterns().get(0));
         for (String p : builder.getPatterns()) {
             Pattern compiled = PatternCompiler.compile(p);
@@ -404,8 +404,8 @@ public final class PatternRegistry {
         builder.validate();
         PatternMeta meta = builder.buildMeta();
         ConditionHandler handler = builder.getInjectableCondition() != null
-                ? InjectableHandlers.condition(builder.getInjectableCondition()) : builder.getInjectableClass() != null
-                ? InjectableHandlers.condition(builder.getInjectableClass(), builder.getInjectableMethodName()) : builder.getHandler();
+                ? InjectableHandlers.condition(builder.getInjectableCondition(), builder.isMethodBased()) : builder.getInjectableClass() != null
+                ? InjectableHandlers.condition(builder.getInjectableClass(), builder.getInjectableMethodName(), builder.isMethodBased()) : builder.getHandler();
         if (handler instanceof PatternHinted ph) ph.patternHint(builder.getPatterns().get(0));
         for (String p : builder.getPatterns()) {
             conditionRegistry.register(p, handler, meta);
@@ -425,8 +425,8 @@ public final class PatternRegistry {
         String returnRefTypeId = builder.getReturnRefTypeId();
         String returnJavaType = builder.getReturnJavaType();
         ExpressionHandler handler = builder.getInjectableExpression() != null
-                ? InjectableHandlers.expression(builder.getInjectableExpression(), returnRefTypeId, returnJavaType) : builder.getInjectableClass() != null
-                ? InjectableHandlers.expression(builder.getInjectableClass(), builder.getInjectableMethodName(), returnRefTypeId, returnJavaType) : builder.getHandler();
+                ? InjectableHandlers.expression(builder.getInjectableExpression(), returnRefTypeId, returnJavaType, builder.isMethodBased()) : builder.getInjectableClass() != null
+                ? InjectableHandlers.expression(builder.getInjectableClass(), builder.getInjectableMethodName(), returnRefTypeId, returnJavaType, builder.isMethodBased()) : builder.getHandler();
         if (handler instanceof PatternHinted ph) ph.patternHint(builder.getPatterns().get(0));
         for (String p : builder.getPatterns()) {
             Pattern compiled = PatternCompiler.compile(p);

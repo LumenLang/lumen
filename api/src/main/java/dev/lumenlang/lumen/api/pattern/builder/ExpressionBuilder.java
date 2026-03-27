@@ -47,6 +47,7 @@ public final class ExpressionBuilder {
     private @Nullable InjectableExpression injectableExpression;
     private @Nullable Class<?> injectableClass;
     private @Nullable String injectableMethodName;
+    private boolean methodBased;
 
     /**
      * Sets the addon name that registers this expression pattern.
@@ -226,6 +227,20 @@ public final class ExpressionBuilder {
         return this;
     }
 
+    /**
+     * Forces method based injection instead of inline.
+     *
+     * <p>By default, injectable handlers use inline mode where the decompiled body
+     * is emitted directly at the call site. Calling this forces the handler to
+     * generate a bridge method with bytecode injection instead.
+     *
+     * @return this builder
+     */
+    public @NotNull ExpressionBuilder methodBased() {
+        this.methodBased = true;
+        return this;
+    }
+
     public @NotNull List<String> getPatterns() {
         return patterns;
     }
@@ -246,6 +261,10 @@ public final class ExpressionBuilder {
 
     public @Nullable String getInjectableMethodName() {
         return injectableMethodName;
+    }
+
+    public boolean isMethodBased() {
+        return methodBased;
     }
 
     public @Nullable String getReturnRefTypeId() {

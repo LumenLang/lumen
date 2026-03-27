@@ -2,19 +2,23 @@ package dev.lumenlang.lumen.plugin.inject.handler;
 
 import dev.lumenlang.lumen.api.codegen.BindingAccess;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler;
-import dev.lumenlang.lumen.pipeline.inject.PatternHinted;
 import dev.lumenlang.lumen.api.inject.body.InjectableExpression;
+import dev.lumenlang.lumen.pipeline.inject.PatternHinted;
 import dev.lumenlang.lumen.pipeline.var.RefType;
 import dev.lumenlang.lumen.plugin.inject.bytecode.BytecodeExtractor;
 import dev.lumenlang.lumen.plugin.inject.bytecode.ExtractedBody;
+import dev.lumenlang.lumen.plugin.inject.bytecode.MethodDecompiler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
- * An {@link ExpressionHandler} that extracts bytecode from an {@link InjectableExpression}
- * and generates a bridge method call that returns a value.
+ * An {@link ExpressionHandler} that extracts bytecode from an {@link InjectableExpression}.
+ * In inline mode (default), the decompiled return expression is used directly.
+ * In method based mode, a bridge method call is generated.
  */
 public final class InjectableExpressionHandler implements ExpressionHandler, PatternHinted {
 
@@ -25,14 +29,15 @@ public final class InjectableExpressionHandler implements ExpressionHandler, Pat
     /**
      * Creates a handler from the given injectable expression.
      *
-     * @param expression the injectable expression whose bytecode will be extracted and injected
-     * @param refTypeId  the ref type id for the return value (e.g. "PLAYER"), or null
-     * @param javaType   the Java type for primitive returns (e.g. "int"), or null
+     * @param expression  the injectable expression whose bytecode will be extracted and injected
+     * @param refTypeId   the ref type id for the return value (e.g. "PLAYER"), or null
+     * @param javaType    the Java type for primitive returns (e.g. "int"), or null
+     * @param methodBased true to force method based injection instead of inline
      */
-    public InjectableExpressionHandler(@NotNull InjectableExpression expression, @Nullable String refTypeId, @Nullable String javaType) {
+    public InjectableExpressionHandler(@NotNull InjectableExpression expression, @Nullable String refTypeId, @Nullable String javaType, boolean methodBased) {
         ExtractedBody body = BytecodeExtractor.extract(expression);
         String returnTypeJava = resolveReturnType(body, refTypeId, javaType);
-        this.support = new InjectableHandlerSupport(body, returnTypeJava);
+        this.support = new InjectableHandlerSupport(body, returnTypeJava, methodBased);
         this.refTypeId = refTypeId;
         this.javaType = javaType;
     }
@@ -40,15 +45,16 @@ public final class InjectableExpressionHandler implements ExpressionHandler, Pat
     /**
      * Creates a handler from a named static method in the given class.
      *
-     * @param clazz      the class containing the method
-     * @param methodName the name of the static method
-     * @param refTypeId  the ref type id for the return value, or null
-     * @param javaType   the Java type for primitive returns, or null
+     * @param clazz       the class containing the method
+     * @param methodName  the name of the static method
+     * @param refTypeId   the ref type id for the return value, or null
+     * @param javaType    the Java type for primitive returns, or null
+     * @param methodBased true to force method based injection instead of inline
      */
-    public InjectableExpressionHandler(@NotNull Class<?> clazz, @NotNull String methodName, @Nullable String refTypeId, @Nullable String javaType) {
+    public InjectableExpressionHandler(@NotNull Class<?> clazz, @NotNull String methodName, @Nullable String refTypeId, @Nullable String javaType, boolean methodBased) {
         ExtractedBody body = BytecodeExtractor.extractMethod(clazz, methodName);
         String returnTypeJava = resolveReturnType(body, refTypeId, javaType);
-        this.support = new InjectableHandlerSupport(body, returnTypeJava);
+        this.support = new InjectableHandlerSupport(body, returnTypeJava, methodBased);
         this.refTypeId = refTypeId;
         this.javaType = javaType;
     }
@@ -69,8 +75,18 @@ public final class InjectableExpressionHandler implements ExpressionHandler, Pat
 
     @Override
     public @NotNull ExpressionResult handle(@NotNull BindingAccess ctx) {
-        List<ExtractedBody.FakeBinding> bindings = support.emitIfNeeded(ctx.codegen());
+        MethodDecompiler.DecompiledInlineBody inlineBody = support.inlineBody();
+        if (inlineBody != null && inlineBody.returnExpression() != null) {
+            support.addInlineImports(ctx.codegen());
+            Map<String, String> bindingExpressions = new HashMap<>();
+            for (ExtractedBody.FakeBinding binding : support.bindings()) {
+                bindingExpressions.put(binding.bindingName(), ctx.java(binding.bindingName()));
+            }
+            String expression = support.replaceBindings(inlineBody.returnExpression(), bindingExpressions);
+            return new ExpressionResult(expression, refTypeId, javaType);
+        }
 
+        List<ExtractedBody.FakeBinding> bindings = support.emitIfNeeded(ctx.codegen());
         StringBuilder call = new StringBuilder();
         call.append(support.methodName()).append("(");
         for (int i = 0; i < bindings.size(); i++) {
@@ -78,7 +94,6 @@ public final class InjectableExpressionHandler implements ExpressionHandler, Pat
             call.append(ctx.java(bindings.get(i).bindingName()));
         }
         call.append(")");
-
         return new ExpressionResult(call.toString(), refTypeId, javaType);
     }
 }
