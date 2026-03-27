@@ -9,7 +9,7 @@ allprojects {
     apply plugin: 'java-library'
 
     group = 'dev.lumenlang'
-    version = '1.0.8-BETA-SNAPSHOT'
+    version = '1.0.8-BETA'
 
     repositories {
         mavenCentral()
