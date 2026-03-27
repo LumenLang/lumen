@@ -29,6 +29,7 @@ dependencies {
     implementation "net.vansencool:LSYAML:1.3.5"
     implementation "org.ow2.asm:asm:9.9.1"
     implementation "org.ow2.asm:asm-commons:9.9.1"
+    implementation "org.vineflower:vineflower:1.11.2"
 }
 
 processResources {

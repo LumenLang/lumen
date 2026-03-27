@@ -6,6 +6,7 @@ import dev.lumenlang.lumen.pipeline.binder.ScriptBinder;
 import dev.lumenlang.lumen.pipeline.codegen.CodegenContext;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.plugin.inject.bytecode.BytecodeInjector;
+import dev.lumenlang.lumen.plugin.inject.bytecode.MethodDecompiler;
 import dev.lumenlang.lumen.pipeline.java.JavaBuilder;
 import dev.lumenlang.lumen.pipeline.java.compiled.ClassBuilder;
 import dev.lumenlang.lumen.pipeline.java.compiled.ScriptSourceMap;
@@ -399,9 +400,9 @@ public final class ScriptManager {
         }
 
         long compileStart = System.nanoTime();
-        dumpIfEnabled(generated);
         Map<String, byte[]> bytecodes = compile(generated);
         BytecodeInjector.inject(bytecodes);
+        dumpIfEnabled(generated, bytecodes);
         cacheIfEnabled(name, source, generated.javaSource(), bytecodes);
         long compileTime = System.nanoTime() - compileStart;
 
@@ -478,6 +479,7 @@ public final class ScriptManager {
             try {
                 Map<String, byte[]> bytecodes = compile(gs);
                 BytecodeInjector.inject(bytecodes);
+                dumpIfEnabled(gs, bytecodes);
                 cacheIfEnabled(gs.scriptName(), gs.originalSource(), gs.javaSource(), bytecodes);
                 result.add(new PreparedScript(gs.scriptName(), gs.fqcn(), bytecodes,
                         new CompileTimings(0L, 0L)));
@@ -527,7 +529,6 @@ public final class ScriptManager {
                                                               long parseTotalNanos) {
         List<SourceFile> files = new ArrayList<>();
         for (GeneratedSource s : generated) {
-            dumpIfEnabled(s);
             files.add(new SourceFile(s.fqcn(), s.javaSource()));
         }
 
@@ -553,6 +554,7 @@ public final class ScriptManager {
             String normalized = ClassBuilder.normalize(s.className());
             Map<String, byte[]> bytecodes = extractBytecodes(fm.classes, normalized);
             BytecodeInjector.inject(bytecodes);
+            dumpIfEnabled(s, bytecodes);
             if (LumenConfiguration.DEBUG.LOG_COMPILATION) {
                 LumenLogger.info(
                         "[Compilation] Extracted " + bytecodes.size() + " bytecode classes for " + s.scriptName());
@@ -618,11 +620,25 @@ public final class ScriptManager {
         }
     }
 
-    private static void dumpIfEnabled(@NotNull GeneratedSource source) {
-        if (!LumenConfiguration.DEBUG.DUMP_GENERATED_JAVA)
-            return;
+    private static void dumpIfEnabled(@NotNull GeneratedSource source, @NotNull Map<String, byte[]> bytecodes) {
+        if (!LumenConfiguration.DEBUG.DUMP_GENERATED_JAVA) return;
+        CompletableFuture.runAsync(() -> writeDump(source, bytecodes));
+    }
 
-        dumpSource(source);
+    private static void writeDump(@NotNull GeneratedSource source, @NotNull Map<String, byte[]> bytecodes) {
+        byte[] mainClassBytes = bytecodes.get(source.fqcn());
+        String content = mainClassBytes != null ? MethodDecompiler.rewriteSource(source.javaSource(), mainClassBytes) : source.javaSource();
+
+        String safeName = source.scriptName().replace('/', '_').replace('\\', '_');
+        Path dumpDir = CompiledClassCache.compiledRoot().resolve(safeName).resolve("dump");
+        try {
+            Files.createDirectories(dumpDir);
+            String baseName = ClassBuilder.normalize(source.className());
+            Files.writeString(dumpDir.resolve(baseName + ".java"), content);
+            Files.writeString(dumpDir.resolve(baseName + "-readable.java"), MiniJavaCleaner.formatReadable(content));
+        } catch (IOException e) {
+            LumenLogger.severe("Failed to dump generated Java for " + source.scriptName() + ": " + e.getMessage());
+        }
     }
 
     private static void dumpSource(@NotNull GeneratedSource source) {
