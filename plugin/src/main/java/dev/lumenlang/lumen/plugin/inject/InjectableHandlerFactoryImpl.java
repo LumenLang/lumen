@@ -26,22 +26,22 @@ public final class InjectableHandlerFactoryImpl implements InjectableHandlers.Fa
     }
 
     @Override
-    public @NotNull ExpressionHandler expression(@NotNull InjectableExpression expression, @Nullable String refTypeId, @Nullable String javaType, boolean methodBased) {
-        return new InjectableExpressionHandler(expression, refTypeId, javaType, methodBased);
+    public @NotNull ExpressionHandler expression(@NotNull InjectableExpression expression, @Nullable String refTypeId, @Nullable String javaType) {
+        return new InjectableExpressionHandler(expression, refTypeId, javaType);
     }
 
     @Override
-    public @NotNull ExpressionHandler expression(@NotNull Class<?> clazz, @NotNull String methodName, @Nullable String refTypeId, @Nullable String javaType, boolean methodBased) {
-        return new InjectableExpressionHandler(clazz, methodName, refTypeId, javaType, methodBased);
+    public @NotNull ExpressionHandler expression(@NotNull Class<?> clazz, @NotNull String methodName, @Nullable String refTypeId, @Nullable String javaType) {
+        return new InjectableExpressionHandler(clazz, methodName, refTypeId, javaType);
     }
 
     @Override
-    public @NotNull ConditionHandler condition(@NotNull InjectableCondition condition, boolean methodBased) {
-        return new InjectableConditionHandler(condition, methodBased);
+    public @NotNull ConditionHandler condition(@NotNull InjectableCondition condition) {
+        return new InjectableConditionHandler(condition);
     }
 
     @Override
-    public @NotNull ConditionHandler condition(@NotNull Class<?> clazz, @NotNull String methodName, boolean methodBased) {
-        return new InjectableConditionHandler(clazz, methodName, methodBased);
+    public @NotNull ConditionHandler condition(@NotNull Class<?> clazz, @NotNull String methodName) {
+        return new InjectableConditionHandler(clazz, methodName);
     }
 }

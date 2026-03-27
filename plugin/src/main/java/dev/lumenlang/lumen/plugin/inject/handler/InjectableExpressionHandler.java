@@ -29,15 +29,14 @@ public final class InjectableExpressionHandler implements ExpressionHandler, Pat
     /**
      * Creates a handler from the given injectable expression.
      *
-     * @param expression  the injectable expression whose bytecode will be extracted and injected
-     * @param refTypeId   the ref type id for the return value (e.g. "PLAYER"), or null
-     * @param javaType    the Java type for primitive returns (e.g. "int"), or null
-     * @param methodBased true to force method based injection instead of inline
+     * @param expression the injectable expression whose bytecode will be extracted and injected
+     * @param refTypeId  the ref type id for the return value (e.g. "PLAYER"), or null
+     * @param javaType   the Java type for primitive returns (e.g. "int"), or null
      */
-    public InjectableExpressionHandler(@NotNull InjectableExpression expression, @Nullable String refTypeId, @Nullable String javaType, boolean methodBased) {
+    public InjectableExpressionHandler(@NotNull InjectableExpression expression, @Nullable String refTypeId, @Nullable String javaType) {
         ExtractedBody body = BytecodeExtractor.extract(expression);
         String returnTypeJava = resolveReturnType(body, refTypeId, javaType);
-        this.support = new InjectableHandlerSupport(body, returnTypeJava, methodBased);
+        this.support = new InjectableHandlerSupport(body, returnTypeJava, false);
         this.refTypeId = refTypeId;
         this.javaType = javaType;
     }
@@ -45,16 +44,15 @@ public final class InjectableExpressionHandler implements ExpressionHandler, Pat
     /**
      * Creates a handler from a named static method in the given class.
      *
-     * @param clazz       the class containing the method
-     * @param methodName  the name of the static method
-     * @param refTypeId   the ref type id for the return value, or null
-     * @param javaType    the Java type for primitive returns, or null
-     * @param methodBased true to force method based injection instead of inline
+     * @param clazz      the class containing the method
+     * @param methodName the name of the static method
+     * @param refTypeId  the ref type id for the return value, or null
+     * @param javaType   the Java type for primitive returns, or null
      */
-    public InjectableExpressionHandler(@NotNull Class<?> clazz, @NotNull String methodName, @Nullable String refTypeId, @Nullable String javaType, boolean methodBased) {
+    public InjectableExpressionHandler(@NotNull Class<?> clazz, @NotNull String methodName, @Nullable String refTypeId, @Nullable String javaType) {
         ExtractedBody body = BytecodeExtractor.extractMethod(clazz, methodName);
         String returnTypeJava = resolveReturnType(body, refTypeId, javaType);
-        this.support = new InjectableHandlerSupport(body, returnTypeJava, methodBased);
+        this.support = new InjectableHandlerSupport(body, returnTypeJava, false);
         this.refTypeId = refTypeId;
         this.javaType = javaType;
     }

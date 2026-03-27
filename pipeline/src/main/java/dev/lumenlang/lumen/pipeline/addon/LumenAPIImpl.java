@@ -175,22 +175,22 @@ public final class LumenAPIImpl implements LumenAPI {
 
             @Override
             public void injectableExpression(@NotNull String pattern, @Nullable String refTypeId, @Nullable String javaType, @NotNull InjectableExpression expression) {
-                patternRegistry.expression(pattern, InjectableHandlers.expression(expression, refTypeId, javaType, false));
+                patternRegistry.expression(pattern, InjectableHandlers.expression(expression, refTypeId, javaType));
             }
 
             @Override
             public void injectableExpression(@NotNull List<String> patterns, @Nullable String refTypeId, @Nullable String javaType, @NotNull InjectableExpression expression) {
-                patternRegistry.expression(patterns, InjectableHandlers.expression(expression, refTypeId, javaType, false));
+                patternRegistry.expression(patterns, InjectableHandlers.expression(expression, refTypeId, javaType));
             }
 
             @Override
             public void injectableCondition(@NotNull String pattern, @NotNull InjectableCondition condition) {
-                patternRegistry.condition(pattern, InjectableHandlers.condition(condition, false));
+                patternRegistry.condition(pattern, InjectableHandlers.condition(condition));
             }
 
             @Override
             public void injectableCondition(@NotNull List<String> patterns, @NotNull InjectableCondition condition) {
-                patternRegistry.condition(patterns, InjectableHandlers.condition(condition, false));
+                patternRegistry.condition(patterns, InjectableHandlers.condition(condition));
             }
         };
 

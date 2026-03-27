@@ -416,8 +416,8 @@ public final class PatternRegistry {
         builder.validate();
         PatternMeta meta = builder.buildMeta();
         ConditionHandler handler = builder.getInjectableCondition() != null
-                ? InjectableHandlers.condition(builder.getInjectableCondition(), builder.isMethodBased()) : builder.getInjectableClass() != null
-                ? InjectableHandlers.condition(builder.getInjectableClass(), builder.getInjectableMethodName(), builder.isMethodBased()) : builder.getHandler();
+                ? InjectableHandlers.condition(builder.getInjectableCondition()) : builder.getInjectableClass() != null
+                ? InjectableHandlers.condition(builder.getInjectableClass(), builder.getInjectableMethodName()) : builder.getHandler();
         if (handler instanceof PatternHinted ph) {
             ph.patternHint(builder.getPatterns().get(0));
             for (int i = 1; i < builder.getPatterns().size(); i++) ph.validateAdditionalPattern(builder.getPatterns().get(i));
@@ -440,8 +440,8 @@ public final class PatternRegistry {
         String returnRefTypeId = builder.getReturnRefTypeId();
         String returnJavaType = builder.getReturnJavaType();
         ExpressionHandler handler = builder.getInjectableExpression() != null
-                ? InjectableHandlers.expression(builder.getInjectableExpression(), returnRefTypeId, returnJavaType, builder.isMethodBased()) : builder.getInjectableClass() != null
-                ? InjectableHandlers.expression(builder.getInjectableClass(), builder.getInjectableMethodName(), returnRefTypeId, returnJavaType, builder.isMethodBased()) : builder.getHandler();
+                ? InjectableHandlers.expression(builder.getInjectableExpression(), returnRefTypeId, returnJavaType) : builder.getInjectableClass() != null
+                ? InjectableHandlers.expression(builder.getInjectableClass(), builder.getInjectableMethodName(), returnRefTypeId, returnJavaType) : builder.getHandler();
         if (handler instanceof PatternHinted ph) {
             ph.patternHint(builder.getPatterns().get(0));
             for (int i = 1; i < builder.getPatterns().size(); i++) ph.validateAdditionalPattern(builder.getPatterns().get(i));

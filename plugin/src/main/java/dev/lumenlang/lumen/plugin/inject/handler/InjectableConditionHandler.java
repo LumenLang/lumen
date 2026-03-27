@@ -26,22 +26,20 @@ public final class InjectableConditionHandler implements ConditionHandler, Patte
     /**
      * Creates a handler from the given injectable condition.
      *
-     * @param condition   the injectable condition whose bytecode will be extracted and injected
-     * @param methodBased true to force method based injection instead of inline
+     * @param condition the injectable condition whose bytecode will be extracted and injected
      */
-    public InjectableConditionHandler(@NotNull InjectableCondition condition, boolean methodBased) {
-        this.support = new InjectableHandlerSupport(BytecodeExtractor.extract(condition), "boolean", methodBased);
+    public InjectableConditionHandler(@NotNull InjectableCondition condition) {
+        this.support = new InjectableHandlerSupport(BytecodeExtractor.extract(condition), "boolean", false);
     }
 
     /**
      * Creates a handler from a named static method in the given class.
      *
-     * @param clazz       the class containing the method
-     * @param methodName  the name of the static method
-     * @param methodBased true to force method based injection instead of inline
+     * @param clazz      the class containing the method
+     * @param methodName the name of the static method
      */
-    public InjectableConditionHandler(@NotNull Class<?> clazz, @NotNull String methodName, boolean methodBased) {
-        this.support = new InjectableHandlerSupport(BytecodeExtractor.extractMethod(clazz, methodName), "boolean", methodBased);
+    public InjectableConditionHandler(@NotNull Class<?> clazz, @NotNull String methodName) {
+        this.support = new InjectableHandlerSupport(BytecodeExtractor.extractMethod(clazz, methodName), "boolean", false);
     }
 
     @Override
