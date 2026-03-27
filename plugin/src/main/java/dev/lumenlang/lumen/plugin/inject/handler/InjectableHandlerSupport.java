@@ -134,6 +134,15 @@ public final class InjectableHandlerSupport {
         validateBindings(pattern);
     }
 
+    /**
+     * Validates bindings for an additional pattern without changing the method name.
+     *
+     * @param pattern the additional pattern to validate
+     */
+    public void validateAdditionalPattern(@NotNull String pattern) {
+        validateBindings(pattern);
+    }
+
     private void validateBindings(@NotNull String pattern) {
         List<String> patternBindings = new ArrayList<>();
         Matcher matcher = PLACEHOLDER_PATTERN.matcher(pattern);

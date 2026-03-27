@@ -50,6 +50,11 @@ public final class InjectableConditionHandler implements ConditionHandler, Patte
     }
 
     @Override
+    public void validateAdditionalPattern(@NotNull String pattern) {
+        support.validateAdditionalPattern(pattern);
+    }
+
+    @Override
     public @NotNull String handle(@NotNull ConditionMatch match, @NotNull EnvironmentAccess env, @NotNull CodegenAccess ctx) {
         MethodDecompiler.DecompiledInlineBody inlineBody = support.inlineBody();
         if (inlineBody != null && inlineBody.returnExpression() != null) {

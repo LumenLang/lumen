@@ -67,7 +67,7 @@ public final class BytecodeInjector {
         for (MethodNode mn : classNode.methods) {
             InjectableMethod injectable = methodMap.get(mn.name);
             if (injectable == null) continue;
-            replaceMethodBody(mn, injectable, classNode.name);
+            replaceMethodBody(mn, injectable);
         }
 
         ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
@@ -75,7 +75,7 @@ public final class BytecodeInjector {
         return writer.toByteArray();
     }
 
-    private static void replaceMethodBody(@NotNull MethodNode target, @NotNull InjectableMethod injectable, @NotNull String targetClassInternal) {
+    private static void replaceMethodBody(@NotNull MethodNode target, @NotNull InjectableMethod injectable) {
         ExtractedBody body = injectable.extractedBody();
         int targetReturnOpcode = returnOpcodeForType(injectable.returnType());
 
@@ -115,11 +115,6 @@ public final class BytecodeInjector {
                     while (next != null && (next instanceof LabelNode || next.getOpcode() == -1)) next = next.getNext();
                     if (next != null && next.getOpcode() >= Opcodes.IRETURN && next.getOpcode() <= Opcodes.RETURN)
                         continue;
-                }
-
-                if (methodInsn.owner.equals(body.sourceClass())) {
-                    newBody.add(new MethodInsnNode(methodInsn.getOpcode(), targetClassInternal, methodInsn.name, methodInsn.desc, methodInsn.itf));
-                    continue;
                 }
             }
 

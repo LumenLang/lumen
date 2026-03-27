@@ -6,6 +6,7 @@ import dev.lumenlang.lumen.pipeline.binder.ScriptBinder;
 import dev.lumenlang.lumen.pipeline.codegen.CodegenContext;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.plugin.inject.bytecode.BytecodeInjector;
+import dev.lumenlang.lumen.plugin.inject.bytecode.InjectableRegistry;
 import dev.lumenlang.lumen.plugin.inject.bytecode.MethodDecompiler;
 import dev.lumenlang.lumen.pipeline.java.JavaBuilder;
 import dev.lumenlang.lumen.pipeline.java.compiled.ClassBuilder;
@@ -400,7 +401,13 @@ public final class ScriptManager {
         }
 
         long compileStart = System.nanoTime();
-        Map<String, byte[]> bytecodes = compile(generated);
+        Map<String, byte[]> bytecodes;
+        try {
+            bytecodes = compile(generated);
+        } catch (RuntimeException e) {
+            InjectableRegistry.clear(generated.fqcn());
+            throw e;
+        }
         BytecodeInjector.inject(bytecodes);
         dumpIfEnabled(generated, bytecodes);
         cacheIfEnabled(name, source, generated.javaSource(), bytecodes);
@@ -484,6 +491,7 @@ public final class ScriptManager {
                 result.add(new PreparedScript(gs.scriptName(), gs.fqcn(), bytecodes,
                         new CompileTimings(0L, 0L)));
             } catch (RuntimeException ignored) {
+                InjectableRegistry.clear(gs.fqcn());
             }
         }
         return result;

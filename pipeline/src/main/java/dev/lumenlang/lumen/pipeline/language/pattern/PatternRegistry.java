@@ -292,7 +292,10 @@ public final class PatternRegistry {
      * @param h        the handler that generates Java code for these statements
      */
     public void statement(@NotNull List<String> patterns, @NotNull StatementHandler h) {
-        if (h instanceof PatternHinted ph && !patterns.isEmpty()) ph.patternHint(patterns.get(0));
+        if (h instanceof PatternHinted ph && !patterns.isEmpty()) {
+            ph.patternHint(patterns.get(0));
+            for (int i = 1; i < patterns.size(); i++) ph.validateAdditionalPattern(patterns.get(i));
+        }
         for (String pattern : patterns) {
             Pattern compiled = PatternCompiler.compile(pattern);
             validateTypes(compiled);
@@ -318,7 +321,10 @@ public final class PatternRegistry {
      * @param handler  the handler that generates a Java boolean expression
      */
     public void condition(@NotNull List<String> patterns, @NotNull ConditionHandler handler) {
-        if (handler instanceof PatternHinted ph && !patterns.isEmpty()) ph.patternHint(patterns.get(0));
+        if (handler instanceof PatternHinted ph && !patterns.isEmpty()) {
+            ph.patternHint(patterns.get(0));
+            for (int i = 1; i < patterns.size(); i++) ph.validateAdditionalPattern(patterns.get(i));
+        }
         for (String pattern : patterns) {
             conditionRegistry.register(pattern, handler);
         }
@@ -344,7 +350,10 @@ public final class PatternRegistry {
      * @param handler  the handler that returns a Java expression result
      */
     public void expression(@NotNull List<String> patterns, @NotNull ExpressionHandler handler) {
-        if (handler instanceof PatternHinted ph && !patterns.isEmpty()) ph.patternHint(patterns.get(0));
+        if (handler instanceof PatternHinted ph && !patterns.isEmpty()) {
+            ph.patternHint(patterns.get(0));
+            for (int i = 1; i < patterns.size(); i++) ph.validateAdditionalPattern(patterns.get(i));
+        }
         for (String pattern : patterns) {
             Pattern compiled = PatternCompiler.compile(pattern);
             validateTypes(compiled);
@@ -365,7 +374,10 @@ public final class PatternRegistry {
         StatementHandler handler = builder.getInjectableBody() != null
                 ? InjectableHandlers.statement(builder.getInjectableBody(), builder.isMethodBased()) : builder.getInjectableClass() != null
                 ? InjectableHandlers.statement(builder.getInjectableClass(), builder.getInjectableMethodName(), builder.isMethodBased()) : builder.getHandler();
-        if (handler instanceof PatternHinted ph) ph.patternHint(builder.getPatterns().get(0));
+        if (handler instanceof PatternHinted ph) {
+            ph.patternHint(builder.getPatterns().get(0));
+            for (int i = 1; i < builder.getPatterns().size(); i++) ph.validateAdditionalPattern(builder.getPatterns().get(i));
+        }
         for (String p : builder.getPatterns()) {
             Pattern compiled = PatternCompiler.compile(p);
             validateTypes(compiled);
@@ -406,7 +418,10 @@ public final class PatternRegistry {
         ConditionHandler handler = builder.getInjectableCondition() != null
                 ? InjectableHandlers.condition(builder.getInjectableCondition(), builder.isMethodBased()) : builder.getInjectableClass() != null
                 ? InjectableHandlers.condition(builder.getInjectableClass(), builder.getInjectableMethodName(), builder.isMethodBased()) : builder.getHandler();
-        if (handler instanceof PatternHinted ph) ph.patternHint(builder.getPatterns().get(0));
+        if (handler instanceof PatternHinted ph) {
+            ph.patternHint(builder.getPatterns().get(0));
+            for (int i = 1; i < builder.getPatterns().size(); i++) ph.validateAdditionalPattern(builder.getPatterns().get(i));
+        }
         for (String p : builder.getPatterns()) {
             conditionRegistry.register(p, handler, meta);
         }
@@ -427,7 +442,10 @@ public final class PatternRegistry {
         ExpressionHandler handler = builder.getInjectableExpression() != null
                 ? InjectableHandlers.expression(builder.getInjectableExpression(), returnRefTypeId, returnJavaType, builder.isMethodBased()) : builder.getInjectableClass() != null
                 ? InjectableHandlers.expression(builder.getInjectableClass(), builder.getInjectableMethodName(), returnRefTypeId, returnJavaType, builder.isMethodBased()) : builder.getHandler();
-        if (handler instanceof PatternHinted ph) ph.patternHint(builder.getPatterns().get(0));
+        if (handler instanceof PatternHinted ph) {
+            ph.patternHint(builder.getPatterns().get(0));
+            for (int i = 1; i < builder.getPatterns().size(); i++) ph.validateAdditionalPattern(builder.getPatterns().get(i));
+        }
         for (String p : builder.getPatterns()) {
             Pattern compiled = PatternCompiler.compile(p);
             validateTypes(compiled);

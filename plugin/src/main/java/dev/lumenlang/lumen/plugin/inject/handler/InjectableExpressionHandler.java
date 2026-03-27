@@ -74,6 +74,11 @@ public final class InjectableExpressionHandler implements ExpressionHandler, Pat
     }
 
     @Override
+    public void validateAdditionalPattern(@NotNull String pattern) {
+        support.validateAdditionalPattern(pattern);
+    }
+
+    @Override
     public @NotNull ExpressionResult handle(@NotNull BindingAccess ctx) {
         MethodDecompiler.DecompiledInlineBody inlineBody = support.inlineBody();
         if (inlineBody != null && inlineBody.returnExpression() != null) {

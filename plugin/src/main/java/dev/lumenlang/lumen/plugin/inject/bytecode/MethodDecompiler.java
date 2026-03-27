@@ -154,10 +154,6 @@ public final class MethodDecompiler {
                         }
                     }
                 }
-                if (methodInsn.owner.equals(body.sourceClass())) {
-                    newBody.add(new MethodInsnNode(methodInsn.getOpcode(), MINI_CLASS_INTERNAL, methodInsn.name, methodInsn.desc, methodInsn.itf));
-                    continue;
-                }
             }
 
             if (insn instanceof LdcInsnNode) {

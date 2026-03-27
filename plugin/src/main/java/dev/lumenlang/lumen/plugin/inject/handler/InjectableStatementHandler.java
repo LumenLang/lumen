@@ -58,6 +58,11 @@ public final class InjectableStatementHandler implements StatementHandler, Patte
     }
 
     @Override
+    public void validateAdditionalPattern(@NotNull String pattern) {
+        support.validateAdditionalPattern(pattern);
+    }
+
+    @Override
     public void handle(int line, @NotNull BindingAccess ctx, @NotNull JavaOutput out) {
         MethodDecompiler.DecompiledInlineBody inlineBody = support.inlineBody();
         if (inlineBody != null && canInlineStatement(inlineBody)) {

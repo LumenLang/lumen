@@ -242,6 +242,9 @@ public final class StatementBuilder {
         if (handler != null && (injectableBody != null || injectableClass != null)) {
             throw new IllegalStateException("Only one of handler or injectableHandler may be set");
         }
+        if (injectableBody != null && injectableClass != null) {
+            throw new IllegalStateException("Only one injectable source may be set: use either injectableHandler(InjectableBody) or injectableHandler(Class, String)");
+        }
         if (by == null) {
             throw new IllegalStateException("Statement builder requires a 'by' (addon name)");
         }
