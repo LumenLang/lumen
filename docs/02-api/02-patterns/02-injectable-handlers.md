@@ -165,3 +165,28 @@ public static boolean test() {
     // ...
 }
 ```
+
+## Method-Based Injection (Statements Only)
+
+By default, all injectable statement handlers use **inline mode**: the decompiled body is emitted directly at the call site in the generated script class. This works well for most cases, especially small handlers.
+
+For statements that are expected to run frequently across different places in the script, you can opt into **method-based injection** instead. In this mode, Lumen generates a bridge method in the script class and emits a call to it at the call site. 
+Because the body lives in a single named method instead of being duplicated at every use, the JIT compiler can profile it in isolation, and optimize it more easily.
+
+Use `methodBased()` in the builder:
+
+```java
+api.patterns().statement(b -> b
+    .pattern("...")
+    .methodBased()
+    .injectableHandler(() -> {
+        // This code will be emitted into a separate method in the script class
+        // Example:
+        // private static void __inject_...(...) {
+        //     // injected code here
+        // }
+    })
+);
+```
+
+For conditions/expressions, it automatically uses method-based injection when the handler body is more than 1 line (excluding Fakes declarations). You cannot explicitly configure it for conditions/expressions.
