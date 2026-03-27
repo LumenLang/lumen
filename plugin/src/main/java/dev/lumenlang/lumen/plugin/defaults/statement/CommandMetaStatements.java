@@ -22,12 +22,10 @@ import org.jetbrains.annotations.NotNull;
 @SuppressWarnings("unused")
 public final class CommandMetaStatements {
 
-    private static @NotNull CommandMeta requireCommandMeta(
-            @NotNull BindingAccess ctx) {
+    private static @NotNull CommandMeta requireCommandMeta(@NotNull BindingAccess ctx) {
         CommandMeta cmd = ctx.block().getEnvFromParents("cmd_meta");
         if (cmd == null) {
-            throw new RuntimeException(
-                    "Command metadata statements used outside a 'command' block");
+            throw new RuntimeException("Command metadata statements used outside a 'command' block");
         }
         return cmd;
     }
@@ -49,8 +47,7 @@ public final class CommandMetaStatements {
         api.patterns().statement(b -> b
                 .by("Lumen")
                 .pattern("name %n:EXPR%")
-                .description(
-                        "Sets the primary name of a command, useful if you need to have the command name based on a variable or expression.")
+                .description("Sets the primary name of a command, useful if you need to have the command name based on a variable or expression.")
                 .example("name tp")
                 .since("1.0.0")
                 .category(Categories.COMMAND)
@@ -75,9 +72,7 @@ public final class CommandMetaStatements {
                         if (alias.isEmpty())
                             continue;
                         if (!alias.matches("[a-zA-Z0-9_\\-]+")) {
-                            throw new IllegalArgumentException(
-                                    "Invalid alias '" + alias
-                                            + "' - aliases may only contain letters, digits, underscores, and hyphens");
+                            throw new IllegalArgumentException("Invalid alias '" + alias + "' - aliases may only contain letters, digits, underscores, and hyphens");
                         }
                         cmd.addAlias(alias);
                     }

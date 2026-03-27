@@ -21,35 +21,40 @@ public final class BlockStatements {
         api.patterns().statement(b -> b
                 .by("Lumen").pattern("set %b:BLOCK% type [to] %mat:MATERIAL%")
                 .description("Sets the type (material) of a block.")
-                .example("set block type to stone").since("1.0.0").category(Categories.BLOCK)
-                .handler((line, ctx, out) -> out
-                        .line(ctx.java("b") + ".setType(" + ctx.java("mat") + ");")));
+                .example("set block type to stone")
+                .since("1.0.0")
+                .category(Categories.BLOCK)
+                .handler((line, ctx, out) -> out.line(ctx.java("b") + ".setType(" + ctx.java("mat") + ");")));
 
         api.patterns().statement(b -> b
                 .by("Lumen").pattern("break %b:BLOCK% naturally")
                 .description("Breaks a block naturally, dropping its items as if mined by a player.")
-                .example("break block naturally").since("1.0.0").category(Categories.BLOCK)
+                .example("break block naturally")
+                .since("1.0.0")
+                .category(Categories.BLOCK)
                 .handler((line, ctx, out) -> out.line(ctx.java("b") + ".breakNaturally();")));
 
         api.patterns().statement(b -> b
                 .by("Lumen").pattern("set %b:BLOCK% data [to] %data:EXPR%")
                 .description("Sets raw block data on a block from a string representation.")
-                .example("set block data to \"facing=north\"").since("1.0.0").category(Categories.BLOCK)
+                .example("set block data to \"facing=north\"")
+                .since("1.0.0")
+                .category(Categories.BLOCK)
                 .handler((line, ctx, out) -> {
                     ctx.codegen().addImport(Bukkit.class.getName());
-                    out.line(ctx.java("b") + ".setBlockData(Bukkit.createBlockData("
-                            + ctx.java("b") + ".getType(), " + ctx.java("data") + "));");
+                    out.line(ctx.java("b") + ".setBlockData(Bukkit.createBlockData(" + ctx.java("b") + ".getType(), " + ctx.java("data") + "));");
                 }));
 
         api.patterns().statement(b -> b
                 .by("Lumen")
                 .pattern("fill (from|between) %a:LOCATION% (to|and) %b:LOCATION% with %mat:MATERIAL%")
                 .description("Fills all blocks in a cuboid region between two locations with the given material.")
-                .example("fill from loc1 to loc2 with stone").since("1.0.0").category(Categories.BLOCK)
+                .example("fill from loc1 to loc2 with stone")
+                .since("1.0.0")
+                .category(Categories.BLOCK)
                 .handler((line, ctx, out) -> {
                     ctx.codegen().addImport(BlockFillHelper.class.getName());
-                    out.line("BlockFillHelper.fill(" + ctx.java("a") + ", " + ctx.java("b")
-                            + ", " + ctx.java("mat") + ");");
+                    out.line("BlockFillHelper.fill(" + ctx.java("a") + ", " + ctx.java("b") + ", " + ctx.java("mat") + ");");
                 }));
     }
 }

@@ -448,7 +448,8 @@ public final class ScriptScheduler {
                     logSourceMapping(mapping);
                     LumenLogger.severe("  -> " + ScriptSourceMap.formatNpeHint(npe));
                 } else {
-                    LumenLogger.severe("[Script " + simpleName + "] Runtime error in scheduled task: " + cause.getMessage());
+                    String message = cause.getMessage() != null ? cause.getMessage() : cause.getClass().getSimpleName();
+                    LumenLogger.severe("[Script " + simpleName + "] Runtime error in scheduled task: " + message);
                     logSourceMapping(mapping);
                 }
             }

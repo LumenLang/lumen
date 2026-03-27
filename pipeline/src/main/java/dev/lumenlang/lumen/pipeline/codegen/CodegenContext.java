@@ -33,6 +33,7 @@ public final class CodegenContext implements CodegenAccess {
     private final Set<String> imports = new LinkedHashSet<>();
     private final List<String> fieldLines = new ArrayList<>();
     private final List<String> interfaces = new ArrayList<>();
+    private final List<String> methodLines = new ArrayList<>();
     private boolean rawJavaEnabled = false;
 
     /**
@@ -148,5 +149,19 @@ public final class CodegenContext implements CodegenAccess {
      */
     public @NotNull List<String> interfaces() {
         return Collections.unmodifiableList(interfaces);
+    }
+
+    @Override
+    public void addMethod(@NotNull String methodSource) {
+        methodLines.add(methodSource);
+    }
+
+    /**
+     * Returns an unmodifiable list of all registered method source blocks.
+     *
+     * @return the method source lines
+     */
+    public @NotNull List<String> methodLines() {
+        return Collections.unmodifiableList(methodLines);
     }
 }

@@ -25,13 +25,11 @@ public final class EventStatements {
                 .category(Categories.EVENT)
                 .handler((line, ctx, out) -> {
                     if (ctx.block().getEnvFromParents("__event_block") == null) {
-                        throw new RuntimeException(
-                                "'cancel event' can only be used inside an event handler block");
+                        throw new RuntimeException("'cancel event' can only be used inside an event handler block");
                     }
                     Boolean cancellable = ctx.block().getEnvFromParents("__event_cancellable");
                     if (cancellable != null && !cancellable) {
-                        throw new RuntimeException(
-                                "'cancel event' cannot be used here because this event is not cancellable");
+                        throw new RuntimeException("'cancel event' cannot be used here because this event is not cancellable");
                     }
                     ctx.codegen().addImport(Cancellable.class.getName());
                     out.line("((Cancellable) event).setCancelled(true);");

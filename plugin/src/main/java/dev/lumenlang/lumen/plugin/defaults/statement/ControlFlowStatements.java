@@ -26,14 +26,10 @@ public final class ControlFlowStatements {
                 .category(Categories.CONTROL_FLOW)
                 .handler((line, ctx, out) -> {
                     if (ctx.block().isRoot()) {
-                        throw new RuntimeException(
-                                "'stop' cannot be used at the top level of a script");
+                        throw new RuntimeException("'stop' cannot be used at the top level of a script");
                     }
                     if (ctx.block().hasNext()) {
-                        throw new LumenScriptException(
-                                ctx.block().nextLine(),
-                                ctx.block().nextRaw(),
-                                "Unreachable code after 'stop'. No statements may follow 'stop' in the same block.");
+                        throw new LumenScriptException(ctx.block().nextLine(), ctx.block().nextRaw(), "Unreachable code after 'stop'. No statements may follow 'stop' in the same block.");
                     }
                     out.line("return;");
                 }));

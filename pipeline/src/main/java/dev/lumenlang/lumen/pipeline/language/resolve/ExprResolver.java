@@ -6,7 +6,7 @@ import dev.lumenlang.lumen.pipeline.codegen.BlockContext;
 import dev.lumenlang.lumen.pipeline.codegen.CodegenContext;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
-import dev.lumenlang.lumen.pipeline.language.pattern.RegisteredExpressionMatch;
+import dev.lumenlang.lumen.pipeline.language.pattern.registered.RegisteredExpressionMatch;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.language.tokenization.TokenKind;
 import dev.lumenlang.lumen.pipeline.type.LumenType;

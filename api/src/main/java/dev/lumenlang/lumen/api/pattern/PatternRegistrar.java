@@ -6,12 +6,16 @@ import dev.lumenlang.lumen.api.handler.ConditionHandler;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler;
 import dev.lumenlang.lumen.api.handler.LoopHandler;
 import dev.lumenlang.lumen.api.handler.StatementHandler;
+import dev.lumenlang.lumen.api.inject.body.InjectableBody;
+import dev.lumenlang.lumen.api.inject.body.InjectableCondition;
+import dev.lumenlang.lumen.api.inject.body.InjectableExpression;
 import dev.lumenlang.lumen.api.pattern.builder.BlockBuilder;
 import dev.lumenlang.lumen.api.pattern.builder.ConditionBuilder;
 import dev.lumenlang.lumen.api.pattern.builder.ExpressionBuilder;
 import dev.lumenlang.lumen.api.pattern.builder.LoopBuilder;
 import dev.lumenlang.lumen.api.pattern.builder.StatementBuilder;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -173,4 +177,86 @@ public interface PatternRegistrar {
      * @param builderConsumer consumer that configures the builder
      */
     void loop(@NotNull Consumer<LoopBuilder> builderConsumer);
+
+    /**
+     * Registers a statement pattern with an injectable body.
+     *
+     * <p>The body's bytecode is extracted at registration time and injected into
+     * the compiled script class after compilation.
+     *
+     * <pre>{@code
+     * api.patterns().injectable("greet %who:PLAYER%", () -> {
+     *     Player player = Fakes.fake("who");
+     *     player.sendMessage("Hello " + player.getName() + "!");
+     * });
+     * }</pre>
+     *
+     * @param pattern the pattern string
+     * @param body the injectable body whose bytecode will be extracted and injected
+     */
+    void injectable(@NotNull String pattern, @NotNull InjectableBody body);
+
+    /**
+     * Registers multiple pattern strings that all map to the same injectable body.
+     *
+     * @param patterns the list of pattern strings
+     * @param body the injectable body whose bytecode will be extracted and injected
+     */
+    void injectable(@NotNull List<String> patterns, @NotNull InjectableBody body);
+
+    /**
+     * Registers an expression pattern with an injectable expression.
+     *
+     * <p>The expression's bytecode is extracted at registration time and injected into
+     * the compiled script class after compilation.
+     *
+     * <pre>{@code
+     * api.patterns().injectableExpression("location of %who:PLAYER%", Types.LOCATION.id(), null, () -> {
+     *     Player player = Fakes.fake("who");
+     *     return player.getLocation();
+     * });
+     * }</pre>
+     *
+     * @param pattern the pattern string
+     * @param refTypeId the ref type id for the return value, or null
+     * @param javaType the Java type for primitive returns, or null
+     * @param expression the injectable expression
+     */
+    void injectableExpression(@NotNull String pattern, @Nullable String refTypeId, @Nullable String javaType, @NotNull InjectableExpression expression);
+
+    /**
+     * Registers multiple pattern strings that all map to the same injectable expression.
+     *
+     * @param patterns the list of pattern strings
+     * @param refTypeId the ref type id for the return value, or null
+     * @param javaType the Java type for primitive returns, or null
+     * @param expression the injectable expression
+     */
+    void injectableExpression(@NotNull List<String> patterns, @Nullable String refTypeId, @Nullable String javaType, @NotNull InjectableExpression expression);
+
+    /**
+     * Registers a condition pattern with an injectable condition.
+     *
+     * <p>The condition's bytecode is extracted at registration time and injected into
+     * the compiled script class after compilation.
+     *
+     * <pre>{@code
+     * api.patterns().injectableCondition("%p:PLAYER% is swimming", () -> {
+     *     Player player = Fakes.fake("p");
+     *     return player.isSwimming();
+     * });
+     * }</pre>
+     *
+     * @param pattern the pattern string
+     * @param condition the injectable condition
+     */
+    void injectableCondition(@NotNull String pattern, @NotNull InjectableCondition condition);
+
+    /**
+     * Registers multiple pattern strings that all map to the same injectable condition.
+     *
+     * @param patterns the list of pattern strings
+     * @param condition the injectable condition
+     */
+    void injectableCondition(@NotNull List<String> patterns, @NotNull InjectableCondition condition);
 }

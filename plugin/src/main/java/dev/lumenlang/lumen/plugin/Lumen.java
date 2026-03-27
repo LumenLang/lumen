@@ -12,6 +12,7 @@ import dev.lumenlang.lumen.pipeline.addon.LumenAPIImpl;
 import dev.lumenlang.lumen.pipeline.addon.ScriptBinderManager;
 import dev.lumenlang.lumen.pipeline.binder.ScriptBinder;
 import dev.lumenlang.lumen.pipeline.java.compiler.system.SystemCompiler;
+import dev.lumenlang.lumen.pipeline.inject.InjectableHandlers;
 import dev.lumenlang.lumen.pipeline.language.emit.EmitRegistry;
 import dev.lumenlang.lumen.pipeline.language.emit.TransformerRegistry;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
@@ -24,6 +25,7 @@ import dev.lumenlang.lumen.plugin.commands.luma.LumaCommand;
 import dev.lumenlang.lumen.plugin.configuration.LumenConfiguration;
 import dev.lumenlang.lumen.plugin.defaults.type.BuiltinTypeBindings;
 import dev.lumenlang.lumen.plugin.documentation.DocumentationDumper;
+import dev.lumenlang.lumen.plugin.inject.InjectableHandlerFactoryImpl;
 import dev.lumenlang.lumen.plugin.platform.ServerPlatform;
 import dev.lumenlang.lumen.plugin.scanner.RegistrationScannerBackend;
 import dev.lumenlang.lumen.plugin.scheduler.ScriptScheduler;
@@ -133,10 +135,10 @@ public final class Lumen extends JavaPlugin {
 
     /**
      * Initialises the Lumen API: creates registries, scans all built-in defaults,
-     * loads jar-based addons, enables them, and exposes the API via
-     * {@link LumenProvider} so that other plugins can access it.
+     * loads jar-based addons, and enables them.
      */
     private void initApi() {
+        InjectableHandlers.factory(new InjectableHandlerFactoryImpl());
         TypeRegistry types = new TypeRegistry();
         BuiltinTypeBindings.register(types);
         patternRegistry = new PatternRegistry(types);

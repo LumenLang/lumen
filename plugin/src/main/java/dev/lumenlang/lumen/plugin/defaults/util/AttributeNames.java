@@ -21,20 +21,6 @@ import java.util.Set;
  * behind a single {@link #resolve(String)} call that always returns the correct
  * enum name, or {@code null} when the attribute is not available.
  *
- * <h2>How resolution works</h2>
- * <ol>
- *   <li>The input is lowercased, trimmed, and any spaces or hyphens are
- *       replaced with underscores.</li>
- *   <li>Common prefixes ({@code generic_}, {@code horse_}, {@code zombie_},
- *       {@code player_}) are stripped so all input converges to a canonical
- *       form like {@code "max_health"} or {@code "attack_damage"}.</li>
- *   <li>The canonical form is looked up in the internal registry.</li>
- *   <li>If the current server version is older than the attribute's
- *       introduction version, {@code null} is returned.</li>
- *   <li>Otherwise, the legacy (pre-1.21.2) or new (1.21.2+) enum name is
- *       returned depending on the server version.</li>
- * </ol>
- *
  * <h2>Accepted input formats</h2>
  * <p>All of the following resolve to the same attribute:
  * <ul>
@@ -80,11 +66,6 @@ import java.util.Set;
  *   <tr><td>water_movement_efficiency</td><td>GENERIC_WATER_MOVEMENT_EFFICIENCY</td><td>WATER_MOVEMENT_EFFICIENCY</td><td>1.21</td></tr>
  *   <tr><td>tempt_range</td><td>GENERIC_TEMPT_RANGE</td><td>TEMPT_RANGE</td><td>1.21</td></tr>
  * </table>
- *
- * @see MinecraftVersion
- * @see #resolve(String)
- * @see #knownNames()
- * @see #availableAttributes()
  */
 @SuppressWarnings("unused")
 public final class AttributeNames {
@@ -135,33 +116,8 @@ public final class AttributeNames {
      * Resolves a user-friendly attribute name to the correct {@code Attribute} enum
      * constant name for the currently running server version.
      *
-     * <p>The input is normalized through the following steps:
-     * <ol>
-     *   <li>Trimmed, lowercased, spaces and hyphens converted to underscores</li>
-     *   <li>Prefixes {@code generic_}, {@code horse_}, {@code zombie_}, and
-     *       {@code player_} are stripped</li>
-     *   <li>Result is matched against the canonical name registry</li>
-     * </ol>
-     *
-     * <p>This means all of the following inputs resolve identically:
-     * <ul>
-     *   <li>{@code "max_health"} or {@code "max health"} or {@code "max-health"}</li>
-     *   <li>{@code "GENERIC_MAX_HEALTH"} (legacy Bukkit enum name)</li>
-     *   <li>{@code "MAX_HEALTH"} (modern Bukkit enum name)</li>
-     * </ul>
-     *
-     * <p>Returns {@code null} in two cases:
-     * <ul>
-     *   <li>The input does not match any known attribute name</li>
-     *   <li>The attribute exists but was introduced in a version newer than the
-     *       current server (e.g. {@code "scale"} on a 1.20 server, since it
-     *       was added in 1.20.5)</li>
-     * </ul>
-     *
      * @param input the user-provided attribute name, in any supported format
      * @return the version-correct {@code Attribute} enum constant name
-     * (e.g. {@code "GENERIC_MAX_HEALTH"} on 1.20 or {@code "MAX_HEALTH"}
-     * on 1.21.2+), or {@code null} if unrecognized or unavailable
      */
     public static @Nullable String resolve(@NotNull String input) {
         String normalized = input.trim().toLowerCase().replace(' ', '_').replace('-', '_');
@@ -207,11 +163,8 @@ public final class AttributeNames {
      * excluded from the result. On a 1.20 server, for instance, {@code "scale"}
      * (added in 1.20.5) will not appear in the returned map.
      *
-     * <p>The returned map preserves insertion order (registration order).
-     *
      * @return an ordered map where keys are canonical names (e.g. {@code "max_health"})
      * and values are the Bukkit enum constant names for the current version
-     * (e.g. {@code "GENERIC_MAX_HEALTH"} on 1.20 or {@code "MAX_HEALTH"} on 1.21.2+)
      */
     public static @NotNull Map<String, String> availableAttributes() {
         Map<String, String> result = new LinkedHashMap<>();
@@ -237,10 +190,7 @@ public final class AttributeNames {
      * @param since      the earliest Minecraft version where this attribute exists; it will not
      *                   be resolved on older servers
      */
-    private static void add(@NotNull String canonical,
-                            @NotNull String legacyName,
-                            @NotNull String newName,
-                            @NotNull MinecraftVersion since) {
+    private static void add(@NotNull String canonical, @NotNull String legacyName, @NotNull String newName, @NotNull MinecraftVersion since) {
         ENTRIES.put(canonical, new AttributeEntry(legacyName, newName, since));
     }
 
@@ -252,8 +202,6 @@ public final class AttributeNames {
      * @param newName    the enum constant name used on servers running 1.21.2 or later
      * @param since      the earliest version where this attribute is available
      */
-    private record AttributeEntry(@NotNull String legacyName,
-                                  @NotNull String newName,
-                                  @NotNull MinecraftVersion since) {
+    private record AttributeEntry(@NotNull String legacyName, @NotNull String newName, @NotNull MinecraftVersion since) {
     }
 }

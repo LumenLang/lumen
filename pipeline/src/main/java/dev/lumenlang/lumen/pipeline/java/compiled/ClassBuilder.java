@@ -58,6 +58,13 @@ public final class ClassBuilder {
             sb.append(line).append("\n");
         }
 
+        for (String method : ctx.methodLines()) {
+            sb.append("\n");
+            for (String methodLine : method.split("\\R")) {
+                sb.append("    ").append(methodLine).append("\n");
+            }
+        }
+
         sb.append("}\n");
 
         return sb.toString();
