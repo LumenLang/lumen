@@ -377,7 +377,8 @@ public final class ScriptManager {
     }
 
     private static @NotNull PreparedScript prepareScript(@NotNull String name, @NotNull String source) {
-        if (LumenConfiguration.PERFORMANCE.CACHE_COMPILED_CLASSES) {
+        boolean internal = name.startsWith("__");
+        if (!internal && LumenConfiguration.PERFORMANCE.CACHE_COMPILED_CLASSES) {
             Map<String, byte[]> cached = CompiledClassCache.load(name, source);
             if (cached != null) {
                 String fqcn = "dev.lumenlang.lumen.java.compiled." +
@@ -409,8 +410,8 @@ public final class ScriptManager {
             throw e;
         }
         BytecodeInjector.inject(bytecodes);
-        dumpIfEnabled(generated, bytecodes);
-        cacheIfEnabled(name, source, generated.javaSource(), bytecodes);
+        if (!internal) dumpIfEnabled(generated, bytecodes);
+        if (!internal) cacheIfEnabled(name, source, generated.javaSource(), bytecodes);
         long compileTime = System.nanoTime() - compileStart;
 
         if (LumenConfiguration.DEBUG.LOG_COMPILATION) {
@@ -622,6 +623,7 @@ public final class ScriptManager {
                                        @NotNull String originalSource,
                                        @NotNull String javaSource,
                                        @NotNull Map<String, byte[]> bytecodes) {
+        if (scriptName.startsWith("__")) return;
         if (LumenConfiguration.PERFORMANCE.CACHE_COMPILED_CLASSES) {
             CompiledClassCache.save(scriptName, originalSource, bytecodes);
             CompiledClassCache.saveJavaSource(scriptName, javaSource);
@@ -629,6 +631,7 @@ public final class ScriptManager {
     }
 
     private static void dumpIfEnabled(@NotNull GeneratedSource source, @NotNull Map<String, byte[]> bytecodes) {
+        if (source.scriptName().startsWith("__")) return;
         if (!LumenConfiguration.DEBUG.DUMP_GENERATED_JAVA) return;
         CompletableFuture.runAsync(() -> writeDump(source, bytecodes));
     }

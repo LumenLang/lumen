@@ -109,6 +109,9 @@ public final class BytecodeExtractor {
         if ((found.access & Opcodes.ACC_STATIC) == 0) {
             throw new IllegalArgumentException("Injectable method '" + methodName + "' in " + classNode.name.replace('/', '.') + " must be static");
         }
+        if (Type.getArgumentTypes(found.desc).length != 0) {
+            throw new IllegalArgumentException("Injectable method '" + methodName + "' in " + classNode.name.replace('/', '.') + " must have no parameters");
+        }
         return found;
     }
 

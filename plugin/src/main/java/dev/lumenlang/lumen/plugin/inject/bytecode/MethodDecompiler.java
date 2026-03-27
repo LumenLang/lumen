@@ -154,6 +154,11 @@ public final class MethodDecompiler {
                         }
                     }
                 }
+                if (BytecodeInjector.isBoxingCall(methodInsn) && targetReturnOpcode != Opcodes.ARETURN) {
+                    AbstractInsnNode next = insn.getNext();
+                    while (next != null && (next instanceof LabelNode || next.getOpcode() == -1)) next = next.getNext();
+                    if (next != null && next.getOpcode() >= Opcodes.IRETURN && next.getOpcode() <= Opcodes.RETURN) continue;
+                }
             }
 
             if (insn instanceof LdcInsnNode) {

@@ -169,7 +169,7 @@ public final class BytecodeInjector {
         target.maxLocals = body.maxLocals() + paramSlotCount;
     }
 
-    private static boolean isBoxingCall(@NotNull MethodInsnNode insn) {
+    public static boolean isBoxingCall(@NotNull MethodInsnNode insn) {
         if (insn.getOpcode() != Opcodes.INVOKESTATIC || !"valueOf".equals(insn.name)) return false;
         return BOXING_OWNERS.contains(insn.owner);
     }
