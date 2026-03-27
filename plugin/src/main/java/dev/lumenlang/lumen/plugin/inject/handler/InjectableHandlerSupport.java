@@ -107,7 +107,7 @@ public final class InjectableHandlerSupport {
 
     private static @NotNull String defaultReturn(@NotNull String type) {
         return switch (type) {
-            case "int", "long", "float", "double" -> "0";
+            case "byte", "short", "char", "int", "long", "float", "double" -> "0";
             case "boolean" -> "false";
             default -> "null";
         };
