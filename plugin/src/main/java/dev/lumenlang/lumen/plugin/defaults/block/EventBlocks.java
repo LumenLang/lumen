@@ -250,8 +250,8 @@ public final class EventBlocks {
                         + "using 'open inventory named \"...\" for player'. The 'player' variable "
                         + "is available inside the block and represents the target player.")
                 .example(of(
-                        top("register inventory \"shop\":"),
-                        secondly("var gui = new inventory \"shop\" with size 54 titled \"&6Shop\"")))
+                        top("register inventory \"test_menu\":"),
+                        secondly("var gui = new inventory \"test_menu\" with size 54 titled \"<gold>Test Menu\"")))
                 .since("1.0.0")
                 .category(Categories.INVENTORY)
                 .supportsRootLevel(true)

@@ -30,7 +30,7 @@ public final class ItemStackStatements {
                 .by("Lumen")
                 .pattern("set %i:ITEMSTACK_POSSESSIVE% (display name|name) [to] %name:STRING%")
                 .description("Sets the display name of an item stack. Supports color codes via LumenText.")
-                .example("set item's display name to \"&6Golden Sword\"")
+                .example("set item's display name to \"<gold>Golden Sword\"")
                 .since("1.0.0")
                 .category(Categories.ITEM)
                 .handler((line, ctx, out) -> {
@@ -47,7 +47,7 @@ public final class ItemStackStatements {
                 .by("Lumen")
                 .pattern("set %i:ITEMSTACK_POSSESSIVE% lore [to] %lore:STRING%")
                 .description("Sets the lore of an item stack. Use | to separate lines. Supports MiniColorize.")
-                .example("set item's lore to \"&7A legendary weapon|&eCrafted by the gods\"")
+                .example("set item's lore to \"<gray>Golden Sword|<yellow>Quite cool huh?\"")
                 .since("1.0.0")
                 .category(Categories.ITEM)
                 .handler((line, ctx, out) -> {
@@ -66,7 +66,7 @@ public final class ItemStackStatements {
                 .by("Lumen")
                 .pattern("add lore %line:STRING% to %i:ITEMSTACK%")
                 .description("Appends a single lore line to an item stack. Supports MiniColorize.")
-                .example("add lore \"&aThis item is special\" to item")
+                .example("add lore \"<green>This item is special\" to item")
                 .since("1.0.0")
                 .category(Categories.ITEM)
                 .handler((line, ctx, out) -> {

@@ -32,7 +32,7 @@ public final class InventoryExpressions {
                 .expression(
                         "new inventory %name:STRING% [with] [size] %size:INT% titled %title:STRING%",
                         "Creates a new Lumen inventory with a name, size, and display title. The name identifies the GUI type programmatically.",
-                        "var gui = new inventory \"main_menu\" with size 27 titled \"&6My Shop\"",
+                        "var gui = new inventory \"main_menu\" with size 27 titled \"<gold>Test Menu\"",
                         Types.INVENTORY.id(),
                         ctx -> {
                             ctx.codegen().addImport(INVENTORY);
@@ -62,7 +62,7 @@ public final class InventoryExpressions {
                         "new inventory %name:STRING% [with] rows %rows:INT% titled %title:STRING%",
                         "Creates a new Lumen inventory with a name, row count (1 to 6), and display title. "
                                 + "The size is calculated as rows * 9. Throws a runtime error if rows is not between 1 and 6.",
-                        "var gui = new inventory \"main_menu\" with rows 3 titled \"&6My Shop\"",
+                        "var gui = new inventory \"main_menu\" with rows 3 titled \"<gold>Test Menu\"",
                         Types.INVENTORY.id(),
                         ctx -> {
                             ctx.codegen().addImport(INVENTORY);

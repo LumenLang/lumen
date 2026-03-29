@@ -24,7 +24,7 @@ public final class TitleStatements {
                 .by("Lumen")
                 .pattern("send title %title:STRING% to %who:PLAYER%")
                 .description("Sends a title to a player with default timing (10 tick fade-in, 70 tick stay, 20 tick fade-out).")
-                .example("send title \"&6Welcome!\" to player")
+                .example("send title \"<gold>Welcome!\" to player")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .handler((line, ctx, out) -> {
@@ -36,7 +36,7 @@ public final class TitleStatements {
                 .by("Lumen")
                 .pattern("send title %title:STRING% with subtitle %sub:STRING% to %who:PLAYER%")
                 .description("Sends a title with subtitle to a player with default timing.")
-                .example("send title \"&6Welcome!\" with subtitle \"&7Enjoy your stay\" to player")
+                .example("send title \"<gold>Welcome!\" with subtitle \"<gray>Enjoy your stay\" to player")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .handler((line, ctx, out) -> {
@@ -48,7 +48,7 @@ public final class TitleStatements {
                 .by("Lumen")
                 .pattern("send title %title:STRING% with subtitle %sub:STRING% to %who:PLAYER% with fade in %fi:INT% stay %st:INT% fade out %fo:INT%")
                 .description("Sends a title with subtitle and custom timing (all in ticks) to a player.")
-                .example("send title \"&6Welcome!\" with subtitle \"&7Enjoy\" to player with fade in 5 stay 40 fade out 10")
+                .example("send title \"<gold>Welcome!\" with subtitle \"<gray>Enjoy\" to player with fade in 5 stay 40 fade out 10")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .handler((line, ctx, out) -> {
@@ -60,7 +60,7 @@ public final class TitleStatements {
                 .by("Lumen")
                 .pattern("send actionbar %text:STRING% to %who:PLAYER%")
                 .description("Sends an action bar message to a player.")
-                .example("send actionbar \"&aHealth: 20\" to player")
+                .example("send actionbar \"<green>Health: 20\" to player")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .handler((line, ctx, out) -> {
