@@ -516,19 +516,6 @@ public final class DefaultEvents {
                     }
                 }));
 
-        api.events().register(api.events().builder("async_chat").by("Lumen")
-                .className(AsyncPlayerChatEvent.class.getName())
-                .description("Fires when a player sends a chat message. Runs asynchronously on the chat thread. Use 'after 1 ticks:' to schedule world-modifying actions, or prefer 'chat' for main-thread safety.")
-                .example("on async_chat:")
-                .since("1.0.0")
-                .category(Categories.PLAYER)
-                .cancellable(true)
-                .addVar("player", Types.PLAYER, "event.getPlayer()")
-                .varDescription("The player who sent the chat message")
-                .addVar("text", "String", "event.getMessage()")
-                .varDescription("The chat message content")
-                .build());
-
         api.events().register(api.events().builder("fish").by("Lumen")
                 .className(PlayerFishEvent.class.getName())
                 .description("Fires when a player uses a fishing rod.")
