@@ -101,6 +101,10 @@ public final class EventBlocks {
                         ctx.block().putEnv("__event_cancellable", def.cancellable());
                         jctx.addImport(def.className());
 
+                        for (String imp : def.imports()) {
+                            jctx.addImport(imp);
+                        }
+
                         String simpleEventName = def.className().substring(def.className().lastIndexOf('.') + 1);
                         out.line("@LumenEvent(" + simpleEventName + ".class)");
                         out.line("public void __lumen_evt_" + eventName + "_" + out.lineNum() + "("

@@ -35,6 +35,7 @@ public final class EventBuilder {
     private final String name;
     private final Map<String, EventDefinition.VarEntry> vars = new LinkedHashMap<>();
     private final List<String> examples = new ArrayList<>();
+    private final List<String> imports = new ArrayList<>();
     private @Nullable String by;
     private String className;
     private String lastVarName;
@@ -149,6 +150,17 @@ public final class EventBuilder {
      */
     public @NotNull EventBuilder deprecated() {
         this.deprecated = true;
+        return this;
+    }
+
+    /**
+     * Adds a fully-qualified class name to the import list for the generated script class.
+     *
+     * @param fqcn the fully-qualified class name to import
+     * @return this builder
+     */
+    public @NotNull EventBuilder addImport(@NotNull String fqcn) {
+        this.imports.add(fqcn);
         return this;
     }
 
@@ -268,6 +280,6 @@ public final class EventBuilder {
             throw new IllegalStateException("className must be set before building");
         }
         return new EventDefinition(name, by, className, new LinkedHashMap<>(vars),
-                description, List.copyOf(examples), since, category, cancellable, deprecated);
+                description, List.copyOf(examples), since, category, cancellable, deprecated, List.copyOf(imports));
     }
 }

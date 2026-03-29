@@ -28,6 +28,7 @@ public final class EventDefinition {
     private final @Nullable String category;
     private final boolean cancellable;
     private final boolean deprecated;
+    private final @NotNull List<String> imports;
 
     EventDefinition(@NotNull String name,
                     @Nullable String by,
@@ -38,7 +39,8 @@ public final class EventDefinition {
                     @Nullable String since,
                     @Nullable String category,
                     boolean cancellable,
-                    boolean deprecated) {
+                    boolean deprecated,
+                    @NotNull List<String> imports) {
         this.name = name;
         this.by = by;
         this.className = className;
@@ -49,6 +51,7 @@ public final class EventDefinition {
         this.category = category;
         this.cancellable = cancellable;
         this.deprecated = deprecated;
+        this.imports = List.copyOf(imports);
     }
 
     /**
@@ -142,6 +145,15 @@ public final class EventDefinition {
      */
     public boolean deprecated() {
         return deprecated;
+    }
+
+    /**
+     * Returns additional fully-qualified class names to import when this event is used.
+     *
+     * @return unmodifiable list of import FQCNs
+     */
+    public @NotNull List<String> imports() {
+        return imports;
     }
 
     /**

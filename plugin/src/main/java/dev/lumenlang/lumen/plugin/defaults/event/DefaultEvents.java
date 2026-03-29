@@ -9,6 +9,8 @@ import dev.lumenlang.lumen.api.handler.BlockHandler;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.api.type.Types;
 import dev.lumenlang.lumen.plugin.Lumen;
+import dev.lumenlang.lumen.plugin.util.LumenInventoryHolder;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
@@ -257,13 +259,14 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.BLOCK)
                 .cancellable(true)
+                .addImport(Material.class.getName())
                 .addVar("player", Types.PLAYER, "event.getPlayer()")
                 .varDescription("The player who broke the block")
                 .addVar("block", Types.BLOCK, "event.getBlock()")
                 .varDescription("The block that was broken")
                 .addVar("item", Types.ITEMSTACK, ItemStack.class.getName(),
                         """
-                                if (event.getPlayer().getInventory().getItemInMainHand().getType() != org.bukkit.Material.AIR) {
+                                if (event.getPlayer().getInventory().getItemInMainHand().getType() != Material.AIR) {
                                     item = event.getPlayer().getInventory().getItemInMainHand();
                                 } else {
                                     item = null;
@@ -340,6 +343,8 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.INVENTORY)
                 .cancellable(true)
+                .addImport(Material.class.getName())
+                .addImport(LumenInventoryHolder.class.getName())
                 .addVar("player", Types.PLAYER, Player.class.getName(),
                         """
                                 if (event.getWhoClicked() instanceof Player __inv_p) {
@@ -353,7 +358,7 @@ public final class DefaultEvents {
                 .varDescription("The top inventory being viewed")
                 .addVar("name", null, Types.STRING,
                         """
-                                if (event.getView().getTopInventory().getHolder() instanceof dev.lumenlang.lumen.plugin.util.LumenInventoryHolder __lh) {
+                                if (event.getView().getTopInventory().getHolder() instanceof LumenInventoryHolder __lh) {
                                     name = __lh.getName();
                                 } else {
                                     name = null;
@@ -381,7 +386,7 @@ public final class DefaultEvents {
                 .withMeta("nullable", true)
                 .addVar("cursor", Types.ITEMSTACK, ItemStack.class.getName(),
                         """
-                                if (event.getCursor() != null && event.getCursor().getType() != org.bukkit.Material.AIR) {
+                                if (event.getCursor() != null && event.getCursor().getType() != Material.AIR) {
                                     cursor = event.getCursor();
                                 } else {
                                     cursor = null;
@@ -406,11 +411,12 @@ public final class DefaultEvents {
                                 }""")
                 .varDescription("The player who closed the inventory, or null if the viewer is not a player (unlikely)")
                 .withMeta("nullable", true)
+                .addImport(LumenInventoryHolder.class.getName())
                 .addVar("inventory", Inventory.class.getName(), "event.getView().getTopInventory()")
                 .varDescription("The top inventory that was closed")
                 .addVar("name", null, Types.STRING,
                         """
-                                if (event.getView().getTopInventory().getHolder() instanceof dev.lumenlang.lumen.plugin.util.LumenInventoryHolder __lh) {
+                                if (event.getView().getTopInventory().getHolder() instanceof LumenInventoryHolder __lh) {
                                     name = __lh.getName();
                                 } else {
                                     name = null;
@@ -437,11 +443,12 @@ public final class DefaultEvents {
                                 }""")
                 .varDescription("The player who opened the inventory, or null if the viewer is not a player (unlikely)")
                 .withMeta("nullable", true)
+                .addImport(LumenInventoryHolder.class.getName())
                 .addVar("inventory", Inventory.class.getName(), "event.getView().getTopInventory()")
                 .varDescription("The top inventory that was opened")
                 .addVar("name", null, Types.STRING,
                         """
-                                if (event.getView().getTopInventory().getHolder() instanceof dev.lumenlang.lumen.plugin.util.LumenInventoryHolder __lh) {
+                                if (event.getView().getTopInventory().getHolder() instanceof LumenInventoryHolder __lh) {
                                     name = __lh.getName();
                                 } else {
                                     name = null;
@@ -468,11 +475,12 @@ public final class DefaultEvents {
                                 }""")
                 .varDescription("The player who dragged items, or null if the dragger is not a player (unlikely)")
                 .withMeta("nullable", true)
+                .addImport(LumenInventoryHolder.class.getName())
                 .addVar("inventory", Inventory.class.getName(), "event.getView().getTopInventory()")
                 .varDescription("The top inventory being viewed")
                 .addVar("name", null, Types.STRING,
                         """
-                                if (event.getView().getTopInventory().getHolder() instanceof dev.lumenlang.lumen.plugin.util.LumenInventoryHolder __lh) {
+                                if (event.getView().getTopInventory().getHolder() instanceof LumenInventoryHolder __lh) {
                                     name = __lh.getName();
                                 } else {
                                     name = null;
