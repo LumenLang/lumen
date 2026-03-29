@@ -8,6 +8,8 @@ import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.api.type.RefTypeHandle;
 import dev.lumenlang.lumen.pipeline.java.compiled.Coerce;
+import dev.lumenlang.lumen.pipeline.persist.GlobalVars;
+import dev.lumenlang.lumen.pipeline.persist.PersistentVars;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -50,10 +52,10 @@ public final class ScopedVariableConditions {
         String scopeKeyPart = refType.keyExpression(scopeRef.java());
         String keyExpr = "\"" + info.className() + "." + varName + ".\" + " + scopeKeyPart;
         if (info.stored()) {
-            ctx.addImport("dev.lumenlang.lumen.pipeline.persist.PersistentVars");
+            ctx.addImport(PersistentVars.class.getName());
             return "PersistentVars.get(" + keyExpr + ", " + info.defaultJava() + ")";
         } else {
-            ctx.addImport("dev.lumenlang.lumen.pipeline.persist.GlobalVars");
+            ctx.addImport(GlobalVars.class.getName());
             return "GlobalVars.get(" + keyExpr + ", " + info.defaultJava() + ")";
         }
     }

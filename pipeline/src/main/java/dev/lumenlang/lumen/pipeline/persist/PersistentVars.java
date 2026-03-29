@@ -14,19 +14,8 @@ import java.util.function.Function;
  * {@code PersistentVars.get("ScriptName.score", 0)} to load the value and
  * {@code PersistentVars.set("ScriptName.score", value)} to save it.
  *
- * <p>For per-entity scoped storage ({@code store points for player default 0}),
- * the key includes the entity identity (e.g. player UUID).
- *
  * <h2>Storage Backend</h2>
  * <p>The default backend is {@link FilePersistentStorage}, which uses a binary file.
- * More will be added in the future, such as Redis, MongoDB. You can also implement your own by implementing the {@link PersistentStorage} interface.
- *
- * <h2>Lifecycle</h2>
- * <ol>
- *   <li>{@link #init(PersistentStorage)} is called once during Lumen startup</li>
- *   <li>Scripts call {@link #get(String, Object)} and {@link #set(String, Object)} at runtime</li>
- *   <li>{@link #shutdown()} is called during server shutdown to flush pending writes</li>
- * </ol>
  */
 @SuppressWarnings("unused")
 public final class PersistentVars {

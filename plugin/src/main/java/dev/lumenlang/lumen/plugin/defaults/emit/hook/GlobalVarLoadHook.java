@@ -22,8 +22,7 @@ import java.util.Map;
  * <p>For each global declared with {@code global [stored] var}, this hook emits a local
  * variable initialization that reads from either {@link PersistentVars} (stored) or
  * {@link GlobalVars} (in-memory). When the global has a ref type, the storage key is scoped
- * to the first variable matching that type in the current scope. If no matching variable
- * is available, the global is silently skipped.
+ * to the first variable matching that type in the current scope.
  */
 @Registration(order = -2000)
 @SuppressWarnings({"unused", "DataFlowIssue"})
@@ -93,6 +92,7 @@ public final class GlobalVarLoadHook implements BlockEnterHook {
 
             String keyExpr;
             String scopeVarName = null;
+            boolean scopeNullable = false;
             RefType exprRefType = exprRefTypeId != null ? RefType.byId(exprRefTypeId) : null;
 
             if (refTypeName != null) {
@@ -105,6 +105,7 @@ public final class GlobalVarLoadHook implements BlockEnterHook {
                     continue;
                 }
                 scopeVarName = scopeRef.java();
+                scopeNullable = Boolean.TRUE.equals(scopeRef.meta("nullable"));
                 String scopeKeyPart = refType.keyExpression(scopeRef.java());
                 keyExpr = "\"" + className + "." + name + ".\" + " + scopeKeyPart;
             } else {
@@ -129,7 +130,15 @@ public final class GlobalVarLoadHook implements BlockEnterHook {
                 fieldType = inferFieldType(defaultJava);
             }
             ctx.codegen().addField(fieldType + " " + name + ";");
-            ctx.out().taggedLine(TAG, name + " = " + storageClass + ".get(" + keyExpr + ", " + defaultJava + ");");
+            if (scopeNullable) {
+                ctx.out().line("if (" + scopeVarName + " != null) {");
+                ctx.out().taggedLine(TAG, name + " = " + storageClass + ".get(" + keyExpr + ", " + defaultJava + ");");
+                ctx.out().line("} else {");
+                ctx.out().line(name + " = " + defaultJava + ";");
+                ctx.out().line("}");
+            } else {
+                ctx.out().taggedLine(TAG, name + " = " + storageClass + ".get(" + keyExpr + ", " + defaultJava + ");");
+            }
 
             VarRef varRef = new VarRef(exprRefType, name, exprMetadata);
             env.defineVar(name, varRef);

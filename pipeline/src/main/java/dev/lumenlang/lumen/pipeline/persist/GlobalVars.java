@@ -10,13 +10,7 @@ import java.util.concurrent.ConcurrentMap;
  * In-memory runtime storage for non-persistent global variables.
  *
  * <p>This class provides the same API surface as {@link PersistentVars} but stores values
- * only in memory. Values survive across block invocations during a single server session
- * but are lost on server restart.
- *
- * <p>Generated script code calls {@link #get(String, Object)} and {@link #set(String, Object)}
- * for globals declared with {@code global var} (without the {@code stored} keyword).
- *
- * @see PersistentVars
+ * only in memory.
  */
 @SuppressWarnings("unused")
 public final class GlobalVars {
