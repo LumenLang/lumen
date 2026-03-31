@@ -165,31 +165,9 @@ public final class EventBuilder {
     }
 
     /**
-     * Adds a variable to this event definition.
-     *
-     * <p>If {@code refType} is non-null, the variable participates in type checking.
-     *
-     * @param name     the variable name accessible in script child statements
-     * @param refType  the logical type category for type checking, or {@code null} for plain variables
-     * @param javaType the Java type name (e.g. {@code Types.DOUBLE} or a fully qualified class name)
-     * @param expr     the initialiser expression (e.g. {@code "event.getPlayer()"})
-     * @return this builder
-     */
-    public @NotNull EventBuilder addVar(@NotNull String name,
-                                        @Nullable RefTypeHandle refType,
-                                        @NotNull String javaType,
-                                        @NotNull String expr) {
-        String refTypeId = refType != null ? refType.id() : null;
-        vars.put(name, new EventDefinition.VarEntry(refTypeId, javaType, expr));
-        this.lastVarName = name;
-        return this;
-    }
-
-    /**
      * Adds a typed variable whose Java type is inferred from the ref type handle.
      *
      * <p>This is the preferred overload for variables with a known ref type.
-     * The Java declaration type is derived from {@link RefTypeHandle#javaType()}.
      *
      * @param name    the variable name accessible in script child statements
      * @param refType the logical type category for type checking
@@ -207,8 +185,7 @@ public final class EventBuilder {
     /**
      * Adds a plain variable (no ref type) to this event definition.
      *
-     * <p>Use this for primitives, strings, or any type that does not need
-     * type checking.
+     * <p>Use this for primitives, strings.
      *
      * @param name     the variable name accessible in script child statements
      * @param javaType the Java type name (e.g. {@code Types.BOOLEAN} or a fully qualified class name)
