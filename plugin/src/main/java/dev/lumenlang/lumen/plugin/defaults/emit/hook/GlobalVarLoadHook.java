@@ -87,8 +87,6 @@ public final class GlobalVarLoadHook implements BlockEnterHook {
             String exprRefTypeId = g.exprRefTypeId();
             Map<String, Object> exprMetadata = g.exprMetadata();
             RefType exprRefType = exprRefTypeId != null ? RefType.byId(exprRefTypeId) : null;
-
-            ctx.codegen().addImport(g.stored() ? PersistentVars.class.getName() : GlobalVars.class.getName());
             String keyExpr = "\"" + className + "." + name + "\"";
 
             String fieldType;

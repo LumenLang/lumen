@@ -84,28 +84,12 @@ public final class VariableStatements {
                     + "' is not a global variable. Scoped operations (for ...) are only supported on global vars.");
         }
         String storageClass = resolveStorageClass(info);
-        ctx.codegen().addImport(info.stored() ? PersistentVars.class.getName() : GlobalVars.class.getName());
         String keyExpr = buildScopedKey(env, varName, scopeVarName, info);
         out.line("{");
         out.line("    var __sv = " + storageClass + ".get(" + keyExpr + ", " + info.defaultJava() + ");");
         out.line("    __sv = Coerce.toInt(__sv) " + op.replace("=", "") + " " + operand + ";");
         out.line("    " + storageClass + ".set(" + keyExpr + ", __sv);");
         out.line("}");
-    }
-
-    private static void emitScopedSet(@NotNull BindingAccess ctx, @NotNull JavaOutput out,
-                                      @NotNull String varName, @NotNull String scopeVarName,
-                                      @NotNull String valueJava) {
-        EnvironmentAccess env = ctx.env();
-        EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(varName);
-        if (info == null) {
-            throw new RuntimeException("Variable '" + varName
-                    + "' is not a global variable. Scoped operations (for ...) are only supported on global vars.");
-        }
-        String storageClass = resolveStorageClass(info);
-        ctx.codegen().addImport(info.stored() ? PersistentVars.class.getName() : GlobalVars.class.getName());
-        String keyExpr = buildScopedKey(env, varName, scopeVarName, info);
-        out.line(storageClass + ".set(" + keyExpr + ", " + valueJava + ");");
     }
 
     private static void emitScopedDelete(@NotNull BindingAccess ctx, @NotNull JavaOutput out,
@@ -242,15 +226,6 @@ public final class VariableStatements {
 
         api.patterns().statement(b -> b
                 .by("Lumen")
-                .pattern("set %name:EXPR% to %val:EXPR% for %scope:EXPR%")
-                .description("Sets a scoped global variable to a new value for a specific scope reference.")
-                .example("set streak to 0 for player")
-                .since("1.0.0")
-                .category(Categories.VARIABLE)
-                .handler((line, ctx, out) -> emitScopedSet(ctx, out, ctx.java("name"), ctx.java("scope"), ctx.java("val"))));
-
-        api.patterns().statement(b -> b
-                .by("Lumen")
                 .pattern("delete stored %name:EXPR% for %scope:EXPR%")
                 .description("Deletes a scoped global variable for a specific scope reference.")
                 .example("delete stored streak for killer")
@@ -308,7 +283,6 @@ public final class VariableStatements {
                     if (info == null) {
                         throw new RuntimeException("'" + varName + "' is not a global variable.");
                     }
-                    ctx.codegen().addImport(info.stored() ? PersistentVars.class.getName() : GlobalVars.class.getName());
                     String storageClass = resolveStorageClass(info);
                     String keyExpr = buildScopedKey(env, varName, ctx.java("scope"), info);
                     return new ExpressionResult(storageClass + ".get(" + keyExpr + ", " + info.defaultJava() + ")", info.exprRefTypeId());

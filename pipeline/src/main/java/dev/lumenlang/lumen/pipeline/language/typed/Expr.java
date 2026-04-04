@@ -11,11 +11,8 @@ import java.util.List;
  * Represents a parsed expression within a Lumen script.
  *
  * <p>
- * Expressions are produced by the {@link ExprParser} when it classifies the
- * right-hand side
- * of a variable assignment or a standalone value. Each variant captures a
- * different kind of
- * expression that the code generator handles independently.
+ * Expressions are produced by the {@link ExprParser} when it classifies the right-hand side of a variable assignment or a standalone value.
+ * Each variant captures a different kind of expression that the code generator handles independently.
  */
 public sealed interface Expr permits Expr.Literal, Expr.RefExpr, Expr.MathExpr, Expr.RawExpr {
 
@@ -70,10 +67,8 @@ public sealed interface Expr permits Expr.Literal, Expr.RefExpr, Expr.MathExpr, 
      * A raw, unparsed expression represented as a list of tokens.
      *
      * <p>
-     * This is used as a fallback when the expression does not match any other
-     * variant.
-     * The code generator handles raw expressions by delegating to the type binding
-     * system.
+     * This is used as a fallback when the expression does not match any other variant.
+     * The code generator handles raw expressions by delegating to the type binding system.
      *
      * @param tokens       the unprocessed tokens forming this expression
      * @param resolvedType the compile-time type if it could be determined, or {@code null}

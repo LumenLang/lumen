@@ -10,10 +10,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * A typed statement that has been classified into a specific category (e.g. pattern match, variable declaration, etc.)
+ * A typed statement that has been classified into a specific category (e.g. pattern match, expression, etc.)
  * and carries the relevant parsed information for code generation.
  */
-public sealed interface TypedStatement permits TypedStatement.PatternStmt, TypedStatement.VarStmt, TypedStatement.ExprVarStmt, TypedStatement.ExprStmt, TypedStatement.ErrorStmt {
+public sealed interface TypedStatement permits TypedStatement.PatternStmt, TypedStatement.ExprStmt, TypedStatement.ErrorStmt {
 
     StatementNode raw();
 
@@ -31,26 +31,6 @@ public sealed interface TypedStatement permits TypedStatement.PatternStmt, Typed
      * @param match the complete match result including handler reference
      */
     record PatternStmt(StatementNode raw, RegisteredPatternMatch match) implements TypedStatement {
-    }
-
-    /**
-     * A simple {@code set x to <expr>} variable declaration.
-     *
-     * @param raw  the original statement node
-     * @param name the variable name
-     * @param expr the parsed expression
-     */
-    record VarStmt(StatementNode raw, String name, Expr expr) implements TypedStatement {
-    }
-
-    /**
-     * A {@code set x to <expression pattern>} declaration where the RHS matched a registered expression pattern.
-     *
-     * @param raw   the original statement node
-     * @param name  the variable name
-     * @param match the expression pattern match
-     */
-    record ExprVarStmt(StatementNode raw, String name, RegisteredExpressionMatch match) implements TypedStatement {
     }
 
     /**
