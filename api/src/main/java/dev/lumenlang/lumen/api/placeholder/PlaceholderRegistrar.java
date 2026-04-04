@@ -26,8 +26,8 @@ import org.jetbrains.annotations.NotNull;
  * <p>In a script:
  * <pre>{@code
  * message player "Hello {player_name}, your health is {player_health}"
- * var hp = {player_health}
- * var yBelow = {player_y} - 1
+ * set hp to {player_health}
+ * set yBelow to {player_y} - 1
  * }</pre>
  *
  * @see RefTypeHandle
@@ -49,7 +49,7 @@ public interface PlaceholderRegistrar {
      * Registers a property placeholder for a given ref type with an explicit return type.
      *
      * <p>Properties with {@link PlaceholderType#NUMBER} can be used in math expressions
-     * (e.g. {@code var yBelow = {player_y} - 1}). Properties with {@link PlaceholderType#STRING}
+     * (e.g. {@code set yBelow to {player_y} - 1}). Properties with {@link PlaceholderType#STRING}
      * can only be used in string contexts.
      *
      * @param type       the ref type this property belongs to

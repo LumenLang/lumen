@@ -20,6 +20,6 @@ public final class SheepExpressions {
                 .stringGetter("[get] %e:ENTITY% (wool|sheep) color",
                         "getColor().name()",
                         "Returns the sheep's wool color name.",
-                        "var c = mob's sheep color");
+                        "set c to mob's sheep color");
     }
 }

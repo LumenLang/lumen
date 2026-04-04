@@ -20,6 +20,6 @@ public final class SlimeExpressions {
                 .intGetter("[get] %e:ENTITY% slime size",
                         "getSize()",
                         "Returns the slime's size.",
-                        "var sz = mob's slime size");
+                        "set sz to mob's slime size");
     }
 }

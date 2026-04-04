@@ -8,7 +8,7 @@
 #   /todo done <N>     Complete a task by number
 #   /todo clear        Clear all tasks
 
-global scoped todos with default new list
+global stored scoped todos with default new list
 
 command todo:
     description "Manage your personal todo list"

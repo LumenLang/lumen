@@ -280,7 +280,7 @@ public final class VariableStatements {
                 .by("Lumen")
                 .pattern("get %name:EXPR% (for|of) %scope:EXPR%")
                 .description("Gets the value of a scoped global variable for a specific scope reference.")
-                .example("var spd = get speed for player")
+                .example("set spd to get speed for player")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
                 .handler(ctx -> {

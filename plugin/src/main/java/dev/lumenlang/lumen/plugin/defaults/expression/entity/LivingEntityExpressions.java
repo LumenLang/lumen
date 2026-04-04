@@ -28,7 +28,7 @@ public final class LivingEntityExpressions {
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("get %e:ENTITY_POSSESSIVE% health")
                 .description("Returns the entity's current health (requires LivingEntity).")
-                .example("var hp = get mob's health")
+                .example("set hp to get mob's health")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
                 .returnJavaType(Types.DOUBLE)
@@ -48,7 +48,7 @@ public final class LivingEntityExpressions {
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("get %e:ENTITY_POSSESSIVE% max health")
                 .description("Returns the entity's max health (requires LivingEntity).")
-                .example("var maxHp = get mob's max health")
+                .example("set maxHp to get mob's max health")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
                 .returnJavaType(Types.DOUBLE)

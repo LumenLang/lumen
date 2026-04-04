@@ -14,7 +14,7 @@ import java.util.Map;
  *
  * <p>Unlike a {@link StatementHandler} which emits lines of Java code, an
  * {@code ExpressionHandler} produces a single Java expression that evaluates to
- * a value. This is used for "returnable" patterns in {@code var x = <pattern>} statement.
+ * a value. This is used for "returnable" patterns in {@code set x to <pattern>} statement.
  *
  * <h2>Example</h2>
  * <pre>{@code
@@ -31,7 +31,7 @@ import java.util.Map;
  *
  * <p>Scripts can then write:
  * <pre>{@code
- * var target = get player "Notch"
+ * set target to get player "Notch"
  * }</pre>
  *
  * @see PatternRegistrar#expression(String, ExpressionHandler)

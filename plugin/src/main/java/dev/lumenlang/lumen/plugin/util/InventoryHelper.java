@@ -27,7 +27,7 @@ import java.util.Objects;
  *     .expression(
  *         "[get] item in slot %slot:INT% of %inv:EXPR%",
  *         "Returns the item in the given slot.",
- *         "var item = get item in slot 0 of inv",
+ *         "set item to get item in slot 0 of inv",
  *         ctx -> { ... }
  *     );
  * }</pre>

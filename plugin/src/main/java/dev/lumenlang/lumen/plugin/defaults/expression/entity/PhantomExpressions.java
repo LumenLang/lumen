@@ -20,6 +20,6 @@ public final class PhantomExpressions {
                 .intGetter("[get] %e:ENTITY% phantom size",
                         "getSize()",
                         "Returns the phantom's size.",
-                        "var sz = mob's phantom size");
+                        "set sz to mob's phantom size");
     }
 }

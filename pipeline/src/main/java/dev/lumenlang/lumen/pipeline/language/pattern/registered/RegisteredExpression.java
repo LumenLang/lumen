@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Associates a compiled {@link Pattern} with the {@link ExpressionHandler} that should be invoked
- * when the pattern is matched in a {@code var x = <pattern>} context.
+ * when the pattern is matched in a {@code set x to <pattern>} context.
  *
  * <p>The optional {@code returnRefTypeId} declares the ref type this expression
  * statically produces (e.g. "PLAYER", "LOCATION"). The optional {@code returnJavaType}

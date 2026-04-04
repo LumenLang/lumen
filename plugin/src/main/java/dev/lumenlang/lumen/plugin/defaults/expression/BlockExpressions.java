@@ -21,7 +21,7 @@ public final class BlockExpressions {
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("[get] block at %loc:LOCATION%")
                 .description("Returns the block at a given location.")
-                .example("var b = block at loc").since("1.0.0").category(Categories.BLOCK)
+                .example("set b to block at loc").since("1.0.0").category(Categories.BLOCK)
                 .returnRefTypeId(Types.BLOCK.id())
                 .handler(ctx -> new ExpressionResult(
                         ctx.java("loc") + ".getBlock()",
@@ -30,7 +30,7 @@ public final class BlockExpressions {
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("[get] %b:BLOCK% type")
                 .description("Returns the material name of a block's type.")
-                .example("var t = block type").since("1.0.0").category(Categories.BLOCK)
+                .example("set t to block type").since("1.0.0").category(Categories.BLOCK)
                 .returnJavaType(Types.STRING)
                 .handler(ctx -> new ExpressionResult(
                         ctx.java("b") + ".getType().name()",
@@ -39,7 +39,7 @@ public final class BlockExpressions {
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("[get] %b:BLOCK% location")
                 .description("Returns the location of a block.")
-                .example("var loc = block location").since("1.0.0").category(Categories.BLOCK)
+                .example("set loc to block location").since("1.0.0").category(Categories.BLOCK)
                 .returnRefTypeId(Types.LOCATION.id())
                 .handler(ctx -> new ExpressionResult(
                         ctx.java("b") + ".getLocation()",
@@ -48,7 +48,7 @@ public final class BlockExpressions {
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("[get] %b:BLOCK% world")
                 .description("Returns the world the block is in.")
-                .example("var w = block world").since("1.0.0").category(Categories.BLOCK)
+                .example("set w to block world").since("1.0.0").category(Categories.BLOCK)
                 .returnRefTypeId(Types.WORLD.id())
                 .handler(ctx -> new ExpressionResult(
                         ctx.java("b") + ".getWorld()",
@@ -57,7 +57,7 @@ public final class BlockExpressions {
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("[get] %b:BLOCK% (x|y|z)")
                 .description("Returns the x, y, or z coordinate of a block.")
-                .example("var x = block x").since("1.0.0").category(Categories.BLOCK)
+                .example("set x to block x").since("1.0.0").category(Categories.BLOCK)
                 .returnJavaType(Types.INT)
                 .handler(ctx -> {
                     String matched = ctx.java("b");
@@ -75,7 +75,7 @@ public final class BlockExpressions {
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("[get] %b:BLOCK% light level")
                 .description("Returns the light level at a block's location.")
-                .example("var light = block light level").since("1.0.0").category(Categories.BLOCK)
+                .example("set light to block light level").since("1.0.0").category(Categories.BLOCK)
                 .returnJavaType(Types.INT)
                 .handler(ctx -> new ExpressionResult(
                         ctx.java("b") + ".getLightLevel()",
@@ -84,7 +84,7 @@ public final class BlockExpressions {
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("[get] %b:BLOCK% data [string]")
                 .description("Returns the block data as a string representation.")
-                .example("var data = block data").since("1.0.0").category(Categories.BLOCK)
+                .example("set data to block data").since("1.0.0").category(Categories.BLOCK)
                 .returnJavaType(Types.STRING)
                 .handler(ctx -> new ExpressionResult(
                         ctx.java("b") + ".getBlockData().getAsString()",

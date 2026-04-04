@@ -20,6 +20,6 @@ public final class AxolotlExpressions {
                 .stringGetter("[get] %e:ENTITY% axolotl variant",
                         "getVariant().name()",
                         "Returns the axolotl's variant name.",
-                        "var v = mob's axolotl variant");
+                        "set v to mob's axolotl variant");
     }
 }

@@ -23,7 +23,7 @@ public final class EndermanExpressions {
                 .expression(
                         "[get] %e:ENTITY% carried block",
                         "Returns the name of the block the enderman is carrying, or null.",
-                        "var block = mob carried block",
+                        "set block to mob carried block",
                         ctx -> {
                             VarHandle h = (VarHandle) ctx.value("e");
                             String java = ctx.java("e");

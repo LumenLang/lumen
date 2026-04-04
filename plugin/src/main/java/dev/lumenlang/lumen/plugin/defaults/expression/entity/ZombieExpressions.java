@@ -20,6 +20,6 @@ public final class ZombieExpressions {
                 .boolGetter("[is] %e:ENTITY% baby zombie",
                         "isBaby()",
                         "Returns whether the zombie is a baby.",
-                        "var isBaby = is mob's baby zombie");
+                        "set isBaby to is mob's baby zombie");
     }
 }
