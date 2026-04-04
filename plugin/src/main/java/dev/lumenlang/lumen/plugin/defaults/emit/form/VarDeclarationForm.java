@@ -6,6 +6,7 @@ import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.emit.EmitContext;
 import dev.lumenlang.lumen.api.emit.ScriptToken;
 import dev.lumenlang.lumen.api.emit.StatementFormHandler;
+import dev.lumenlang.lumen.plugin.defaults.statement.VariableStatements;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.pipeline.codegen.BindingContext;
 import dev.lumenlang.lumen.pipeline.codegen.BlockContext;
@@ -31,11 +32,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Statement form handler for {@code set x to <expr>} local variable declarations.
+ * Handles all {@code set x to <expr>} statements for local and unscoped global variables.
  *
- * <p>Only intercepts when {@code x} is not yet defined in the current scope.
- * If {@code x} already exists, this handler returns {@code false} and the registered
- * {@code set} pattern handles reassignment.
+ * <p>Intercepts both creation (new name) and reassignment (existing name). Returns
+ * {@code false} only for scoped globals, which require the {@code for/of} patterns
+ * registered in {@link VariableStatements}.
  */
 @Registration(order = -1998)
 @SuppressWarnings({"unused", "DataFlowIssue"})
@@ -84,8 +85,13 @@ public final class VarDeclarationForm implements StatementFormHandler {
         String name = pipelineTokens.get(1).text();
         TypeEnv env = (TypeEnv) ctx.env();
 
-        if (env.lookupVar(name) != null || env.isGlobalField(name) || env.getGlobalInfo(name) != null) {
+        if (env.getGlobalInfo(name) != null && !env.isGlobalField(name)) {
             return false;
+        }
+
+        VarRef existing = env.lookupVar(name);
+        if (existing != null) {
+            return emitReassignment(name, existing, pipelineTokens, (EmitContextImpl) ctx, env);
         }
 
         String nameError = VarNameValidator.validate(name);
@@ -180,5 +186,49 @@ public final class VarDeclarationForm implements StatementFormHandler {
             env.blockContext().parent().defineVar(name, varRef);
         }
         return true;
+    }
+
+    private static boolean emitReassignment(@NotNull String name, @NotNull VarRef ref, @NotNull List<Token> tokens, @NotNull EmitContextImpl ctx, @NotNull TypeEnv env) {
+        BlockContext block = env.blockContext();
+        if (block.getEnvFromParents("__lambda_block") != null && env.isVarCapturedByLambda(name)) {
+            throw new LumenScriptException(ctx.line(), ctx.raw(), "Cannot modify '" + name + "' inside a schedule block. Use 'global " + name + " with default <value>' instead.", List.of(tokens.get(1)));
+        }
+        List<Token> exprTokens = tokens.subList(3, tokens.size());
+        String java = resolveExpressionJava(exprTokens, ctx, env);
+        if (java == null) {
+            throw new LumenScriptException(ctx.line(), ctx.raw(), "Cannot resolve expression '" + ExprResolver.joinTokens(exprTokens) + "'.", exprTokens);
+        }
+        ctx.out().line(ref.java() + " = Coerce.coerce(" + java + ", " + ref.java() + ");");
+        if (env.isStored(name)) {
+            ctx.out().line(env.storedClassName(name) + ".set(" + env.getStoredKey(name) + ", " + ref.java() + ");");
+        }
+        return true;
+    }
+
+    private static @Nullable String resolveExpressionJava(@NotNull List<Token> tokens, @NotNull EmitContextImpl ctx, @NotNull TypeEnv env) {
+        Expr e = ExprParser.parse(tokens, env);
+        if (e instanceof Expr.Literal l) {
+            if (l.value() instanceof String s) return PlaceholderExpander.expand(s, env);
+            if (l.value() instanceof Boolean b) return b.toString();
+            return l.value().toString();
+        }
+        if (e instanceof Expr.RefExpr r) {
+            VarRef varRef = env.lookupVar(r.name());
+            return varRef != null ? varRef.java() : null;
+        }
+        if (e instanceof Expr.MathExpr m) return m.java();
+        Expr.RawExpr raw = (Expr.RawExpr) e;
+        if (raw.tokens().size() > 1) {
+            ExpressionResult result = tryExpressionPattern(raw.tokens(), ctx, env);
+            if (result != null) return result.java();
+            ExpressionResult resolved = ExprResolver.resolveWithType(raw.tokens(), ctx.codegenContext(), env);
+            return resolved != null ? resolved.java() : null;
+        }
+        Token single = raw.tokens().get(0);
+        if (single.kind() == TokenKind.IDENT) {
+            VarRef varRef = env.lookupVar(single.text());
+            return varRef != null ? varRef.java() : null;
+        }
+        return ExprResolver.joinTokens(raw.tokens());
     }
 }

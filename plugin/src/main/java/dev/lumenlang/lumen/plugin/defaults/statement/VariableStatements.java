@@ -10,19 +10,10 @@ import dev.lumenlang.lumen.api.codegen.JavaOutput;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.api.type.RefTypeHandle;
-import dev.lumenlang.lumen.pipeline.codegen.BindingContext;
-import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
-import dev.lumenlang.lumen.pipeline.language.match.BoundValue;
-import dev.lumenlang.lumen.pipeline.language.resolve.ExprResolver;
-import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
-import dev.lumenlang.lumen.pipeline.language.tokenization.TokenKind;
 import dev.lumenlang.lumen.pipeline.persist.GlobalVars;
 import dev.lumenlang.lumen.pipeline.persist.PersistentVars;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Registers built-in variable manipulation statements.
@@ -256,55 +247,7 @@ public final class VariableStatements {
                 .example("set streak to 0 for player")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
-                .handler((line, ctx, out) -> {
-                    BindingContext bc = (BindingContext) ctx;
-                    BoundValue nameBv = bc.bound("name");
-                    if (nameBv.tokens().size() != 1) {
-                        emitScopedSet(ctx, out, ctx.java("name"), ctx.java("scope"), ctx.java("val"));
-                        return;
-                    }
-                    String varName = nameBv.tokens().get(0).text();
-                    EnvironmentAccess env = ctx.env();
-                    EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(varName);
-                    if (info != null) {
-                        emitScopedSet(ctx, out, varName, ctx.java("scope"), ctx.java("val"));
-                        return;
-                    }
-                    EnvironmentAccess.VarHandle ref = env.lookupVar(varName);
-                    if (ref == null) {
-                        throw new RuntimeException("Variable '" + varName + "' is not defined. Use 'set " + varName + " to <value>' inside a command or event to create it, or 'global " + varName + " with default <value>' to define a global variable.");
-                    }
-                    List<Token> valTokens = bc.bound("val").tokens();
-                    List<Token> scopeTokens = bc.bound("scope").tokens();
-                    List<Token> fullExpr = new ArrayList<>(valTokens);
-                    fullExpr.add(new Token(TokenKind.IDENT, ctx.choice(0), 0, 0, 0));
-                    fullExpr.addAll(scopeTokens);
-                    String resolvedExpr = ExprResolver.resolve(fullExpr, bc.codegen(), (TypeEnv) env);
-                    if (resolvedExpr == null) {
-                        throw new RuntimeException("Cannot resolve expression '" + ExprResolver.joinTokens(fullExpr) + "' for variable '" + varName + "'. If '" + varName + "' should be a scoped global, define it with 'global " + varName + " for type <reftype> with default <value>'.");
-                    }
-                    rejectLocalMutationInsideLambda(ctx.block(), env, varName);
-                    out.line(ref.java() + " = Coerce.coerce(" + resolvedExpr + ", " + ref.java() + ");");
-                    emitAutoSave(env, varName, ref, out);
-                }));
-
-        api.patterns().statement(b -> b
-                .by("Lumen")
-                .pattern("set %name:EXPR% to %val:EXPR%")
-                .description("Sets a variable to a new value.")
-                .example("set score to 100")
-                .since("1.0.0")
-                .category(Categories.VARIABLE)
-                .handler((line, ctx, out) -> {
-                    EnvironmentAccess env = ctx.env();
-                    String varName = ctx.java("name");
-                    rejectLocalMutationInsideLambda(ctx.block(), env, varName);
-                    EnvironmentAccess.VarHandle ref = env.lookupVar(varName);
-                    if (ref == null)
-                        throw new RuntimeException("Variable not found: " + varName);
-                    out.line(ref.java() + " = Coerce.coerce(" + ctx.java("val") + ", " + ref.java() + ");");
-                    emitAutoSave(env, varName, ref, out);
-                }));
+                .handler((line, ctx, out) -> emitScopedSet(ctx, out, ctx.java("name"), ctx.java("scope"), ctx.java("val"))));
 
         api.patterns().statement(b -> b
                 .by("Lumen")
