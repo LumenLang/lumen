@@ -8,10 +8,10 @@ Stored variables persist across server restarts. Their values are saved to disk 
 
 ## Global Stored Variables
 
-Use `global stored var` to create a variable that is both shared across all blocks and saved permanently:
+Use `global stored` to create a variable that is both shared across all blocks and saved permanently:
 
 ```luma
-global stored var total_joins default 0
+global stored total_joins with default 0
 
 on join:
     add 1 to total_joins
@@ -22,10 +22,10 @@ Even after a server restart, `total_joins` retains its value.
 
 ## Per-Player Stored Variables
 
-Combine `global stored var` with `for ref type player` so each player has their own persistent value:
+Combine `global stored` with `for ref type player` so each player has their own persistent value:
 
 ```luma
-global stored var coins for ref type player default 0
+global stored coins for ref type player with default 0
 
 command earn:
     add 10 to coins
@@ -37,19 +37,19 @@ command balance:
 
 Every player's coins are saved independently and survive restarts.
 
-## Inline Store
+## Inline Load
 
-For event-scoped persistent data, use the `store` keyword directly inside an event or command. This is a shorthand that creates a stored variable on the spot:
+For event-scoped persistent data, use `load` directly inside an event or command. This creates a stored variable reference on the spot:
 
 ```luma
 on block_break:
     if block type is stone:
-        store mined for player default 0
+        load mined for player with default 0
         add 1 to mined
         send actionbar "&7Blocks mined: {mined}" to player
 ```
 
-The value of `mined` is saved per-player and persists across restarts.
+The value of `mined` is saved per player and persists across restarts.
 
 ## Deleting Stored Data
 
@@ -72,9 +72,9 @@ Deleting stored data is permanent. Once deleted, the values cannot be recovered.
 Stored variables can hold complex types too, including lists and maps:
 
 ```luma
-global stored var notes for ref type player default new list
-global stored var balances for ref type player default new map
-global stored var warps default new list of warp
+global stored notes for ref type player with default new list
+global stored balances for ref type player with default new map
+global stored warps with default new list of warp
 ```
 
 All entries in these collections are saved to disk along with the variable itself.

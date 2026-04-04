@@ -58,7 +58,7 @@ public final class MapExpressions {
         api.patterns().expression(b -> b
                 .by("Lumen")
                 .pattern("get %map:MAP% at key %key:EXPR% for %scope:EXPR%")
-                .description("Returns the value associated with a key in a player-scoped stored map.")
+                .description("Returns the value associated with a key in a scoped global map for a specific scope reference.")
                 .example("var bal = get balances at key \"money\" for p")
                 .since("1.0.0")
                 .category(Categories.MAP)

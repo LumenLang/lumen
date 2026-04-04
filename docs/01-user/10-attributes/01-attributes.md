@@ -42,21 +42,21 @@ This sets the attribute back to its default value.
 Get the base value (before modifiers):
 
 ```luma
-var hp = get mob's max_health
+set hp to get mob's max_health
 message player "Base health: {hp}"
 ```
 
 Get the effective value (with all modifiers applied):
 
 ```luma
-var totalHp = get mob's max_health effective
+set totalHp to get mob's max_health effective
 message player "Effective health: {totalHp}"
 ```
 
 Get the default value:
 
 ```luma
-var defaultHp = get mob's max_health default
+set defaultHp to get mob's max_health default
 message player "Default health: {defaultHp}"
 ```
 
@@ -85,15 +85,11 @@ if mob lacks attack_damage:
 
 ## Version Compatibility
 
-Lumen handles the Bukkit attribute rename in 1.21.2 automatically. You always write the short name (like `max_health`) and Lumen resolves to `GENERIC_MAX_HEALTH` on older servers or `MAX_HEALTH` on 1.21.2+.
-
 Some attributes were added in later versions. If your server is older than the version an attribute was introduced in, it will not be available.
 
 ## Available Attributes
 
 ### Since 1.20
-
-These attributes are available on all supported server versions.
 
 | Name |
 |------|

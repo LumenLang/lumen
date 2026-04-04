@@ -9,8 +9,8 @@
 command roll:
     description "Roll a random number"
 
-    var result = random between 1 and 100
-    var n = round result
+    set result to random between 1 and 100
+    set n to round result
     broadcast "&e{player_name} &frolled &6{n}&f!"
 
     if n >= 90:
@@ -37,17 +37,17 @@ command crate:
 command math:
     description "Math functions demo"
 
-    var a = 42
-    var b = 8
-    var sum = a + b
-    var diff = a - b
-    var product = a * b
-    var quotient = a / b
-    var minimum = min of a and b
-    var maximum = max of a and b
-    var neg = 0 - 15
-    var absolute = abs of neg
-    var clamped = clamp 150 between 0 and 100
+    set a to 42
+    set b to 8
+    set sum to a + b
+    set diff to a - b
+    set product to a * b
+    set quotient to a / b
+    set minimum to min of a and b
+    set maximum to max of a and b
+    set neg to 0 - 15
+    set absolute to abs of neg
+    set clamped to clamp 150 between 0 and 100
     message player "&6&lMath Demo &7(a=42, b=8):"
     message player "  &fa + b = &e{sum}"
     message player "  &fa - b = &e{diff}"

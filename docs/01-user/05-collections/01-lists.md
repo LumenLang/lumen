@@ -9,13 +9,13 @@ Lists are ordered collections of items. You can store text, numbers, or other va
 ## Creating a List
 
 ```luma
-var items = new list
+set items to new list
 ```
 
 For a global or stored list:
 
 ```luma
-global stored var notes for ref type player default new list
+global stored notes for ref type player with default new list
 ```
 
 This creates a per-player list that is saved across restarts, starting empty for each new player.
@@ -25,7 +25,7 @@ This creates a per-player list that is saved across restarts, starting empty for
 Use `add ... to` to append an item:
 
 ```luma
-var fruits = new list
+set fruits to new list
 add "apple" to fruits
 add "banana" to fruits
 add "cherry" to fruits
@@ -36,14 +36,14 @@ add "cherry" to fruits
 Retrieve an item at a specific position (indices start at 0):
 
 ```luma
-var first = get fruits at index 0
-var second = get fruits at index 1
+set first to get fruits at index 0
+set second to get fruits at index 1
 ```
 
 ## Size
 
 ```luma
-var count = fruits size
+set count to fruits size
 message player "&eYou have {count} items."
 ```
 
@@ -81,8 +81,8 @@ remove index 0 from fruits
 Practical example where a player provides a 1-based number that needs converting to a 0-based index:
 
 ```luma
-var num = get args at index 1
-var idx = num as integer
+set num to get args at index 1
+set idx to num as integer
 subtract 1 from idx
 remove index idx from notes
 message player "&aRemoved note #{num}."
@@ -102,7 +102,7 @@ You can loop over a list and remove items during iteration:
 
 ```luma
 loop entry in warps:
-    var name = get field "name" of entry
+    set name to get field "name" of entry
     if name is target:
         remove entry from warps
 ```
@@ -124,16 +124,42 @@ data warp:
     y number
     z number
 
-global stored var warps default new list of warp
+global stored warps with default new list of warp
 ```
 
 You can then add data instances and loop over them, reading fields:
 
 ```luma
-var entry = new warp with name "Spawn" x 0 y 64 z 0
+set entry to new warp with name "Spawn" x 0 y 64 z 0
 add entry to warps
 
 loop entry in warps:
-    var warpname = get field "name" of entry
+    set warpname to get field "name" of entry
     message player "&e{warpname}"
+```
+
+## Scoped List Operations
+
+When a list is declared as a scoped global (with `for ref type`), you can operate on it directly using `for <scope>` without loading it into a local variable first.
+
+```luma
+global stored todos for ref type player with default new list
+```
+
+```luma
+add "Buy milk" to todos for player
+
+set count to todos size for player
+
+if todos is empty for player:
+    message player "&7You have nothing to do."
+
+loop item in todos for player:
+    message player "&e- {item}"
+
+remove "Buy milk" from todos for player
+
+remove index 0 from todos for player
+
+clear todos for player
 ```

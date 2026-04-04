@@ -6,11 +6,11 @@
 #   /stats          View your kill and death counts
 #   /stats reset    Reset all your stats
 
-global stored var stats for ref type player default new map
+global stats for type player with default new map
 
 on entity_death:
     if killer is set:
-        var kills = get stats at key "kills" for killer
+        set kills to get stats at key "kills" for killer
         if kills is not set:
             set kills to 0
         add 1 to kills
@@ -18,24 +18,24 @@ on entity_death:
         message killer "&a+1 Kill &7(Total: {kills})"
 
 on player_death:
-    var deaths = get stats at key "deaths"
+    set deaths to get stats at key "deaths" for player
     if deaths is not set:
         set deaths to 0
     add 1 to deaths
-    set stats at key "deaths" to deaths
+    set stats at key "deaths" to deaths for player
 
 command stats:
     description "View your kill and death stats"
 
     if args size >= 1:
-        var sub = get args at index 0
+        set sub to get args at index 0
         if sub is "reset":
-            clear stats
+            clear stats for player
             message player "&eStats reset!"
     else:
         message player "&6&lYour Stats:"
-        if stats is empty:
+        if stats is empty for player:
             message player "  &7No stats yet. Go get some kills!"
         else:
-            loop key val in stats:
+            loop key val in stats for player:
                 message player "  &f{key}: &e{val}"

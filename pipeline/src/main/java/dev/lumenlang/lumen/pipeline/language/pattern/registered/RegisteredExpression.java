@@ -23,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
  * @param meta             documentation metadata for this pattern
  * @param returnRefTypeId  the ref type id this expression always returns, or {@code null} if dynamic
  * @param returnJavaType   the Java type this expression always returns (e.g. "int", "String"), or {@code null}
- * @see PatternRegistry#expression(String, ExpressionHandler)
  */
 public record RegisteredExpression(@NotNull Pattern pattern, @NotNull ExpressionHandler handler,
                                    @NotNull PatternMeta meta,

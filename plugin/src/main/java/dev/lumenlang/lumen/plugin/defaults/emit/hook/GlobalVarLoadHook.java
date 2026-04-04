@@ -17,12 +17,13 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Block enter hook that loads all registered global variables at the start of every block body.
+ * Block enter hook that loads server-wide global variables at the start of every block body.
  *
- * <p>For each global declared with {@code global [stored] var}, this hook emits a local
- * variable initialization that reads from either {@link PersistentVars} (stored) or
- * {@link GlobalVars} (in-memory). When the global has a ref type, the storage key is scoped
- * to the first variable matching that type in the current scope.
+ * <p>For each global declared with {@code global} that has no {@code for type} clause,
+ * this hook emits a local variable initialization that reads from {@link GlobalVars}
+ * (or {@link PersistentVars} for stored globals).
+ * Scoped globals (declared with {@code for type}) are not loaded here and must be
+ * accessed explicitly via {@code get name for scope}.
  */
 @Registration(order = -2000)
 @SuppressWarnings({"unused", "DataFlowIssue"})
@@ -40,7 +41,7 @@ public final class GlobalVarLoadHook implements BlockEnterHook {
      * <p>Recognizes integer, long, double, boolean, and string literals.
      * Falls back to {@code Object} for any expression that cannot be trivially classified.
      *
-     * @param defaultJava the Java default value expression (e.g. {@code "5"}, {@code "\"hello\""})
+     * @param defaultJava the Java default value expression
      * @return a Java type name suitable for a field declaration
      */
     private static @NotNull String inferFieldType(@NotNull String defaultJava) {
@@ -78,48 +79,17 @@ public final class GlobalVarLoadHook implements BlockEnterHook {
 
         for (EnvironmentAccess.GlobalInfo g : globals) {
             String name = g.name();
-
-            if (env.lookupVar(name) != null) {
-                continue;
-            }
+            if (env.lookupVar(name) != null) continue;
+            if (g.refTypeName() != null) continue;
 
             String defaultJava = g.defaultJava();
             String className = g.className();
-            String refTypeName = g.refTypeName();
-            boolean stored = g.stored();
             String exprRefTypeId = g.exprRefTypeId();
             Map<String, Object> exprMetadata = g.exprMetadata();
-
-            String keyExpr;
-            String scopeVarName = null;
-            boolean scopeNullable = false;
             RefType exprRefType = exprRefTypeId != null ? RefType.byId(exprRefTypeId) : null;
 
-            if (refTypeName != null) {
-                RefType refType = RefType.byId(refTypeName);
-                if (refType == null) {
-                    continue;
-                }
-                VarRef scopeRef = env.lookupVarByType(refType);
-                if (scopeRef == null) {
-                    continue;
-                }
-                scopeVarName = scopeRef.java();
-                scopeNullable = Boolean.TRUE.equals(scopeRef.meta("nullable"));
-                String scopeKeyPart = refType.keyExpression(scopeRef.java());
-                keyExpr = "\"" + className + "." + name + ".\" + " + scopeKeyPart;
-            } else {
-                keyExpr = "\"" + className + "." + name + "\"";
-            }
-
-            String storageClass;
-            if (stored) {
-                ctx.codegen().addImport(PersistentVars.class.getName());
-                storageClass = PersistentVars.class.getSimpleName();
-            } else {
-                ctx.codegen().addImport(GlobalVars.class.getName());
-                storageClass = GlobalVars.class.getSimpleName();
-            }
+            ctx.codegen().addImport(g.stored() ? PersistentVars.class.getName() : GlobalVars.class.getName());
+            String keyExpr = "\"" + className + "." + name + "\"";
 
             String fieldType;
             if (exprRefType != null) {
@@ -129,28 +99,15 @@ public final class GlobalVarLoadHook implements BlockEnterHook {
             } else {
                 fieldType = inferFieldType(defaultJava);
             }
+            String storageClass = g.stored() ? "PersistentVars" : "GlobalVars";
             ctx.codegen().addField(fieldType + " " + name + ";");
-            if (scopeNullable) {
-                ctx.out().line("if (" + scopeVarName + " != null) {");
-                ctx.out().taggedLine(TAG, name + " = " + storageClass + ".get(" + keyExpr + ", " + defaultJava + ");");
-                ctx.out().line("} else {");
-                ctx.out().line(name + " = " + defaultJava + ";");
-                ctx.out().line("}");
-            } else {
-                ctx.out().taggedLine(TAG, name + " = " + storageClass + ".get(" + keyExpr + ", " + defaultJava + ");");
-            }
+            ctx.out().taggedLine(TAG, name + " = " + storageClass + ".get(" + keyExpr + ", " + defaultJava + ");");
 
             VarRef varRef = new VarRef(exprRefType, name, exprMetadata);
             env.defineVar(name, varRef);
             env.markGlobalField(name);
-
-            String baseKey = "\"" + className + "." + name + ".\"";
-            if (stored) {
-                env.markStored(name, keyExpr, baseKey, scopeVarName);
-            } else {
-                env.markRuntimeGlobal(name);
-                env.markStored(name, keyExpr, baseKey, scopeVarName);
-            }
+            env.markRuntimeGlobal(name);
+            env.markStored(name, keyExpr, "\"" + className + "." + name + ".\"", null);
         }
     }
 }

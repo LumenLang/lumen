@@ -14,8 +14,8 @@ For the full list of item patterns, see the reference pages:
 ## Creating Items
 
 ```luma
-var pick = new item diamond_pickaxe
-var arrows = new item arrow 64
+set pick to new item diamond_pickaxe
+set arrows to new item arrow 64
 ```
 
 The material name matches Minecraft's material names (lowercase, underscores).
@@ -23,14 +23,14 @@ The material name matches Minecraft's material names (lowercase, underscores).
 ## Display Name
 
 ```luma
-var pick = new item diamond_pickaxe
+set pick to new item diamond_pickaxe
 set pick's name to "<gradient:#4facfe:#00f2fe>Frostbite</gradient>"
 ```
 
 Reading the name:
 
 ```luma
-var name = get pick's name
+set name to get pick's name
 message player "<gray>Item name: <white>{name}"
 ```
 
@@ -57,29 +57,29 @@ clear pick's lore
 Reading lore:
 
 ```luma
-var lines = get pick's lore
+set lines to get pick's lore
 ```
 
 ## Amount
 
 ```luma
 set pick's amount to 3
-var count = get pick's amount
+set count to get pick's amount
 ```
 
 ## Material Type
 
 ```luma
 set pick's type to netherite_pickaxe
-var mat = get pick's type
+set mat to get pick's type
 ```
 
 ## Durability
 
 ```luma
 set pick's durability to 50
-var dmg = get pick's durability
-var max = get pick's max durability
+set dmg to get pick's durability
+set max to get pick's max durability
 ```
 
 ## Unbreakable
@@ -93,7 +93,7 @@ make pick breakable
 
 ```luma
 set pick's custom model data to 1001
-var cmd = get pick's custom model data
+set cmd to get pick's custom model data
 ```
 
 ## Giving Items

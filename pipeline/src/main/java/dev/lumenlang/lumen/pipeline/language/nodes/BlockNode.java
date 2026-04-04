@@ -12,21 +12,6 @@ import java.util.List;
  * <p>A {@code BlockNode} is created for every source line that ends with a colon ({@code :}).
  * The colon is stripped during parsing; the remaining tokens form the {@link #head()} list.
  * All subsequent lines at a greater indentation level become {@link #children()}.
- *
- * <p>During code generation, block nodes are matched against registered block patterns. The
- * matching {@link BlockHandler}'s {@code begin} method is called
- * before the children are processed, and {@code end} is called afterwards.
- *
- * <p>Example source:
- * <pre>
- * on join:
- *     message player "Welcome!"
- * </pre>
- * produces a {@code BlockNode} with head {@code ["on", "join"]} and one {@link StatementNode}
- * child.
- *
- * @see RawBlockNode
- * @see BlockHandler
  */
 public non-sealed class BlockNode implements Node {
     private final int indent;

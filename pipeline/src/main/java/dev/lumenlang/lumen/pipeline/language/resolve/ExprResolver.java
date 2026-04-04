@@ -86,7 +86,7 @@ public final class ExprResolver {
      * @param tokens the tokens to resolve
      * @param ctx    the code generation context
      * @param env    the type environment
-     * @param depth  the current recursion depth (capped at {@link #MAX_RESOLVE_DEPTH})
+     * @param depth  the current recursion depth
      * @return the full expression result, or null if not resolvable
      */
     private static @Nullable ExpressionResult resolveRecursive(
@@ -101,8 +101,7 @@ public final class ExprResolver {
                 && tokens.get(0).text().equals("{")
                 && tokens.get(tokens.size() - 1).kind() == TokenKind.SYMBOL
                 && tokens.get(tokens.size() - 1).text().equals("}")) {
-            return resolveRecursive(
-                    tokens.subList(1, tokens.size() - 1), ctx, env, depth + 1);
+            return resolveRecursive(tokens.subList(1, tokens.size() - 1), ctx, env, depth + 1);
         }
 
         PatternRegistry reg;

@@ -31,32 +31,21 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Statement form handler for {@code var x = <expr>} declarations.
+ * Statement form handler for {@code set x to <expr>} local variable declarations.
  *
- * <p>Handles plain variable assignment where the RHS is a literal, reference,
- * math expression, or resolvable expression. For multi-token expressions, it
- * first tries matching against registered expression patterns (preserving the
- * refType from the {@link ExpressionResult}), then falls back to
- * {@link ExprResolver} for nested sub-expressions and arithmetic.
+ * <p>Only intercepts when {@code x} is not yet defined in the current scope.
+ * If {@code x} already exists, this handler returns {@code false} and the registered
+ * {@code set} pattern handles reassignment.
  */
 @Registration(order = -1998)
 @SuppressWarnings({"unused", "DataFlowIssue"})
-public final class VarStatementForm implements StatementFormHandler {
+public final class VarDeclarationForm implements StatementFormHandler {
 
     @Call
     public void register(@NotNull LumenAPI api) {
         api.emitters().statementForm(this);
     }
 
-    /**
-     * Tries to match the given tokens against a registered expression pattern,
-     * returning the full {@link ExpressionResult} (including refType) on success.
-     *
-     * @param tokens the expression tokens to match
-     * @param ctx    the emit context
-     * @param env    the type environment
-     * @return the expression result with refType preserved, or null if no pattern matched
-     */
     private static @Nullable ExpressionResult tryExpressionPattern(
             @NotNull List<Token> tokens,
             @NotNull EmitContextImpl ctx,
@@ -86,8 +75,8 @@ public final class VarStatementForm implements StatementFormHandler {
     @Override
     public boolean tryHandle(@NotNull List<? extends ScriptToken> tokens, @NotNull EmitContext ctx) {
         if (tokens.size() < 4
-                || !tokens.get(0).text().equalsIgnoreCase("var")
-                || !tokens.get(2).text().equals("=")) {
+                || !tokens.get(0).text().equalsIgnoreCase("set")
+                || !tokens.get(2).text().equalsIgnoreCase("to")) {
             return false;
         }
 
@@ -95,21 +84,20 @@ public final class VarStatementForm implements StatementFormHandler {
         String name = pipelineTokens.get(1).text();
         TypeEnv env = (TypeEnv) ctx.env();
 
+        if (env.lookupVar(name) != null || env.isGlobalField(name) || env.getGlobalInfo(name) != null) {
+            return false;
+        }
+
         String nameError = VarNameValidator.validate(name);
         if (nameError != null) {
             throw new LumenScriptException(ctx.line(), ctx.raw(), nameError,
                     List.of(pipelineTokens.get(1)));
         }
 
-        if (env.lookupVar(name) != null) {
-            throw new LumenScriptException(ctx.line(), ctx.raw(),
-                    "Variable '" + name + "' is already defined in this scope");
-        }
-
         if (env.blockContext().isRoot()) {
             throw new LumenScriptException(ctx.line(), ctx.raw(),
-                    "'var' cannot be used at the top level of a script. "
-                            + "Use 'global var " + name + " default <value>' instead to declare a script-wide variable.",
+                    "'set' cannot be used at the top level of a script. "
+                            + "Use 'global " + name + " with default <value>' instead.",
                     List.of(pipelineTokens.get(0)));
         }
 
@@ -137,6 +125,7 @@ public final class VarStatementForm implements StatementFormHandler {
             }
             java = ref.java();
             inheritedRef = ref;
+            resolvedMetadata = ref.metadata();
         } else if (e instanceof Expr.MathExpr m) {
             java = m.java();
         } else {

@@ -31,7 +31,7 @@ on join:
     broadcast "{prefix} &a{player_name} joined!"
     message player "{prefix} &eWelcome back!"
 
-    var lv = get player's xp level
+    set lv to get player's xp level
     if lv > maxLevel:
         set player's xp level to maxLevel
         message player "{prefix} &7Level capped to {maxLevel}."

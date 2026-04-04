@@ -7,10 +7,22 @@ import dev.lumenlang.lumen.api.codegen.BindingAccess;
 import dev.lumenlang.lumen.api.codegen.BlockAccess;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.codegen.JavaOutput;
+import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.api.type.RefTypeHandle;
+import dev.lumenlang.lumen.pipeline.codegen.BindingContext;
+import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
+import dev.lumenlang.lumen.pipeline.language.match.BoundValue;
+import dev.lumenlang.lumen.pipeline.language.resolve.ExprResolver;
+import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
+import dev.lumenlang.lumen.pipeline.language.tokenization.TokenKind;
+import dev.lumenlang.lumen.pipeline.persist.GlobalVars;
+import dev.lumenlang.lumen.pipeline.persist.PersistentVars;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Registers built-in variable manipulation statements.
@@ -40,7 +52,7 @@ public final class VariableStatements {
         throw new RuntimeException(
                 "Cannot modify local variable '" + varName + "' inside a schedule block. "
                         + "Local variables must be effectively final inside schedule/delay blocks. "
-                        + "Tip: use 'global var " + varName + " default <value>' to make it a class-level field instead.");
+                        + "Tip: use 'global " + varName + " with default <value>' to make it a class-level field instead.");
     }
 
     private static void emitAutoSave(@NotNull EnvironmentAccess env, @NotNull String varName,
@@ -81,6 +93,7 @@ public final class VariableStatements {
                     + "' is not a global variable. Scoped operations (for ...) are only supported on global vars.");
         }
         String storageClass = resolveStorageClass(info);
+        ctx.codegen().addImport(info.stored() ? PersistentVars.class.getName() : GlobalVars.class.getName());
         String keyExpr = buildScopedKey(env, varName, scopeVarName, info);
         out.line("{");
         out.line("    var __sv = " + storageClass + ".get(" + keyExpr + ", " + info.defaultJava() + ");");
@@ -99,6 +112,7 @@ public final class VariableStatements {
                     + "' is not a global variable. Scoped operations (for ...) are only supported on global vars.");
         }
         String storageClass = resolveStorageClass(info);
+        ctx.codegen().addImport(info.stored() ? PersistentVars.class.getName() : GlobalVars.class.getName());
         String keyExpr = buildScopedKey(env, varName, scopeVarName, info);
         out.line(storageClass + ".set(" + keyExpr + ", " + valueJava + ");");
     }
@@ -126,7 +140,7 @@ public final class VariableStatements {
         api.patterns().statement(b -> b
                 .by("Lumen")
                 .pattern("add %n:INT% to %name:EXPR% for %scope:EXPR%")
-                .description("Adds an integer value to a scoped global variable for a specific entity.")
+                .description("Adds an integer value to a scoped global variable for a specific scope reference.")
                 .example("add 1 to streak for killer")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
@@ -154,7 +168,7 @@ public final class VariableStatements {
         api.patterns().statement(b -> b
                 .by("Lumen")
                 .pattern("subtract %n:INT% from %name:EXPR% for %scope:EXPR%")
-                .description("Subtracts an integer value from a scoped global variable for a specific entity.")
+                .description("Subtracts an integer value from a scoped global variable for a specific scope reference.")
                 .example("subtract 1 from streak for player")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
@@ -182,7 +196,7 @@ public final class VariableStatements {
         api.patterns().statement(b -> b
                 .by("Lumen")
                 .pattern("multiply %name:EXPR% by %n:INT% for %scope:EXPR%")
-                .description("Multiplies a scoped global variable by an integer value for a specific entity.")
+                .description("Multiplies a scoped global variable by an integer value for a specific scope reference.")
                 .example("multiply streak by 2 for killer")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
@@ -210,7 +224,7 @@ public final class VariableStatements {
         api.patterns().statement(b -> b
                 .by("Lumen")
                 .pattern("divide %name:EXPR% by %n:INT% for %scope:EXPR%")
-                .description("Divides a scoped global variable by an integer value for a specific entity.")
+                .description("Divides a scoped global variable by an integer value for a specific scope reference.")
                 .example("divide streak by 2 for killer")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
@@ -238,12 +252,41 @@ public final class VariableStatements {
         api.patterns().statement(b -> b
                 .by("Lumen")
                 .pattern("set %name:EXPR% to %val:EXPR% for %scope:EXPR%")
-                .description("Sets a scoped global variable to a new value for a specific entity.")
+                .description("Sets a scoped global variable to a new value for a specific scope reference.")
                 .example("set streak to 0 for player")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
-                .handler((line, ctx, out) -> emitScopedSet(ctx, out, ctx.java("name"), ctx.java("scope"),
-                        ctx.java("val"))));
+                .handler((line, ctx, out) -> {
+                    BindingContext bc = (BindingContext) ctx;
+                    BoundValue nameBv = bc.bound("name");
+                    if (nameBv.tokens().size() != 1) {
+                        emitScopedSet(ctx, out, ctx.java("name"), ctx.java("scope"), ctx.java("val"));
+                        return;
+                    }
+                    String varName = nameBv.tokens().get(0).text();
+                    EnvironmentAccess env = ctx.env();
+                    EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(varName);
+                    if (info != null) {
+                        emitScopedSet(ctx, out, varName, ctx.java("scope"), ctx.java("val"));
+                        return;
+                    }
+                    EnvironmentAccess.VarHandle ref = env.lookupVar(varName);
+                    if (ref == null) {
+                        throw new RuntimeException("Variable '" + varName + "' is not defined. Use 'set " + varName + " to <value>' inside a command or event to create it, or 'global " + varName + " with default <value>' to define a global variable.");
+                    }
+                    List<Token> valTokens = bc.bound("val").tokens();
+                    List<Token> scopeTokens = bc.bound("scope").tokens();
+                    List<Token> fullExpr = new ArrayList<>(valTokens);
+                    fullExpr.add(new Token(TokenKind.IDENT, ctx.choice(0), 0, 0, 0));
+                    fullExpr.addAll(scopeTokens);
+                    String resolvedExpr = ExprResolver.resolve(fullExpr, bc.codegen(), (TypeEnv) env);
+                    if (resolvedExpr == null) {
+                        throw new RuntimeException("Cannot resolve expression '" + ExprResolver.joinTokens(fullExpr) + "' for variable '" + varName + "'. If '" + varName + "' should be a scoped global, define it with 'global " + varName + " for type <reftype> with default <value>'.");
+                    }
+                    rejectLocalMutationInsideLambda(ctx.block(), env, varName);
+                    out.line(ref.java() + " = Coerce.coerce(" + resolvedExpr + ", " + ref.java() + ");");
+                    emitAutoSave(env, varName, ref, out);
+                }));
 
         api.patterns().statement(b -> b
                 .by("Lumen")
@@ -266,7 +309,7 @@ public final class VariableStatements {
         api.patterns().statement(b -> b
                 .by("Lumen")
                 .pattern("delete stored %name:EXPR% for %scope:EXPR%")
-                .description("Deletes a scoped stored variable for a specific entity from storage.")
+                .description("Deletes a scoped global variable for a specific scope reference.")
                 .example("delete stored streak for killer")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
@@ -293,9 +336,39 @@ public final class VariableStatements {
                         }
                         out.line(env.storedClassName(varName) + ".delete(" + env.getStoredKey(varName) + ");");
                     } else {
-                        String keyExpr = "\"" + ctx.codegen().className() + "." + varName + "\"";
-                        out.line(env.persistClassName() + ".delete(" + keyExpr + ");");
+                        EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(varName);
+                        if (info != null) {
+                            ctx.codegen().addImport(GlobalVars.class.getName());
+                            if (info.refTypeName() != null) {
+                                out.line("GlobalVars.deleteByPrefix(\"" + info.className() + "." + varName + ".\");");
+                            } else {
+                                out.line("GlobalVars.delete(\"" + info.className() + "." + varName + "\");");
+                            }
+                        } else {
+                            String keyExpr = "\"" + ctx.codegen().className() + "." + varName + "\"";
+                            out.line(env.persistClassName() + ".delete(" + keyExpr + ");");
+                        }
                     }
+                }));
+
+        api.patterns().expression(b -> b
+                .by("Lumen")
+                .pattern("get %name:EXPR% (for|of) %scope:EXPR%")
+                .description("Gets the value of a scoped global variable for a specific scope reference.")
+                .example("var spd = get speed for player")
+                .since("1.0.0")
+                .category(Categories.VARIABLE)
+                .handler(ctx -> {
+                    String varName = ctx.java("name");
+                    EnvironmentAccess env = ctx.env();
+                    EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(varName);
+                    if (info == null) {
+                        throw new RuntimeException("'" + varName + "' is not a global variable.");
+                    }
+                    ctx.codegen().addImport(info.stored() ? PersistentVars.class.getName() : GlobalVars.class.getName());
+                    String storageClass = resolveStorageClass(info);
+                    String keyExpr = buildScopedKey(env, varName, ctx.java("scope"), info);
+                    return new ExpressionResult(storageClass + ".get(" + keyExpr + ", " + info.defaultJava() + ")", info.exprRefTypeId());
                 }));
     }
 }

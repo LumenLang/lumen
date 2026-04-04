@@ -3,9 +3,12 @@ package dev.lumenlang.lumen.plugin.defaults.condition;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
+import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.pattern.Categories;
+import dev.lumenlang.lumen.api.type.RefTypeHandle;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -67,6 +70,57 @@ public final class MapConditions {
                     ctx.addImport(Map.class.getName());
                     return "!((Map<?, ?>) " + match.ref("map").java()
                             + ").isEmpty()";
+                }));
+        api.patterns().condition(b -> b
+                .by("Lumen")
+                .pattern("%map:MAP% is empty for %scope:EXPR%")
+                .description("Checks if a scoped global map has no entries for a specific scope reference.")
+                .example("if stats is empty for player:")
+                .since("1.0.0")
+                .category(Categories.MAP)
+                .handler((match, env, ctx) -> {
+                    Object mapVal = match.value("map");
+                    if (mapVal instanceof EnvironmentAccess.VarHandle ref) {
+                        ctx.addImport(Map.class.getName());
+                        return "((Map<?, ?>) " + ref.java() + ").isEmpty()";
+                    }
+                    String mapVarName = (String) mapVal;
+                    EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(mapVarName);
+                    if (info == null) throw new RuntimeException("'" + mapVarName + "' is not a global variable.");
+                    String scopeVarName = match.java("scope", ctx, env);
+                    EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
+                    if (scopeRef == null) throw new RuntimeException("Scope variable not found: " + scopeVarName);
+                    RefTypeHandle refType = scopeRef.type();
+                    if (refType == null) throw new RuntimeException("Scope variable '" + scopeVarName + "' has no ref type.");
+                    ctx.addImport(Map.class.getName());
+                    ctx.addImport(HashMap.class.getName());
+                    return "((Map<?, ?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") + ".get(" + "\"" + info.className() + "." + mapVarName + ".\" + " + refType.keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")).isEmpty()";
+                }));
+
+        api.patterns().condition(b -> b
+                .by("Lumen")
+                .pattern("%map:MAP% is not empty for %scope:EXPR%")
+                .description("Checks if a scoped global map has at least one entry for a specific scope reference.")
+                .example("if stats is not empty for player:")
+                .since("1.0.0")
+                .category(Categories.MAP)
+                .handler((match, env, ctx) -> {
+                    Object mapVal = match.value("map");
+                    if (mapVal instanceof EnvironmentAccess.VarHandle ref) {
+                        ctx.addImport(Map.class.getName());
+                        return "!((Map<?, ?>) " + ref.java() + ").isEmpty()";
+                    }
+                    String mapVarName = (String) mapVal;
+                    EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(mapVarName);
+                    if (info == null) throw new RuntimeException("'" + mapVarName + "' is not a global variable.");
+                    String scopeVarName = match.java("scope", ctx, env);
+                    EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
+                    if (scopeRef == null) throw new RuntimeException("Scope variable not found: " + scopeVarName);
+                    RefTypeHandle refType = scopeRef.type();
+                    if (refType == null) throw new RuntimeException("Scope variable '" + scopeVarName + "' has no ref type.");
+                    ctx.addImport(Map.class.getName());
+                    ctx.addImport(HashMap.class.getName());
+                    return "!((Map<?, ?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") + ".get(" + "\"" + info.className() + "." + mapVarName + ".\" + " + refType.keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")).isEmpty()";
                 }));
     }
 }

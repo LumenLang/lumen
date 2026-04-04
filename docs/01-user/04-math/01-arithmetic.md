@@ -10,12 +10,12 @@ Lumen supports standard arithmetic for working with numbers.
 
 ```luma
 command math:
-    var a = 42
-    var b = 8
-    var sum = a + b
-    var diff = a - b
-    var product = a * b
-    var quotient = a / b
+    set a to 42
+    set b to 8
+    set sum to a + b
+    set diff to a - b
+    set product to a * b
+    set quotient to a / b
     message player "a + b = &e{sum}"
     message player "a - b = &e{diff}"
     message player "a * b = &e{product}"
@@ -27,7 +27,7 @@ command math:
 Use `add ... to` and `subtract ... from` to change a number variable directly:
 
 ```luma
-var count = 10
+set count to 10
 add 5 to count
 subtract 3 from count
 ```
@@ -43,7 +43,7 @@ multiply count by 2
 These work with per-player variables too:
 
 ```luma
-global var points for ref type player default 0
+global points for ref type player with default 0
 
 command earn:
     add 25 to points
@@ -75,5 +75,5 @@ if health <= 0:
 Lumen does not have a negative sign, so express negatives with subtraction:
 
 ```luma
-var neg = 0 - 15
+set neg to 0 - 15
 ```

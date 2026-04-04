@@ -22,19 +22,6 @@ import java.util.Map;
 /**
  * Represents a successful pattern match with all bound parameters.
  *
- * <p>
- * A Match is created when
- * {@link PatternMatcher#match(List, Pattern, TypeRegistry, TypeEnv)}
- * successfully matches all pattern parts against the input tokens.
- *
- * <h2>Convenience Accessors</h2>
- * <p>
- * Rather than navigating the raw {@link #values()} map, handlers can use:
- * <ul>
- * <li>{@link #ref(String)} to get a parsed value as a {@link VarRef}</li>
- * <li>{@link #java(String, CodegenContext, TypeEnv)} to convert a parsed value to Java code</li>
- * </ul>
- *
  * @param pattern the pattern that was matched
  * @param values  map of parameter names to their bound values
  * @param choices text of the matched alternative for each required choice group, in order

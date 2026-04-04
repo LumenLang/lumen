@@ -42,14 +42,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Walks the parsed AST and emits Java source code.
- *
- * <p>Each node is first offered to registered emit handlers (statement form handlers,
- * block form handlers, and block enter hooks) before falling back to pattern matching.
- * All built-in language features are registered through the same {@link EmitRegistry}
- * that addons use, keeping the pipeline fully extensible.
- *
- * @see EmitRegistry
- * @see EmitRegistrar
  */
 public final class CodeEmitter {
 
@@ -386,10 +378,7 @@ public final class CodeEmitter {
     }
 
     /**
-     * Emits an expression-based variable assignment ({@code var x = <expression pattern>}).
-     *
-     * <p>This is kept in CodeEmitter because it is tightly coupled with the pattern matching
-     * system and produces results from the expression handler's return value.
+     * Emits an expression-based variable declaration ({@code set x to <expression pattern>}).
      */
     private static void emitExprVar(
             TypedStatement.@NotNull ExprVarStmt evs,
@@ -404,8 +393,8 @@ public final class CodeEmitter {
 
         if (blockCtx.isRoot()) {
             throw new LumenScriptException(evs.raw().line(), evs.raw().raw(),
-                    "'var' cannot be used at the top level of a script. "
-                            + "Use 'global var " + evs.name() + " default <value>' instead to declare a script-wide variable.");
+                    "'set' cannot be used at the top level of a script. "
+                            + "Use 'global " + evs.name() + " with default <value>' instead.");
         }
 
         BindingContext bc = new BindingContext(evs.match().match(), env, ctx, blockCtx);

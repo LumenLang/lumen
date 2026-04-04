@@ -19,13 +19,13 @@ data arena:
     y2 number
     z2 number
 
-global stored var arenas default new list of arena
+global stored arenas with default new list of arena
 
 command arena:
     permission "lumen.arena"
     description "Manage PvP arenas"
 
-    var argc = args size
+    set argc to args size
     if argc < 1:
         message player "&cUsage: /arena <create|delete|list>"
         message player "&7  /arena create <name> <x1> <y1> <z1> <x2> <y2> <z2>"
@@ -33,19 +33,19 @@ command arena:
         message player "&7  /arena list"
 
     else:
-        var action = get args at index 0
+        set action to get args at index 0
         if action is "create":
             if argc < 8:
                 message player "&cUsage: /arena create <name> <x1> <y1> <z1> <x2> <y2> <z2>"
             else:
-                var name = get args at index 1
-                var x1 = get args at index 2
-                var y1 = get args at index 3
-                var z1 = get args at index 4
-                var x2 = get args at index 5
-                var y2 = get args at index 6
-                var z2 = get args at index 7
-                var entry = new arena with name name x1 x1 y1 y1 z1 z1 x2 x2 y2 y2 z2 z2
+                set name to get args at index 1
+                set x1 to get args at index 2
+                set y1 to get args at index 3
+                set z1 to get args at index 4
+                set x2 to get args at index 5
+                set y2 to get args at index 6
+                set z2 to get args at index 7
+                set entry to new arena with name name x1 x1 y1 y1 z1 z1 x2 x2 y2 y2 z2 z2
                 add entry to arenas
                 message player "&aArena &f{name} &acreated!"
                 message player "&7Bounds: ({x1}, {y1}, {z1}) to ({x2}, {y2}, {z2})"
@@ -54,10 +54,10 @@ command arena:
             if argc < 2:
                 message player "&cUsage: /arena delete <name>"
             else:
-                var target = get args at index 1
-                var found = 0
+                set target to get args at index 1
+                set found to 0
                 loop entry in arenas:
-                    var arenaname = get field "name" of entry
+                    set arenaname to get field "name" of entry
                     if arenaname is target:
                         remove entry from arenas
                         set found to 1
@@ -71,40 +71,40 @@ command arena:
             else:
                 message player "&6&lArenas:"
                 loop entry in arenas:
-                    var arenaname = get field "name" of entry
-                    var x1 = get field "x1" of entry
-                    var y1 = get field "y1" of entry
-                    var z1 = get field "z1" of entry
-                    var x2 = get field "x2" of entry
-                    var y2 = get field "y2" of entry
-                    var z2 = get field "z2" of entry
+                    set arenaname to get field "name" of entry
+                    set x1 to get field "x1" of entry
+                    set y1 to get field "y1" of entry
+                    set z1 to get field "z1" of entry
+                    set x2 to get field "x2" of entry
+                    set y2 to get field "y2" of entry
+                    set z2 to get field "z2" of entry
                     message player "&e  {arenaname} &7({x1}, {y1}, {z1}) to ({x2}, {y2}, {z2})"
 
         else:
             message player "&cUnknown subcommand. Use /arena for help."
 
 on move:
-    var px = to x
-    var py = to y
-    var pz = to z
-    var fx = from x
-    var fy = from y
-    var fz = from z
+    set px to to x
+    set py to to y
+    set pz to to z
+    set fx to from x
+    set fy to from y
+    set fz to from z
 
     loop entry in arenas:
-        var arenaname = get field "name" of entry
-        var ax1 = get field "x1" of entry
-        var ay1 = get field "y1" of entry
-        var az1 = get field "z1" of entry
-        var ax2 = get field "x2" of entry
-        var ay2 = get field "y2" of entry
-        var az2 = get field "z2" of entry
+        set arenaname to get field "name" of entry
+        set ax1 to get field "x1" of entry
+        set ay1 to get field "y1" of entry
+        set az1 to get field "z1" of entry
+        set ax2 to get field "x2" of entry
+        set ay2 to get field "y2" of entry
+        set az2 to get field "z2" of entry
 
-        var now_inside = 0
+        set now_inside to 0
         if px >= ax1 and px <= ax2 and py >= ay1 and py <= ay2 and pz >= az1 and pz <= az2:
             set now_inside to 1
 
-        var was_inside = 0
+        set was_inside to 0
         if fx >= ax1 and fx <= ax2 and fy >= ay1 and fy <= ay2 and fz >= az1 and fz <= az2:
             set was_inside to 1
 

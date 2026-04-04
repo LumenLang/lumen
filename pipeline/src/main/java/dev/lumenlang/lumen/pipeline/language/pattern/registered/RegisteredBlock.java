@@ -19,8 +19,6 @@ import java.util.List;
  * @param variables         the variables this block provides to child statements
  * @param supportsRootLevel whether this block can be used at the root level of a script
  * @param supportsBlock     whether this block can be used inside another block
- * @see PatternRegistry#block(String, BlockHandler)
- * @see RegisteredBlockMatch
  */
 public record RegisteredBlock(@NotNull Pattern pattern, @NotNull BlockHandler handler,
                               @NotNull PatternMeta meta,

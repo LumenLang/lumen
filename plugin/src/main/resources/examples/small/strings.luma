@@ -6,7 +6,7 @@
 #   /textinfo <text>   Show string length, case conversions
 #   /tag <name|off>    Set or remove your join tag
 
-global stored var tag for ref type player default "none"
+global tag for type player with default "none"
 
 command shout:
     description "Shout in uppercase"
@@ -14,8 +14,8 @@ command shout:
     if args size < 1:
         message player "&cUsage: /shout <text>"
     else:
-        var text = args joined with " "
-        var upper = text to uppercase
+        set text to args joined with " "
+        set upper to text to uppercase
         broadcast "&c&l{player_name}: &f{upper}"
 
 command textinfo:
@@ -24,10 +24,10 @@ command textinfo:
     if args size < 1:
         message player "&cUsage: /textinfo <text>"
     else:
-        var text = get args at index 0
-        var len = length of text
-        var upper = text to uppercase
-        var lower = text to lowercase
+        set text to get args at index 0
+        set len to length of text
+        set upper to text to uppercase
+        set lower to text to lowercase
         message player "&6String Info:"
         message player "  &7Original: &f{text}"
         message player "  &7Length: &f{len}"
@@ -38,17 +38,19 @@ command tag:
     description "Set your chat tag"
 
     if args size < 1:
-        message player "&eYour tag: &f{tag}"
+        set current_tag to get tag for player
+        message player "&eYour tag: &f{current_tag}"
         message player "&7Use /tag <name> to set, /tag off to remove."
     else:
-        var name = get args at index 0
+        set name to get args at index 0
         if name is "off":
-            set tag to "none"
+            set tag to "none" for player
             message player "&eTag removed."
         else:
-            set tag to name
+            set tag to name for player
             message player "&eTag set to &f[{name}]"
 
 on join:
-    if tag is not "none":
-        broadcast "&7[{tag}] &e{player_name} &7joined!"
+    set current_tag to get tag for player
+    if current_tag is not "none":
+        broadcast "&7[{current_tag}] &e{player_name} &7joined!"

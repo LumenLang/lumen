@@ -24,9 +24,7 @@ public final class ScriptLineAdapter implements ScriptLine {
     public ScriptLineAdapter(@NotNull Node node) {
         this.lineNumber = node.line();
         this.raw = node.raw();
-        this.tokens = node instanceof StatementNode sn
-                ? Collections.unmodifiableList(sn.head())
-                : Collections.emptyList();
+        this.tokens = node instanceof StatementNode sn ? Collections.unmodifiableList(sn.head()) : Collections.emptyList();
     }
 
     @Override

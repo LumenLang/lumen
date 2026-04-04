@@ -31,12 +31,6 @@ After code generation, Lumen runs all registered code transformers against the e
 
 The builtin transformers are:
 
-### Global Variable Load Transformer
-
-When a script uses global variables, Lumen loads them at the start of every block. If a global variable is loaded but never used in a particular block, this transformer removes the unnecessary load.
-
-For example, if a script defines `global var testing for ref type player default no location` and has a command that never references `testing`, the `testing = GlobalVars.get(...)` line in that command's method is removed.
-
 ### Unused Variable Transformer
 
 This transformer removes any local variable assignment where the variable is never referenced in the rest of the enclosing method. It handles dependency chains: if variable A is only used to initialize variable B, and B is itself unused, both A and B are removed.
@@ -62,8 +56,6 @@ World world = player != null ? player.getWorld() : null;
 With code transform enabled, the built in unused variable transformer detects `args`, `sender`, and `world` as unused and removes them. Only `player` remains because it is used by `message player`.
 
 ## Notes
-
-The built in transformers use text based analysis. They check whether a variable name appears as an identifier anywhere in the method body.
 
 Addons can register their own transformers through the API for any purpose, not just removing unused lines. See the API documentation for details.
 

@@ -97,7 +97,7 @@ command stop:
 Use `cancel` with no arguments inside a schedule body to stop it from running again:
 
 ```luma
-global var countdown default 5
+global countdown with default 5
 
 every 20 ticks as "countdown_task" restarting:
     if countdown > 0:

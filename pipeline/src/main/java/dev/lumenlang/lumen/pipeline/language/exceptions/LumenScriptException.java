@@ -25,8 +25,6 @@ import java.util.List;
  * <p>Handlers should throw a plain {@link RuntimeException} with a descriptive message; the
  * code generation loop in {@link CodeEmitter} will catch it and wrap it in a
  * {@code LumenScriptException} that includes line context automatically.
- *
- * @see CodeEmitter
  */
 @SuppressWarnings("unused")
 public final class LumenScriptException extends RuntimeException {

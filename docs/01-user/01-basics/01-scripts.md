@@ -29,7 +29,7 @@ command greet:
     if args size < 1:
         message player "&cPlease provide a name!"
     else:
-        var name = get args at index 0
+        set name to get args at index 0
         message player "&aHello, {name}!"
 ```
 

@@ -16,18 +16,8 @@ import java.util.List;
  * of a variable assignment or a standalone value. Each variant captures a
  * different kind of
  * expression that the code generator handles independently.
- *
- * <p>Every variant carries an optional {@link LumenType} that describes the
- * compile-time type of the expression, when it can be determined.
- *
- * @see ExprParser
- * @see TypedStatement.VarStmt
  */
-public sealed interface Expr permits
-        Expr.Literal,
-        Expr.RefExpr,
-        Expr.MathExpr,
-        Expr.RawExpr {
+public sealed interface Expr permits Expr.Literal, Expr.RefExpr, Expr.MathExpr, Expr.RawExpr {
 
     /**
      * Returns the compile-time type of this expression, or {@code null} if unknown.

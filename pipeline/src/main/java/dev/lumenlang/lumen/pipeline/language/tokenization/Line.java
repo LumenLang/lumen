@@ -12,7 +12,6 @@ import java.util.List;
  * @param lineNumber the 1-based line number in the original source file
  * @param raw        the raw (non-indentation) content of the source line
  * @param tokens     the tokens produced from {@link #raw()}
- * @see Tokenizer
  */
 public record Line(
         int indent,

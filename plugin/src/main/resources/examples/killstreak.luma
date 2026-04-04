@@ -2,27 +2,28 @@
 # Tracks consecutive kills per player, resets on death,
 # broadcasts milestones, and rewards effects at thresholds.
 
-global stored var streak for ref type player default 0
+global streak for type player with default 0
 
 on entity_death:
     if killer is set:
         add 1 to streak for killer
+        set ks to get streak for killer
+        message killer "&aKill streak: &e{ks}"
 
-        message killer "&aKill streak: &e{streak}"
-
-        if streak >= 10:
-            broadcast "&c&l{killer_name} &6is on a &c{streak} &6kill streak!"
+        if ks >= 10:
+            broadcast "&c&l{killer_name} &6is on a &c{ks} &6kill streak!"
             apply "strength" 1 to killer for 200 ticks
 
-        else if streak >= 5:
-            broadcast "&e{killer_name} &6is on a &e{streak} &6kill streak!"
+        else if ks >= 5:
+            broadcast "&e{killer_name} &6is on a &e{ks} &6kill streak!"
             apply "speed" 2 to killer for 200 ticks
 
-        else if streak >= 3:
+        else if ks >= 3:
             apply "speed" 1 to killer for 100 ticks
 
 on player_death:
-    if streak >= 3:
-        message player "&cYour kill streak of &e{streak} &chas been ended!"
+    set ks to get streak for player
+    if ks >= 3:
+        message player "&cYour kill streak of &e{ks} &chas been ended!"
 
     set streak to 0 for player

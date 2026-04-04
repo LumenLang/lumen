@@ -11,7 +11,7 @@ data bounty:
     reward number
     placed_by text
 
-global stored var current_bounty default none
+global current_bounty with default none
 
 command bounty:
     description "Manage bounties"
@@ -19,15 +19,15 @@ command bounty:
     if args size < 1:
         message player "&cUsage: /bounty <player> <amount> or /bounty check"
     else:
-        var sub = get args at index 0
+        set sub to get args at index 0
 
         if sub is "check":
             if current_bounty is not set:
                 message player "&7No active bounty."
             else:
-                var t = get field "target" of current_bounty
-                var r = get field "reward" of current_bounty
-                var p = get field "placed_by" of current_bounty
+                set t to get field "target" of current_bounty
+                set r to get field "reward" of current_bounty
+                set p to get field "placed_by" of current_bounty
                 message player "&6Active Bounty:"
                 message player "  &cTarget: &f{t}"
                 message player "  &eReward: &f{r}"
@@ -36,16 +36,16 @@ command bounty:
             if args size < 2:
                 message player "&cUsage: /bounty <player> <amount>"
             else:
-                var target = get args at index 0
-                var amount = get args at index 1
+                set target to get args at index 0
+                set amount to get args at index 1
                 set current_bounty to new bounty with target target reward amount placed_by "{player_name}"
                 broadcast "&c{player_name} &6placed a &e{amount} &6coin bounty on &c{target}!"
 
 on player_death:
     if current_bounty is set:
-        var t = get field "target" of current_bounty
+        set t to get field "target" of current_bounty
         if t is "{player_name}":
             if killer is set:
-                var r = get field "reward" of current_bounty
+                set r to get field "reward" of current_bounty
                 broadcast "&a{killer_name} &eclaimed the &6{r} &ecoin bounty on &c{t}!"
                 set current_bounty to none

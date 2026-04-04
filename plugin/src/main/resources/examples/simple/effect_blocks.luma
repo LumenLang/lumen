@@ -18,14 +18,14 @@ data effect_entry:
 config:
     prefix: &d[EffectBlocks]&r
 
-global stored var effect_mappings default new list of effect_entry
+global effect_mappings with default new list of effect_entry
 
 command effectblock:
     permission "lumen.effectblock"
     description "Configure which blocks apply potion effects when stepped on"
     aliases eb
 
-    var argc = args size
+    set argc to args size
     if argc < 1:
         message player "{prefix} &eEffect Block Commands:"
         message player "  &f/eb add <block> <effect> <level> <duration>"
@@ -33,18 +33,18 @@ command effectblock:
         message player "  &f/eb list"
         message player "  &f/eb clear"
     else:
-        var action = get args at index 0
+        set action to get args at index 0
 
         if action is "add":
             if argc < 5:
                 message player "{prefix} &cUsage: /eb add <block> <effect> <level> <duration>"
                 message player "{prefix} &7Example: /eb add diamond_block speed 2 200"
             else:
-                var btype = get args at index 1
-                var ename = get args at index 2
-                var elevel = get args at index 3
-                var eduration = get args at index 4
-                var entry = new effect_entry with block_type btype effect_name ename level elevel duration eduration
+                set btype to get args at index 1
+                set ename to get args at index 2
+                set elevel to get args at index 3
+                set eduration to get args at index 4
+                set entry to new effect_entry with block_type btype effect_name ename level elevel duration eduration
                 add entry to effect_mappings
                 message player "{prefix} &aStepping on &f{btype} &anow applies &f{ename} {elevel} &afor &f{eduration} ticks!"
 
@@ -52,10 +52,10 @@ command effectblock:
             if argc < 2:
                 message player "{prefix} &cUsage: /eb remove <block>"
             else:
-                var target = get args at index 1
-                var found = 0
+                set target to get args at index 1
+                set found to 0
                 loop mapping in effect_mappings:
-                    var bt = get field "block_type" of mapping
+                    set bt to get field "block_type" of mapping
                     if bt is target:
                         remove mapping from effect_mappings
                         set found to 1
@@ -69,10 +69,10 @@ command effectblock:
             else:
                 message player "{prefix} &6&lEffect Blocks:"
                 loop mapping in effect_mappings:
-                    var bt = get field "block_type" of mapping
-                    var en = get field "effect_name" of mapping
-                    var lv = get field "level" of mapping
-                    var dur = get field "duration" of mapping
+                    set bt to get field "block_type" of mapping
+                    set en to get field "effect_name" of mapping
+                    set lv to get field "level" of mapping
+                    set dur to get field "duration" of mapping
                     message player "  &f{bt} &7-> &e{en} {lv} &7for &f{dur} ticks"
 
         else if action is "clear":
@@ -84,19 +84,19 @@ command effectblock:
 
 on move:
     if effect_mappings is not empty:
-        var px = to x
-        var py = to y - 1
-        var pz = to z
-        var w = to world
-        var below_loc = new location in w at px py pz
-        var below_block = block at below_loc
-        var below_type = below_block type
+        set px to to x
+        set py to to y - 1
+        set pz to to z
+        set w to to world
+        set below_loc to new location in w at px py pz
+        set below_block to block at below_loc
+        set below_type to below_block type
 
         loop mapping in effect_mappings:
-            var bt = get field "block_type" of mapping
+            set bt to get field "block_type" of mapping
             if below_type is bt:
-                var en = get field "effect_name" of mapping
-                var lv = get field "level" of mapping
-                var dur = get field "duration" of mapping
+                set en to get field "effect_name" of mapping
+                set lv to get field "level" of mapping
+                set dur to get field "duration" of mapping
                 apply en lv to player for dur ticks
                 send actionbar "&a+{en} from stepping on &f{bt}" to player

@@ -36,7 +36,7 @@ You can use whichever alias you prefer. For example, `text` and `string` are the
 Use `new` followed by the data type name to create an instance.
 
 ```luma
-var r = new reward
+set r to new reward
 ```
 
 This creates a reward with all fields empty.
@@ -46,15 +46,15 @@ This creates a reward with all fields empty.
 Use `with` to set fields when creating the instance. Fields are written as `fieldName value` pairs.
 
 ```luma
-var r = new reward with label "Diamond Package" amount 500 given_by "Server"
+set r to new reward with label "Diamond Package" amount 500 given_by "Server"
 ```
 
 You can pass variables as values too:
 
 ```luma
-var name = get args at index 0
-var value = get args at index 1
-var r = new reward with label name amount value given_by "{player_name}"
+set name to get args at index 0
+set value to get args at index 1
+set r to new reward with label name amount value given_by "{player_name}"
 ```
 
 ## Accessing Fields
@@ -64,14 +64,14 @@ There are two ways to read a field from a data instance.
 ### Prefix Syntax
 
 ```luma
-var name = get field "label" of r
-var amount = get field "amount" of r
+set name to get field "label" of r
+set amount to get field "amount" of r
 ```
 
 ### Postfix Syntax
 
 ```luma
-var name = r field "label"
+set name to r field "label"
 ```
 
 Both syntaxes return the same result. Use whichever reads better in context.
@@ -98,7 +98,7 @@ data warp:
     y number
     z number
 
-global stored var warps default new list of warp
+global stored warps with default new list of warp
 ```
 
 The `new list of warp` creates a list that knows it contains `warp` instances. This means when you loop over it, the loop variable automatically has access to field operations.
@@ -106,7 +106,7 @@ The `new list of warp` creates a list that knows it contains `warp` instances. T
 ### Adding to a List
 
 ```luma
-var entry = new warp with name "Spawn" x 0 y 64 z 0
+set entry to new warp with name "Spawn" x 0 y 64 z 0
 add entry to warps
 ```
 
@@ -114,10 +114,10 @@ add entry to warps
 
 ```luma
 loop entry in warps:
-    var warpname = get field "name" of entry
-    var x = get field "x" of entry
-    var y = get field "y" of entry
-    var z = get field "z" of entry
+    set warpname to get field "name" of entry
+    set x to get field "x" of entry
+    set y to get field "y" of entry
+    set z to get field "z" of entry
     message player "&e{warpname} &7at ({x}, {y}, {z})"
 ```
 
@@ -125,7 +125,7 @@ loop entry in warps:
 
 ```luma
 loop entry in warps:
-    var warpname = get field "name" of entry
+    set warpname to get field "name" of entry
     if warpname is "Spawn":
         remove entry from warps
 ```
@@ -144,14 +144,14 @@ Maps store key-value pairs. You can store data instances as values in a map.
 ### Creating a Map
 
 ```luma
-global stored var stats for ref type player default new map
+global stored stats for ref type player with default new map
 ```
 
 ### Storing and Retrieving Values
 
 ```luma
 set stats at key "score" to 0
-var score = get stats at key "score"
+set score to get stats at key "score"
 ```
 
 ### Per-player Maps
@@ -160,7 +160,7 @@ Maps can be scoped per player using `for`:
 
 ```luma
 set stats at key "score" to 100 for player
-var score = get stats at key "score" for player
+set score to get stats at key "score" for player
 ```
 
 ### Removing Keys
@@ -180,14 +180,14 @@ loop key val in stats:
 ### Getting Keys and Values
 
 ```luma
-var allKeys = keys of stats
-var allValues = values of stats
+set allKeys to keys of stats
+set allValues to values of stats
 ```
 
 ### Map Size
 
 ```luma
-var count = stats size
+set count to stats size
 ```
 
 ## Persistence
@@ -196,13 +196,13 @@ Data instances, lists, and maps can all be persisted across server restarts usin
 
 ```luma
 # single data instance
-global stored var active_reward default none
+global stored active_reward with default none
 
 # list of data
-global stored var warps default new list of warp
+global stored warps with default new list of warp
 
 # per-player map
-global stored var inventory for ref type player default new map
+global stored inventory for ref type player with default new map
 ```
 
 Changes made to stored variables are saved automatically.

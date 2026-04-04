@@ -7,32 +7,16 @@ import org.jetbrains.annotations.NotNull;
  *
  * <h2>Reference Types</h2>
  * <p>Reference types carry a {@link RefTypeHandle} which provides an id, a Java class
- * name, and a key expression for lookups. These are used for Bukkit object types such
- * as players, entities, locations, and items.
+ * name, and a key expression for lookups. These are used for object types such
+ * as players, entities, locations, etc.
  *
  * <h2>Primitive Types</h2>
  * <p>Primitive type constants are plain {@code String} values representing Java types.
  * These are used for numeric values, booleans, and strings in event variable
  * definitions and expression results.
  *
- * <h2>Event Variable Registration</h2>
- * <pre>{@code
- * api.events().register(api.events().builder("entity_damage")
- *     .className("org.bukkit.event.entity.EntityDamageEvent")
- *     .addVar("entity", Types.ENTITY, "event.getEntity()")
- *     .addVar("damage", Types.DOUBLE, "event.getDamage()")
- *     .build()
- * );
- * }</pre>
- *
- * <h2>Custom Type Registration</h2>
- * <p>Addons can register entirely new reference types via {@link RefTypeRegistrar}.
- * Once registered, these can be used in event definitions, variable declarations,
- * and placeholder bindings just like the built-in types.
- *
  * @see RefTypeHandle
  * @see RefTypeRegistrar
- * @see TypeRegistrar
  */
 @SuppressWarnings("unused")
 public final class Types {

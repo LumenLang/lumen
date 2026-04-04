@@ -8,14 +8,14 @@
 #   /wand               Gives the player a golden axe selection wand
 #   /fill <material>    Fills the selected region with the given block type
 
-global var pos1 for ref type player default no location
-global var pos2 for ref type player default no location
+global pos1 for type "player" with default no location
+global pos2 for type "player" with default no location
 
 command wand:
     permission "lumen.wand"
     description "Gives you a selection wand"
 
-    var axe = new item golden_axe
+    set axe to new item golden_axe
     set axe's display name to "&6&lSelection Wand"
     set axe's lore to "&7Left click to set pos 1|&7Right click to set pos 2"
     set pdc "wand_type" of axe to "block_setter"
@@ -30,14 +30,14 @@ on interact:
             if block is set:
                 if action is "LEFT_CLICK_BLOCK":
                     cancel event
-                    var loc = block location
-                    set pos1 to loc
+                    set loc to block location
+                    set pos1 to loc for player
                     message player "&ePosition 1 &fset to ({loc_x}, {loc_y}, {loc_z})"
 
                 else if action is "RIGHT_CLICK_BLOCK":
                     cancel event
-                    var loc = block location
-                    set pos2 to loc
+                    set loc to block location
+                    set pos2 to loc for player
                     message player "&ePosition 2 &fset to ({loc_x}, {loc_y}, {loc_z})"
 
 command fill:
@@ -47,11 +47,13 @@ command fill:
     if args size < 1:
         message player "&cUsage: /fill <material>"
     else:
-        if pos1 is not set:
+        set p1 to get pos1 for player
+        set p2 to get pos2 for player
+        if p1 is not set:
             message player "&cPosition 1 not set! Left click a block with a golden axe."
-        else if pos2 is not set:
+        else if p2 is not set:
             message player "&cPosition 2 not set! Right click a block with a golden axe."
         else:
-            var mat = get args at index 0
-            fill from pos1 to pos2 with mat
+            set mat to get args at index 0
+            fill from p1 to p2 with mat
             message player "&aRegion filled with {mat}!"

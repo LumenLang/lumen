@@ -9,19 +9,8 @@ import java.util.List;
  *
  * <p>A Lumen script is parsed into a tree of {@code Node} objects before any code is generated.
  * Each node corresponds to either a single source line or a block of indented lines.
- *
- * <p>There are three concrete node kinds:
- * <ul>
- *   <li>{@link StatementNode}  -  a single-line action (e.g. {@code give player diamond 1})</li>
- *   <li>{@link BlockNode}  -  a header line ending with {@code :} that owns indented child nodes</li>
- *   <li>{@link ConditionalBlockNode}  -  a block that carries condition tokens ({@code else if}, future keywords, etc.)</li>
- * </ul>
- *
- * @see StatementNode
- * @see BlockNode
- * @see ConditionalBlockNode
  */
-public sealed interface Node permits BlockNode, StatementNode, ConditionalBlockNode {
+public sealed interface Node permits BlockNode, StatementNode {
 
     /**
      * Returns the indentation level (in spaces) of this node's source line.
@@ -47,8 +36,7 @@ public sealed interface Node permits BlockNode, StatementNode, ConditionalBlockN
     /**
      * Returns the tokens that form the "head" of this node.
      *
-     * <p>For a {@link StatementNode} this is all tokens on the line. For a {@link BlockNode} or
-     * {@link ConditionalBlockNode} this is the tokens before the trailing colon (which is
+     * <p>For a {@link StatementNode} this is all tokens on the line. For a {@link BlockNode} this is the tokens before the trailing colon (which is
      * stripped during parsing).
      *
      * @return the head token list; never {@code null}, may be empty

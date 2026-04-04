@@ -16,15 +16,6 @@ import java.util.List;
 /**
  * Indentation-based parser that converts tokenized lines into a tree of
  * {@link Node}s.
- *
- * <p>The parser uses Python-style indentation to determine parent/child
- * relationships. Lines ending with a colon ({@code :}) become {@link BlockNode}s
- * whose children are the more deeply indented lines that follow. All other lines
- * become {@link StatementNode}s.
- *
- * <p>A special case exists for {@code java:} blocks, which are parsed as
- * {@link RawBlockNode}s where the body is kept as raw text rather than being
- * tokenized.
  */
 public final class LumenParser {
 
@@ -49,9 +40,7 @@ public final class LumenParser {
             BlockNode parent = stack.peek();
 
             boolean isBlock = endsWithColon(l.tokens());
-            List<Token> head = isBlock
-                    ? l.tokens().subList(0, l.tokens().size() - 1)
-                    : l.tokens();
+            List<Token> head = isBlock ? l.tokens().subList(0, l.tokens().size() - 1) : l.tokens();
 
             if (parent instanceof RawBlockNode rawParent) {
                 rawParent.rawLines().add(l.raw());
@@ -62,17 +51,9 @@ public final class LumenParser {
                 BlockNode block;
 
                 if (isRawBlock(head)) {
-                    block = new RawBlockNode(
-                            l.indent(),
-                            l.lineNumber(),
-                            l.raw(),
-                            head);
+                    block = new RawBlockNode(l.indent(), l.lineNumber(), l.raw(), head);
                 } else {
-                    block = new BlockNode(
-                            l.indent(),
-                            l.lineNumber(),
-                            l.raw(),
-                            head);
+                    block = new BlockNode(l.indent(), l.lineNumber(), l.raw(), head);
                 }
 
                 if (parent == null) {

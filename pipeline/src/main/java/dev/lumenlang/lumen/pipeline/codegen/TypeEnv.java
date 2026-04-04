@@ -482,12 +482,6 @@ public final class TypeEnv implements EnvironmentAccess {
                                 @Nullable String exprRefTypeId, boolean stored,
                                 @Nullable Map<String, Object> exprMetadata)
             implements EnvironmentAccess.GlobalInfo {
-
-        public GlobalVarInfo(@NotNull String name, @NotNull String defaultJava,
-                             @NotNull String className, @Nullable String refTypeName,
-                             @Nullable String exprRefTypeId, boolean stored) {
-            this(name, defaultJava, className, refTypeName, exprRefTypeId, stored, null);
-        }
     }
 
     /**

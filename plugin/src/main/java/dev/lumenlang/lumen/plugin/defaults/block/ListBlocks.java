@@ -13,6 +13,7 @@ import dev.lumenlang.lumen.api.type.Types;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -108,6 +109,46 @@ public class ListBlocks {
                         } else {
                             ctx.env().defineVar(varName, elementType, varName);
                         }
+                    }
+
+                    @Override
+                    public void end(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
+                        out.line("}");
+                    }
+                }));
+
+        api.patterns().block(b -> b
+                .by("Lumen")
+                .pattern("loop %var:EXPR% in %list:LIST% for %scope:EXPR%")
+                .description("Iterates over each element of a scoped global list for a specific scope reference.")
+                .example("loop item in todos for player:")
+                .since("1.0.0")
+                .category(Categories.LIST)
+                .addVar("var", "Object")
+                    .varDescription("The current element in the list")
+                .handler(new BlockHandler() {
+                    @Override
+                    public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
+                        if (ctx.block().isRoot()) {
+                            throw new RuntimeException("A 'loop' block cannot be top-level");
+                        }
+                        EnvironmentAccess env = ctx.env();
+                        String varName = ctx.java("var");
+                        if (env.lookupVar(varName) != null) throw new RuntimeException("Loop variable '" + varName + "' is already defined in this scope.");
+
+                        String listVarName = ctx.tokens("list").get(0);
+                        String scopeVarName = ctx.java("scope");
+                        EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(listVarName);
+                        if (info == null) throw new RuntimeException("'" + listVarName + "' is not a global variable.");
+                        EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
+                        if (scopeRef == null) throw new RuntimeException("Scope variable not found: " + scopeVarName);
+                        RefTypeHandle refType = scopeRef.type();
+                        if (refType == null) throw new RuntimeException("Scope variable '" + scopeVarName + "' has no ref type.");
+
+                        ctx.codegen().addImport(List.class.getName());
+                        ctx.codegen().addImport(ArrayList.class.getName());
+                        out.line("for (var " + varName + " : (List<?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") + ".get(" + "\"" + info.className() + "." + listVarName + ".\" + " + refType.keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")) {");
+                        env.defineVar(varName, null, varName);
                     }
 
                     @Override

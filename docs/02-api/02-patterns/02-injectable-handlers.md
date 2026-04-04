@@ -83,7 +83,7 @@ api.patterns().expression(b -> b
     .by("MyAddon")
     .pattern("location of %who:PLAYER%")
     .description("Returns the current location of a player.")
-    .example("var loc = location of player")
+    .example("set loc to location of player")
     .since("1.0.0")
     .category(Categories.PLAYER)
     .returnRefTypeId(Types.LOCATION.id())

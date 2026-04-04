@@ -3,8 +3,10 @@ package dev.lumenlang.lumen.plugin.defaults.expression;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
+import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.pattern.Categories;
+import dev.lumenlang.lumen.api.type.RefTypeHandle;
 import dev.lumenlang.lumen.api.type.Types;
 import org.jetbrains.annotations.NotNull;
 
@@ -111,6 +113,52 @@ public final class ListExpressions {
                     return new ExpressionResult(
                             "((List<?>) " + ctx.java("list") + ").indexOf(" + ctx.java("val") + ")",
                             null, Types.INT);
+                }));
+
+        api.patterns().expression(b -> b
+                .by("Lumen")
+                .pattern("size of %list:LIST% for %scope:EXPR%")
+                .description("Returns the number of elements in a scoped global list for a specific scope reference.")
+                .example("var count = size of todos for player")
+                .since("1.0.0")
+                .category(Categories.LIST)
+                .returnJavaType(Types.INT)
+                .handler(ctx -> {
+                    EnvironmentAccess env = ctx.env();
+                    String listVarName = ctx.tokens("list").get(0);
+                    EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(listVarName);
+                    if (info == null) throw new RuntimeException("'" + listVarName + "' is not a global variable.");
+                    String scopeVarName = ctx.java("scope");
+                    EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
+                    if (scopeRef == null) throw new RuntimeException("Scope variable not found: " + scopeVarName);
+                    RefTypeHandle refType = scopeRef.type();
+                    if (refType == null) throw new RuntimeException("Scope variable '" + scopeVarName + "' has no ref type.");
+                    ctx.codegen().addImport(List.class.getName());
+                    ctx.codegen().addImport(ArrayList.class.getName());
+                    return new ExpressionResult("((List<?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") + ".get(" + "\"" + info.className() + "." + listVarName + ".\" + " + refType.keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")).size()", null, Types.INT);
+                }));
+
+        api.patterns().expression(b -> b
+                .by("Lumen")
+                .pattern("%list:LIST% size for %scope:EXPR%")
+                .description("Returns the number of elements in a scoped global list (postfix syntax).")
+                .example("var count = todos size for player")
+                .since("1.0.0")
+                .category(Categories.LIST)
+                .returnJavaType(Types.INT)
+                .handler(ctx -> {
+                    EnvironmentAccess env = ctx.env();
+                    String listVarName = ctx.tokens("list").get(0);
+                    EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(listVarName);
+                    if (info == null) throw new RuntimeException("'" + listVarName + "' is not a global variable.");
+                    String scopeVarName = ctx.java("scope");
+                    EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
+                    if (scopeRef == null) throw new RuntimeException("Scope variable not found: " + scopeVarName);
+                    RefTypeHandle refType = scopeRef.type();
+                    if (refType == null) throw new RuntimeException("Scope variable '" + scopeVarName + "' has no ref type.");
+                    ctx.codegen().addImport(List.class.getName());
+                    ctx.codegen().addImport(ArrayList.class.getName());
+                    return new ExpressionResult("((List<?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") + ".get(" + "\"" + info.className() + "." + listVarName + ".\" + " + refType.keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")).size()", null, Types.INT);
                 }));
     }
 }

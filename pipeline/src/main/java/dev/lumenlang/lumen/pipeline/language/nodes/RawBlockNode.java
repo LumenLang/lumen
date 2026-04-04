@@ -9,10 +9,7 @@ import java.util.List;
 /**
  * A {@link BlockNode} whose body is captured as raw text lines instead of parsed child nodes.
  *
- * <p>A {@code RawBlockNode} is used when a block's content should bypass the normal parsing
- * pipeline  -  for example, inline Java snippets that must be inserted verbatim into the generated
- * class. The raw lines are accessible via {@link #rawLines()} and are typically emitted directly
- * by the block's {@link BlockHandler}.
+ * <p>A {@code RawBlockNode} is used when a block's content should bypass the normal parsing pipeline.
  *
  * @see BlockNode
  * @see BlockHandler
