@@ -2,7 +2,6 @@ package dev.lumenlang.lumen.pipeline.language.emit;
 
 import dev.lumenlang.lumen.api.emit.BlockEnterHook;
 import dev.lumenlang.lumen.api.emit.BlockFormHandler;
-import dev.lumenlang.lumen.api.emit.EmitRegistrar;
 import dev.lumenlang.lumen.api.emit.ScriptLine;
 import dev.lumenlang.lumen.api.emit.StatementFormHandler;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;

@@ -6,7 +6,7 @@ import java.util.List;
 
 /**
  * A single element within a compiled {@link Pattern}.
- *
+ * <p>
  * Pattern syntax:
  * <ul>
  * <li>{@code %name:TYPE%} A placeholder with an explicit type</li>

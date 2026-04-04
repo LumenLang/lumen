@@ -55,7 +55,6 @@ public final class GlobalDeclarationForm implements StatementFormHandler {
         if (!t.get(0).text().equalsIgnoreCase("global")) return false;
         int start = 1;
         if (t.get(start).text().equalsIgnoreCase("stored")) start++;
-        if (start >= t.size()) return false;
         String nameCandidate = t.get(start).text();
         if (nameCandidate.equalsIgnoreCase("for") || nameCandidate.equalsIgnoreCase("with") || nameCandidate.equalsIgnoreCase("default")) return false;
         for (int i = start + 1; i < t.size() - 1; i++) {

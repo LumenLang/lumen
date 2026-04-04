@@ -1,11 +1,7 @@
 package dev.lumenlang.lumen.pipeline.language.pattern.registered;
 
-import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.pipeline.language.match.Match;
-import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 /**
  * The result of a successful statement pattern match, bundling the matched

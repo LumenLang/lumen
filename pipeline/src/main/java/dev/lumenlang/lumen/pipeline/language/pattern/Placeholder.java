@@ -1,6 +1,5 @@
 package dev.lumenlang.lumen.pipeline.language.pattern;
 
-import dev.lumenlang.lumen.pipeline.language.TypeBinding;
 import dev.lumenlang.lumen.pipeline.typebinding.TypeRegistry;
 import org.jetbrains.annotations.NotNull;
 

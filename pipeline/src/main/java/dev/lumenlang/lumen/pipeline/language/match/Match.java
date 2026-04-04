@@ -10,7 +10,6 @@ import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.pipeline.language.exceptions.TokenCarryingException;
 import dev.lumenlang.lumen.pipeline.language.pattern.Pattern;
 import dev.lumenlang.lumen.pipeline.language.resolve.ExprResolver;
-import dev.lumenlang.lumen.pipeline.typebinding.TypeRegistry;
 import dev.lumenlang.lumen.pipeline.var.RefType;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
@@ -211,17 +210,6 @@ public record Match(
                                 @NotNull CodegenAccess ctx,
                                 @NotNull EnvironmentAccess env) {
         return javaAt(index, (CodegenContext) ctx, (TypeEnv) env);
-    }
-
-    /**
-     * Creates a synthetic {@link EnvironmentAccess.VarHandle} wrapping a resolved Java
-     * expression with no type information.
-     *
-     * @param javaExpr the resolved Java expression
-     * @return a VarHandle backed by the expression
-     */
-    public static EnvironmentAccess.@NotNull VarHandle syntheticHandle(@NotNull String javaExpr) {
-        return new InlineVarRef(javaExpr, null, Map.of());
     }
 
     /**
