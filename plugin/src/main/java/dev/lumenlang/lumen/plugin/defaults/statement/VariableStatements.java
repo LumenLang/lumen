@@ -11,7 +11,6 @@ import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.api.type.RefTypeHandle;
 import dev.lumenlang.lumen.pipeline.persist.GlobalVars;
-import dev.lumenlang.lumen.pipeline.persist.PersistentVars;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
