@@ -13,8 +13,8 @@ config:
     prefix: &5[Swap]&r
     cooldown_ticks: 100
 
-global swap_enabled for type player with default 0
-global swap_cooldown for type player with default 0
+global scoped swap_enabled with default 0
+global scoped swap_cooldown with default 0
 
 command swap:
     permission "lumen.swap"

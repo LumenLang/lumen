@@ -6,7 +6,7 @@
 #   /stats          View your kill and death counts
 #   /stats reset    Reset all your stats
 
-global stats for type player with default new map
+global scoped stats with default new map
 
 on entity_death:
     if killer is set:

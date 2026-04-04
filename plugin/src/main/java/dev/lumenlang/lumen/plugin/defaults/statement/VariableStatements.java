@@ -82,6 +82,10 @@ public final class VariableStatements {
             throw new RuntimeException("Variable '" + varName
                     + "' is not a global variable. Scoped operations (for ...) are only supported on global vars.");
         }
+        if (!info.scoped()) {
+            throw new RuntimeException("Variable '" + varName
+                    + "' is not a scoped global. Declare it with 'global scoped " + varName + "' to use per-entity access.");
+        }
         String storageClass = resolveStorageClass(info);
         String keyExpr = buildScopedKey(env, varName, scopeVarName, info);
         out.line("{");
@@ -98,6 +102,10 @@ public final class VariableStatements {
         if (info == null) {
             throw new RuntimeException("Variable '" + varName
                     + "' is not a global variable. Scoped operations (for ...) are only supported on global vars.");
+        }
+        if (!info.scoped()) {
+            throw new RuntimeException("Variable '" + varName
+                    + "' is not a scoped global. Declare it with 'global scoped " + varName + "' to use per-entity access.");
         }
         String storageClass = resolveStorageClass(info);
         if (scopeVarName != null) {
@@ -256,7 +264,7 @@ public final class VariableStatements {
                         EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(varName);
                         if (info != null) {
                             ctx.codegen().addImport(GlobalVars.class.getName());
-                            if (info.refTypeName() != null) {
+                            if (info.scoped()) {
                                 out.line("GlobalVars.deleteByPrefix(\"" + info.className() + "." + varName + ".\");");
                             } else {
                                 out.line("GlobalVars.delete(\"" + info.className() + "." + varName + "\");");
@@ -281,6 +289,9 @@ public final class VariableStatements {
                     EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(varName);
                     if (info == null) {
                         throw new RuntimeException("'" + varName + "' is not a global variable.");
+                    }
+                    if (!info.scoped()) {
+                        throw new RuntimeException("'" + varName + "' is not a scoped global. Declare it with 'global scoped " + varName + "' to use per-entity access.");
                     }
                     String storageClass = resolveStorageClass(info);
                     String keyExpr = buildScopedKey(env, varName, ctx.java("scope"), info);

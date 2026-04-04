@@ -28,10 +28,10 @@ Global variables are reset whenever the script reloads or the server restarts. U
 
 ## Scoped Global Variables
 
-Add `for type refType` to give each scope reference its own independent value:
+Add `scoped` to give each scope reference its own independent value:
 
 ```luma
-global swap_enabled for type player with default 0
+global scoped swap_enabled with default 0
 
 command swap:
     set enabled to get swap_enabled for player
@@ -50,7 +50,7 @@ Each player has their own `swap_enabled` value. Enabling swap mode for one playe
 Use `for <scope>` to read or write a specific scope reference's value:
 
 ```luma
-global coins for type player with default 0
+global scoped coins with default 0
 
 command earn:
     set bal to get coins for player
@@ -77,7 +77,7 @@ command pay:
 If you use `no <type>` as the default value, the variable starts unset. You can check this with `is set` / `is not set`:
 
 ```luma
-global pos1 for type player with default no location
+global scoped pos1 with default no location
 
 command select:
     set pos1 to get player's location for player

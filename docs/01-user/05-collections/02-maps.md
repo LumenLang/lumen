@@ -15,7 +15,7 @@ set stats to new map
 For a global or stored map:
 
 ```luma
-global stored stats for ref type player with default new map
+global stored scoped stats with default new map
 ```
 
 This creates a per-player map that is saved across restarts, starting empty for each new player.
@@ -74,10 +74,10 @@ loop key val in stats:
 
 ## Scoped Map Operations
 
-When a map is declared as a scoped global (with `for ref type`), you can operate on it directly using `for <scope>` without loading it into a local variable first.
+When a map is declared as a scoped global (with `scoped`), you can operate on it directly using `for <scope>` without loading it into a local variable first.
 
 ```luma
-global stored stats for ref type player with default new map
+global stored scoped stats with default new map
 ```
 
 ```luma

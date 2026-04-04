@@ -58,7 +58,7 @@ public final class DefaultExpressions {
                 .by("Lumen")
                 .pattern("none")
                 .description("Represents a null (absent) value. Useful as a default for global vars that hold optional objects like locations or players.")
-                .examples("global var pos1 for ref type player default none", "var result = none")
+                .examples("global scoped pos1 with default none", "var result = none")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
                 .handler(ctx -> new ExpressionResult("(Object) null", null)));
@@ -514,7 +514,7 @@ public final class DefaultExpressions {
      * even when their initial value is absent:
      *
      * <pre>{@code
-     * global var pos1 for ref type player default no location
+     * global scoped pos1 with default no location
      * }</pre>
      *
      * @param api the Lumen API to register expressions on
@@ -524,7 +524,7 @@ public final class DefaultExpressions {
                 .by("Lumen")
                 .pattern("no location")
                 .description("Represents a null location value. The variable will carry the LOCATION ref type at compile time.")
-                .example("global var pos1 for ref type player default no location")
+                .example("global scoped pos1 with default no location")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
                 .returnRefTypeId(Types.LOCATION.id())
@@ -537,7 +537,7 @@ public final class DefaultExpressions {
                 .by("Lumen")
                 .pattern("no player")
                 .description("Represents a null player value. The variable will carry the PLAYER ref type at compile time.")
-                .example("global var target for ref type player default no player")
+                .example("global scoped target with default no player")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
                 .returnRefTypeId(Types.PLAYER.id())
@@ -547,7 +547,7 @@ public final class DefaultExpressions {
                 .by("Lumen")
                 .pattern("no entity")
                 .description("Represents a null entity value. The variable will carry the ENTITY ref type at compile time.")
-                .example("global var target for ref type player default no entity")
+                .example("global scoped target with default no entity")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
                 .returnRefTypeId(Types.ENTITY.id())
@@ -560,7 +560,7 @@ public final class DefaultExpressions {
                 .by("Lumen")
                 .pattern("no world")
                 .description("Represents a null world value. The variable will carry the WORLD ref type at compile time.")
-                .example("global var w for ref type player default no world")
+                .example("global scoped w with default no world")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
                 .returnRefTypeId(Types.WORLD.id())
@@ -573,7 +573,7 @@ public final class DefaultExpressions {
                 .by("Lumen")
                 .pattern("no block")
                 .description("Represents a null block value. The variable will carry the BLOCK ref type at compile time.")
-                .example("global var target_block for ref type player default no block")
+                .example("global scoped target_block with default no block")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
                 .returnRefTypeId(Types.BLOCK.id())

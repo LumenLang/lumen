@@ -43,7 +43,7 @@ multiply count by 2
 These work with per-player variables too:
 
 ```luma
-global points for ref type player with default 0
+global scoped points with default 0
 
 command earn:
     add 25 to points

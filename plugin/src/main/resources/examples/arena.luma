@@ -1,6 +1,5 @@
 # Multi Arena System
 # Supports multiple PvP arenas, each with a name and 3D bounds.
-# Uses data classes for type-safe arena storage.
 #
 # Commands:
 #   /arena create <name> <x1> <y1> <z1> <x2> <y2> <z2>

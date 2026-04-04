@@ -21,22 +21,22 @@ import dev.lumenlang.lumen.pipeline.language.validator.VarNameValidator;
 import dev.lumenlang.lumen.pipeline.placeholder.PlaceholderExpander;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 /**
  * Statement form handler for global variable declarations.
  *
- * <p>Accepts the syntax {@code global [stored] name [for type refType] with default expr}
- * and {@code global [stored] name [for ref type refType] with default expr}.
- * Declarations without {@code for type} create a server-wide global loaded automatically
- * at the start of every block body. Declarations with {@code for type} create a scoped
- * global whose storage key includes a runtime identifier derived from the given reference type.
+ * <p>Accepts the syntax {@code global [stored] [scoped] name [with default expr]}.
+ * Declarations without {@code scoped} create a server-wide global loaded automatically
+ * at the start of every block body. Declarations with {@code scoped} create a per-entity
+ * global whose storage key includes a runtime identifier derived from the scope variable.
  * Scoped globals are not loaded automatically and must be accessed explicitly via
  * {@code get name for scope} and {@code set name to value for scope}.
+ *
+ * <p>The {@code with default expr} clause is optional. When omitted, the default is
+ * {@code null}.
  *
  * <p>When {@code stored} is present, the variable is persisted to disk and survives
  * server restarts. Without {@code stored}, the value lives only in memory.
@@ -51,16 +51,14 @@ public final class GlobalDeclarationForm implements StatementFormHandler {
     }
 
     private static boolean isGlobalDeclaration(@NotNull List<Token> t) {
-        if (t.size() < 5) return false;
+        if (t.size() < 2) return false;
         if (!t.get(0).text().equalsIgnoreCase("global")) return false;
-        int start = 1;
-        if (t.get(start).text().equalsIgnoreCase("stored")) start++;
-        String nameCandidate = t.get(start).text();
-        if (nameCandidate.equalsIgnoreCase("for") || nameCandidate.equalsIgnoreCase("with") || nameCandidate.equalsIgnoreCase("default")) return false;
-        for (int i = start + 1; i < t.size() - 1; i++) {
-            if (t.get(i).text().equalsIgnoreCase("with") && t.get(i + 1).text().equalsIgnoreCase("default")) return true;
-        }
-        return false;
+        int idx = 1;
+        if (t.get(idx).text().equalsIgnoreCase("stored")) idx++;
+        if (idx < t.size() && t.get(idx).text().equalsIgnoreCase("scoped")) idx++;
+        if (idx >= t.size()) return false;
+        String nameCandidate = t.get(idx).text();
+        return !nameCandidate.equalsIgnoreCase("with") && !nameCandidate.equalsIgnoreCase("default");
     }
 
     @Override
@@ -74,48 +72,43 @@ public final class GlobalDeclarationForm implements StatementFormHandler {
     private void handleGlobal(@NotNull List<Token> t, @NotNull EmitContext ctx) {
         int idx = 1;
         boolean stored = false;
-        if (t.get(idx).text().equalsIgnoreCase("stored")) {
+        boolean scoped = false;
+        if (idx < t.size() && t.get(idx).text().equalsIgnoreCase("stored")) {
             stored = true;
             idx++;
+        }
+        if (idx < t.size() && t.get(idx).text().equalsIgnoreCase("scoped")) {
+            scoped = true;
+            idx++;
+        }
+
+        if (idx >= t.size()) {
+            throw new LumenScriptException(ctx.line(), ctx.raw(), "Expected variable name. Correct syntax: global [stored] [scoped] <name> [with default <expr>]");
         }
 
         String name = t.get(idx).text();
         idx++;
 
-        String refTypeName = null;
-        if (idx < t.size() && t.get(idx).text().equalsIgnoreCase("for")) {
-            idx++;
-            if (idx < t.size() && t.get(idx).text().equalsIgnoreCase("ref")) {
-                idx++;
-                if (idx >= t.size() || !t.get(idx).text().equalsIgnoreCase("type")) {
-                    throw new LumenScriptException(ctx.line(), ctx.raw(), "Expected 'type' after 'ref'. Correct syntax: global " + name + " for ref type <refType> with default ...");
-                }
-                idx++;
-            } else if (idx < t.size() && t.get(idx).text().equalsIgnoreCase("type")) {
-                idx++;
-            } else {
-                throw new LumenScriptException(ctx.line(), ctx.raw(), "Expected 'type' or 'ref type' after 'for'. Correct syntax: global " + name + " for type <refType> with default ...");
+        List<Token> exprTokens = null;
+        if (idx < t.size()) {
+            if (!t.get(idx).text().equalsIgnoreCase("with")) {
+                throw new LumenScriptException(ctx.line(), ctx.raw(), "Unexpected token '" + t.get(idx).text() + "'. Correct syntax: global [stored] [scoped] " + name + " [with default <expr>]");
             }
+            idx++;
+            if (idx >= t.size() || !t.get(idx).text().equalsIgnoreCase("default")) {
+                throw new LumenScriptException(ctx.line(), ctx.raw(), "Expected 'default' after 'with'. Correct syntax: global " + name + " with default <expr>");
+            }
+            idx++;
             if (idx >= t.size()) {
-                throw new LumenScriptException(ctx.line(), ctx.raw(), "Expected ref type name after 'for type'. Correct syntax: global " + name + " for type <refType> with default ...");
+                throw new LumenScriptException(ctx.line(), ctx.raw(), "Expected an expression after 'with default'.");
             }
-            refTypeName = t.get(idx).text().toUpperCase(Locale.ROOT);
-            idx++;
+            exprTokens = t.subList(idx, t.size());
         }
 
-        if (idx >= t.size() || !t.get(idx).text().equalsIgnoreCase("with")) {
-            throw new LumenScriptException(ctx.line(), ctx.raw(), "Expected 'with default'. Correct syntax: global " + name + " with default ...");
-        }
-        idx++;
-        if (idx >= t.size() || !t.get(idx).text().equalsIgnoreCase("default")) {
-            throw new LumenScriptException(ctx.line(), ctx.raw(), "Expected 'default' after 'with'. Correct syntax: global " + name + " with default ...");
-        }
-        idx++;
-
-        registerGlobal(name, refTypeName, stored, t.subList(idx, t.size()), ctx);
+        registerGlobal(name, scoped, stored, exprTokens, ctx);
     }
 
-    private void registerGlobal(@NotNull String name, @Nullable String refTypeName, boolean stored, @NotNull List<Token> exprTokens, @NotNull EmitContext ctx) {
+    private void registerGlobal(@NotNull String name, boolean scoped, boolean stored, @NotNull List<Token> exprTokens, @NotNull EmitContext ctx) {
         TypeEnv env = (TypeEnv) ctx.env();
 
         String nameError = VarNameValidator.validate(name);
@@ -144,11 +137,12 @@ public final class GlobalDeclarationForm implements StatementFormHandler {
             }
         }
 
-        env.registerGlobal(new TypeEnv.GlobalVarInfo(name, defaultJava, className, refTypeName, exprRefTypeId, stored, exprMetadata));
+        env.registerGlobal(new TypeEnv.GlobalVarInfo(name, defaultJava, className, scoped, exprRefTypeId, stored, exprMetadata));
     }
 
     private @NotNull String resolveDefaultJava(@NotNull Expr expr, @NotNull TypeEnv env) {
         if (expr instanceof Expr.Literal l) {
+            if (l.value() == null) return "(Object) null";
             return l.value() instanceof String s ? PlaceholderExpander.expand(s, env) : l.value().toString();
         }
         if (expr instanceof Expr.RefExpr r) {

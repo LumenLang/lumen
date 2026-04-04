@@ -11,7 +11,7 @@ config:
     prefix: <gold>[Grapple]<reset>
     default_speed: 2
 
-global grapple_speed for type player with default 2
+global scoped grapple_speed with default 2
 
 command grapplinghook:
     permission "lumen.grapple"

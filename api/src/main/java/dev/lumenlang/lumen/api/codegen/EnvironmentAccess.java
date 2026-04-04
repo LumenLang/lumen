@@ -344,11 +344,11 @@ public interface EnvironmentAccess {
         @NotNull String className();
 
         /**
-         * Returns the ref type ID used as the scope qualifier for this global, or {@code null} for server-wide globals.
+         * Returns whether this global is scoped per entity rather than server-wide.
          *
-         * @return the ref type identifier, or {@code null}
+         * @return {@code true} if scoped
          */
-        @Nullable String refTypeName();
+        boolean scoped();
 
         /**
          * Returns whether the variable is persisted to disk.

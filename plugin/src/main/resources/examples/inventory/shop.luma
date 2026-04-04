@@ -18,7 +18,7 @@ data shop_item:
     display_name string
 
 global shop_items with default new list of shop_item
-global shop_page for type player with default 0
+global scoped shop_page with default 0
 
 load:
     add new shop_item with material "diamond_sword" price 100 display_name "&bDiamond Sword" to shop_items

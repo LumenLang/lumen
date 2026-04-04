@@ -81,6 +81,9 @@ public final class VarDeclarationForm implements StatementFormHandler {
     }
 
     private static void emitScopedGlobalSet(@NotNull String name, @NotNull EnvironmentAccess.GlobalInfo info, @NotNull List<Token> exprTokens, @NotNull EmitContextImpl ctx, @NotNull TypeEnv env) {
+        if (!info.scoped()) {
+            throw new LumenScriptException(ctx.line(), ctx.raw(), "Variable '" + name + "' is not a scoped global. Declare it with 'global scoped " + name + "' to use per-entity access.", exprTokens);
+        }
         int splitIdx = -1;
         for (int i = exprTokens.size() - 2; i >= 1; i--) {
             String text = exprTokens.get(i).text();

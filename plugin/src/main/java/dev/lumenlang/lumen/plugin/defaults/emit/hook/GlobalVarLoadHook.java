@@ -19,11 +19,10 @@ import java.util.Map;
 /**
  * Block enter hook that loads server-wide global variables at the start of every block body.
  *
- * <p>For each global declared with {@code global} that has no {@code for type} clause,
- * this hook emits a local variable initialization that reads from {@link GlobalVars}
- * (or {@link PersistentVars} for stored globals).
- * Scoped globals (declared with {@code for type}) are not loaded here and must be
- * accessed explicitly via {@code get name for scope}.
+ * <p>For each global declared without {@code scoped}, this hook emits a local variable
+ * initialization that reads from {@link GlobalVars} (or {@link PersistentVars} for
+ * stored globals). Scoped globals are not loaded here and must be accessed explicitly
+ * via {@code get name for scope}.
  */
 @Registration(order = -2000)
 @SuppressWarnings({"unused", "DataFlowIssue"})
@@ -80,7 +79,7 @@ public final class GlobalVarLoadHook implements BlockEnterHook {
         for (EnvironmentAccess.GlobalInfo g : globals) {
             String name = g.name();
             if (env.lookupVar(name) != null) continue;
-            if (g.refTypeName() != null) continue;
+            if (g.scoped()) continue;
 
             String defaultJava = g.defaultJava();
             String className = g.className();

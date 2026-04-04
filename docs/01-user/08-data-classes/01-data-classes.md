@@ -144,7 +144,7 @@ Maps store key-value pairs. You can store data instances as values in a map.
 ### Creating a Map
 
 ```luma
-global stored stats for ref type player with default new map
+global stored scoped stats with default new map
 ```
 
 ### Storing and Retrieving Values
@@ -202,7 +202,7 @@ global stored active_reward with default none
 global stored warps with default new list of warp
 
 # per-player map
-global stored inventory for ref type player with default new map
+global stored scoped inventory with default new map
 ```
 
 Changes made to stored variables are saved automatically.

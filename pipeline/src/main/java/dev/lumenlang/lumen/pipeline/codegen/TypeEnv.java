@@ -340,7 +340,7 @@ public final class TypeEnv implements EnvironmentAccess {
         } else {
             globalVars.add(new GlobalVarInfo(
                     info.name(), info.defaultJava(), info.className(),
-                    info.refTypeName(), info.exprRefTypeId(), info.stored(),
+                    info.scoped(), info.exprRefTypeId(), info.stored(),
                     info.exprMetadata()));
         }
     }
@@ -471,14 +471,13 @@ public final class TypeEnv implements EnvironmentAccess {
      * @param name          the variable name
      * @param defaultJava   the Java expression for the default value
      * @param className     the script class name at the time of declaration
-     * @param refTypeName   the optional ref type name for per-entity scoping (e.g. {@code "player"}),
-     *                      or {@code null} for server-wide globals
+     * @param scoped        whether the global is scoped per entity rather than server-wide
      * @param exprRefTypeId the optional expression ref type id
      * @param stored        whether the variable is persisted to disk ({@code true}) or in-memory only ({@code false})
      * @param exprMetadata  compile-time metadata from the default expression, or {@code null}
      */
     public record GlobalVarInfo(@NotNull String name, @NotNull String defaultJava,
-                                @NotNull String className, @Nullable String refTypeName,
+                                @NotNull String className, boolean scoped,
                                 @Nullable String exprRefTypeId, boolean stored,
                                 @Nullable Map<String, Object> exprMetadata)
             implements EnvironmentAccess.GlobalInfo {

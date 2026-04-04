@@ -15,7 +15,7 @@ set items to new list
 For a global or stored list:
 
 ```luma
-global stored notes for ref type player with default new list
+global stored scoped notes with default new list
 ```
 
 This creates a per-player list that is saved across restarts, starting empty for each new player.
@@ -140,10 +140,10 @@ loop entry in warps:
 
 ## Scoped List Operations
 
-When a list is declared as a scoped global (with `for ref type`), you can operate on it directly using `for <scope>` without loading it into a local variable first.
+When a list is declared as a scoped global (with `scoped`), you can operate on it directly using `for <scope>` without loading it into a local variable first.
 
 ```luma
-global stored todos for ref type player with default new list
+global stored scoped todos with default new list
 ```
 
 ```luma

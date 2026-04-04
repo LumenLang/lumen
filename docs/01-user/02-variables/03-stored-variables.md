@@ -22,10 +22,10 @@ Even after a server restart, `total_joins` retains its value.
 
 ## Per-Player Stored Variables
 
-Combine `global stored` with `for ref type player` so each player has their own persistent value:
+Combine `global stored` with `scoped` so each player has their own persistent value:
 
 ```luma
-global stored coins for ref type player with default 0
+global stored scoped coins with default 0
 
 command earn:
     add 10 to coins
@@ -72,8 +72,8 @@ Deleting stored data is permanent. Once deleted, the values cannot be recovered.
 Stored variables can hold complex types too, including lists and maps:
 
 ```luma
-global stored notes for ref type player with default new list
-global stored balances for ref type player with default new map
+global stored scoped notes with default new list
+global stored scoped balances with default new map
 global stored warps with default new list of warp
 ```
 
