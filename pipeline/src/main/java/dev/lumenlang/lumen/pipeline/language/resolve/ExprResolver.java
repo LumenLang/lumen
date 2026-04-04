@@ -293,6 +293,9 @@ public final class ExprResolver {
         ExpressionResult result = resolveRecursive(tokens, ctx, env, depth + 1);
         if (result == null) return null;
         LumenType type = LumenType.resolve(result.refTypeId(), result.javaType());
+        if (type == null || !type.numeric()) {
+            return new TypedOperand("Coerce.toInt(" + result.java() + ")", LumenType.Primitive.INT);
+        }
         return new TypedOperand(result.java(), type);
     }
 

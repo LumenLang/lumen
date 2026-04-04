@@ -19,9 +19,6 @@ import java.util.List;
 
 /**
  * Pipeline-internal implementation of {@link EmitContext}.
- *
- * <p>Wraps the internal {@link TypeEnv}, {@link CodegenContext}, and {@link JavaBuilder}
- * and exposes them through the API-level interfaces.
  */
 public final class EmitContextImpl implements EmitContext {
 
@@ -31,8 +28,7 @@ public final class EmitContextImpl implements EmitContext {
     private final int line;
     private final String raw;
 
-    public EmitContextImpl(@NotNull TypeEnv env, @NotNull CodegenContext ctx,
-                           @NotNull JavaBuilder out, int line, @NotNull String raw) {
+    public EmitContextImpl(@NotNull TypeEnv env, @NotNull CodegenContext ctx, @NotNull JavaBuilder out, int line, @NotNull String raw) {
         this.env = env;
         this.ctx = ctx;
         this.out = out;

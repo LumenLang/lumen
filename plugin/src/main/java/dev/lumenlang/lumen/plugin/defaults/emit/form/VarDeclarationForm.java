@@ -66,8 +66,14 @@ public final class VarDeclarationForm implements StatementFormHandler {
 
         VarRef existing = env.lookupVar(name);
         if (existing != null) {
-            emitReassignment(name, existing, pipelineTokens, emitCtx, env);
-            return true;
+            if (tryReassignment(name, existing, exprTokens, pipelineTokens, emitCtx, env)) {
+                return true;
+            }
+            if (globalInfo != null) {
+                emitScopedGlobalSet(name, globalInfo, exprTokens, emitCtx, env);
+                return true;
+            }
+            throw new LumenScriptException(emitCtx.line(), emitCtx.raw(), "Cannot resolve expression '" + ExprResolver.joinTokens(exprTokens) + "'.", exprTokens);
         }
 
         emitDeclaration(name, exprTokens, pipelineTokens, emitCtx, env);
@@ -110,22 +116,26 @@ public final class VarDeclarationForm implements StatementFormHandler {
         String storageClass = info.stored() ? "PersistentVars" : "GlobalVars";
         String keyExpr = "\"" + info.className() + "." + name + ".\" + " + scopeRef.refType().keyExpression(scopeRef.java());
         ctx.out().line(storageClass + ".set(" + keyExpr + ", " + valueJava + ");");
+        VarRef fieldRef = env.lookupVar(name);
+        if (fieldRef != null) {
+            ctx.out().line(fieldRef.java() + " = " + valueJava + ";");
+        }
     }
 
-    private static void emitReassignment(@NotNull String name, @NotNull VarRef ref, @NotNull List<Token> tokens, @NotNull EmitContextImpl ctx, @NotNull TypeEnv env) {
+    private static boolean tryReassignment(@NotNull String name, @NotNull VarRef ref, @NotNull List<Token> exprTokens, @NotNull List<Token> pipelineTokens, @NotNull EmitContextImpl ctx, @NotNull TypeEnv env) {
         BlockContext block = env.blockContext();
         if (block.getEnvFromParents("__lambda_block") != null && env.isVarCapturedByLambda(name)) {
-            throw new LumenScriptException(ctx.line(), ctx.raw(), "Cannot modify '" + name + "' inside a schedule block. Use 'global " + name + " with default <value>' instead.", List.of(tokens.get(1)));
+            throw new LumenScriptException(ctx.line(), ctx.raw(), "Cannot modify '" + name + "' inside a schedule block. Use 'global " + name + " with default <value>' instead.", List.of(pipelineTokens.get(1)));
         }
-        List<Token> exprTokens = tokens.subList(3, tokens.size());
         String java = resolveExpressionJava(exprTokens, ctx, env);
         if (java == null) {
-            throw new LumenScriptException(ctx.line(), ctx.raw(), "Cannot resolve expression '" + ExprResolver.joinTokens(exprTokens) + "'.", exprTokens);
+            return false;
         }
         ctx.out().line(ref.java() + " = Coerce.coerce(" + java + ", " + ref.java() + ");");
         if (env.isStored(name)) {
             ctx.out().line(env.storedClassName(name) + ".set(" + env.getStoredKey(name) + ", " + ref.java() + ");");
         }
+        return true;
     }
 
     private static void emitDeclaration(@NotNull String name, @NotNull List<Token> exprTokens, @NotNull List<Token> pipelineTokens, @NotNull EmitContextImpl ctx, @NotNull TypeEnv env) {
