@@ -365,11 +365,9 @@ public final class DefaultEvents {
                         """
                                 if (event.getWhoClicked() instanceof Player __inv_p) {
                                     player = __inv_p;
-                                } else {
-                                    player = null;
                                 }""")
-                .varDescription("The player who clicked, or null if the clicker is not a player (unlikely)")
-                .withMeta("nullable", true)
+                .varDescription("The player who clicked")
+                .withMeta("nullable", false)
                 .addVar("inventory", Inventory.class.getName(), "event.getView().getTopInventory()")
                 .varDescription("The top inventory being viewed")
                 .addVar("name", Types.STRING,
@@ -377,10 +375,10 @@ public final class DefaultEvents {
                                 if (event.getView().getTopInventory().getHolder() instanceof LumenInventoryHolder __lh) {
                                     name = __lh.getName();
                                 } else {
-                                    name = null;
+                                    name = "";
                                 }""")
-                .varDescription("The Lumen inventory name, or null if not a Lumen inventory")
-                .withMeta("nullable", true)
+                .varDescription("The Lumen inventory name, or empty if not a Lumen inventory")
+                .withMeta("nullable", false)
                 .addVar("slot", Types.INT, "event.getSlot()")
                 .varDescription("The slot index that was clicked")
                 .addVar("rawSlot", Types.INT, "event.getRawSlot()")
@@ -514,7 +512,7 @@ public final class DefaultEvents {
                 .example("on chat:")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .cancellable(false)
+                .cancellable(true)
                 .addImport(AsyncPlayerChatEvent.class.getName())
                 .addImport(Lumen.class.getName())
                 .addVar("player", Types.PLAYER, "player")
