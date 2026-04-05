@@ -32,15 +32,14 @@ public final class GenericConditions {
     public void register(@NotNull LumenAPI api) {
         api.patterns().condition(b -> b
                 .by("Lumen")
-                .pattern("chance %n:INT%")
-                .description("Succeeds with a random chance (0 to 100).")
-                .example("if chance 50:")
+                .patterns("[a] (chance|probability) of %value:INT%", "[a] %value:INT% (chance|probability)")
+                .description("Succeeds with a random chance (0 to 100). Values of 100 or more always succeed, values of 0 or less always fail.")
+                .example("if a chance of 50%:")
                 .since("1.0.0")
                 .category(Categories.SERVER)
                 .handler((match, env, ctx) -> {
                     ctx.addImport(ThreadLocalRandom.class.getName());
-                    return "(ThreadLocalRandom.current().nextInt(100) < "
-                            + match.java("n", ctx, env) + ")";
+                    return "(ThreadLocalRandom.current().nextInt(100) < " + match.java("value", ctx, env) + ")";
                 }));
 
         api.patterns().condition(b -> b

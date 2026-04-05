@@ -22,11 +22,11 @@ command crate:
     message player "&6&lOpening crate..."
 
     after 20 ticks:
-        if chance 10:
+        if a chance of 50%:
             message player "&d&lLEGENDARY! &fDiamond x3"
             give player diamond 3
             play sound "entity_player_levelup" to player
-        else if chance 40:
+        else if a chance of 40%:
             message player "&9&lRare! &fGold x5"
             give player gold_ingot 5
             play sound "entity_experience_orb_pickup" to player

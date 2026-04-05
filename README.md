@@ -41,7 +41,7 @@ Instead, it:
 There is no continuously running interpreter.
 There are no runtime logic trees evaluated on every event.
 
-Once processed, scripts behave like compiled server code, enabling near-native performance.
+Once processed, scripts are compiled server code, enabling near-native performance.
 
 Which means you can write complex scripts without worrying about performance degradation as your server grows.
 
@@ -53,10 +53,10 @@ Which means you can write complex scripts without worrying about performance deg
 on join:
     message player "Welcome to the server!"
 
-    if player is op:
+    if player is a op:
         message player "Hello, admin!"
 
-    if chance 50%:
+    if a chance of 50%:
         give player diamond 1
 ```
 

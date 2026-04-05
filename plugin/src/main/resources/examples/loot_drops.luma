@@ -123,13 +123,13 @@ every spawn_interval ticks as "loot_spawner":
                 set count to active_chests size
                 if count < max_active:
                     set tier to "common"
-                    if chance legendary_chance:
+                    if a chance of legendary_chance:
                         set tier to "legendary"
-                    else if chance epic_chance:
+                    else if a chance of epic_chance:
                         set tier to "epic"
-                    else if chance rare_chance:
+                    else if a chance of rare_chance:
                         set tier to "rare"
-                    else if chance uncommon_chance:
+                    else if a chance of uncommon_chance:
                         set tier to "uncommon"
 
                     set p1x to drop_pos1 x

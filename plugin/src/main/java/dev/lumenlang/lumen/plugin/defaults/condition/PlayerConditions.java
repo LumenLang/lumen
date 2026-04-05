@@ -66,9 +66,9 @@ public final class PlayerConditions {
 
         api.patterns().condition(b -> b
                 .by("Lumen")
-                .pattern("%p:PLAYER% is op")
+                .pattern("%p:PLAYER% is [a] op")
                 .description("Checks if a player has operator status.")
-                .example("if player is op:")
+                .example("if player is a op:")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .handler((match, env, ctx) -> match.ref("p").java() + ".isOp()"));
