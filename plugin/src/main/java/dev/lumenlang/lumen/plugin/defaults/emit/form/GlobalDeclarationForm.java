@@ -43,7 +43,7 @@ import java.util.Map;
  * server restarts. Without {@code stored}, the value lives only in memory.
  */
 @Registration(order = -2000)
-@SuppressWarnings({"unused", "DataFlowIssue"})
+@SuppressWarnings("unused")
 public final class GlobalDeclarationForm implements StatementFormHandler {
 
     @Call
