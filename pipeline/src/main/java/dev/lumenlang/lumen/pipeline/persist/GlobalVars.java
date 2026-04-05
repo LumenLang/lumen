@@ -1,5 +1,6 @@
 package dev.lumenlang.lumen.pipeline.persist;
 
+import dev.lumenlang.lumen.pipeline.java.compiled.Coerce;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +33,9 @@ public final class GlobalVars {
     public static <T> @Nullable T get(@NotNull String key, @Nullable T defaultValue) {
         Object val = VALUES.get(key);
         if (val == null) return defaultValue;
+        if (defaultValue != null && !defaultValue.getClass().isInstance(val)) {
+            val = Coerce.coerce(val, defaultValue);
+        }
         return (T) val;
     }
 

@@ -62,14 +62,17 @@ command pay:
     if args size < 1:
         message player "&cUsage: /pay <player>"
     else:
-        set target to get args at index 0
-        set my_bal to get coins for player
-        set target_bal to get coins for target
-        subtract 10 from my_bal
-        add 10 to target_bal
-        set coins to my_bal for player
-        set coins to target_bal for target
-        message player "&eSent 10 coins to {target}!"
+        set target to get player by name get args at index 0
+        if target is not set:
+            message player "&cPlayer not found."
+        else:
+            set my_bal to get coins for player
+            set target_bal to get coins for target
+            subtract 10 from my_bal
+            add 10 to target_bal
+            set coins to my_bal for player
+            set coins to target_bal for target
+            message player "&eSent 10 coins to {target}!"
 ```
 
 ## No Default

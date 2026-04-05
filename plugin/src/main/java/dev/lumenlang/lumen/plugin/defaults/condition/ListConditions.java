@@ -80,9 +80,8 @@ public final class ListConditions {
                 .category(Categories.LIST)
                 .handler((match, env, ctx) -> {
                     Object listVal = match.value("list");
-                    if (listVal instanceof EnvironmentAccess.VarHandle ref) {
-                        ctx.addImport(List.class.getName());
-                        return "((List<?>) " + ref.java() + ").isEmpty()";
+                    if (listVal instanceof EnvironmentAccess.VarHandle) {
+                        throw new RuntimeException("Cannot use 'for <scope>' with a local list variable. Use '%list% is empty' instead, or declare the list as 'global scoped'.");
                     }
                     String listVarName = (String) listVal;
                     EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(listVarName);
@@ -107,9 +106,8 @@ public final class ListConditions {
                 .category(Categories.LIST)
                 .handler((match, env, ctx) -> {
                     Object listVal = match.value("list");
-                    if (listVal instanceof EnvironmentAccess.VarHandle ref) {
-                        ctx.addImport(List.class.getName());
-                        return "!((List<?>) " + ref.java() + ").isEmpty()";
+                    if (listVal instanceof EnvironmentAccess.VarHandle) {
+                        throw new RuntimeException("Cannot use 'for <scope>' with a local list variable. Use '%list% is not empty' instead, or declare the list as 'global scoped'.");
                     }
                     String listVarName = (String) listVal;
                     EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(listVarName);

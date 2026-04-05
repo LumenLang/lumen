@@ -80,9 +80,8 @@ public final class MapConditions {
                 .category(Categories.MAP)
                 .handler((match, env, ctx) -> {
                     Object mapVal = match.value("map");
-                    if (mapVal instanceof EnvironmentAccess.VarHandle ref) {
-                        ctx.addImport(Map.class.getName());
-                        return "((Map<?, ?>) " + ref.java() + ").isEmpty()";
+                    if (mapVal instanceof EnvironmentAccess.VarHandle) {
+                        throw new RuntimeException("Cannot use 'for <scope>' with a local map variable. Use '%map% is empty' instead, or declare the map as 'global scoped'.");
                     }
                     String mapVarName = (String) mapVal;
                     EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(mapVarName);
@@ -107,9 +106,8 @@ public final class MapConditions {
                 .category(Categories.MAP)
                 .handler((match, env, ctx) -> {
                     Object mapVal = match.value("map");
-                    if (mapVal instanceof EnvironmentAccess.VarHandle ref) {
-                        ctx.addImport(Map.class.getName());
-                        return "!((Map<?, ?>) " + ref.java() + ").isEmpty()";
+                    if (mapVal instanceof EnvironmentAccess.VarHandle) {
+                        throw new RuntimeException("Cannot use 'for <scope>' with a local map variable. Use '%map% is not empty' instead, or declare the map as 'global scoped'.");
                     }
                     String mapVarName = (String) mapVal;
                     EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(mapVarName);

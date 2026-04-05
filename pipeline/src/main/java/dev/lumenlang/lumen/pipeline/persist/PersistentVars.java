@@ -1,5 +1,6 @@
 package dev.lumenlang.lumen.pipeline.persist;
 
+import dev.lumenlang.lumen.pipeline.java.compiled.Coerce;
 import dev.lumenlang.lumen.pipeline.persist.impl.FilePersistentStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,6 +85,9 @@ public final class PersistentVars {
         Object val = storage.get(key);
         if (val == null) return defaultValue;
         if (valueResolver != null) val = valueResolver.apply(val);
+        if (defaultValue != null && !defaultValue.getClass().isInstance(val)) {
+            val = Coerce.coerce(val, defaultValue);
+        }
         return (T) val;
     }
 

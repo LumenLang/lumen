@@ -83,7 +83,7 @@ global stored scoped stats with default new map
 ```luma
 set stats at key "kills" to 0 for player
 
-set kills to get key "kills" from stats for player
+set kills to get stats at key "kills" for player
 
 if stats is empty for player:
     message player "&7No stats yet."

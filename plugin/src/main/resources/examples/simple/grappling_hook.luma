@@ -24,8 +24,6 @@ command grapplinghook:
             if args size < 2:
                 message player "{prefix} <red>Usage: /grapple speed <number>"
             else:
-            // FIXXX!! NEEDS A FIX!
-            // User might not want to do "as number" - or may not know about it
                 set spd to get args at index 1 as number
                 set grapple_speed to spd for player
                 message player "{prefix} <green>Grapple speed set to <white>{spd}<green>!"

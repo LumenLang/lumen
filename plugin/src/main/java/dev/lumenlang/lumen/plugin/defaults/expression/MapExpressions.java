@@ -72,6 +72,10 @@ public final class MapExpressions {
                         throw new RuntimeException("Variable '" + mapVarName
                                 + "' is not a global variable. Scoped expressions (for ...) are only supported on global vars.");
                     }
+                    if (!info.scoped()) {
+                        throw new RuntimeException("'" + mapVarName
+                                + "' is not a scoped global. Declare it with 'global scoped " + mapVarName + "' to use per-entity access.");
+                    }
                     String storageClass = info.stored() ? "PersistentVars" : "GlobalVars";
                     String storageKey = buildScopedKey(env, mapVarName, scopeVarName, info);
                     ctx.codegen().addImport(Map.class.getName());
