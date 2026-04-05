@@ -42,7 +42,8 @@ processResources {
 }
 
 shadowJar {
-    archiveClassifier.set('')
+    archiveClassifier.set('shadow')
+    archiveFileName.set(rootProject.name + (version.isEmpty() ? "" : "-${version}") + ".jar")
     archiveBaseName.set(rootProject.name)
     exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
     destinationDirectory.set(rootProject.layout.buildDirectory.dir("libs"))
@@ -70,11 +71,7 @@ java {
 publishing {
     publications {
         mavenJava(MavenPublication) {
-            artifact jar
-            artifact sourcesJar
-            artifact(shadowJar) {
-                classifier = 'shadow'
-            }
+            from components.java
             groupId = rootProject.group
             artifactId = 'lumen-plugin'
             version = rootProject.version
