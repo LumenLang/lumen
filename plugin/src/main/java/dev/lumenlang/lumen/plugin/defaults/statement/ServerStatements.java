@@ -4,10 +4,8 @@ import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.pattern.Categories;
-import org.bukkit.Sound;
+import dev.lumenlang.lumen.plugin.util.SoundHelper;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Locale;
 
 /**
  * Registers built-in server-related statement patterns.
@@ -20,21 +18,12 @@ public final class ServerStatements {
     public void register(@NotNull LumenAPI api) {
         api.patterns().statement(b -> b
                 .by("Lumen")
-                .pattern("use %clazz:EXPR%")
+                .pattern("(use|import) %clazz:EXPR%")
                 .description("Adds a Java import to the compiled script.")
                 .example("use org.bukkit.Material")
                 .since("1.0.0")
                 .category(Categories.SERVER)
                 .handler((line, ctx, out) -> ctx.codegen().addImport(ctx.java("clazz"))));
-
-        api.patterns().statement(b -> b
-                .by("Lumen")
-                .pattern("import %cls:EXPR%")
-                .description("Adds a Java import to the compiled script (alias for 'use').")
-                .example("import org.bukkit.Material")
-                .since("1.0.0")
-                .category(Categories.SERVER)
-                .handler((line, ctx, out) -> ctx.codegen().addImport(ctx.java("cls"))));
 
         api.patterns().statement(b -> b
                 .by("Lumen")
@@ -55,8 +44,7 @@ public final class ServerStatements {
                 .category(Categories.ENTITY)
                 .handler((line, ctx, out) -> {
                     String locJava = ctx.java("loc");
-                    out.line(locJava + ".getWorld().spawnEntity("
-                            + locJava + ", " + ctx.java("type") + ");");
+                    out.line(locJava + ".getWorld().spawnEntity(" + locJava + ", " + ctx.java("type") + ");");
                 }));
 
         api.patterns().statement(b -> b
@@ -66,8 +54,7 @@ public final class ServerStatements {
                 .example("broadcast \"Server restarting in 5 minutes!\"")
                 .since("1.0.0")
                 .category(Categories.SERVER)
-                .handler((line, ctx, out) -> out.line("LumenText.broadcast("
-                        + ctx.java("text") + ");")));
+                .handler((line, ctx, out) -> out.line("LumenText.broadcast(" + ctx.java("text") + ");")));
 
         api.patterns().statement(b -> b
                 .by("Lumen")
@@ -96,9 +83,7 @@ public final class ServerStatements {
                 .example("execute console \"say Hello\"")
                 .since("1.0.0")
                 .category(Categories.SERVER)
-                .handler((line, ctx, out) -> out.line(
-                        "Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "
-                                + ctx.java("cmd") + ");")));
+                .handler((line, ctx, out) -> out.line("Bukkit.dispatchCommand(Bukkit.getConsoleSender(), " + ctx.java("cmd") + ");")));
 
         api.patterns().statement(b -> b
                 .by("Lumen")
@@ -108,19 +93,8 @@ public final class ServerStatements {
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .handler((line, ctx, out) -> {
-                    ctx.codegen().addImport(Sound.class.getName());
-                    ctx.codegen().addImport(Locale.class.getName());
-                    String soundJava = ctx.java("sound");
-                    String whoJava = ctx.java("who");
-                    out.line("{");
-                    out.line("  String __sndRaw = " + soundJava + ";");
-                    out.line("  try {");
-                    out.line("    Sound __snd = Sound.valueOf(__sndRaw.toUpperCase(Locale.ROOT).replace('.', '_'));");
-                    out.line("    " + whoJava + ".playSound(" + whoJava + ".getLocation(), __snd, 1.0f, 1.0f);");
-                    out.line("  } catch (IllegalArgumentException __ex) {");
-                    out.line("    " + whoJava + ".playSound(" + whoJava + ".getLocation(), __sndRaw, 1.0f, 1.0f);");
-                    out.line("  }");
-                    out.line("}");
+                    ctx.codegen().addImport(SoundHelper.class.getName());
+                    out.line(SoundHelper.class.getSimpleName() + ".playSound(" + ctx.java("who") + ", " + ctx.java("sound") + ");");
                 }));
     }
 }
