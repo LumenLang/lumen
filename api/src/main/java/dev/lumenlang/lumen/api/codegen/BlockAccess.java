@@ -107,9 +107,6 @@ public interface BlockAccess {
     /**
      * Returns {@code true} if this node has a following sibling at the same indentation level.
      *
-     * <p>Statement handlers can use this to enforce structural constraints, such as
-     * preventing unreachable code after a terminal statement.
-     *
      * @return {@code true} if there is a next sibling
      */
     boolean hasNext();
