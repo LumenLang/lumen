@@ -134,8 +134,8 @@ public final class DataExpressions {
                 .by("Lumen")
                 .pattern("new %body:EXPR%")
                 .description("Creates a new data instance. Use 'with' to set fields: new arena with name \"x\" x1 5")
-                .examples("var a = new arena",
-                        "var a = new arena with name \"PvP\" x1 0 y1 0 z1 0 x2 100 y2 100 z2 100")
+                .examples("set a to new arena",
+                        "set a to new arena with name \"PvP\" x1 0 y1 0 z1 0 x2 100 y2 100 z2 100")
                 .since("1.0.0")
                 .category(Categories.DATA)
                 .returnRefTypeId(Types.DATA.id())
@@ -216,8 +216,8 @@ public final class DataExpressions {
                 .by("Lumen")
                 .pattern("get field %field:STRING% (of|from) %obj:EXPR%")
                 .description("Gets a field value from a data instance.")
-                .examples("var name = get field \"name\" of myArena",
-                        "var x = get field \"x1\" from myArena")
+                .examples("set name to get field \"name\" of myArena",
+                        "set x to get field \"x1\" from myArena")
                 .since("1.0.0")
                 .category(Categories.DATA)
                 .handler(ctx -> {
@@ -232,7 +232,7 @@ public final class DataExpressions {
                 .by("Lumen")
                 .pattern("%obj:EXPR% field [of] %field:STRING%")
                 .description("Gets a field value from a data instance using postfix syntax.")
-                .example("var name = myArena field \"name\"")
+                .example("set name to myArena field \"name\"")
                 .since("1.0.0")
                 .category(Categories.DATA)
                 .handler(ctx -> {

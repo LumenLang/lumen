@@ -25,9 +25,9 @@ public final class MathExpressions {
                 .patterns("random (between|from) %min:INT% (to|and) %max:INT%",
                         "random %min:INT% to %max:INT%")
                 .description("Returns a random integer between min (inclusive) and max (inclusive).")
-                .examples("var roll = random 1 to 6",
-                        "var rx = random between 0 and 100",
-                        "var n = random from low to high")
+                .examples("set roll to random 1 to 6",
+                        "set rx to random between 0 and 100",
+                        "set n to random from low to high")
                 .since("1.0.0")
                 .category(Categories.MATH)
                 .returnJavaType(Types.INT)
@@ -46,8 +46,8 @@ public final class MathExpressions {
                 .patterns("random decimal (between|from) %min:NUMBER% (to|and) %max:NUMBER%",
                         "random decimal %min:NUMBER% to %max:NUMBER%")
                 .description("Returns a random decimal (double) between min (inclusive) and max (exclusive).")
-                .examples("var luck = random decimal between 0.0 and 1.0",
-                        "var dmg = random decimal 1.5 to 10.0")
+                .examples("set luck to random decimal between 0.0 and 1.0",
+                        "set dmg to random decimal 1.5 to 10.0")
                 .since("1.0.0")
                 .category(Categories.MATH)
                 .returnJavaType(Types.DOUBLE)
@@ -65,7 +65,7 @@ public final class MathExpressions {
                 .by("Lumen")
                 .pattern("chance %pct:NUMBER%")
                 .description("Returns true with the given percentage chance (0 to 100). For example, 'chance 25' succeeds roughly 25% of the time.")
-                .examples("var lucky = chance 10",
+                .examples("set lucky to chance 10",
                         "if chance 50: message player \"Heads!\"")
                 .since("1.0.0")
                 .category(Categories.MATH)
@@ -84,8 +84,8 @@ public final class MathExpressions {
                 .patterns("(min|minimum) of %x:NUMBER% and %y:NUMBER%",
                         "(min|minimum) between %x:NUMBER% and %y:NUMBER%")
                 .description("Returns the smaller of two values.")
-                .examples("var lowest = min of health and maxHealth",
-                        "var lowest = minimum between 10 and 20")
+                .examples("set lowest to min of health and maxHealth",
+                        "set lowest to minimum between 10 and 20")
                 .since("1.0.0")
                 .category(Categories.MATH)
                 .returnJavaType(Types.DOUBLE)
@@ -98,8 +98,8 @@ public final class MathExpressions {
                 .patterns("(max|maximum) of %x:NUMBER% and %y:NUMBER%",
                         "(max|maximum) between %x:NUMBER% and %y:NUMBER%")
                 .description("Returns the larger of two values.")
-                .examples("var highest = max of health and maxHealth",
-                        "var highest = maximum between 10 and 20")
+                .examples("set highest to max of health and maxHealth",
+                        "set highest to maximum between 10 and 20")
                 .since("1.0.0")
                 .category(Categories.MATH)
                 .returnJavaType(Types.DOUBLE)
@@ -111,7 +111,7 @@ public final class MathExpressions {
                 .by("Lumen")
                 .pattern("abs of %x:NUMBER%")
                 .description("Returns the absolute value of a number.")
-                .example("var positive = abs of difference")
+                .example("set positive to abs of difference")
                 .since("1.0.0")
                 .category(Categories.MATH)
                 .returnJavaType(Types.DOUBLE)
@@ -123,7 +123,7 @@ public final class MathExpressions {
                 .by("Lumen")
                 .pattern("round %x:NUMBER%")
                 .description("Rounds a number to the nearest integer.")
-                .example("var rounded = round 3.7")
+                .example("set rounded to round 3.7")
                 .since("1.0.0")
                 .category(Categories.MATH)
                 .returnJavaType(Types.LONG)
@@ -135,7 +135,7 @@ public final class MathExpressions {
                 .by("Lumen")
                 .pattern("floor %x:NUMBER%")
                 .description("Rounds a number down to the nearest integer.")
-                .example("var floored = floor 3.7")
+                .example("set floored to floor 3.7")
                 .since("1.0.0")
                 .category(Categories.MATH)
                 .returnJavaType(Types.INT)
@@ -147,7 +147,7 @@ public final class MathExpressions {
                 .by("Lumen")
                 .pattern("ceil %x:NUMBER%")
                 .description("Rounds a number up to the nearest integer.")
-                .example("var ceiled = ceil 3.2")
+                .example("set ceiled to ceil 3.2")
                 .since("1.0.0")
                 .category(Categories.MATH)
                 .returnJavaType(Types.INT)
@@ -159,7 +159,7 @@ public final class MathExpressions {
                 .by("Lumen")
                 .pattern("clamp %x:NUMBER% between %min:NUMBER% and %max:NUMBER%")
                 .description("Clamps a value between a minimum and maximum.")
-                .example("var clamped = clamp health between 0 and 20")
+                .example("set clamped to clamp health between 0 and 20")
                 .since("1.0.0")
                 .category(Categories.MATH)
                 .returnJavaType(Types.DOUBLE)

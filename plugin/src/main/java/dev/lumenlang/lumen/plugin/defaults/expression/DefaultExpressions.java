@@ -58,7 +58,7 @@ public final class DefaultExpressions {
                 .by("Lumen")
                 .pattern("none")
                 .description("Represents a null (absent) value. Useful as a default for global vars that hold optional objects like locations or players.")
-                .examples("global var pos1 for ref type player default none", "var result = none")
+                .examples("global scoped pos1 with default none", "set result to none")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
                 .handler(ctx -> new ExpressionResult("(Object) null", null)));
@@ -69,7 +69,7 @@ public final class DefaultExpressions {
                 .by("Lumen")
                 .pattern("get location %who:PLAYER%")
                 .description("Returns the current location of a player.")
-                .example("var loc = get location player")
+                .example("set loc to get location player")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .returnRefTypeId(Types.LOCATION.id())
@@ -80,7 +80,7 @@ public final class DefaultExpressions {
                 .by("Lumen")
                 .pattern("get %who:PLAYER_POSSESSIVE% location")
                 .description("Returns the current location of a player.")
-                .example("var loc = get player's location")
+                .example("set loc to get player's location")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .returnRefTypeId(Types.LOCATION.id())
@@ -91,7 +91,7 @@ public final class DefaultExpressions {
                 .by("Lumen")
                 .pattern("get %who:PLAYER_POSSESSIVE% world")
                 .description("Returns the world a player is currently in.")
-                .example("var w = get player's world")
+                .example("set w to get player's world")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .returnRefTypeId(Types.WORLD.id())
@@ -102,7 +102,7 @@ public final class DefaultExpressions {
                 .by("Lumen")
                 .pattern("get player by (name|username) %name:STRING%")
                 .description("Looks up an online player by name.")
-                .example("var p = get player by name \"Notch\"")
+                .example("set p to get player by name \"Notch\"")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .returnRefTypeId(Types.PLAYER.id())
@@ -114,7 +114,7 @@ public final class DefaultExpressions {
                 .by("Lumen")
                 .pattern("get player by (name|username) %name:EXPR%")
                 .description("Looks up an online player by a name expression (variable or value).")
-                .example("var p = get player by name target_name")
+                .example("set p to get player by name target_name")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .returnRefTypeId(Types.PLAYER.id())
@@ -126,7 +126,7 @@ public final class DefaultExpressions {
                 .by("Lumen")
                 .pattern("get player by (uuid|unique id) %uuid:STRING%")
                 .description("Looks up an online player by UUID string.")
-                .example("var p = get player by uuid \"069a79f4-44e9-4726-a5be-fca90e38aaf5\"")
+                .example("set p to get player by uuid \"069a79f4-44e9-4726-a5be-fca90e38aaf5\"")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .returnRefTypeId(Types.PLAYER.id())
@@ -141,7 +141,7 @@ public final class DefaultExpressions {
                 .by("Lumen")
                 .pattern("get world %name:STRING%")
                 .description("Looks up a world by name.")
-                .example("var w = get world \"world_nether\"")
+                .example("set w to get world \"world_nether\"")
                 .since("1.0.0")
                 .category(Categories.WORLD)
                 .returnRefTypeId(Types.WORLD.id())
@@ -153,7 +153,7 @@ public final class DefaultExpressions {
                 .by("Lumen")
                 .pattern("get offline player by (name|username) %name:STRING%")
                 .description("Looks up an offline player by name.")
-                .example("var op = get offline player by name \"Notch\"")
+                .example("set op to get offline player by name \"Notch\"")
                 .since("1.0.0")
                 .category(Categories.OFFLINE_PLAYER)
                 .returnRefTypeId(Types.OFFLINE_PLAYER.id())
@@ -169,7 +169,7 @@ public final class DefaultExpressions {
                 .by("Lumen")
                 .pattern("get offline player by (uuid|unique id) %uuid:STRING%")
                 .description("Looks up an offline player by UUID string.")
-                .example("var op = get offline player by uuid \"069a79f4-44e9-4726-a5be-fca90e38aaf5\"")
+                .example("set op to get offline player by uuid \"069a79f4-44e9-4726-a5be-fca90e38aaf5\"")
                 .since("1.0.0")
                 .category(Categories.OFFLINE_PLAYER)
                 .returnRefTypeId(Types.OFFLINE_PLAYER.id())
@@ -187,7 +187,7 @@ public final class DefaultExpressions {
                 .by("Lumen")
                 .pattern("get %op:PLAYER_POSSESSIVE% name")
                 .description("Returns an online player's display name.")
-                .example("var name = get player's name")
+                .example("set name to get player's name")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .returnJavaType(Types.STRING)
@@ -197,7 +197,7 @@ public final class DefaultExpressions {
                 .by("Lumen")
                 .pattern("get %op:OFFLINE_PLAYER_POSSESSIVE% name")
                 .description("Returns an offline player's name.")
-                .example("var name = get offlinePlayer's name")
+                .example("set name to get offlinePlayer's name")
                 .since("1.0.0")
                 .category(Categories.OFFLINE_PLAYER)
                 .returnJavaType(Types.STRING)
@@ -207,7 +207,7 @@ public final class DefaultExpressions {
                 .by("Lumen")
                 .pattern("get %op:OFFLINE_PLAYER_POSSESSIVE% uuid")
                 .description("Returns an offline player's UUID as a string.")
-                .example("var id = get offlinePlayer's uuid")
+                .example("set id to get offlinePlayer's uuid")
                 .since("1.0.0")
                 .category(Categories.OFFLINE_PLAYER)
                 .returnJavaType(Types.STRING)
@@ -218,7 +218,7 @@ public final class DefaultExpressions {
                 .by("Lumen")
                 .pattern("get %op:OFFLINE_PLAYER_POSSESSIVE% first played")
                 .description("Returns the timestamp of when the offline player first joined.")
-                .example("var time = get offlinePlayer's first played")
+                .example("set time to get offlinePlayer's first played")
                 .since("1.0.0")
                 .category(Categories.OFFLINE_PLAYER)
                 .returnJavaType(Types.LONG)
@@ -228,7 +228,7 @@ public final class DefaultExpressions {
                 .by("Lumen")
                 .pattern("get %op:OFFLINE_PLAYER_POSSESSIVE% last played")
                 .description("Returns the timestamp of when the offline player last joined.")
-                .example("var time = get offlinePlayer's last played")
+                .example("set time to get offlinePlayer's last played")
                 .since("1.0.0")
                 .category(Categories.OFFLINE_PLAYER)
                 .returnJavaType(Types.LONG)
@@ -238,7 +238,7 @@ public final class DefaultExpressions {
                 .by("Lumen")
                 .pattern("get %op:OFFLINE_PLAYER_POSSESSIVE% bed spawn location")
                 .description("Returns the offline player's bed spawn location, or null if not set.")
-                .example("var loc = get offlinePlayer's bed spawn location")
+                .example("set loc to get offlinePlayer's bed spawn location")
                 .since("1.0.0")
                 .category(Categories.OFFLINE_PLAYER)
                 .returnRefTypeId(Types.LOCATION.id())
@@ -249,7 +249,7 @@ public final class DefaultExpressions {
                 .by("Lumen")
                 .pattern("get %who:PLAYER_POSSESSIVE% x")
                 .description("Returns the player's current X coordinate as a double.")
-                .example("var px = get player's x")
+                .example("set px to get player's x")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .returnJavaType(Types.DOUBLE)
@@ -259,7 +259,7 @@ public final class DefaultExpressions {
                 .by("Lumen")
                 .pattern("get %who:PLAYER_POSSESSIVE% y")
                 .description("Returns the player's current Y coordinate as a double.")
-                .example("var py = get player's y")
+                .example("set py to get player's y")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .returnJavaType(Types.DOUBLE)
@@ -269,7 +269,7 @@ public final class DefaultExpressions {
                 .by("Lumen")
                 .pattern("get %who:PLAYER_POSSESSIVE% z")
                 .description("Returns the player's current Z coordinate as a double.")
-                .example("var pz = get player's z")
+                .example("set pz to get player's z")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .returnJavaType(Types.DOUBLE)
@@ -279,7 +279,7 @@ public final class DefaultExpressions {
                 .by("Lumen")
                 .pattern("get %who:PLAYER_POSSESSIVE% uuid")
                 .description("Returns the player's UUID as a string.")
-                .example("var id = get player's uuid")
+                .example("set id to get player's uuid")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .returnJavaType(Types.STRING)
@@ -290,7 +290,7 @@ public final class DefaultExpressions {
                 .by("Lumen")
                 .pattern("get %who:PLAYER_POSSESSIVE% (xp level|level)")
                 .description("Returns a player's experience level as an integer.")
-                .example("var lv = get player's xp level")
+                .example("set lv to get player's xp level")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .returnJavaType(Types.INT)
@@ -301,7 +301,7 @@ public final class DefaultExpressions {
                 .by("Lumen")
                 .pattern("get %who:PLAYER_POSSESSIVE% eye location")
                 .description("Returns the location of a player's eyes.")
-                .example("var loc = get player's eye location")
+                .example("set loc to get player's eye location")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .returnRefTypeId(Types.LOCATION.id())
@@ -312,7 +312,7 @@ public final class DefaultExpressions {
                 .by("Lumen")
                 .pattern("get %who:PLAYER_POSSESSIVE% direction x")
                 .description("Returns the X component of the direction a player is looking.")
-                .example("var dx = get player's direction x")
+                .example("set dx to get player's direction x")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .returnJavaType(Types.DOUBLE)
@@ -323,7 +323,7 @@ public final class DefaultExpressions {
                 .by("Lumen")
                 .pattern("get %who:PLAYER_POSSESSIVE% direction y")
                 .description("Returns the Y component of the direction a player is looking.")
-                .example("var dy = get player's direction y")
+                .example("set dy to get player's direction y")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .returnJavaType(Types.DOUBLE)
@@ -334,7 +334,7 @@ public final class DefaultExpressions {
                 .by("Lumen")
                 .pattern("get %who:PLAYER_POSSESSIVE% direction z")
                 .description("Returns the Z component of the direction a player is looking.")
-                .example("var dz = get player's direction z")
+                .example("set dz to get player's direction z")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .returnJavaType(Types.DOUBLE)
@@ -349,7 +349,7 @@ public final class DefaultExpressions {
      * Allows creating {@code Location} objects from coordinates:
      *
      * <pre>{@code
-     * var loc = new location in myWorld at 100 64 -200
+     * set loc to new location in myWorld at 100 64 -200
      * }</pre>
      */
     private void registerLocation(@NotNull LumenAPI api) {
@@ -357,7 +357,7 @@ public final class DefaultExpressions {
                 .by("Lumen")
                 .pattern("new location in %w:WORLD% at %x:INT% %y:INT% %z:INT%")
                 .description("Creates a new Location from a world and XYZ coordinates.")
-                .example("var loc = new location in myWorld at 100 64 -200")
+                .example("set loc to new location in myWorld at 100 64 -200")
                 .since("1.0.0")
                 .category(Categories.LOCATION)
                 .returnRefTypeId(Types.LOCATION.id())
@@ -373,7 +373,7 @@ public final class DefaultExpressions {
                 .by("Lumen")
                 .pattern("new location at %x:INT% %y:INT% %z:INT% in %w:WORLD%")
                 .description("Creates a new Location from XYZ coordinates and a world.")
-                .example("var loc = new location at 100 64 -200 in myWorld")
+                .example("set loc to new location at 100 64 -200 in myWorld")
                 .since("1.0.0")
                 .category(Categories.LOCATION)
                 .returnRefTypeId(Types.LOCATION.id())
@@ -390,7 +390,7 @@ public final class DefaultExpressions {
      * Registers spawn as an expression so it can be used in variable assignment.
      *
      * <p>
-     * This makes {@code var mob = spawn zombie at loc} work, returning the
+     * This makes {@code set mob to spawn zombie at loc} work, returning the
      * spawned entity as an {@code ENTITY}-typed variable.
      */
     private void registerSpawn(@NotNull LumenAPI api) {
@@ -398,7 +398,7 @@ public final class DefaultExpressions {
                 .by("Lumen")
                 .pattern("spawn %type:ENTITY_TYPE% at %who:PLAYER%")
                 .description("Spawns an entity at a player's location and returns it.")
-                .example("var mob = spawn zombie at player")
+                .example("set mob to spawn zombie at player")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
                 .returnRefTypeId(Types.ENTITY.id())
@@ -419,7 +419,7 @@ public final class DefaultExpressions {
                 .by("Lumen")
                 .pattern("spawn %type:ENTITY_TYPE% [at] %loc:LOCATION%")
                 .description("Spawns an entity at a location and returns it.")
-                .example("var mob = spawn zombie at myLoc")
+                .example("set mob to spawn zombie at myLoc")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
                 .returnRefTypeId(Types.ENTITY.id())
@@ -438,7 +438,7 @@ public final class DefaultExpressions {
                 .by("Lumen")
                 .pattern("spawn %type:ENTITY_TYPE% at %loc:EXPR%")
                 .description("Spawns an entity at an expression that resolves to a location and returns it.")
-                .example("var mob = spawn zombie at get player's location")
+                .example("set mob to spawn zombie at get player's location")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
                 .returnRefTypeId(Types.ENTITY.id())
@@ -462,7 +462,7 @@ public final class DefaultExpressions {
      * Allows launching a projectile from a player in the direction they are looking:
      *
      * <pre>{@code
-     * var proj = launch snowball from player
+     * set proj to launch snowball from player
      * }</pre>
      *
      * @param api the Lumen API to register expressions on
@@ -472,7 +472,7 @@ public final class DefaultExpressions {
                 .by("Lumen")
                 .pattern("launch %type:ENTITY_TYPE% from %who:PLAYER%")
                 .description("Launches a projectile from a player in the direction they are looking and returns it.")
-                .example("var proj = launch snowball from player")
+                .example("set proj to launch snowball from player")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
                 .returnRefTypeId(Types.ENTITY.id())
@@ -490,7 +490,7 @@ public final class DefaultExpressions {
                 .by("Lumen")
                 .pattern("launch %type:ENTITY_TYPE% from %loc:LOCATION%")
                 .description("Spawns a projectile at a location and returns it. The projectile spawns with no initial velocity.")
-                .example("var proj = launch snowball from myLoc")
+                .example("set proj to launch snowball from myLoc")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
                 .returnRefTypeId(Types.ENTITY.id())
@@ -514,7 +514,7 @@ public final class DefaultExpressions {
      * even when their initial value is absent:
      *
      * <pre>{@code
-     * global var pos1 for ref type player default no location
+     * global scoped pos1 with default no location
      * }</pre>
      *
      * @param api the Lumen API to register expressions on
@@ -524,7 +524,7 @@ public final class DefaultExpressions {
                 .by("Lumen")
                 .pattern("no location")
                 .description("Represents a null location value. The variable will carry the LOCATION ref type at compile time.")
-                .example("global var pos1 for ref type player default no location")
+                .example("global scoped pos1 with default no location")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
                 .returnRefTypeId(Types.LOCATION.id())
@@ -537,7 +537,7 @@ public final class DefaultExpressions {
                 .by("Lumen")
                 .pattern("no player")
                 .description("Represents a null player value. The variable will carry the PLAYER ref type at compile time.")
-                .example("global var target for ref type player default no player")
+                .example("global scoped target with default no player")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
                 .returnRefTypeId(Types.PLAYER.id())
@@ -547,7 +547,7 @@ public final class DefaultExpressions {
                 .by("Lumen")
                 .pattern("no entity")
                 .description("Represents a null entity value. The variable will carry the ENTITY ref type at compile time.")
-                .example("global var target for ref type player default no entity")
+                .example("global scoped target with default no entity")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
                 .returnRefTypeId(Types.ENTITY.id())
@@ -560,7 +560,7 @@ public final class DefaultExpressions {
                 .by("Lumen")
                 .pattern("no world")
                 .description("Represents a null world value. The variable will carry the WORLD ref type at compile time.")
-                .example("global var w for ref type player default no world")
+                .example("global scoped w with default no world")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
                 .returnRefTypeId(Types.WORLD.id())
@@ -573,7 +573,7 @@ public final class DefaultExpressions {
                 .by("Lumen")
                 .pattern("no block")
                 .description("Represents a null block value. The variable will carry the BLOCK ref type at compile time.")
-                .example("global var target_block for ref type player default no block")
+                .example("global scoped target_block with default no block")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
                 .returnRefTypeId(Types.BLOCK.id())

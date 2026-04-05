@@ -1,27 +1,14 @@
 package dev.lumenlang.lumen.pipeline.language.nodes;
 
-import dev.lumenlang.lumen.api.handler.StatementHandler;
-import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 
 import java.util.List;
 
 /**
- * A leaf node representing a single-line action statement in a Lumen script.
+ * A leaf node representing a single-line in a Lumen script.
  *
  * <p>A {@code StatementNode} is created for every non-block, non-comment source line. It carries
- * the full token list for that line. During code generation it is matched against registered
- * statement patterns and the first successful match triggers the corresponding
- * {@link StatementHandler}.
- *
- * <p>Example source line:
- * <pre>
- *     give player diamond 3
- * </pre>
- * becomes a {@code StatementNode} with tokens {@code ["give", "player", "diamond", "3"]}.
- *
- * @see StatementHandler
- * @see PatternRegistry#statement(String, StatementHandler)
+ * the full token list for that line.
  */
 public final class StatementNode implements Node {
     private final int indent;

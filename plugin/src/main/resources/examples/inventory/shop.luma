@@ -17,8 +17,8 @@ data shop_item:
     price integer
     display_name string
 
-global var shop_items default new list of shop_item
-global var shop_page for ref type player default 0
+global shop_items with default new list of shop_item
+global scoped shop_page with default 0
 
 load:
     add new shop_item with material "diamond_sword" price 100 display_name "&bDiamond Sword" to shop_items
@@ -35,49 +35,47 @@ load:
     add new shop_item with material "lapis_lazuli" price 20 display_name "&9Lapis Lazuli" to shop_items
 
 register inventory "shop":
-    var total = shop_items size
-    var per_page = items_per_page
-    var page = shop_page
-
-    var max_page = (total - 1) / per_page
-    if page > max_page:
+    set total to shop_items size
+    set per_page to items_per_page
+    set current_page to get shop_page for player
+    set max_page to (total - 1) / per_page
+    if current_page > max_page:
         set shop_page to 0 for player
+        set current_page to 0
+    set display_page to current_page + 1
+    set gui to new inventory "shop" with rows 6 titled "&6&lShop &7(Page {display_page})"
 
-    var current_page = shop_page
-    var display_page = current_page + 1
-    var gui = new inventory "shop" with rows 6 titled "&6&lShop &7(Page {display_page})"
-
-    var filler = new item gray_stained_glass_pane
+    set filler to new item gray_stained_glass_pane
     set filler's display name to " "
     fill slots 45 to 53 of gui with filler
 
     if current_page > 0:
-        var prev = new item arrow
+        set prev to new item arrow
         set prev's display name to "&ePrevious Page"
         set prev's lore to "&7Click to go back"
         set slot 45 of gui to prev
 
-    var last_page = (total - 1) / per_page
+    set last_page to (total - 1) / per_page
     if current_page < last_page:
-        var next = new item arrow
+        set next to new item arrow
         set next's display name to "&eNext Page"
         set next's lore to "&7Click to go forward"
         set slot 53 of gui to next
 
-    var close_btn = new item barrier
+    set close_btn to new item barrier
     set close_btn's display name to "&c&lClose"
     set slot 49 of gui to close_btn
 
-    var start = current_page * per_page
-    var idx = 0
+    set start to current_page * per_page
+    set idx to 0
     repeat per_page times:
-        var item_pos = start + idx
+        set item_pos to start + idx
         if item_pos < total:
-            var entry = get shop_items at item_pos
-            var dn = get field "display_name" of entry
-            var pr = get field "price" of entry
-            var mat = get field "material" of entry
-            var display = new item mat
+            set entry to get shop_items at item_pos
+            set dn to get field "display_name" of entry
+            set pr to get field "price" of entry
+            set mat to get field "material" of entry
+            set display to new item mat
             set display's display name to dn
             set display's lore to "&7Price: &a{pr} coins|&eClick to buy"
             set slot idx of gui to display
@@ -99,24 +97,27 @@ slot 49 click in "shop":
     close player's inventory
 
 slot 53 click in "shop":
-    var total = shop_items size
-    var max_page = (total - 1) / items_per_page
-    if shop_page < max_page:
+    set total to shop_items size
+    set max_page to (total - 1) / items_per_page
+    set current_page to get shop_page for player
+    if current_page < max_page:
         add 1 to shop_page for player
         open inventory named "shop" for player
 
 slot 45 click in "shop":
-    if shop_page > 0:
+    set current_page to get shop_page for player
+    if current_page > 0:
         subtract 1 from shop_page for player
         open inventory named "shop" for player
 
 click in "shop":
     if slot < 45:
         if item is set:
-            var item_idx = shop_page * items_per_page + slot
+            set current_page to get shop_page for player
+            set item_idx to current_page * items_per_page + slot
             if item_idx < shop_items size:
-                var entry = get shop_items at item_idx
-                var pr = get field "price" of entry
-                var dn = get field "display_name" of entry
+                set entry to get shop_items at item_idx
+                set pr to get field "price" of entry
+                set dn to get field "display_name" of entry
                 message player "{shop_prefix} You bought {dn} for &a{pr} coins!"
                 give player get field "material" of entry 1

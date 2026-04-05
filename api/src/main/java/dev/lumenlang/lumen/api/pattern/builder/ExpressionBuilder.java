@@ -24,7 +24,7 @@ import java.util.function.Consumer;
  * api.patterns().expression(b -> b
  *         .pattern("[get] %who:PLAYER% location")
  *         .description("Returns the location of a player.")
- *         .example("var loc = get player location")
+ *         .example("set loc to get player location")
  *         .since("1.0.0")
  *         .category(Categories.PLAYER)
  *         .handler(ctx -> new ExpressionResult(ctx.java("who") + ".getLocation()", Types.LOCATION.id())));

@@ -128,7 +128,7 @@ public interface PatternRegistrar {
      * Registers an expression pattern with its handler.
      *
      * <p>
-     * Expression patterns are used in {@code var x = <pattern>} statement where
+     * Expression patterns are used in {@code set x to <pattern>} statement where
      * the
      * handler returns a Java expression that evaluates to the variable's value.
      *

@@ -5,7 +5,7 @@ package dev.lumenlang.lumen.api.placeholder;
  * to decide how a placeholder value is used in expressions and string contexts.
  *
  * <p>For example, {@code {player_y}} returns a {@link #NUMBER} and can be used
- * in {@code var yBelow = {player_y} - 1}, while {@code {player_name}} returns
+ * in {@code set yBelow to {player_y} - 1}, while {@code {player_name}} returns
  * a {@link #STRING} and cannot.
  */
 public enum PlaceholderType {

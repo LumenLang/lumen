@@ -8,43 +8,43 @@
 #   /todo done <N>     Complete a task by number
 #   /todo clear        Clear all tasks
 
-global stored var todos for ref type player default new list
+global stored scoped todos with default new list
 
 command todo:
     description "Manage your personal todo list"
     aliases task
 
     if args size < 1:
-        if todos is empty:
+        if todos is empty for player:
             message player "&7No tasks yet. Use /todo add <task>"
         else:
             message player "&6&lYour Todos:"
-            var i = 1
-            loop item in todos:
+            set i to 1
+            loop item in todos for player:
                 message player "  &e{i}. &f{item}"
                 add 1 to i
     else:
-        var action = get args at index 0
+        set action to get args at index 0
 
         if action is "add":
             if args size < 2:
                 message player "&cUsage: /todo add <task>"
             else:
-                var text = get args at index 1
-                add text to todos
-                var count = todos size
+                set text to get args at index 1
+                add text to todos for player
+                set count to todos size for player
                 message player "&aAdded! &7({count} tasks total)"
 
         else if action is "done":
             if args size < 2:
                 message player "&cUsage: /todo done <number>"
             else:
-                var num = get args at index 1
-                var idx = num as integer
+                set num to get args at index 1
+                set idx to num as integer
                 subtract 1 from idx
-                remove index idx from todos
+                remove index idx from todos for player
                 message player "&aDone! Removed task #{num}."
 
         else if action is "clear":
-            clear todos
+            clear todos for player
             message player "&eTodo list cleared!"

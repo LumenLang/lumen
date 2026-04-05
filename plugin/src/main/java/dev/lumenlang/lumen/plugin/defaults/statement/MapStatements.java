@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * Registers built-in statement patterns for map manipulation.
@@ -40,42 +41,18 @@ public final class MapStatements {
         }
     }
 
-    private static void emitScopedPut(@NotNull BindingAccess ctx, @NotNull JavaOutput out,
-                                      @NotNull String mapVarName, @NotNull String scopeVarName,
-                                      @NotNull String keyJava, @NotNull String valJava) {
-        EnvironmentAccess env = ctx.env();
-        EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(mapVarName);
-        if (info == null) {
-            throw new RuntimeException("Variable '" + mapVarName
-                    + "' is not a global variable. Scoped operations (for ...) are only supported on global vars.");
-        }
+    private static void emitScopedMutation(@NotNull BindingAccess ctx, @NotNull JavaOutput out, @NotNull String mapVarName, @NotNull String scopeVarName, @NotNull Function<String, String> mutation) {
+        EnvironmentAccess.GlobalInfo info = ctx.env().getGlobalInfo(mapVarName);
+        if (info == null) throw new RuntimeException("'" + mapVarName + "' is not a global variable.");
+        if (!info.scoped()) throw new RuntimeException("'" + mapVarName + "' is not a scoped global. Declare it with 'global scoped " + mapVarName + "' to use per-entity access.");
         String storageClass = info.stored() ? "PersistentVars" : "GlobalVars";
-        String storageKey = buildScopedKey(env, mapVarName, scopeVarName, info);
-        String tempVar = "__scoped_" + mapVarName + "_" + out.lineNum();
+        String scopeKey = buildScopedKey(ctx.env(), mapVarName, scopeVarName, info);
+        String tmp = "__scoped_" + mapVarName + "_" + out.lineNum();
         ctx.codegen().addImport(Map.class.getName());
         ctx.codegen().addImport(HashMap.class.getName());
-        out.line("var " + tempVar + " = " + storageClass + ".get(" + storageKey + ", " + info.defaultJava() + ");");
-        out.line("((Map<Object, Object>) " + tempVar + ").put(" + keyJava + ", " + valJava + ");");
-        out.line(storageClass + ".set(" + storageKey + ", " + tempVar + ");");
-    }
-
-    private static void emitScopedRemove(@NotNull BindingAccess ctx, @NotNull JavaOutput out,
-                                         @NotNull String mapVarName, @NotNull String scopeVarName,
-                                         @NotNull String keyJava) {
-        EnvironmentAccess env = ctx.env();
-        EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(mapVarName);
-        if (info == null) {
-            throw new RuntimeException("Variable '" + mapVarName
-                    + "' is not a global variable. Scoped operations (for ...) are only supported on global vars.");
-        }
-        String storageClass = info.stored() ? "PersistentVars" : "GlobalVars";
-        String storageKey = buildScopedKey(env, mapVarName, scopeVarName, info);
-        String tempVar = "__scoped_" + mapVarName + "_" + out.lineNum();
-        ctx.codegen().addImport(Map.class.getName());
-        ctx.codegen().addImport(HashMap.class.getName());
-        out.line("var " + tempVar + " = " + storageClass + ".get(" + storageKey + ", " + info.defaultJava() + ");");
-        out.line("((Map<?, ?>) " + tempVar + ").remove(" + keyJava + ");");
-        out.line(storageClass + ".set(" + storageKey + ", " + tempVar + ");");
+        out.line("var " + tmp + " = " + storageClass + ".get(" + scopeKey + ", " + info.defaultJava() + ");");
+        out.line(mutation.apply(tmp));
+        out.line(storageClass + ".set(" + scopeKey + ", " + tmp + ");");
     }
 
     private static @NotNull String buildScopedKey(@NotNull EnvironmentAccess env,
@@ -100,17 +77,11 @@ public final class MapStatements {
         api.patterns().statement(b -> b
                 .by("Lumen")
                 .pattern("set %map:MAP% at key %key:EXPR% to %val:EXPR% for %scope:EXPR%")
-                .description("Sets a key-value pair in a player-scoped stored map. Reads the map from storage, inserts the entry, and writes it back.")
+                .description("Sets a key-value pair in a scoped global map for a specific scope reference. Reads the map from storage, inserts the entry, and writes it back.")
                 .example("set balances at key \"money\" to 100 for p")
                 .since("1.0.0")
                 .category(Categories.MAP)
-                .handler((line, ctx, out) -> {
-                    String keyJava = ctx.java("key");
-                    String valJava = ctx.java("val");
-                    String scopeVarName = ctx.java("scope");
-                    String mapVarName = ctx.tokens("map").get(0);
-                    emitScopedPut(ctx, out, mapVarName, scopeVarName, keyJava, valJava);
-                }));
+                .handler((line, ctx, out) -> emitScopedMutation(ctx, out, ctx.tokens("map").get(0), ctx.java("scope"), tmp -> "((Map<Object, Object>) " + tmp + ").put(" + ctx.java("key") + ", " + ctx.java("val") + ");")));
 
         api.patterns().statement(b -> b
                 .by("Lumen")
@@ -120,28 +91,20 @@ public final class MapStatements {
                 .since("1.0.0")
                 .category(Categories.MAP)
                 .handler((line, ctx, out) -> {
-                    EnvironmentAccess env = ctx.env();
                     String mapJava = ctx.java("map");
-                    String keyJava = ctx.java("key");
-                    String valJava = ctx.java("val");
                     ctx.codegen().addImport(Map.class.getName());
-                    out.line("((Map<Object, Object>) " + mapJava + ").put(" + keyJava + ", " + valJava + ");");
-                    flushIfStored(env, out, mapJava, mapVarName(ctx));
+                    out.line("((Map<Object, Object>) " + mapJava + ").put(" + ctx.java("key") + ", " + ctx.java("val") + ");");
+                    flushIfStored(ctx.env(), out, mapJava, mapVarName(ctx));
                 }));
 
         api.patterns().statement(b -> b
                 .by("Lumen")
                 .pattern("remove key %key:EXPR% from %map:MAP% for %scope:EXPR%")
-                .description("Removes a key from a player-scoped stored map.")
+                .description("Removes a key from a scoped global map for a specific scope reference.")
                 .example("remove key \"money\" from balances for p")
                 .since("1.0.0")
                 .category(Categories.MAP)
-                .handler((line, ctx, out) -> {
-                    String keyJava = ctx.java("key");
-                    String scopeVarName = ctx.java("scope");
-                    String mapVarName = ctx.tokens("map").get(0);
-                    emitScopedRemove(ctx, out, mapVarName, scopeVarName, keyJava);
-                }));
+                .handler((line, ctx, out) -> emitScopedMutation(ctx, out, ctx.tokens("map").get(0), ctx.java("scope"), tmp -> "((Map<?, ?>) " + tmp + ").remove(" + ctx.java("key") + ");")));
 
         api.patterns().statement(b -> b
                 .by("Lumen")
@@ -151,13 +114,20 @@ public final class MapStatements {
                 .since("1.0.0")
                 .category(Categories.MAP)
                 .handler((line, ctx, out) -> {
-                    EnvironmentAccess env = ctx.env();
                     String mapJava = ctx.java("map");
-                    String keyJava = ctx.java("key");
                     ctx.codegen().addImport(Map.class.getName());
-                    out.line("((Map<?, ?>) " + mapJava + ").remove(" + keyJava + ");");
-                    flushIfStored(env, out, mapJava, mapVarName(ctx));
+                    out.line("((Map<?, ?>) " + mapJava + ").remove(" + ctx.java("key") + ");");
+                    flushIfStored(ctx.env(), out, mapJava, mapVarName(ctx));
                 }));
+
+        api.patterns().statement(b -> b
+                .by("Lumen")
+                .pattern("clear %map:MAP% for %scope:EXPR%")
+                .description("Removes all entries from a scoped global map for a specific scope reference.")
+                .example("clear stats for player")
+                .since("1.0.0")
+                .category(Categories.MAP)
+                .handler((line, ctx, out) -> emitScopedMutation(ctx, out, ctx.tokens("map").get(0), ctx.java("scope"), tmp -> "((Map<?, ?>) " + tmp + ").clear();")));
 
         api.patterns().statement(b -> b
                 .by("Lumen")
@@ -167,11 +137,10 @@ public final class MapStatements {
                 .since("1.0.0")
                 .category(Categories.MAP)
                 .handler((line, ctx, out) -> {
-                    EnvironmentAccess env = ctx.env();
                     String mapJava = ctx.java("map");
                     ctx.codegen().addImport(Map.class.getName());
                     out.line("((Map<?, ?>) " + mapJava + ").clear();");
-                    flushIfStored(env, out, mapJava, mapVarName(ctx));
+                    flushIfStored(ctx.env(), out, mapJava, mapVarName(ctx));
                 }));
     }
 }

@@ -99,7 +99,7 @@ public interface EnvironmentAccess {
      * Returns whether the named variable is a stored (persistent) variable.
      *
      * @param name the variable name
-     * @return {@code true} if the variable was declared with {@code store}
+     * @return {@code true} if the variable was declared with {@code load}
      */
     boolean isStored(@NotNull String name);
 
@@ -114,7 +114,7 @@ public interface EnvironmentAccess {
     /**
      * Returns the base key prefix for a stored variable, or {@code null} if not tracked.
      *
-     * <p>For scoped stored variables (e.g. {@code store x for player}), this returns the
+     * <p>For scoped stored variables (e.g. {@code load x for player with default 0}), this returns the
      * prefix without the scope suffix, enabling prefix-based deletion of all scoped entries.
      *
      * @param name the variable name
@@ -156,7 +156,7 @@ public interface EnvironmentAccess {
      * Returns whether the named variable was declared as a script-wide global.
      *
      * @param name the variable name
-     * @return {@code true} if declared with {@code global var}
+     * @return {@code true} if declared with {@code global}
      */
     boolean isGlobal(@NotNull String name);
 
@@ -344,11 +344,11 @@ public interface EnvironmentAccess {
         @NotNull String className();
 
         /**
-         * Returns the ref type ID for per-entity scoping, or {@code null} for server-wide globals.
+         * Returns whether this global is scoped per entity rather than server-wide.
          *
-         * @return the ref type name, or {@code null}
+         * @return {@code true} if scoped
          */
-        @Nullable String refTypeName();
+        boolean scoped();
 
         /**
          * Returns whether the variable is persisted to disk.

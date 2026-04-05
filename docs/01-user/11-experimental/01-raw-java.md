@@ -72,7 +72,7 @@ on join:
 Config values and global variables are class fields, so they are accessible from any `java:` block:
 
 ```luma
-global var counter default 0
+global counter with default 0
 
 command count:
     java:
@@ -90,16 +90,6 @@ use org.bukkit.inventory.ItemStack
 ```
 
 Both add the specified class to the generated Java file's imports. Place them anywhere in your script, typically near the top.
-
-### Default Imports
-
-Lumen automatically imports several common classes, so you do not need to import them yourself:
-
-- `org.bukkit.entity.Player`
-- `org.bukkit.command.CommandSender`
-- `org.bukkit.plugin.Plugin`
-- `org.bukkit.Bukkit`
-- `org.bukkit.event.Listener`
 
 ### Example with Imports
 
@@ -134,9 +124,8 @@ command serverinfo:
         player.sendMessage("Total online: " + count);
 ```
 
-## Important Notes
+## Notes
 
 - Syntax errors in your Java code will cause the script to fail to compile, and Lumen will report the error.
-- You have access to the full server classpath, including all loaded plugins and libraries.
 - Performance is identical to native Java since it compiles down to the same bytecode.
 - Changes to `java:` blocks are picked up on script reload.

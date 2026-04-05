@@ -49,7 +49,7 @@ api.placeholders().property(Types.PLAYER, "z", "$.getLocation().getZ()", Placeho
 In a script, numeric properties can participate in arithmetic:
 
 ```luma
-var yBelow = {player_y} - 1
+set yBelow to {player_y} - 1
 ```
 
 String properties can only be used in string contexts.

@@ -8,7 +8,7 @@
 command customsword:
     description "Give yourself a custom diamond sword"
 
-    var sword = new item diamond_sword
+    set sword to new item diamond_sword
     set sword's display name to "&6&lLegendary Blade"
     set sword's lore to "&7A powerful weapon|&eForged in ancient fire|&aUnbreakable"
     make sword unbreakable
@@ -20,9 +20,9 @@ command customsword:
 on interact:
     if item is set:
         if action is "RIGHT_CLICK_AIR":
-            var name = get item's display name
-            var type = get item's type
-            var amt = get item's amount
+            set name to get item's display name
+            set type to get item's type
+            set amt to get item's amount
             message player "&6Item Info:"
             message player "  &7Type: &f{type}"
             message player "  &7Amount: &f{amt}"
@@ -38,5 +38,5 @@ on interact:
                 message player "  &7Unbreakable: &aYes"
 
             if item has pdc "custom_id":
-                var tag = get pdc "custom_id" of item
+                set tag to get pdc "custom_id" of item
                 message player "  &7PDC Tag: &f{tag}"

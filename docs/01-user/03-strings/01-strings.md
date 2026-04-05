@@ -9,8 +9,8 @@ Strings are pieces of text. In Lumen, strings are enclosed in double quotes and 
 ## Creating Strings
 
 ```luma
-var greeting = "Hello, world!"
-var name = "Steve"
+set greeting to "Hello, world!"
+set name to "Steve"
 ```
 
 ## Placeholders
@@ -19,7 +19,7 @@ Embed variable values inside strings using curly braces `{}`:
 
 ```luma
 command greet:
-    var name = "World"
+    set name to "World"
     message player "&aHello, {name}!"
 ```
 
@@ -35,8 +35,8 @@ on join:
 Get the character count with `length of`:
 
 ```luma
-var text = "Hello"
-var len = length of text
+set text to "Hello"
+set len to length of text
 message player "&7Length: {len}"
 ```
 
@@ -45,9 +45,9 @@ message player "&7Length: {len}"
 Convert to uppercase or lowercase:
 
 ```luma
-var text = "Hello World"
-var upper = text to uppercase
-var lower = text to lowercase
+set text to "Hello World"
+set upper to text to uppercase
+set lower to text to lowercase
 ```
 
 `upper` is `"HELLO WORLD"` and `lower` is `"hello world"`.
@@ -58,8 +58,8 @@ When a command receives multiple words as arguments, join them into a single str
 
 ```luma
 command shout:
-    var text = args joined with " "
-    var upper = text to uppercase
+    set text to args joined with " "
+    set upper to text to uppercase
     broadcast "&c&l{player_name}: &f{upper}"
 ```
 
@@ -70,7 +70,7 @@ If a player types `/shout Hello there friend`, `text` becomes `"Hello there frie
 Use `is` and `is not` to compare strings:
 
 ```luma
-var action = get args at index 0
+set action to get args at index 0
 
 if action is "add":
     message player "&aAdding!"
@@ -113,7 +113,7 @@ if text is empty:
 Remove leading and trailing whitespace:
 
 ```luma
-var cleaned = text trimmed
+set cleaned to text trimmed
 ```
 
 ## Substring
@@ -121,7 +121,7 @@ var cleaned = text trimmed
 Extract a portion of a string:
 
 ```luma
-var part = substring of text from 0 to 5
+set part to substring of text from 0 to 5
 ```
 
 ## Replace
@@ -129,5 +129,5 @@ var part = substring of text from 0 to 5
 Replace occurrences of one string with another:
 
 ```luma
-var result = "hello world" replaced "world" with "everyone" # Result: "hello everyone"
+set result to "hello world" replaced "world" with "everyone" # Result: "hello everyone"
 ```

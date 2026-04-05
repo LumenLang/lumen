@@ -1,5 +1,5 @@
 ---
-description: "Global variables shared across commands and events, with optional per-player scoping."
+description: "Global variables shared across commands and events, with optional scoped access per reference type."
 ---
 
 # Global Variables
@@ -8,10 +8,10 @@ Global variables are shared across all commands, events, and schedules in the sa
 
 ## Defining Global Variables
 
-Declare them at the top level of your script using `global var`:
+Declare them at the top level of your script using `global`:
 
 ```luma
-global var heartbeat_count default 0
+global heartbeat_count with default 0
 
 every 1 minute as "heartbeat":
     add 1 to heartbeat_count
@@ -20,66 +20,75 @@ command heartbeat:
     message player "&eHeartbeats so far: {heartbeat_count}"
 ```
 
-The `default` keyword sets the initial value. Both the schedule and the command can see and modify `heartbeat_count` because it is global.
+The `with default` clause sets the initial value. Both the schedule and the command can see and modify `heartbeat_count` because it is global.
 
 :::alert note
 Global variables are reset whenever the script reloads or the server restarts. Use stored variables if you need persistence.
 :::
 
-## Per-Player Global Variables
+## Scoped Global Variables
 
-Add `for ref type player` to give each player their own independent copy of the variable:
+Add `scoped` to give each scope reference its own independent value:
 
 ```luma
-global var swap_enabled for ref type player default 0
+global scoped swap_enabled with default 0
 
 command swap:
-    if swap_enabled == 0:
-        set swap_enabled to 1
+    set enabled to get swap_enabled for player
+    if enabled == 0:
+        set swap_enabled to 1 for player
         message player "&aSwap mode enabled!"
     else:
-        set swap_enabled to 0
+        set swap_enabled to 0 for player
         message player "&cSwap mode disabled."
 ```
 
 Each player has their own `swap_enabled` value. Enabling swap mode for one player does not affect others.
 
-## Accessing Another Player's Value
+## Accessing Another Reference's Value
 
-When a variable is per-player, use `for <player>` to read or write a specific player's copy:
+Use `for <scope>` to read or write a specific scope reference's value:
 
 ```luma
-global var coins for ref type player default 0
+global scoped coins with default 0
 
 command earn:
-    add 10 to coins
-    message player "&a+10 coins! Balance: {coins}"
+    set bal to get coins for player
+    add 10 to bal
+    set coins to bal for player
+    message player "&a+10 coins! Balance: {bal}"
 
 command pay:
     if args size < 1:
         message player "&cUsage: /pay <player>"
     else:
-        var target = get args at index 0
-        subtract 10 from coins
-        add 10 to coins for target
-        message player "&eSent 10 coins to {target}!"
+        set target to get player by name get args at index 0
+        if target is not set:
+            message player "&cPlayer not found."
+        else:
+            set my_bal to get coins for player
+            set target_bal to get coins for target
+            subtract 10 from my_bal
+            add 10 to target_bal
+            set coins to my_bal for player
+            set coins to target_bal for target
+            message player "&eSent 10 coins to {target}!"
 ```
-
-With `for target`, you are explicitly accessing another player's copy of the variable.
 
 ## No Default
 
-If you omit `default`, the variable starts unset. You can check this with `is set` / `is not set`:
+If you use `no <type>` as the default value, the variable starts unset. You can check this with `is set` / `is not set`:
 
 ```luma
-global var pos1 for ref type player default no location
+global scoped pos1 with default no location
 
 command select:
-    set pos1 to get player's location
+    set pos1 to get player's location for player
     message player "&aPosition set!"
 
 command check:
-    if pos1 is not set:
+    set p1 to get pos1 for player
+    if p1 is not set:
         message player "&cNo position selected."
     else:
         message player "&aPosition is set."

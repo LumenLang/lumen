@@ -63,7 +63,7 @@ Fires when a player clicks in the world. The `action` tells you what kind of cli
 on interact:
     if item is set:
         if action is "RIGHT_CLICK_AIR":
-            var name = get item's display name
+            set name to get item's display name
             message player "&7You right clicked with: {name}"
 ```
 

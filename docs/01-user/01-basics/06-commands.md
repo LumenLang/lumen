@@ -64,7 +64,7 @@ command greet:
     if args size < 1:
         message player "&cUsage: /greet <name>"
     else:
-        var name = get args at index 0
+        set name to get args at index 0
         message player "&aHello, {name}!"
 ```
 
@@ -85,13 +85,13 @@ command note:
     if args size < 1:
         message player "&7Usage: /note <add|clear>"
     else:
-        var action = get args at index 0
+        set action to get args at index 0
 
         if action is "add":
             if args size < 2:
                 message player "&cUsage: /note add <text>"
             else:
-                var text = get args at index 1
+                set text to get args at index 1
                 message player "&aAdded note: {text}"
 
         else if action is "clear":

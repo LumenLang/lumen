@@ -30,9 +30,7 @@ import java.util.Map;
  * <p>Calls to {@link TypeBinding#consumeCount} and {@link TypeBinding#parse}
  * are wrapped in defensive error handling. A {@link ParseFailureException}
  * is the normal rejection signal and causes the matcher to try the next
- * candidate. Any other {@link RuntimeException} (typically from a buggy addon
- * type binding) is caught, logged as a warning, and treated as a non-match
- * rather than crashing the entire compilation pipeline.
+ * candidate.
  */
 public final class PatternMatcher {
 

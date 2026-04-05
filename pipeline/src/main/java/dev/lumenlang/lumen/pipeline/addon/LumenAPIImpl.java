@@ -245,7 +245,8 @@ public final class LumenAPIImpl implements LumenAPI {
                         .className(internal.className);
                 for (var entry : internal.vars.entrySet()) {
                     VarDef vd = entry.getValue();
-                    b.addVar(entry.getKey(), vd.refType(), vd.javaType(), vd.expr());
+                    if (vd.refType() != null) b.addVar(entry.getKey(), vd.refType(), vd.expr());
+                    else b.addVar(entry.getKey(), vd.javaType(), vd.expr());
                 }
                 return b.build();
             }

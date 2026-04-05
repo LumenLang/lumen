@@ -4,7 +4,6 @@ import dev.lumenlang.lumen.api.handler.BlockHandler;
 import dev.lumenlang.lumen.api.pattern.BlockVarInfo;
 import dev.lumenlang.lumen.api.pattern.PatternMeta;
 import dev.lumenlang.lumen.pipeline.language.pattern.Pattern;
-import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -19,8 +18,6 @@ import java.util.List;
  * @param variables         the variables this block provides to child statements
  * @param supportsRootLevel whether this block can be used at the root level of a script
  * @param supportsBlock     whether this block can be used inside another block
- * @see PatternRegistry#block(String, BlockHandler)
- * @see RegisteredBlockMatch
  */
 public record RegisteredBlock(@NotNull Pattern pattern, @NotNull BlockHandler handler,
                               @NotNull PatternMeta meta,

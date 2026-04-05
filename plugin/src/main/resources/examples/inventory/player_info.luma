@@ -10,50 +10,50 @@
 command playerinfo:
     description "Shows player info in a GUI"
 
-    var target = player
+    set target to player
 
     if args size > 0:
-        var target_name = get args at index 0
-        var found = get player by name target_name
+        set target_name to get args at index 0
+        set found to get player by name target_name
         if found is set:
             set target to found
         else:
             message player "&cPlayer not found: {target_name}"
 
     if target is set:
-        var gui = new inventory "player_info" with rows 5 titled "&9&lPlayer Info"
+        set gui to new inventory "player_info" with rows 5 titled "&9&lPlayer Info"
 
-        var filler = new item blue_stained_glass_pane
+        set filler to new item blue_stained_glass_pane
         set filler's display name to " "
         fill slots 0 to 8 of gui with filler
         fill slots 36 to 44 of gui with filler
 
-        var head = new item player_head
+        set head to new item player_head
         set head's display name to "&f{target_name}"
         set head's lore to "&7Player profile information"
         set slot 4 of gui to head
 
-        var health_item = new item red_dye
+        set health_item to new item red_dye
         set health_item's display name to "&c&lHealth"
         set health_item's lore to "&7Current: &c{target_health}"
         set slot 19 of gui to health_item
 
-        var food_item = new item cooked_beef
+        set food_item to new item cooked_beef
         set food_item's display name to "&6&lFood"
         set food_item's lore to "&7Level: &6{target_food}"
         set slot 21 of gui to food_item
 
-        var xp_item = new item experience_bottle
+        set xp_item to new item experience_bottle
         set xp_item's display name to "&a&lLevel"
         set xp_item's lore to "&7Level: &a{target_level}"
         set slot 23 of gui to xp_item
 
-        var loc_item = new item compass
+        set loc_item to new item compass
         set loc_item's display name to "&b&lLocation"
         set loc_item's lore to "&7X: &f{target_x}|&7Y: &f{target_y}|&7Z: &f{target_z}"
         set slot 25 of gui to loc_item
 
-        var close_btn = new item barrier
+        set close_btn to new item barrier
         set close_btn's display name to "&c&lClose"
         set slot 40 of gui to close_btn
 

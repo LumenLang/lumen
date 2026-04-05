@@ -20,10 +20,10 @@ public final class CreeperExpressions {
                 .intGetter("[get] %e:ENTITY% explosion radius",
                         "getExplosionRadius()",
                         "Returns the creeper's explosion radius.",
-                        "var r = mob's explosion radius")
+                        "set r to mob's explosion radius")
                 .intGetter("[get] %e:ENTITY% max fuse ticks",
                         "getMaxFuseTicks()",
                         "Returns the creeper's max fuse ticks before detonation.",
-                        "var fuse = mob's max fuse ticks");
+                        "set fuse to mob's max fuse ticks");
     }
 }

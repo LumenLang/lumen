@@ -18,8 +18,8 @@
 config:
     prefix: &6[Economy]&r
 
-global stored var currencies default new list
-global stored var balances for ref type player default new map
+global stored currencies with default new list
+global stored scoped balances with default new map
 
 on join:
     message player "{prefix} &eWelcome back! Your balances:"
@@ -27,9 +27,9 @@ on join:
         message player "  &7No currencies registered yet."
     else:
         loop currency in currencies:
-            var bal = get balances at key currency
+            set bal to get balances at key currency for player
             if bal is not set:
-                set balances at key currency to 0
+                set balances at key currency to 0 for player
                 message player "  &f{currency}: &a0"
             else:
                 message player "  &f{currency}: &a{bal}"
@@ -42,40 +42,40 @@ command balance:
     else:
         message player "{prefix} &eYour balances:"
         loop currency in currencies:
-            var bal = get balances at key currency
+            set bal to get balances at key currency for player
             if bal is not set:
-                set balances at key currency to 0
+                set balances at key currency to 0 for player
                 message player "  &f{currency}: &a0"
             else:
                 message player "  &f{currency}: &a{bal}"
 
 command pay:
     description "Send currency to another player"
-    var argc = args size
+    set argc to args size
     if argc < 3:
         message player "{prefix} &cUsage: /pay <player> <currency> <amount>"
     else:
-        var target = get args at index 0
-        var currency = get args at index 1
-        var amount = get args at index 2
+        set target to get args at index 0
+        set currency to get args at index 1
+        set amount to get args at index 2
         if target is "{player_name}":
             message player "{prefix} &cYou cannot pay yourself!"
         else if currencies does not contain currency:
             message player "{prefix} &cUnknown currency: {currency}"
         else:
-            var my_bal = get balances at key currency
+            set my_bal to get balances at key currency for player
             if my_bal is not set:
                 set my_bal to 0
             if my_bal < amount:
                 message player "{prefix} &cInsufficient {currency}!"
             else:
-                var p = get player by name target
+                set p to get player by name target
                 if p is not set:
                     message player "{prefix} &cPlayer {target} is not online!"
                 else:
                     subtract amount from my_bal
-                    set balances at key currency to my_bal
-                    var p_bal = get balances at key currency for p
+                    set balances at key currency to my_bal for player
+                    set p_bal to get balances at key currency for p
                     if p_bal is not set:
                         set p_bal to 0
                     add amount to p_bal
@@ -87,7 +87,7 @@ command eco:
     permission "economy.admin"
     description "Economy administration"
     aliases economy
-    var argc = args size
+    set argc to args size
     if argc < 1:
         message player "{prefix} &eEconomy Admin Commands:"
         message player "  &f/eco register &7<name>"
@@ -98,13 +98,13 @@ command eco:
         message player "  &f/eco reset &7<player> <currency>"
         message player "  &f/eco resetall &7<currency>"
     else:
-        var action = get args at index 0
+        set action to get args at index 0
 
         if action is "register":
             if argc < 2:
                 message player "{prefix} &cUsage: /eco register <name>"
             else:
-                var name = get args at index 1
+                set name to get args at index 1
                 if currencies contains name:
                     message player "{prefix} &cCurrency '{name}' already exists!"
                 else:
@@ -115,7 +115,7 @@ command eco:
             if argc < 2:
                 message player "{prefix} &cUsage: /eco unregister <name>"
             else:
-                var name = get args at index 1
+                set name to get args at index 1
                 if currencies does not contain name:
                     message player "{prefix} &cCurrency '{name}' does not exist!"
                 else:
@@ -126,17 +126,17 @@ command eco:
             if argc < 4:
                 message player "{prefix} &cUsage: /eco give <player> <currency> <amount>"
             else:
-                var target = get args at index 1
-                var currency = get args at index 2
-                var amount = get args at index 3
+                set target to get args at index 1
+                set currency to get args at index 2
+                set amount to get args at index 3
                 if currencies does not contain currency:
                     message player "{prefix} &cUnknown currency: {currency}"
                 else:
-                    var p = get player by name target
+                    set p to get player by name target
                     if p is not set:
                         message player "{prefix} &cPlayer {target} is not online!"
                     else:
-                        var p_bal = get balances at key currency for p
+                        set p_bal to get balances at key currency for p
                         if p_bal is not set:
                             set p_bal to 0
                         add amount to p_bal
@@ -148,17 +148,17 @@ command eco:
             if argc < 4:
                 message player "{prefix} &cUsage: /eco take <player> <currency> <amount>"
             else:
-                var target = get args at index 1
-                var currency = get args at index 2
-                var amount = get args at index 3
+                set target to get args at index 1
+                set currency to get args at index 2
+                set amount to get args at index 3
                 if currencies does not contain currency:
                     message player "{prefix} &cUnknown currency: {currency}"
                 else:
-                    var p = get player by name target
+                    set p to get player by name target
                     if p is not set:
                         message player "{prefix} &cPlayer {target} is not online!"
                     else:
-                        var p_bal = get balances at key currency for p
+                        set p_bal to get balances at key currency for p
                         if p_bal is not set:
                             set p_bal to 0
                         subtract amount from p_bal
@@ -170,13 +170,13 @@ command eco:
             if argc < 4:
                 message player "{prefix} &cUsage: /eco set <player> <currency> <amount>"
             else:
-                var target = get args at index 1
-                var currency = get args at index 2
-                var amount = get args at index 3
+                set target to get args at index 1
+                set currency to get args at index 2
+                set amount to get args at index 3
                 if currencies does not contain currency:
                     message player "{prefix} &cUnknown currency: {currency}"
                 else:
-                    var p = get player by name target
+                    set p to get player by name target
                     if p is not set:
                         message player "{prefix} &cPlayer {target} is not online!"
                     else:
@@ -187,12 +187,12 @@ command eco:
             if argc < 3:
                 message player "{prefix} &cUsage: /eco reset <player> <currency>"
             else:
-                var target = get args at index 1
-                var currency = get args at index 2
+                set target to get args at index 1
+                set currency to get args at index 2
                 if currencies does not contain currency:
                     message player "{prefix} &cUnknown currency: {currency}"
                 else:
-                    var p = get player by name target
+                    set p to get player by name target
                     if p is not set:
                         message player "{prefix} &cPlayer {target} is not online!"
                     else:
@@ -203,7 +203,7 @@ command eco:
             if argc < 2:
                 message player "{prefix} &cUsage: /eco resetall <currency>"
             else:
-                var currency = get args at index 1
+                set currency to get args at index 1
                 if currencies does not contain currency:
                     message player "{prefix} &cUnknown currency: {currency}"
                 else:

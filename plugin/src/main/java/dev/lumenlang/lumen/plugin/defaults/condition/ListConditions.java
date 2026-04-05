@@ -3,9 +3,12 @@ package dev.lumenlang.lumen.plugin.defaults.condition;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
+import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.pattern.Categories;
+import dev.lumenlang.lumen.api.type.RefTypeHandle;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -67,6 +70,57 @@ public final class ListConditions {
                     ctx.addImport(List.class.getName());
                     return "!((List<?>) " + match.ref("list").java()
                             + ").isEmpty()";
+                }));
+        api.patterns().condition(b -> b
+                .by("Lumen")
+                .pattern("%list:LIST% is empty for %scope:EXPR%")
+                .description("Checks if a scoped global list has no elements for a specific scope reference.")
+                .example("if todos is empty for player:")
+                .since("1.0.0")
+                .category(Categories.LIST)
+                .handler((match, env, ctx) -> {
+                    Object listVal = match.value("list");
+                    if (listVal instanceof EnvironmentAccess.VarHandle) {
+                        throw new RuntimeException("Cannot use 'for <scope>' with a local list variable. Use '%list% is empty' instead, or declare the list as 'global scoped'.");
+                    }
+                    String listVarName = (String) listVal;
+                    EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(listVarName);
+                    if (info == null) throw new RuntimeException("'" + listVarName + "' is not a global variable.");
+                    if (!info.scoped()) throw new RuntimeException("'" + listVarName + "' is not a scoped global. Declare it with 'global scoped " + listVarName + "' to use per-entity access.");
+                    String scopeVarName = match.java("scope", ctx, env);
+                    EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
+                    if (scopeRef == null) throw new RuntimeException("Scope variable not found: " + scopeVarName);
+                    RefTypeHandle refType = scopeRef.type();
+                    if (refType == null) throw new RuntimeException("Scope variable '" + scopeVarName + "' has no ref type.");
+                    ctx.addImport(List.class.getName());
+                    ctx.addImport(ArrayList.class.getName());
+                    return "((List<?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") + ".get(" + "\"" + info.className() + "." + listVarName + ".\" + " + refType.keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")).isEmpty()";
+                }));
+
+        api.patterns().condition(b -> b
+                .by("Lumen")
+                .pattern("%list:LIST% is not empty for %scope:EXPR%")
+                .description("Checks if a scoped global list has at least one element for a specific scope reference.")
+                .example("if todos is not empty for player:")
+                .since("1.0.0")
+                .category(Categories.LIST)
+                .handler((match, env, ctx) -> {
+                    Object listVal = match.value("list");
+                    if (listVal instanceof EnvironmentAccess.VarHandle) {
+                        throw new RuntimeException("Cannot use 'for <scope>' with a local list variable. Use '%list% is not empty' instead, or declare the list as 'global scoped'.");
+                    }
+                    String listVarName = (String) listVal;
+                    EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(listVarName);
+                    if (info == null) throw new RuntimeException("'" + listVarName + "' is not a global variable.");
+                    if (!info.scoped()) throw new RuntimeException("'" + listVarName + "' is not a scoped global. Declare it with 'global scoped " + listVarName + "' to use per-entity access.");
+                    String scopeVarName = match.java("scope", ctx, env);
+                    EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
+                    if (scopeRef == null) throw new RuntimeException("Scope variable not found: " + scopeVarName);
+                    RefTypeHandle refType = scopeRef.type();
+                    if (refType == null) throw new RuntimeException("Scope variable '" + scopeVarName + "' has no ref type.");
+                    ctx.addImport(List.class.getName());
+                    ctx.addImport(ArrayList.class.getName());
+                    return "!((List<?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") + ".get(" + "\"" + info.className() + "." + listVarName + ".\" + " + refType.keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")).isEmpty()";
                 }));
     }
 }

@@ -40,6 +40,10 @@ public final class ScopedVariableConditions {
             throw new RuntimeException("Variable '" + varName
                     + "' is not a global variable. Scoped reads (for ...) are only supported on global vars.");
         }
+        if (!info.scoped()) {
+            throw new RuntimeException("Variable '" + varName
+                    + "' is not a scoped global. Declare it with 'global scoped " + varName + "' to use per-entity access.");
+        }
         EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
         if (scopeRef == null) {
             throw new RuntimeException("Scope variable not found: " + scopeVarName);

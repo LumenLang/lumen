@@ -36,8 +36,8 @@ every 30 seconds as "temp_task" cancelling:
 
 # A named repeating task with default hot-reload behavior.
 # On reload, the code is swapped but the timer keeps its current phase.
-global var heartbeat_count default 0
-global var countdown default 5
+global heartbeat_count with default 0
+global countdown with default 5
 
 every 1 minute as "heartbeat":
     add 1 to heartbeat_count
@@ -48,7 +48,7 @@ command schedules:
     if args size < 1:
         message player "&cUsage: /schedules <demo|stop|countdown>"
     else:
-        var action = get args at index 0
+        set action to get args at index 0
 
         if action is "demo":
             message player "&aStarting schedule demos..."

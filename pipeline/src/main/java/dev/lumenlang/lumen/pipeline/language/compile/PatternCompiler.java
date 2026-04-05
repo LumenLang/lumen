@@ -12,20 +12,7 @@ import java.util.Locale;
 /**
  * Compiles pattern strings into structured {@link Pattern} objects.
  *
- * <p>
- * Pattern syntax:
- * <ul>
- * <li>{@code %name:TYPE%} A placeholder with an explicit type</li>
- * <li>{@code %name%} A placeholder with the implicit EXPR type</li>
- * <li>{@code literal} Fixed text (case-insensitive match)</li>
- * <li>{@code (a|b|c)} Required choice: one alternative must match</li>
- * <li>{@code [text]} Optional: text may be present or absent</li>
- * <li>{@code [a|b|c]} Optional choice: zero or one alternative matches</li>
- * <li>{@code word[suffix]} Optional suffix, e.g. {@code info[rmation]}</li>
- * <li>{@code [prefix]word} Optional prefix, e.g. {@code [un]hide}</li>
- * </ul>
- *
- * @see Pattern
+ * @see PatternPart
  */
 public final class PatternCompiler {
 
@@ -67,8 +54,7 @@ public final class PatternCompiler {
                 String type = colon < 0 ? "EXPR" : inner.substring(colon + 1);
                 parts.add(new PatternPart.PlaceholderPart(new Placeholder(name, type)));
 
-                if (i < len && raw.charAt(i) != ' ' && raw.charAt(i) != '%'
-                        && raw.charAt(i) != '(' && raw.charAt(i) != ')') {
+                if (i < len && raw.charAt(i) != ' ' && raw.charAt(i) != '%' && raw.charAt(i) != '(' && raw.charAt(i) != ')') {
                     int wordEnd = readWordEnd(raw, i);
                     String suffix = raw.substring(i, wordEnd);
                     i = wordEnd;
@@ -200,8 +186,7 @@ public final class PatternCompiler {
             PatternPart last = alt.get(alt.size() - 1);
             if (last instanceof PatternPart.Literal lit) {
                 List<PatternPart> modified = new ArrayList<>(alt);
-                modified.set(modified.size() - 1, new PatternPart.FlexLiteral(
-                        List.of(lit.text(), lit.text() + suffix.toLowerCase(Locale.ROOT))));
+                modified.set(modified.size() - 1, new PatternPart.FlexLiteral(List.of(lit.text(), lit.text() + suffix.toLowerCase(Locale.ROOT))));
                 result.add(modified);
             } else if (last instanceof PatternPart.FlexLiteral flex) {
                 List<String> expanded = new ArrayList<>();
@@ -241,8 +226,7 @@ public final class PatternCompiler {
     private static @NotNull PatternPart toWordPart(@NotNull String word) {
         if (word.indexOf('[') >= 0) {
             List<String> forms = expandBrackets(word);
-            return new PatternPart.FlexLiteral(
-                    forms.stream().map(f -> f.toLowerCase(Locale.ROOT)).toList());
+            return new PatternPart.FlexLiteral(forms.stream().map(f -> f.toLowerCase(Locale.ROOT)).toList());
         }
         return new PatternPart.Literal(word.toLowerCase(Locale.ROOT));
     }

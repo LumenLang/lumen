@@ -11,10 +11,10 @@ Lumen provides several built-in math functions for common operations.
 Find the smaller or larger of two values:
 
 ```luma
-var a = 42
-var b = 8
-var smallest = min of a and b
-var largest = max of a and b
+set a to 42
+set b to 8
+set smallest to min of a and b
+set largest to max of a and b
 ```
 
 `smallest` is 8 and `largest` is 42.
@@ -24,8 +24,8 @@ var largest = max of a and b
 Get the non-negative version of a number:
 
 ```luma
-var neg = 0 - 15
-var absolute = abs of neg
+set neg to 0 - 15
+set absolute to abs of neg
 ```
 
 `absolute` is 15.
@@ -35,7 +35,7 @@ var absolute = abs of neg
 Restrict a value to a specific range. Values below the minimum become the minimum, values above the maximum become the maximum:
 
 ```luma
-var clamped = clamp 150 between 0 and 100
+set clamped to clamp 150 between 0 and 100
 ```
 
 `clamped` is 100, since 150 exceeds the upper bound.
@@ -46,7 +46,7 @@ Generate a random number within a range (both are inclusive):
 
 ```luma
 command roll:
-    var result = random between 1 and 100
+    set result to random between 1 and 100
     broadcast "&e{player_name} rolled &6{result}&f!"
 ```
 

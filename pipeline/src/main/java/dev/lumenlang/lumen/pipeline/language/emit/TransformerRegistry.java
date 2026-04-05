@@ -102,8 +102,7 @@ public final class TransformerRegistry {
         int pass = 0;
         while (changed) {
             if (++pass > MAX_PASSES) {
-                LumenLogger.warning("[CodeTransform] Reached " + MAX_PASSES
-                        + " transformation passes, aborting to prevent an infinite loop");
+                LumenLogger.warning("[CodeTransform] Reached " + MAX_PASSES + " transformation passes, aborting to prevent an infinite loop");
                 break;
             }
             changed = false;

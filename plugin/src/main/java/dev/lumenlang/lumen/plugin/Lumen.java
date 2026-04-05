@@ -11,8 +11,8 @@ import dev.lumenlang.lumen.pipeline.addon.AddonManager;
 import dev.lumenlang.lumen.pipeline.addon.LumenAPIImpl;
 import dev.lumenlang.lumen.pipeline.addon.ScriptBinderManager;
 import dev.lumenlang.lumen.pipeline.binder.ScriptBinder;
-import dev.lumenlang.lumen.pipeline.java.compiler.system.SystemCompiler;
 import dev.lumenlang.lumen.pipeline.inject.InjectableHandlers;
+import dev.lumenlang.lumen.pipeline.java.compiler.system.SystemCompiler;
 import dev.lumenlang.lumen.pipeline.language.emit.EmitRegistry;
 import dev.lumenlang.lumen.pipeline.language.emit.TransformerRegistry;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
@@ -208,8 +208,8 @@ public final class Lumen extends JavaPlugin {
     private void platformCheck() {
         if (ServerPlatform.isFolia()) {
             this.getLogger().warning("Folia detected. Folia is currently not officially supported, features such as entity, schedules, and additional issues may occur. Use at your own risk.");
-            LumenConfiguration.applyOverride(ConfigOverride.disable(ConfigOption.ENABLE_ALL_SCRIPTS_IMMEDIATELY)
-                    .lastingSession("Disabling ENABLE_ALL_SCRIPTS_IMMEDIATELY will make the code use runTask, which is not supported on Folia."));
+            LumenConfiguration.applyOverride(ConfigOverride.enable(ConfigOption.ENABLE_ALL_SCRIPTS_IMMEDIATELY)
+                    .lastingSession("Folia does not support runTask; all scripts must be initialized immediately on startup."));
         }
         if (!ServerPlatform.isPaper() && LumenConfiguration.FEATURES.PAPER_ONLY_FEATURES) {
             this.getLogger().warning(

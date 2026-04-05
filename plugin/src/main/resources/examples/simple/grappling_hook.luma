@@ -8,10 +8,10 @@
 #   /grapple speed <value>  Set your grapple launch speed (default 2)
 
 config:
-    prefix: &6[Grapple]&r
+    prefix: <gold>[Grapple]<reset>
     default_speed: 2
 
-global stored var grapple_speed for ref type player default 2
+global scoped grapple_speed with default 2
 
 command grapplinghook:
     permission "lumen.grapple"
@@ -19,42 +19,43 @@ command grapplinghook:
     aliases grapple, ghook
 
     if args size >= 1:
-        var sub = get args at index 0
+        set sub to get args at index 0
         if sub is "speed":
             if args size < 2:
-                message player "{prefix} &cUsage: /grapple speed <number>"
+                message player "{prefix} <red>Usage: /grapple speed <number>"
             else:
-                var spd = get args at index 1
-                set grapple_speed to spd
-                message player "{prefix} &aGrapple speed set to &f{spd}!"
+                set spd to get args at index 1 as number
+                set grapple_speed to spd for player
+                message player "{prefix} <green>Grapple speed set to <white>{spd}<green>!"
     else:
-        var rod = new item fishing_rod
-        set rod's display name to "&6&lGrappling Hook"
-        set rod's lore to "&7Cast and reel to launch yourself!|&eRight click to use"
+        set rod to new item fishing_rod
+        set rod's display name to "<gold><bold>Grappling Hook"
+        set rod's lore to "<gray>Cast and reel to launch yourself!|<yellow>Right click to use"
         set pdc "grapple" of rod to "true"
         make rod unbreakable
         give player rod
-        message player "{prefix} &aGrappling Hook received!"
-        message player "&7Cast the rod, then reel in to grapple!"
-        message player "&7Use /grapple speed <number> to adjust launch power."
+        message player "{prefix} <green>Grappling Hook received!"
+        message player "<gray>Cast the rod, then reel in to grapple!"
+        message player "<gray>Use /grapple speed <number> to adjust launch power."
 
 on fish:
-    if player is holding fishing_rod:
-        if state is "FISHING":
-            send actionbar "&7Hook cast..." to player
+    if item is set:
+        if item has pdc "grapple":
+            if state is "FISHING":
+                send actionbar "<gray>Hook cast..." to player
 
-        else if state is "BITE":
-            send actionbar "&eSomething is nibbling!" to player
+            else if state is "BITE":
+                send actionbar "<yellow>Something is nibbling!" to player
 
-        else if state is "CAUGHT_FISH":
-            send actionbar "&aCaught a fish!" to player
+            else if state is "CAUGHT_FISH":
+                send actionbar "<green>Caught a fish!" to player
 
-        else if state is "CAUGHT_ENTITY":
-            send actionbar "&bCaught an entity!" to player
+            else if state is "CAUGHT_ENTITY":
+                send actionbar "<aqua>Caught an entity!" to player
 
-        else:
-            var hook_loc = get hook's location
-            var spd = grapple_speed
-            launch player toward hook_loc with speed spd
-            play sound "entity_fishing_bobber_retrieve" to player
-            send actionbar "&6&lGrapple!" to player
+            else:
+                set hook_loc to get hook's location
+                set spd to get grapple_speed for player
+                launch player toward hook_loc with speed spd
+                play sound "entity_fishing_bobber_retrieve" to player
+                send actionbar "<gold><bold>Grapple!" to player

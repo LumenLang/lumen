@@ -5,7 +5,6 @@ import dev.lumenlang.lumen.api.handler.ConditionHandler;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler;
 import dev.lumenlang.lumen.api.handler.LoopHandler;
 import dev.lumenlang.lumen.api.handler.StatementHandler;
-import dev.lumenlang.lumen.pipeline.inject.PatternHinted;
 import dev.lumenlang.lumen.api.pattern.PatternMeta;
 import dev.lumenlang.lumen.api.pattern.builder.BlockBuilder;
 import dev.lumenlang.lumen.api.pattern.builder.ConditionBuilder;
@@ -15,6 +14,7 @@ import dev.lumenlang.lumen.api.pattern.builder.StatementBuilder;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.pipeline.conditions.registry.ConditionRegistry;
 import dev.lumenlang.lumen.pipeline.inject.InjectableHandlers;
+import dev.lumenlang.lumen.pipeline.inject.PatternHinted;
 import dev.lumenlang.lumen.pipeline.language.compile.PatternCompiler;
 import dev.lumenlang.lumen.pipeline.language.match.InlineExprValidator;
 import dev.lumenlang.lumen.pipeline.language.match.Match;
@@ -41,73 +41,6 @@ import java.util.function.Consumer;
 /**
  * Central registry for all Lumen patterns including statements, blocks, and
  * conditions.
- *
- * <p>
- * The PatternRegistry is the heart of Lumen's extensibility system. It allows
- * patterns to
- * be registered with handlers that define how matching script code should be
- * compiled into Java.
- *
- * <h2>Pattern Types</h2>
- * <p>
- * There are three types of patterns:
- * <ul>
- * <li><b>Statements:</b> Single-line actions like
- * {@code "give player diamond 1"}</li>
- * <li><b>Blocks:</b> Multi-line structures like {@code "on join:"} with
- * indented children</li>
- * <li><b>Conditions:</b> Boolean expressions used in if statements</li>
- * </ul>
- *
- * <h2>Registration Example</h2>
- *
- * <pre>{@code
- * PatternRegistry reg = new PatternRegistry(typeRegistry);
- *
- * // Register a statement
- * reg.statements("give %who:PLAYER% %item:MATERIAL% %amt:INT%", (node, ctx, out) -> {
- *     out.line(ctx.java("who") + ".getInventory().addItem(new ItemStack(" +
- *             ctx.java("item") + ", " + ctx.java("amt") + "));");
- * });
- *
- * // Register a block
- * reg.block("on %events:EXPR%", new BlockHandler() {
- *     public void begin(BindingContext ctx, JavaBuilder out) {
- *         out.line("public void handle_" + ctx.java("events") + "() {");
- *     }
- *
- *     public void end(BindingContext ctx, JavaBuilder out) {
- *         out.line("}");
- *     }
- * });
- *
- * // Register a condition
- * reg.condition("%p:PLAYER% health > %n:INT%", (m, env, ctx) -> {
- *     return m.values().get("p").value() + ".getHealth() > " +
- *             m.values().get("n").value();
- * });
- * }</pre>
- *
- * <h2>Pattern Matching Order</h2>
- * <p>
- * When matching a statement or block, the registry tries patterns in
- * registration order.
- * The first pattern that successfully matches is used. This means:
- * <ul>
- * <li>More specific patterns should be registered before generic ones</li>
- * <li>Pattern order matters for ambiguous cases</li>
- * </ul>
- *
- * <h2>Singleton Instance</h2>
- * <p>
- * The PatternRegistry uses a singleton pattern accessible via
- * {@link #instance()}.
- * This must be initialized during plugin startup with
- * {@link #instance(PatternRegistry)}.
- *
- * @see #statement(String, StatementHandler)
- * @see #block(String, BlockHandler)
- * @see #condition(String, ConditionHandler)
  */
 @SuppressWarnings({"unused", "DataFlowIssue"})
 public final class PatternRegistry {

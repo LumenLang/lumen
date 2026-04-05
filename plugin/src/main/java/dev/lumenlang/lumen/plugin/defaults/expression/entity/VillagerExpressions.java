@@ -20,14 +20,14 @@ public final class VillagerExpressions {
                 .stringGetter("[get] %e:ENTITY% profession",
                         "getProfession().name()",
                         "Returns the villager's profession name.",
-                        "var prof = mob's profession")
+                        "set prof to mob's profession")
                 .intGetter("[get] %e:ENTITY% villager level",
                         "getVillagerLevel()",
                         "Returns the villager's trading level.",
-                        "var lvl = mob's villager level")
+                        "set lvl to mob's villager level")
                 .stringGetter("[get] %e:ENTITY% villager type",
                         "getVillagerType().name()",
                         "Returns the villager's biome type name.",
-                        "var vt = mob's villager type");
+                        "set vt to mob's villager type");
     }
 }

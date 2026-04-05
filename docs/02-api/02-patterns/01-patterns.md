@@ -304,7 +304,7 @@ api.patterns().condition(b -> b
 
 ## Expressions
 
-Expression patterns are used in `var x = <pattern>` statements. The handler returns an `ExpressionResult` containing a Java expression and optional type information.
+Expression patterns are used in `set x to <pattern>` statements. The handler returns an `ExpressionResult` containing a Java expression and optional type information.
 
 ```java
 api.patterns().expression(
@@ -321,7 +321,7 @@ The first argument of `ExpressionResult` is the Java expression, and the second 
 In a script:
 
 ```luma
-var target = get player "Notch"
+set target to get player "Notch"
 message target "Hello!"
 ```
 
@@ -332,7 +332,7 @@ api.patterns().expression(b -> b
     .by("MyAddon")
     .pattern("get player %name:STRING%")
     .description("Looks up an online player by name.")
-    .example("var target = get player \"Notch\"")
+    .example("set target to get player \"Notch\"")
     .since("1.0.0")
     .category(Categories.PLAYER)
     .handler(ctx -> new ExpressionResult(

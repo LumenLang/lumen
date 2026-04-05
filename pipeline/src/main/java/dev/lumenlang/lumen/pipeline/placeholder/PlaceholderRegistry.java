@@ -40,8 +40,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p>In a script:
  * <pre>{@code
  * message player "Hello {player_name}, your health is {player_health}"
- * var hp = {player_health}
- * var yBelow = {player_y} - 1
+ * set hp to {player_health}
+ * set yBelow to {player_y} - 1
  * }</pre>
  */
 public final class PlaceholderRegistry {

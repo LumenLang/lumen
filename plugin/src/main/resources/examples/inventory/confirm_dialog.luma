@@ -11,18 +11,18 @@ config:
 command confirm:
     description "Opens a confirmation dialog"
 
-    var gui = new inventory "confirm_dialog" with rows 3 titled "{confirm_title}"
+    set gui to new inventory "confirm_dialog" with rows 3 titled "{confirm_title}"
 
-    var filler = new item black_stained_glass_pane
+    set filler to new item black_stained_glass_pane
     set filler's display name to " "
     fill slots 0 to 26 of gui with filler
 
-    var yes = new item lime_wool
+    set yes to new item lime_wool
     set yes's display name to "&a&lYes"
     set yes's lore to "&7Click to confirm"
     set slot 11 of gui to yes
 
-    var no = new item red_wool
+    set no to new item red_wool
     set no's display name to "&c&lNo"
     set no's lore to "&7Click to cancel"
     set slot 15 of gui to no

@@ -10,7 +10,6 @@ import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.pipeline.language.exceptions.TokenCarryingException;
 import dev.lumenlang.lumen.pipeline.language.pattern.Pattern;
 import dev.lumenlang.lumen.pipeline.language.resolve.ExprResolver;
-import dev.lumenlang.lumen.pipeline.typebinding.TypeRegistry;
 import dev.lumenlang.lumen.pipeline.var.RefType;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
@@ -21,19 +20,6 @@ import java.util.Map;
 
 /**
  * Represents a successful pattern match with all bound parameters.
- *
- * <p>
- * A Match is created when
- * {@link PatternMatcher#match(List, Pattern, TypeRegistry, TypeEnv)}
- * successfully matches all pattern parts against the input tokens.
- *
- * <h2>Convenience Accessors</h2>
- * <p>
- * Rather than navigating the raw {@link #values()} map, handlers can use:
- * <ul>
- * <li>{@link #ref(String)} to get a parsed value as a {@link VarRef}</li>
- * <li>{@link #java(String, CodegenContext, TypeEnv)} to convert a parsed value to Java code</li>
- * </ul>
  *
  * @param pattern the pattern that was matched
  * @param values  map of parameter names to their bound values
@@ -224,17 +210,6 @@ public record Match(
                                 @NotNull CodegenAccess ctx,
                                 @NotNull EnvironmentAccess env) {
         return javaAt(index, (CodegenContext) ctx, (TypeEnv) env);
-    }
-
-    /**
-     * Creates a synthetic {@link EnvironmentAccess.VarHandle} wrapping a resolved Java
-     * expression with no type information.
-     *
-     * @param javaExpr the resolved Java expression
-     * @return a VarHandle backed by the expression
-     */
-    public static EnvironmentAccess.@NotNull VarHandle syntheticHandle(@NotNull String javaExpr) {
-        return new InlineVarRef(javaExpr, null, Map.of());
     }
 
     /**

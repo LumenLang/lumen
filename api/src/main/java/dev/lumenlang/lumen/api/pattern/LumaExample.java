@@ -42,9 +42,6 @@ public final class LumaExample {
     /**
      * Joins pre-indented lines into a single example string.
      *
-     * <p>Each line should be produced by {@link #top(String)}, {@link #secondly(String)},
-     * {@link #thirdly(String)}, or {@link #fourthly(String)}.
-     *
      * @param lines one or more pre-indented lines
      * @return the formatted example string
      */

@@ -20,6 +20,6 @@ public final class WolfExpressions {
                 .stringGetter("[get] %e:ENTITY% collar color",
                         "getCollarColor().name()",
                         "Returns the wolf's collar color name.",
-                        "var c = mob's collar color");
+                        "set c to mob's collar color");
     }
 }

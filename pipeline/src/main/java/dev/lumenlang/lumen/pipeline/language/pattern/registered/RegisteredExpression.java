@@ -3,13 +3,12 @@ package dev.lumenlang.lumen.pipeline.language.pattern.registered;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler;
 import dev.lumenlang.lumen.api.pattern.PatternMeta;
 import dev.lumenlang.lumen.pipeline.language.pattern.Pattern;
-import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Associates a compiled {@link Pattern} with the {@link ExpressionHandler} that should be invoked
- * when the pattern is matched in a {@code var x = <pattern>} context.
+ * when the pattern is matched in a {@code set x to <pattern>} context.
  *
  * <p>The optional {@code returnRefTypeId} declares the ref type this expression
  * statically produces (e.g. "PLAYER", "LOCATION"). The optional {@code returnJavaType}
@@ -23,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
  * @param meta             documentation metadata for this pattern
  * @param returnRefTypeId  the ref type id this expression always returns, or {@code null} if dynamic
  * @param returnJavaType   the Java type this expression always returns (e.g. "int", "String"), or {@code null}
- * @see PatternRegistry#expression(String, ExpressionHandler)
  */
 public record RegisteredExpression(@NotNull Pattern pattern, @NotNull ExpressionHandler handler,
                                    @NotNull PatternMeta meta,

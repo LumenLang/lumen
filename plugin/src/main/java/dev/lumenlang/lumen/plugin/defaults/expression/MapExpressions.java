@@ -43,7 +43,7 @@ public final class MapExpressions {
                 .by("Lumen")
                 .pattern("new map")
                 .description("Creates a new empty map.")
-                .example("var myMap = new map")
+                .example("set myMap to new map")
                 .since("1.0.0")
                 .category(Categories.MAP)
                 .returnRefTypeId(Types.MAP.id())
@@ -58,8 +58,8 @@ public final class MapExpressions {
         api.patterns().expression(b -> b
                 .by("Lumen")
                 .pattern("get %map:MAP% at key %key:EXPR% for %scope:EXPR%")
-                .description("Returns the value associated with a key in a player-scoped stored map.")
-                .example("var bal = get balances at key \"money\" for p")
+                .description("Returns the value associated with a key in a scoped global map for a specific scope reference.")
+                .example("set bal to get balances at key \"money\" for p")
                 .since("1.0.0")
                 .category(Categories.MAP)
                 .handler(ctx -> {
@@ -71,6 +71,10 @@ public final class MapExpressions {
                     if (info == null) {
                         throw new RuntimeException("Variable '" + mapVarName
                                 + "' is not a global variable. Scoped expressions (for ...) are only supported on global vars.");
+                    }
+                    if (!info.scoped()) {
+                        throw new RuntimeException("'" + mapVarName
+                                + "' is not a scoped global. Declare it with 'global scoped " + mapVarName + "' to use per-entity access.");
                     }
                     String storageClass = info.stored() ? "PersistentVars" : "GlobalVars";
                     String storageKey = buildScopedKey(env, mapVarName, scopeVarName, info);
@@ -86,7 +90,7 @@ public final class MapExpressions {
                 .by("Lumen")
                 .pattern("get %map:MAP% at key %key:EXPR%")
                 .description("Returns the value associated with a key in a map, or null if the key is not present.")
-                .example("var name = get myMap at key \"name\"")
+                .example("set name to get myMap at key \"name\"")
                 .since("1.0.0")
                 .category(Categories.MAP)
                 .handler(ctx -> {
@@ -100,7 +104,7 @@ public final class MapExpressions {
                 .by("Lumen")
                 .pattern("size of %map:MAP%")
                 .description("Returns the number of entries in a map.")
-                .example("var count = size of myMap")
+                .example("set count to size of myMap")
                 .since("1.0.0")
                 .category(Categories.MAP)
                 .returnJavaType(Types.INT)
@@ -115,7 +119,7 @@ public final class MapExpressions {
                 .by("Lumen")
                 .pattern("%map:MAP% size")
                 .description("Returns the number of entries in a map (postfix syntax).")
-                .example("var count = myMap size")
+                .example("set count to myMap size")
                 .since("1.0.0")
                 .category(Categories.MAP)
                 .returnJavaType(Types.INT)
@@ -130,7 +134,7 @@ public final class MapExpressions {
                 .by("Lumen")
                 .pattern("keys of %map:MAP%")
                 .description("Returns a list containing all keys of a map.")
-                .example("var allKeys = keys of myMap")
+                .example("set allKeys to keys of myMap")
                 .since("1.0.0")
                 .category(Categories.MAP)
                 .returnRefTypeId(Types.LIST.id())
@@ -147,7 +151,7 @@ public final class MapExpressions {
                 .by("Lumen")
                 .pattern("values of %map:MAP%")
                 .description("Returns a list containing all values of a map.")
-                .example("var allValues = values of myMap")
+                .example("set allValues to values of myMap")
                 .since("1.0.0")
                 .category(Categories.MAP)
                 .returnRefTypeId(Types.LIST.id())

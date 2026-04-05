@@ -6,8 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * A {@link RuntimeException} subclass that carries token position information,
- * allowing callers to generate precise squiggly-underline error indicators.
+ * A {@link RuntimeException} subclass that carries token position information.
  */
 public class TokenCarryingException extends RuntimeException {
 

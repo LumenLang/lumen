@@ -3,7 +3,6 @@ package dev.lumenlang.lumen.pipeline.language.emit;
 import dev.lumenlang.lumen.api.emit.BlockEnterHook;
 import dev.lumenlang.lumen.api.emit.BlockFormHandler;
 import dev.lumenlang.lumen.api.emit.StatementFormHandler;
-import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -14,10 +13,6 @@ import java.util.List;
  * Stores registered emit handlers (statement forms, block forms, and block enter hooks).
  *
  * <p>All built-in language features and addon-registered extensions are stored here.
- * The {@link CodeEmitter} consults this registry before falling back to pattern matching.
- *
- * <p>Uses the same static-singleton pattern as
- * {@link PatternRegistry}.
  */
 public final class EmitRegistry {
 

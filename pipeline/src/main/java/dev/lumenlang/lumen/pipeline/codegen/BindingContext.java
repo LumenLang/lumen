@@ -3,6 +3,7 @@ package dev.lumenlang.lumen.pipeline.codegen;
 import dev.lumenlang.lumen.api.codegen.BindingAccess;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.handler.BlockHandler;
+import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.handler.StatementHandler;
 import dev.lumenlang.lumen.pipeline.conditions.ConditionExpr;
 import dev.lumenlang.lumen.pipeline.conditions.parser.ConditionParser;
@@ -14,9 +15,8 @@ import dev.lumenlang.lumen.pipeline.language.match.Match;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.language.resolve.ExprResolver;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
-import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
-import dev.lumenlang.lumen.pipeline.var.RefType;
 import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
+import dev.lumenlang.lumen.pipeline.var.RefType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

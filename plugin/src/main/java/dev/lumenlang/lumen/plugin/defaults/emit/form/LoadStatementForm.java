@@ -28,38 +28,26 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * Statement form handler for stored variable declarations.
+ * Statement form handler for inline stored variable loading.
  *
- * <p>Handles both the {@code stored var x [for [ref type] scope] default expr}
- * syntax and the {@code store x [for scope] default expr} syntax.
+ * <p>Accepts the syntax {@code load name [for [ref type] scope] with default expr}.
+ * This loads a persistent variable into the current scope, creating it with the given
+ * default value if it does not yet exist. The variable is backed by {@link PersistentVars}
+ * and survives server restarts.
  */
 @Registration(order = -1999)
 @SuppressWarnings({"unused", "DataFlowIssue"})
-public final class StoreVarStatementForm implements StatementFormHandler {
+public final class LoadStatementForm implements StatementFormHandler {
 
     @Call
     public void register(@NotNull LumenAPI api) {
         api.emitters().statementForm(this);
     }
 
-    private static boolean isStoreStatement(@NotNull List<Token> t) {
-        if (t.size() < 4 || !t.get(0).text().equalsIgnoreCase("store")) {
-            return false;
-        }
-        for (int i = 2; i < t.size(); i++) {
-            if (t.get(i).text().equalsIgnoreCase("default")) return true;
-        }
-        return false;
-    }
-
-    private static boolean isStoredVarStatement(@NotNull List<Token> t) {
-        if (t.size() < 5
-                || !t.get(0).text().equalsIgnoreCase("stored")
-                || !t.get(1).text().equalsIgnoreCase("var")) {
-            return false;
-        }
-        for (int i = 3; i < t.size(); i++) {
-            if (t.get(i).text().equalsIgnoreCase("default")) return true;
+    private static boolean isLoadStatement(@NotNull List<Token> t) {
+        if (t.size() < 5 || !t.get(0).text().equalsIgnoreCase("load")) return false;
+        for (int i = 2; i < t.size() - 1; i++) {
+            if (t.get(i).text().equalsIgnoreCase("with") && t.get(i + 1).text().equalsIgnoreCase("default")) return true;
         }
         return false;
     }
@@ -67,56 +55,42 @@ public final class StoreVarStatementForm implements StatementFormHandler {
     @Override
     public boolean tryHandle(@NotNull List<? extends ScriptToken> tokens, @NotNull EmitContext ctx) {
         List<Token> t = EmitContextImpl.toPipelineTokens(tokens);
-
-        if (isStoredVarStatement(t)) {
-            return handleStoredVar(t, ctx);
-        }
-        if (isStoreStatement(t)) {
-            return handleStore(t, ctx);
-        }
-        return false;
+        if (!isLoadStatement(t)) return false;
+        handleLoad(t, ctx);
+        return true;
     }
 
-    private boolean handleStoredVar(@NotNull List<Token> t, @NotNull EmitContext ctx) {
-        String name = t.get(2).text();
-        String scopeVar = null;
-        int defaultIdx;
-
-        if (t.get(3).text().equalsIgnoreCase("for")) {
-            int forIdx = 4;
-            if (forIdx + 1 < t.size()
-                    && t.get(forIdx).text().equalsIgnoreCase("ref")
-                    && t.get(forIdx + 1).text().equalsIgnoreCase("type")) {
-                forIdx += 2;
-            }
-            scopeVar = t.get(forIdx).text();
-            defaultIdx = forIdx + 1;
-        } else {
-            defaultIdx = 3;
-        }
-
-        List<Token> exprTokens = t.subList(defaultIdx + 1, t.size());
-        return emitStoreVar(name, scopeVar, exprTokens, ctx);
-    }
-
-    private boolean handleStore(@NotNull List<Token> t, @NotNull EmitContext ctx) {
+    private void handleLoad(@NotNull List<Token> t, @NotNull EmitContext ctx) {
         String name = t.get(1).text();
+        int idx = 2;
         String scopeVar = null;
-        int defaultIdx;
 
-        if (t.get(2).text().equalsIgnoreCase("for")) {
-            scopeVar = t.get(3).text();
-            defaultIdx = 4;
-        } else {
-            defaultIdx = 2;
+        if (idx < t.size() && t.get(idx).text().equalsIgnoreCase("for")) {
+            idx++;
+            if (idx + 1 < t.size() && t.get(idx).text().equalsIgnoreCase("ref") && t.get(idx + 1).text().equalsIgnoreCase("type")) {
+                idx += 2;
+            }
+            if (idx >= t.size()) {
+                throw new LumenScriptException(ctx.line(), ctx.raw(), "Expected scope variable after 'for'. Correct syntax: load " + name + " for <scope> with default ...");
+            }
+            scopeVar = t.get(idx).text();
+            idx++;
         }
 
-        List<Token> exprTokens = t.subList(defaultIdx + 1, t.size());
-        return emitStoreVar(name, scopeVar, exprTokens, ctx);
+        if (idx >= t.size() || !t.get(idx).text().equalsIgnoreCase("with")) {
+            throw new LumenScriptException(ctx.line(), ctx.raw(), "Expected 'with default'. Correct syntax: load " + name + " [for <scope>] with default ...");
+        }
+        idx++;
+        if (idx >= t.size() || !t.get(idx).text().equalsIgnoreCase("default")) {
+            throw new LumenScriptException(ctx.line(), ctx.raw(), "Expected 'default' after 'with'. Correct syntax: load " + name + " [for <scope>] with default ...");
+        }
+        idx++;
+
+        List<Token> exprTokens = t.subList(idx, t.size());
+        emitLoadVar(name, scopeVar, exprTokens, ctx);
     }
 
-    private boolean emitStoreVar(@NotNull String name, @Nullable String scopeVar,
-                                 @NotNull List<Token> exprTokens, @NotNull EmitContext ctx) {
+    private void emitLoadVar(@NotNull String name, @Nullable String scopeVar, @NotNull List<Token> exprTokens, @NotNull EmitContext ctx) {
         TypeEnv env = (TypeEnv) ctx.env();
 
         String nameError = VarNameValidator.validate(name);
@@ -125,8 +99,7 @@ public final class StoreVarStatementForm implements StatementFormHandler {
         }
 
         if (env.lookupVar(name) != null) {
-            throw new LumenScriptException(ctx.line(), ctx.raw(),
-                    "Variable '" + name + "' is already defined in this scope");
+            throw new LumenScriptException(ctx.line(), ctx.raw(), "Variable '" + name + "' is already defined in this scope");
         }
 
         RegisteredExpressionMatch exprMatch = PatternRegistry.instance().matchExpression(exprTokens, env);
@@ -135,10 +108,7 @@ public final class StoreVarStatementForm implements StatementFormHandler {
         RefType exprRefType = null;
 
         if (exprMatch != null) {
-            BindingContext bc = new BindingContext(
-                    exprMatch.match(), env,
-                    ((EmitContextImpl) ctx).codegenContext(),
-                    env.blockContext());
+            BindingContext bc = new BindingContext(exprMatch.match(), env, ((EmitContextImpl) ctx).codegenContext(), env.blockContext());
             ExpressionResult result = exprMatch.reg().handler().handle(bc);
             defaultJava = result.java();
             if (result.refTypeId() != null) {
@@ -147,9 +117,7 @@ public final class StoreVarStatementForm implements StatementFormHandler {
         } else {
             Expr e = ExprParser.parse(exprTokens, env);
             if (e instanceof Expr.Literal l) {
-                defaultJava = l.value() instanceof String s
-                        ? PlaceholderExpander.expand(s, env)
-                        : l.value().toString();
+                defaultJava = l.value() instanceof String s ? PlaceholderExpander.expand(s, env) : l.value().toString();
             } else if (e instanceof Expr.RefExpr r) {
                 VarRef ref = env.lookupVar(r.name());
                 if (ref == null) {
@@ -160,10 +128,7 @@ public final class StoreVarStatementForm implements StatementFormHandler {
                 defaultJava = m.java();
             } else {
                 Expr.RawExpr raw = (Expr.RawExpr) e;
-                throw new LumenScriptException(ctx.line(), ctx.raw(),
-                        "Expression not recognized: '" + ExprResolver.joinTokens(raw.tokens())
-                                + "'. Check spelling of variables and expression patterns.",
-                        raw.tokens());
+                throw new LumenScriptException(ctx.line(), ctx.raw(), "Expression not recognized: '" + ExprResolver.joinTokens(raw.tokens()) + "'. Check spelling of variables and expression patterns.", raw.tokens());
             }
         }
 
@@ -194,6 +159,5 @@ public final class StoreVarStatementForm implements StatementFormHandler {
         }
         String baseKey = "\"" + className + "." + name + ".\"";
         ctx.env().markStored(name, keyExpr, baseKey, scopeVar);
-        return true;
     }
 }

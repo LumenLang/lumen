@@ -11,7 +11,7 @@ command setrank:
     if args size < 1:
         message player "&cUsage: /setrank <rank>"
     else:
-        var rank = get args at index 0
+        set rank to get args at index 0
         set pdc "rank" of player to rank
         message player "&aYour rank has been set to &e{rank}&a."
 
@@ -19,7 +19,7 @@ command rank:
     description "Show your rank"
 
     if player has pdc "rank":
-        var r = get pdc "rank" of player
+        set r to get pdc "rank" of player
         message player "&6Your rank: &f{r}"
     else:
         message player "&7You do not have a rank set. Use /setrank to set one."

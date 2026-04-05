@@ -255,7 +255,7 @@ public final class EventBlocks {
                         + "is available inside the block and represents the target player.")
                 .example(of(
                         top("register inventory \"test_menu\":"),
-                        secondly("var gui = new inventory \"test_menu\" with size 54 titled \"<gold>Test Menu\"")))
+                        secondly("set gui to new inventory \"test_menu\" with size 54 titled \"<gold>Test Menu\"")))
                 .since("1.0.0")
                 .category(Categories.INVENTORY)
                 .supportsRootLevel(true)

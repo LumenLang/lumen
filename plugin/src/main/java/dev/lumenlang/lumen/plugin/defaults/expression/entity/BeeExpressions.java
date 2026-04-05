@@ -20,6 +20,6 @@ public final class BeeExpressions {
                 .intGetter("[get] %e:ENTITY% anger [level]",
                         "getAnger()",
                         "Returns the bee's anger level in ticks.",
-                        "var anger = mob's anger level");
+                        "set anger to mob's anger level");
     }
 }

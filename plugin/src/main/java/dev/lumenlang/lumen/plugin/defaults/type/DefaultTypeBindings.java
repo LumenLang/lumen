@@ -1200,8 +1200,9 @@ public final class DefaultTypeBindings {
                     throw new ParseFailureException("LIST requires at least one token");
                 String name = tokens.get(0);
                 VarHandle ref = env.lookupVar(name);
-                if (ref != null && isList(ref))
-                    return 1;
+                if (ref != null && isList(ref)) return 1;
+                EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(name);
+                if (info != null && "LIST".equals(info.exprRefTypeId())) return 1;
                 throw new ParseFailureException("Expected a list variable, got '" + name + "'");
             }
 
@@ -1210,19 +1211,20 @@ public final class DefaultTypeBindings {
                 String name = tokens.get(0);
                 VarHandle ref = env.lookupVar(name);
                 if (ref != null) {
-                    if (!isList(ref))
-                        throw new ParseFailureException(name + " is not a list");
+                    if (!isList(ref)) throw new ParseFailureException(name + " is not a list");
                     return ref;
                 }
+                EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(name);
+                if (info != null && "LIST".equals(info.exprRefTypeId())) return name;
                 throw new ParseFailureException("Unknown list variable: " + name);
             }
 
             @Override
             public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx,
                                           @NotNull EnvironmentAccess env) {
-                if (v == null)
-                    throw new RuntimeException("Cannot generate Java for null list reference");
-                return ((VarHandle) v).java();
+                if (v instanceof VarHandle ref) return ref.java();
+                if (v instanceof String name) throw new RuntimeException("'" + name + "' is a scoped global variable. Retrieve it first: var " + name + " = get " + name + " for <scope>");
+                throw new RuntimeException("Cannot generate Java for null list reference");
             }
 
             private boolean isList(@NotNull VarHandle ref) {
@@ -1254,8 +1256,9 @@ public final class DefaultTypeBindings {
                     throw new ParseFailureException("MAP requires at least one token");
                 String name = tokens.get(0);
                 VarHandle ref = env.lookupVar(name);
-                if (ref != null && isMap(ref))
-                    return 1;
+                if (ref != null && isMap(ref)) return 1;
+                EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(name);
+                if (info != null && "MAP".equals(info.exprRefTypeId())) return 1;
                 throw new ParseFailureException("Expected a map variable, got '" + name + "'");
             }
 
@@ -1264,19 +1267,20 @@ public final class DefaultTypeBindings {
                 String name = tokens.get(0);
                 VarHandle ref = env.lookupVar(name);
                 if (ref != null) {
-                    if (!isMap(ref))
-                        throw new ParseFailureException(name + " is not a map");
+                    if (!isMap(ref)) throw new ParseFailureException(name + " is not a map");
                     return ref;
                 }
+                EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(name);
+                if (info != null && "MAP".equals(info.exprRefTypeId())) return name;
                 throw new ParseFailureException("Unknown map variable: " + name);
             }
 
             @Override
             public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx,
                                           @NotNull EnvironmentAccess env) {
-                if (v == null)
-                    throw new RuntimeException("Cannot generate Java for null map reference");
-                return ((VarHandle) v).java();
+                if (v instanceof VarHandle ref) return ref.java();
+                if (v instanceof String name) throw new RuntimeException("'" + name + "' is a scoped global variable. Retrieve it first: var " + name + " = get " + name + " for <scope>");
+                throw new RuntimeException("Cannot generate Java for null map reference");
             }
 
             private boolean isMap(@NotNull VarHandle ref) {

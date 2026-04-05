@@ -44,7 +44,7 @@ import java.util.Objects;
  *         "[get] %e:ENTITY% collar color",
  *         "getCollarColor().name()",
  *         "Returns the wolf's collar color name.",
- *         "var c = mob collar color"
+ *         "set c to mob collar color"
  *     );
  * }</pre>
  *
@@ -273,45 +273,6 @@ public final class EntityHelper {
                     ctx.codegen().addImport(fqcn);
                     out.line("if (" + ctx.java("e") + " instanceof " + simpleName + " " + alias
                             + ") { " + alias + "." + methodCall + "; }");
-                }));
-        return this;
-    }
-
-    /**
-     * Registers a statement that sets an enum property from a string expression.
-     *
-     * <p>The value binding has its quotes stripped and is converted to uppercase to produce
-     * a valid enum constant name. Use {@code {val}} as a placeholder for the enum constant.
-     *
-     * @param pattern     the statement pattern
-     * @param setterExpr  the setter expression with {@code {val}} placeholder
-     * @param valBinding  the binding name for the value
-     * @param extraImport an additional import for the enum class, or null
-     * @param description the description
-     * @param example     the example
-     * @return this builder
-     */
-    public @NotNull EntityHelper enumSetter(@NotNull String pattern,
-                                            @NotNull String setterExpr,
-                                            @NotNull String valBinding,
-                                            @Nullable String extraImport,
-                                            @NotNull String description,
-                                            @NotNull String example) {
-        api.patterns().statement(b -> b
-                .by("Lumen")
-                .pattern(toPossessive(pattern))
-                .description(description)
-                .example(example)
-                .since("1.0.0")
-                .category(Categories.ENTITY)
-                .handler((line, ctx, out) -> {
-                    EntityValidation.requireSubtype((VarHandle) ctx.value("e"), fqcn, pattern);
-                    ctx.codegen().addImport(fqcn);
-                    if (extraImport != null) ctx.codegen().addImport(extraImport);
-                    String val = ctx.java(valBinding).replace("\"", "").toUpperCase(Locale.ROOT);
-                    String resolved = setterExpr.replace("{val}", val);
-                    out.line("if (" + ctx.java("e") + " instanceof " + simpleName + " " + alias
-                            + ") { " + alias + "." + resolved + "; }");
                 }));
         return this;
     }

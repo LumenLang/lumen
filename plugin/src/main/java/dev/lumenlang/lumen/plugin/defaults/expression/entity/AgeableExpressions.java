@@ -20,6 +20,6 @@ public final class AgeableExpressions {
                 .intGetter("[get] %e:ENTITY% age",
                         "getAge()",
                         "Returns the ageable entity's age value.",
-                        "var a = mob's age");
+                        "set a to mob's age");
     }
 }

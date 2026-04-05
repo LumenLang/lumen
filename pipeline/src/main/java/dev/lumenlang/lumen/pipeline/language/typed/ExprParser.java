@@ -23,9 +23,6 @@ import java.util.List;
  * <li>Math expression: any token sequence recognised by {@link MathEngine}</li>
  * <li>Fallback: wrap as {@link Expr.RawExpr} for downstream handling</li>
  * </ol>
- *
- * @see Expr
- * @see StatementClassifier
  */
 public final class ExprParser {
 

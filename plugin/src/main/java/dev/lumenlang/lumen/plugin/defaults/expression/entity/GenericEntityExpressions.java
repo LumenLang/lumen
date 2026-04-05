@@ -20,7 +20,7 @@ public final class GenericEntityExpressions {
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("get %e:ENTITY_POSSESSIVE% location")
                 .description("Returns the entity's current location.")
-                .example("var loc = get mob's location")
+                .example("set loc to get mob's location")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
                 .returnRefTypeId(Types.LOCATION.id())
@@ -29,7 +29,7 @@ public final class GenericEntityExpressions {
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("get %e:ENTITY_POSSESSIVE% world")
                 .description("Returns the world the entity is in.")
-                .example("var w = get mob's world")
+                .example("set w to get mob's world")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
                 .returnRefTypeId(Types.WORLD.id())
@@ -38,7 +38,7 @@ public final class GenericEntityExpressions {
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("get %e:ENTITY_POSSESSIVE% type")
                 .description("Returns the entity's EntityType.")
-                .example("var t = get mob's type")
+                .example("set t to get mob's type")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
                 .handler(ctx -> new ExpressionResult(ctx.java("e") + ".getType()", null)));
@@ -46,7 +46,7 @@ public final class GenericEntityExpressions {
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("get %e:ENTITY_POSSESSIVE% name")
                 .description("Returns the entity's name.")
-                .example("var n = get mob's name")
+                .example("set n to get mob's name")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
                 .returnJavaType(Types.STRING)
@@ -55,7 +55,7 @@ public final class GenericEntityExpressions {
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("get %e:ENTITY_POSSESSIVE% custom name")
                 .description("Returns the entity's custom name, or null if not set.")
-                .example("var cn = get mob's custom name")
+                .example("set cn to get mob's custom name")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
                 .returnJavaType(Types.STRING)
@@ -64,7 +64,7 @@ public final class GenericEntityExpressions {
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("get %e:ENTITY_POSSESSIVE% uuid")
                 .description("Returns the entity's UUID as a string.")
-                .example("var id = get mob's uuid")
+                .example("set id to get mob's uuid")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
                 .returnJavaType(Types.STRING)
@@ -73,7 +73,7 @@ public final class GenericEntityExpressions {
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("get %e:ENTITY_POSSESSIVE% velocity")
                 .description("Returns the entity's velocity vector.")
-                .example("var vel = get mob's velocity")
+                .example("set vel to get mob's velocity")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
                 .handler(ctx -> new ExpressionResult(ctx.java("e") + ".getVelocity()", null)));
@@ -81,7 +81,7 @@ public final class GenericEntityExpressions {
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("get %e:ENTITY_POSSESSIVE% fire ticks")
                 .description("Returns the number of ticks the entity will remain on fire.")
-                .example("var ft = get mob's fire ticks")
+                .example("set ft to get mob's fire ticks")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
                 .returnJavaType(Types.INT)
@@ -90,7 +90,7 @@ public final class GenericEntityExpressions {
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("get %e:ENTITY_POSSESSIVE% passenger count")
                 .description("Returns how many passengers are riding the entity.")
-                .example("var count = get mob's passenger count")
+                .example("set count to get mob's passenger count")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
                 .returnJavaType(Types.INT)

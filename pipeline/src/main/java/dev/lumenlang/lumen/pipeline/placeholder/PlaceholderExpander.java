@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  * <p>Output Java: {@code "Hello " + player.getName() + ", hp " + String.valueOf(player.getHealth())}
  *
  * <p>In var expressions:
- * <pre>{@code var y = {player_y}   ->   var y = player.getLocation().getBlockY();}</pre>
+ * <pre>{@code set y to {player_y} -> var y = player.getLocation().getBlockY();}</pre>
  */
 public final class PlaceholderExpander {
 

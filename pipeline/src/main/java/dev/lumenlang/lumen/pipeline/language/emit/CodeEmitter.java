@@ -2,7 +2,6 @@ package dev.lumenlang.lumen.pipeline.language.emit;
 
 import dev.lumenlang.lumen.api.emit.BlockEnterHook;
 import dev.lumenlang.lumen.api.emit.BlockFormHandler;
-import dev.lumenlang.lumen.api.emit.EmitRegistrar;
 import dev.lumenlang.lumen.api.emit.ScriptLine;
 import dev.lumenlang.lumen.api.emit.StatementFormHandler;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
@@ -21,17 +20,12 @@ import dev.lumenlang.lumen.pipeline.language.parse.LumenParser;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.language.pattern.registered.RegisteredBlockMatch;
 import dev.lumenlang.lumen.pipeline.language.pattern.registered.RegisteredPatternMatch;
-import dev.lumenlang.lumen.pipeline.language.resolve.ExprResolver;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Line;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Tokenizer;
-import dev.lumenlang.lumen.pipeline.language.typed.Expr;
 import dev.lumenlang.lumen.pipeline.language.typed.StatementClassifier;
 import dev.lumenlang.lumen.pipeline.language.typed.TypedStatement;
 import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
-import dev.lumenlang.lumen.pipeline.type.LumenType;
-import dev.lumenlang.lumen.pipeline.var.RefType;
-import dev.lumenlang.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,14 +36,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Walks the parsed AST and emits Java source code.
- *
- * <p>Each node is first offered to registered emit handlers (statement form handlers,
- * block form handlers, and block enter hooks) before falling back to pattern matching.
- * All built-in language features are registered through the same {@link EmitRegistry}
- * that addons use, keeping the pipeline fully extensible.
- *
- * @see EmitRegistry
- * @see EmitRegistrar
  */
 public final class CodeEmitter {
 
@@ -330,17 +316,6 @@ public final class CodeEmitter {
             return;
         }
 
-        if (ts instanceof TypedStatement.ExprVarStmt evs) {
-            try {
-                emitExprVar(evs, env, ctx, out, blockCtx);
-            } catch (LumenScriptException e) {
-                throw e;
-            } catch (RuntimeException e) {
-                throw wrapRuntimeException(st.line(), st.raw(), e);
-            }
-            return;
-        }
-
         if (ts instanceof TypedStatement.ExprStmt es) {
             BindingContext bc = new BindingContext(es.match().match(), env, ctx, blockCtx);
             try {
@@ -361,67 +336,8 @@ public final class CodeEmitter {
             throw new LumenScriptException(st.line(), st.raw(), err.message());
         }
 
-        if (ts instanceof TypedStatement.VarStmt vs) {
-            String exprText;
-            List<Token> errorTokens = null;
-            if (vs.expr() instanceof Expr.RawExpr raw) {
-                exprText = ExprResolver.joinTokens(raw.tokens());
-                errorTokens = raw.tokens();
-            } else {
-                exprText = vs.expr().toString();
-            }
-            if (errorTokens != null && !errorTokens.isEmpty()) {
-                throw new LumenScriptException(st.line(), st.raw(),
-                        "Could not resolve expression: '" + exprText + "'. "
-                                + "No registered expression pattern matched the right-hand side of this variable assignment",
-                        errorTokens);
-            }
-            throw new LumenScriptException(st.line(), st.raw(),
-                    "Could not resolve expression: '" + exprText + "'. "
-                            + "No registered expression pattern matched the right-hand side of this variable assignment");
-        }
-
         throw new LumenScriptException(st.line(), st.raw(),
                 "Unhandled statement type: " + ts.getClass().getSimpleName());
-    }
-
-    /**
-     * Emits an expression-based variable assignment ({@code var x = <expression pattern>}).
-     *
-     * <p>This is kept in CodeEmitter because it is tightly coupled with the pattern matching
-     * system and produces results from the expression handler's return value.
-     */
-    private static void emitExprVar(
-            TypedStatement.@NotNull ExprVarStmt evs,
-            @NotNull TypeEnv env,
-            @NotNull CodegenContext ctx,
-            @NotNull JavaBuilder out,
-            @NotNull BlockContext blockCtx) {
-        if (env.lookupVar(evs.name()) != null) {
-            throw new LumenScriptException(evs.raw().line(), evs.raw().raw(),
-                    "Variable '" + evs.name() + "' is already defined in this scope");
-        }
-
-        if (blockCtx.isRoot()) {
-            throw new LumenScriptException(evs.raw().line(), evs.raw().raw(),
-                    "'var' cannot be used at the top level of a script. "
-                            + "Use 'global var " + evs.name() + " default <value>' instead to declare a script-wide variable.");
-        }
-
-        BindingContext bc = new BindingContext(evs.match().match(), env, ctx, blockCtx);
-        ExpressionResult result = evs.match().reg().handler().handle(bc);
-        LumenLogger.debug("emitExprVar", "var " + evs.name() + " = ... -> refTypeId=" + result.refTypeId());
-        out.line("var " + evs.name() + " = " + result.java() + ";");
-        RefType refType = result.refTypeId() != null ? RefType.byId(result.refTypeId()) : null;
-        LumenLogger.debug("emitExprVar",
-                "RefType.byId(" + result.refTypeId() + ") -> " + (refType != null ? refType.id() : "null"));
-        LumenType lumenType = LumenType.resolve(result.refTypeId(), result.javaType());
-        VarRef varRef = new VarRef(refType, evs.name(), lumenType, result.metadata());
-        env.defineVar(evs.name(), varRef);
-        BlockContext parentScope = env.blockContext().parent();
-        if (parentScope != null) {
-            parentScope.defineVar(evs.name(), varRef);
-        }
     }
 
     private static @NotNull LumenScriptException wrapRuntimeException(int line, @NotNull String raw,

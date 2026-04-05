@@ -18,8 +18,6 @@ import org.jetbrains.annotations.NotNull;
  * @param line  the 1-based source line number
  * @param start the character offset of the first character within the source line
  * @param end   the character offset one past the last character within the source line
- * @see TokenKind
- * @see Tokenizer
  */
 public record Token(
         TokenKind kind,

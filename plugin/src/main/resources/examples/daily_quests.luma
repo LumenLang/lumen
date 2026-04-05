@@ -5,7 +5,7 @@
 
 on block_break:
     if block type is stone:
-        store mined for player default 0
+        load mined for player with default 0
         add 1 to mined
 
         if mined == 10:

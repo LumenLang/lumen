@@ -82,7 +82,7 @@ At a high level, this is how a script is processed:
 - **Statement classification:** Matched statements are categorized so the compiler knows how code should be generated.
 - **Expression parsing and resolution:** Expressions are analyzed and resolved with compile time type information.
 - **Type binding execution:** Placeholder tokens are validated and converted into Java source fragments.
-- **Symbol tracking:** A compile time environment tracks local, global, and stored variables across scopes.
+- **Symbol tracking:** A compile time environment tracks local/global variables, scopes, and much more.
 - **Code emission:** The AST is walked and Java source code is generated.
 
 Following this, a new **Pipeline Documentation** will be released with detailed explanations of each stage for those interested in contributing to Lumen or understanding how it works internally.

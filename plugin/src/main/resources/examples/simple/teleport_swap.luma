@@ -13,17 +13,17 @@ config:
     prefix: &5[Swap]&r
     cooldown_ticks: 100
 
-global stored var swap_enabled for ref type player default 0
-global var swap_cooldown for ref type player default 0
+global scoped swap_enabled with default 0
+global scoped swap_cooldown with default 0
 
 command swap:
     permission "lumen.swap"
     description "Toggle teleport swap mode"
 
     if args size >= 1:
-        var sub = get args at index 0
+        set sub to get args at index 0
         if sub is "cooldown":
-            var cd = swap_cooldown
+            set cd to get swap_cooldown for player
             if cd > 0:
                 message player "{prefix} &7Cooldown remaining: &f{cd} ticks"
             else:
@@ -31,22 +31,25 @@ command swap:
         else:
             message player "{prefix} &cUsage: /swap or /swap cooldown"
     else:
-        if swap_enabled == 0:
-            set swap_enabled to 1
+        set enabled to get swap_enabled for player
+        if enabled == 0:
+            set swap_enabled to 1 for player
             message player "{prefix} &aSwap mode &f&lENABLED!"
             message player "&7Right click a player to swap positions."
         else:
-            set swap_enabled to 0
+            set swap_enabled to 0 for player
             message player "{prefix} &cSwap mode &f&lDISABLED."
 
 on entity_interact:
-    if swap_enabled == 1:
+    set enabled to get swap_enabled for player
+    if enabled == 1:
         if entity is a player:
-            if swap_cooldown <= 0:
-                var my_loc = get player's location
-                var their_loc = get entity's location
-                var target_name = get entity's name
-                var target = get player by name target_name
+            set cd to get swap_cooldown for player
+            if cd <= 0:
+                set my_loc to get player's location
+                set their_loc to get entity's location
+                set target_name to get entity's name
+                set target to get player by name target_name
 
                 teleport player to their_loc
                 teleport entity to my_loc
@@ -60,12 +63,12 @@ on entity_interact:
                 send title "&5&lSwap!" with subtitle "&7Positions exchanged" to player with fade in 5 stay 20 fade out 10
                 play sound "entity_enderman_teleport" to player
 
-                set swap_cooldown to cooldown_ticks
+                set swap_cooldown to cooldown_ticks for player
 
                 send actionbar "{prefix} &7Cooldown: {cooldown_ticks} ticks" to player
 
                 after cooldown_ticks ticks:
-                    set swap_cooldown to 0
+                    set swap_cooldown to 0 for player
             else:
-                var cd = swap_cooldown
+                set cd to get swap_cooldown for player
                 message player "{prefix} &cOn cooldown! &7{cd} ticks remaining."

@@ -1,39 +1,23 @@
 package dev.lumenlang.lumen.pipeline.language.pattern;
 
-import dev.lumenlang.lumen.pipeline.language.compile.PatternCompiler;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 /**
  * A single element within a compiled {@link Pattern}.
- *
- * <p>Pattern parts are the building blocks of Lumen's pattern matching system.
- * The pattern compiler ({@link PatternCompiler#compile(String)})
- * produces a list of these parts from a raw pattern string.
- *
- * <h2>Part Types</h2>
+ * <p>
+ * Pattern syntax:
  * <ul>
- *   <li>{@link Literal}  -  a fixed word that must match exactly (case-insensitive)</li>
- *   <li>{@link FlexLiteral}  -  a word with optional affixes, matching one of multiple forms</li>
- *   <li>{@link PlaceholderPart}  -  a typed placeholders that captures tokens via a type binding</li>
- *   <li>{@link Group}  -  a choice or optional group containing one or more alternative sequences</li>
+ * <li>{@code %name:TYPE%} A placeholder with an explicit type</li>
+ * <li>{@code %name%} A placeholder with the implicit EXPR type</li>
+ * <li>{@code literal} Fixed text (case-insensitive match)</li>
+ * <li>{@code (a|b|c)} Required choice: one alternative must match</li>
+ * <li>{@code [text]} Optional: text may be present or absent</li>
+ * <li>{@code [a|b|c]} Optional choice: zero or one alternative matches</li>
+ * <li>{@code word[suffix]} Optional suffix, e.g. {@code info[rmation]}</li>
+ * <li>{@code [prefix]word} Optional prefix, e.g. {@code [un]hide}</li>
  * </ul>
- *
- * <h2>Pattern Syntax</h2>
- * <pre>
- * literal           - exact match (case-insensitive)
- * %name:TYPE%       - placeholders with explicit type
- * %name%            - placeholders with default EXPR type
- * (a|b|c)           - required choice: one alternative must match
- * [text]            - optional: may or may not be present
- * [a|b|c]           - optional choice: zero or one alternative matches
- * word[suffix]      - optional suffix: matches "word" or "wordsuffix"
- * [prefix]word      - optional prefix: matches "word" or "prefixword"
- * </pre>
- *
- * @see Pattern
- * @see Placeholder
  */
 public sealed interface PatternPart {
 

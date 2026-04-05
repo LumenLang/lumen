@@ -3,12 +3,15 @@ package dev.lumenlang.lumen.pipeline.java.compiled;
 import dev.lumenlang.lumen.pipeline.codegen.CodegenContext;
 import dev.lumenlang.lumen.pipeline.java.JavaBuilder;
 import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
+import dev.lumenlang.lumen.pipeline.persist.GlobalVars;
+import dev.lumenlang.lumen.pipeline.persist.PersistentVars;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 /**
@@ -29,6 +32,8 @@ public final class ClassBuilder {
         ctx.addImport("org.bukkit.entity.Player");
         ctx.addImport("org.bukkit.plugin.Plugin");
         ctx.addImport("org.bukkit.Bukkit");
+        ctx.addImport(PersistentVars.class.getName());
+        ctx.addImport(GlobalVars.class.getName());
         ctx.addImport("dev.lumenlang.lumen.plugin.text.LumenText");
         ctx.addImport("dev.lumenlang.lumen.pipeline.java.compiled.Coerce");
         ctx.addImport("dev.lumenlang.lumen.plugin.annotations.LumenEvent");
@@ -246,8 +251,7 @@ public final class ClassBuilder {
     }
 
     private static int countBraces(@NotNull String line, char brace) {
-        String trimmed = line.trim();
-        if (trimmed.startsWith("//")) return 0;
+        if (line.trim().startsWith("//")) return 0;
         int count = 0;
         boolean inString = false;
         boolean inChar = false;
@@ -271,7 +275,7 @@ public final class ClassBuilder {
     private record RawLine(@NotNull String code, boolean comment) {
     }
 
-    public static String normalize(String input) {
+    public static String normalize(@NotNull String input) {
         String s = input;
 
         int dot = s.lastIndexOf('.');
@@ -282,9 +286,7 @@ public final class ClassBuilder {
 
         if (s.isEmpty()) {
             int hash = Math.abs(input.hashCode());
-            LumenLogger.warning(
-                    "Script file name '" + input + "' contains no valid characters. " +
-                            "Using generated class name 'Script_" + hash + "'.");
+            LumenLogger.warning("Script file name '" + input + "' contains no valid characters. Using generated class name 'Script_" + hash + "'.");
             s = "Script_" + hash;
         }
 
@@ -299,13 +301,13 @@ public final class ClassBuilder {
         return s;
     }
 
-    private static String capitalize(String s) {
+    private static String capitalize(@NotNull String s) {
         if (s.isEmpty())
             return s;
         return Character.toUpperCase(s.charAt(0)) + s.substring(1);
     }
 
-    private static boolean isJavaKeyword(String s) {
+    private static boolean isJavaKeyword(@NotNull String s) {
         return switch (s) {
             case "Abstract", "Assert", "Boolean", "Break", "Byte", "Case", "Catch",
                  "Char", "Class", "Const", "Continue", "Default", "Do", "Double",
@@ -319,7 +321,7 @@ public final class ClassBuilder {
         } || isReservedClassName(s);
     }
 
-    private static boolean isReservedClassName(String s) {
+    private static boolean isReservedClassName(@NotNull String s) {
         return switch (s) {
             case "Math", "Object", "String", "System", "Thread", "Runtime",
                  "Process", "Number", "Integer", "Character", "Error",
@@ -345,7 +347,7 @@ public final class ClassBuilder {
      * @param sb      the StringBuilder to write to
      * @param imports the collection of import statements to process and write
      */
-    private static void writeFormattedImports(StringBuilder sb, Collection<String> imports) {
+    private static void writeFormattedImports(@NotNull StringBuilder sb, @NotNull Collection<String> imports) {
         imports.stream()
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
@@ -361,7 +363,7 @@ public final class ClassBuilder {
                     if (s.startsWith("java."))
                         return "2";
                     return "3";
-                }, java.util.TreeMap::new, Collectors.toList()))
+                }, TreeMap::new, Collectors.toList()))
                 .forEach((k, group) -> {
                     if ("2".equals(k) && !sb.isEmpty())
                         sb.append("\n");
