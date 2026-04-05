@@ -87,6 +87,7 @@ public final class MapConditions {
                     String mapVarName = (String) mapVal;
                     EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(mapVarName);
                     if (info == null) throw new RuntimeException("'" + mapVarName + "' is not a global variable.");
+                    if (!info.scoped()) throw new RuntimeException("'" + mapVarName + "' is not a scoped global. Declare it with 'global scoped " + mapVarName + "' to use per-entity access.");
                     String scopeVarName = match.java("scope", ctx, env);
                     EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
                     if (scopeRef == null) throw new RuntimeException("Scope variable not found: " + scopeVarName);
@@ -113,6 +114,7 @@ public final class MapConditions {
                     String mapVarName = (String) mapVal;
                     EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(mapVarName);
                     if (info == null) throw new RuntimeException("'" + mapVarName + "' is not a global variable.");
+                    if (!info.scoped()) throw new RuntimeException("'" + mapVarName + "' is not a scoped global. Declare it with 'global scoped " + mapVarName + "' to use per-entity access.");
                     String scopeVarName = match.java("scope", ctx, env);
                     EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
                     if (scopeRef == null) throw new RuntimeException("Scope variable not found: " + scopeVarName);

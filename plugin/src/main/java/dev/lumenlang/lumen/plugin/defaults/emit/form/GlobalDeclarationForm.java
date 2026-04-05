@@ -21,6 +21,7 @@ import dev.lumenlang.lumen.pipeline.language.validator.VarNameValidator;
 import dev.lumenlang.lumen.pipeline.placeholder.PlaceholderExpander;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -108,7 +109,7 @@ public final class GlobalDeclarationForm implements StatementFormHandler {
         registerGlobal(name, scoped, stored, exprTokens, ctx);
     }
 
-    private void registerGlobal(@NotNull String name, boolean scoped, boolean stored, @NotNull List<Token> exprTokens, @NotNull EmitContext ctx) {
+    private void registerGlobal(@NotNull String name, boolean scoped, boolean stored, @Nullable List<Token> exprTokens, @NotNull EmitContext ctx) {
         TypeEnv env = (TypeEnv) ctx.env();
 
         String nameError = VarNameValidator.validate(name);
@@ -120,6 +121,11 @@ public final class GlobalDeclarationForm implements StatementFormHandler {
         String defaultJava;
         String exprRefTypeId = null;
         Map<String, Object> exprMetadata = null;
+
+        if (exprTokens == null) {
+            env.registerGlobal(new TypeEnv.GlobalVarInfo(name, "(Object) null", className, scoped, null, stored, null));
+            return;
+        }
 
         Expr expr = ExprParser.parse(exprTokens, env);
         if (!(expr instanceof Expr.RawExpr)) {

@@ -179,17 +179,4 @@ if (api != null) {
 
 ## The LumenAPI Handle
 
-The `LumenAPI` handle is how you access all of Lumen's registrars. Through it you can register patterns, types, events, ref types, placeholders, and emit handlers. Each registrar is covered in its own documentation page.
-
-```java
-@Override
-public void onEnable(@NotNull LumenAPI api) {
-    PatternRegistrar patterns = api.patterns();
-    TypeRegistrar types = api.types();
-    EventRegistrar events = api.events();
-    RefTypeRegistrar refTypes = api.refTypes();
-    PlaceholderRegistrar placeholders = api.placeholders();
-    EmitRegistrar emitters = api.emitters();
-    ScriptBinderRegistrar binders = api.binders();
-}
-```
+The `LumenAPI` handle is how you access all of Lumen's registrars. Through it you can register patterns, types, events, ref types, placeholders, and more. Each registrar is covered in its own documentation page.

@@ -208,7 +208,7 @@ public final class Lumen extends JavaPlugin {
     private void platformCheck() {
         if (ServerPlatform.isFolia()) {
             this.getLogger().warning("Folia detected. Folia is currently not officially supported, features such as entity, schedules, and additional issues may occur. Use at your own risk.");
-            LumenConfiguration.applyOverride(ConfigOverride.disable(ConfigOption.ENABLE_ALL_SCRIPTS_IMMEDIATELY)
+            LumenConfiguration.applyOverride(ConfigOverride.enable(ConfigOption.ENABLE_ALL_SCRIPTS_IMMEDIATELY)
                     .lastingSession("Disabling ENABLE_ALL_SCRIPTS_IMMEDIATELY will make the code use runTask, which is not supported on Folia."));
         }
         if (!ServerPlatform.isPaper() && LumenConfiguration.FEATURES.PAPER_ONLY_FEATURES) {

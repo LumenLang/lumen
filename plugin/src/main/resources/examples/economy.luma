@@ -18,8 +18,8 @@
 config:
     prefix: &6[Economy]&r
 
-global currencies with default new list
-global scoped balances with default new map
+global stored currencies with default new list
+global stored scoped balances with default new map
 
 on join:
     message player "{prefix} &eWelcome back! Your balances:"

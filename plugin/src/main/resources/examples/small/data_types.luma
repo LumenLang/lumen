@@ -11,7 +11,7 @@ data bounty:
     reward number
     placed_by text
 
-global current_bounty with default none
+global stored current_bounty with default none
 
 command bounty:
     description "Manage bounties"

@@ -140,6 +140,7 @@ public class ListBlocks {
                         String scopeVarName = ctx.java("scope");
                         EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(listVarName);
                         if (info == null) throw new RuntimeException("'" + listVarName + "' is not a global variable.");
+                        if (!info.scoped()) throw new RuntimeException("'" + listVarName + "' is not a scoped global. Declare it with 'global scoped " + listVarName + "' to use per-entity access.");
                         EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
                         if (scopeRef == null) throw new RuntimeException("Scope variable not found: " + scopeVarName);
                         RefTypeHandle refType = scopeRef.type();

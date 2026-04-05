@@ -87,6 +87,7 @@ public final class ListConditions {
                     String listVarName = (String) listVal;
                     EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(listVarName);
                     if (info == null) throw new RuntimeException("'" + listVarName + "' is not a global variable.");
+                    if (!info.scoped()) throw new RuntimeException("'" + listVarName + "' is not a scoped global. Declare it with 'global scoped " + listVarName + "' to use per-entity access.");
                     String scopeVarName = match.java("scope", ctx, env);
                     EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
                     if (scopeRef == null) throw new RuntimeException("Scope variable not found: " + scopeVarName);
@@ -113,6 +114,7 @@ public final class ListConditions {
                     String listVarName = (String) listVal;
                     EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(listVarName);
                     if (info == null) throw new RuntimeException("'" + listVarName + "' is not a global variable.");
+                    if (!info.scoped()) throw new RuntimeException("'" + listVarName + "' is not a scoped global. Declare it with 'global scoped " + listVarName + "' to use per-entity access.");
                     String scopeVarName = match.java("scope", ctx, env);
                     EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
                     if (scopeRef == null) throw new RuntimeException("Scope variable not found: " + scopeVarName);

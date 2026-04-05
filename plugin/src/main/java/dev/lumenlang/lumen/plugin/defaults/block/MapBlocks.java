@@ -99,6 +99,7 @@ public final class MapBlocks {
                         String scopeVarName = ctx.java("scope");
                         EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(mapVarName);
                         if (info == null) throw new RuntimeException("'" + mapVarName + "' is not a global variable.");
+                        if (!info.scoped()) throw new RuntimeException("'" + mapVarName + "' is not a scoped global. Declare it with 'global scoped " + mapVarName + "' to use per-entity access.");
                         EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
                         if (scopeRef == null) throw new RuntimeException("Scope variable not found: " + scopeVarName);
                         RefTypeHandle refType = scopeRef.type();

@@ -44,6 +44,7 @@ public final class MapStatements {
     private static void emitScopedMutation(@NotNull BindingAccess ctx, @NotNull JavaOutput out, @NotNull String mapVarName, @NotNull String scopeVarName, @NotNull Function<String, String> mutation) {
         EnvironmentAccess.GlobalInfo info = ctx.env().getGlobalInfo(mapVarName);
         if (info == null) throw new RuntimeException("'" + mapVarName + "' is not a global variable.");
+        if (!info.scoped()) throw new RuntimeException("'" + mapVarName + "' is not a scoped global. Declare it with 'global scoped " + mapVarName + "' to use per-entity access.");
         String storageClass = info.stored() ? "PersistentVars" : "GlobalVars";
         String scopeKey = buildScopedKey(ctx.env(), mapVarName, scopeVarName, info);
         String tmp = "__scoped_" + mapVarName + "_" + out.lineNum();
@@ -99,7 +100,7 @@ public final class MapStatements {
         api.patterns().statement(b -> b
                 .by("Lumen")
                 .pattern("remove key %key:EXPR% from %map:MAP% for %scope:EXPR%")
-                .description("Removes a key from a player-scoped stored map.")
+                .description("Removes a key from a scoped global map for a specific scope reference.")
                 .example("remove key \"money\" from balances for p")
                 .since("1.0.0")
                 .category(Categories.MAP)
