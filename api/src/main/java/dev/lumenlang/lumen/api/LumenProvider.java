@@ -10,6 +10,8 @@ import org.jetbrains.annotations.Nullable;
  * <pre>{@code
  * public class MyPlugin extends JavaPlugin {
  *
+ *     @Override
+ *     // Please don't use onEnable() for addon registration - see the note below. Use onLoad() instead.
  *     public void onLoad() {
  *         // Register your addon with Lumen. This will call your addon's onEnable() with the API handle.
  *         LumenProvider.registerAddon(new MyAddon());
@@ -28,9 +30,7 @@ import org.jetbrains.annotations.Nullable;
  * }</pre>
  *
  * <h2>Important</h2>
- * <p>Script loading is deferred to the first server tick. This means any addon that
- * registers patterns, conditions, events, or types during its {@code onEnable()} is
- * guaranteed to have those definitions available before the first script compiles.
+ * <p>Do not register addons from your plugin's {@code onEnable()} method. Scripts may have already been loaded by then (depending on the configuration), and your addon will miss the chance to register patterns before script compilation.
  *
  * @see LumenAPI
  * @see LumenAddon
@@ -46,32 +46,23 @@ public final class LumenProvider {
     /**
      * Returns the global {@link LumenAPI} handle.
      *
-     * <p>Returns {@code null} until Lumen has initialized its API during {@code onLoad()}.
-     * Plugin-based addons that declare {@code depend: [Lumen]} in their {@code plugin.yml}
-     * are guaranteed that this returns non-null from their own {@code onLoad()} onwards.
-     *
      * @return the API handle, or {@code null} if Lumen is not yet ready
+     * @throws IllegalStateException if Lumen is not yet initialized
      */
-    public static @Nullable LumenAPI api() {
+    public static @NotNull LumenAPI api() {
+        if (api == null) throw new IllegalStateException("Lumen is not initialized yet");
         return api;
     }
 
     /**
      * Registers a plugin-based addon with Lumen.
      *
-     * <p>If Lumen has already finished enabling, the addon's
-     * {@link LumenAddon#onEnable(LumenAPI)} is called immediately. Otherwise
-     * it is queued and will be enabled when Lumen finishes initializing.
-     *
-     * <p>Call this from your plugin's {@code onLoad()} after declaring
-     * {@code depend: [Lumen]} in your {@code plugin.yml}.
-     *
      * @param addon the addon to register
-     * @throws IllegalStateException if Lumen has not loaded at all
+     * @throws IllegalStateException if Lumen is not yet initialized
      */
     public static void registerAddon(@NotNull LumenAddon addon) {
         if (registrar == null) {
-            throw new IllegalStateException("Lumen is not loaded  -  cannot register addons");
+            throw new IllegalStateException("Lumen is not initialized yet.");
         }
         registrar.register(addon);
     }
