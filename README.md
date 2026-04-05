@@ -65,7 +65,6 @@ on join:
 
 That is it.
 
-The syntax is designed to be simple and readable, and the behavior does not require you to run commands like `/reload`, restart, or script reloads.
 It will also detect changes to the file and update the behavior on the fly, so you can iterate quickly.
 
 ---
@@ -76,24 +75,11 @@ Lumen is built from the ground up and is **not a fork, wrapper, or extension of 
 
 The language, compiler pipeline, and runtime were designed specifically for Lumen. Scripts are not interpreted or translated directly into Java API calls. They go through a full compilation pipeline before they run.
 
-At a high level, this is how a script is processed:
-
-- **Pattern matching:** Statements are matched against registered patterns using typed placeholders and recursive matching.
-- **Statement classification:** Matched statements are categorized so the compiler knows how code should be generated.
-- **Expression parsing and resolution:** Expressions are analyzed and resolved with compile time type information.
-- **Type binding execution:** Placeholder tokens are validated and converted into Java source fragments.
-- **Symbol tracking:** A compile time environment tracks local/global variables, scopes, and much more.
-- **Code emission:** The AST is walked and Java source code is generated.
-
-Following this, a new **Pipeline Documentation** will be released with detailed explanations of each stage for those interested in contributing to Lumen or understanding how it works internally.
-
 ---
 
 ## Current Status
 
 Lumen is currently in beta.
-
-The core system is stable, but there are still edge cases where a script may fail to compile unexpectedly. In many situations, these should instead be reported as parse errors. Receiving a raw compiler error is considered a bug at this stage.
 
 If you encounter compilation failures, incorrect behavior, patterns not working as expected, or any unexpected issues, please report them through the issue tracker. Even if the script can be manually fixed, those cases are still valuable to report.
 
