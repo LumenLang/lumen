@@ -81,7 +81,7 @@ performance:
 
   # Exclude certain packages from the classpath when compiling scripts, such as internals or large libraries.
   # This can speed up compilation and reduce memory usage.
-  # This shouldn't cause any issues unless some addon relies on shaded libraries that are excluded by this, in that case, they are allowed to disable this feature automatically.
+  # This shouldn't cause any issues.
   reduce-classpath: true
 
   # Define compiled script classes on a background thread instead of the main server thread.
@@ -125,7 +125,6 @@ features:
   use-legacy-colors: true
 
   # Enable Paper-only APIs and optimizations.
-  # Disables compatibility with Spigot.
   paper-only-features: true
 
 # Miscellaneous settings that don't fit into other categories
@@ -134,8 +133,6 @@ extra:
   # When enabled, changes to the config.yml file will be detected and applied without restarting or doing the /lumen reload command.
   enable-config-file-watcher: true
 
-  # When enabled, Lumen will dump all registered patterns, type bindings, and more to a JSON file after all
-  # registrations are complete. The file is written to
-  # plugins/Lumen/documentation.json and can be consumed by external
-  # tools to generate documentation for the Lumen language.
+  # When enabled, Lumen will dump all registered patterns, type bindings, and more to the "documentation" folder.
+  # The files generated are in the .ldoc format, which is a compressed JSON format that can be used by tools.
   enable-documentation-tool: false
