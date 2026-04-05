@@ -508,7 +508,7 @@ public final class DefaultEvents {
         api.events().advanced(b -> b
                 .name("chat")
                 .by("Lumen")
-                .description("Fires when a player sends a chat message. The handler body runs on the main server thread, so world-modifying actions are safe. Use 'async_chat' if you need the raw async event.")
+                .description("Fires when a player sends a chat message.")
                 .example("on chat:")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
