@@ -137,14 +137,12 @@ public class ListBlocks {
                         if (env.lookupVar(varName) != null) throw new RuntimeException("Loop variable '" + varName + "' is already defined in this scope.");
 
                         String listVarName = ctx.tokens("list").get(0);
-                        String scopeVarName = ctx.java("scope");
                         EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(listVarName);
                         if (info == null) throw new RuntimeException("'" + listVarName + "' is not a global variable.");
                         if (!info.scoped()) throw new RuntimeException("'" + listVarName + "' is not a scoped global. Declare it with 'global scoped " + listVarName + "' to use per-entity access.");
-                        EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
-                        if (scopeRef == null) throw new RuntimeException("Scope variable not found: " + scopeVarName);
+                        if (!(ctx.value("scope") instanceof EnvironmentAccess.VarHandle scopeRef)) throw new RuntimeException("Scope must be a typed variable (e.g. a player or entity).");
                         RefTypeHandle refType = scopeRef.type();
-                        if (refType == null) throw new RuntimeException("Scope variable '" + scopeVarName + "' has no ref type.");
+                        if (refType == null) throw new RuntimeException("Scope variable '" + scopeRef.java() + "' has no ref type.");
 
                         ctx.codegen().addImport(List.class.getName());
                         ctx.codegen().addImport(ArrayList.class.getName());

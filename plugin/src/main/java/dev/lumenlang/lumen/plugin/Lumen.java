@@ -209,7 +209,7 @@ public final class Lumen extends JavaPlugin {
         if (ServerPlatform.isFolia()) {
             this.getLogger().warning("Folia detected. Folia is currently not officially supported, features such as entity, schedules, and additional issues may occur. Use at your own risk.");
             LumenConfiguration.applyOverride(ConfigOverride.enable(ConfigOption.ENABLE_ALL_SCRIPTS_IMMEDIATELY)
-                    .lastingSession("Disabling ENABLE_ALL_SCRIPTS_IMMEDIATELY will make the code use runTask, which is not supported on Folia."));
+                    .lastingSession("Folia does not support runTask; all scripts must be initialized immediately on startup."));
         }
         if (!ServerPlatform.isPaper() && LumenConfiguration.FEATURES.PAPER_ONLY_FEATURES) {
             this.getLogger().warning(

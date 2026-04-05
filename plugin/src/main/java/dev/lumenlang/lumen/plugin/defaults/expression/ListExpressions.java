@@ -128,11 +128,9 @@ public final class ListExpressions {
                     String listVarName = ctx.tokens("list").get(0);
                     EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(listVarName);
                     if (info == null) throw new RuntimeException("'" + listVarName + "' is not a global variable.");
-                    String scopeVarName = ctx.java("scope");
-                    EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
-                    if (scopeRef == null) throw new RuntimeException("Scope variable not found: " + scopeVarName);
+                    if (!(ctx.value("scope") instanceof EnvironmentAccess.VarHandle scopeRef)) throw new RuntimeException("Scope must be a typed variable (e.g. a player or entity).");
                     RefTypeHandle refType = scopeRef.type();
-                    if (refType == null) throw new RuntimeException("Scope variable '" + scopeVarName + "' has no ref type.");
+                    if (refType == null) throw new RuntimeException("Scope variable '" + scopeRef.java() + "' has no ref type.");
                     ctx.codegen().addImport(List.class.getName());
                     ctx.codegen().addImport(ArrayList.class.getName());
                     return new ExpressionResult("((List<?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") + ".get(" + "\"" + info.className() + "." + listVarName + ".\" + " + refType.keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")).size()", null, Types.INT);
@@ -151,11 +149,9 @@ public final class ListExpressions {
                     String listVarName = ctx.tokens("list").get(0);
                     EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(listVarName);
                     if (info == null) throw new RuntimeException("'" + listVarName + "' is not a global variable.");
-                    String scopeVarName = ctx.java("scope");
-                    EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
-                    if (scopeRef == null) throw new RuntimeException("Scope variable not found: " + scopeVarName);
+                    if (!(ctx.value("scope") instanceof EnvironmentAccess.VarHandle scopeRef)) throw new RuntimeException("Scope must be a typed variable (e.g. a player or entity).");
                     RefTypeHandle refType = scopeRef.type();
-                    if (refType == null) throw new RuntimeException("Scope variable '" + scopeVarName + "' has no ref type.");
+                    if (refType == null) throw new RuntimeException("Scope variable '" + scopeRef.java() + "' has no ref type.");
                     ctx.codegen().addImport(List.class.getName());
                     ctx.codegen().addImport(ArrayList.class.getName());
                     return new ExpressionResult("((List<?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") + ".get(" + "\"" + info.className() + "." + listVarName + ".\" + " + refType.keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")).size()", null, Types.INT);
