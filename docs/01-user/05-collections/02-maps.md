@@ -30,7 +30,7 @@ set stats at key "deaths" to 0
 ## Getting Values
 
 ```luma
-set kills to get key "kills" from stats
+set kills to get stats at key "kills"
 message player "&eKills: {kills}"
 ```
 

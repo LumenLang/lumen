@@ -18,7 +18,7 @@ data effect_entry:
 config:
     prefix: &d[EffectBlocks]&r
 
-global effect_mappings with default new list of effect_entry
+global stored effect_mappings with default new list of effect_entry
 
 command effectblock:
     permission "lumen.effectblock"
