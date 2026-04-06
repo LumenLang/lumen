@@ -151,7 +151,7 @@ public final class AddonManager {
         try {
             addon.onEnable(api);
             LumenLogger.info("Enabled addon: " + addon.name() + " v" + addon.version());
-        } catch (Exception e) {
+        } catch (Throwable e) {
             LumenLogger.severe("Error enabling addon " + addon.name() + " v" + addon.version(), e);
         }
     }
@@ -159,7 +159,7 @@ public final class AddonManager {
     private void callOnLoad(@NotNull LumenAddon addon) {
         try {
             addon.onLoad();
-        } catch (Exception e) {
+        } catch (Throwable e) {
             LumenLogger.warning("Error calling onLoad for addon " + addon.name() + " v" + addon.version() + ": " + e.getMessage());
         }
     }
