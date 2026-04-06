@@ -14,6 +14,7 @@ import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Utility class for compiling Java source files in memory using the system Java compiler.
@@ -58,6 +59,26 @@ public final class SystemCompiler {
     );
     private static volatile JavaCompiler cachedCompiler;
     private static volatile boolean reduceClasspath;
+    private static final Set<String> extraClasspathEntries = ConcurrentHashMap.newKeySet();
+
+    /**
+     * Registers an additional path to include on the script compilation classpath.
+     * Useful for JAR files whose classloaders are not in the parent chain of the default loader.
+     *
+     * @param path the absolute file path to add
+     */
+    public static void addExtraClasspath(@NotNull String path) {
+        extraClasspathEntries.add(path);
+    }
+
+    /**
+     * Removes a previously registered extra classpath entry.
+     *
+     * @param path the absolute file path to remove
+     */
+    public static void removeExtraClasspath(@NotNull String path) {
+        extraClasspathEntries.remove(path);
+    }
 
     /**
      * Enables or disables the reduced classpath mode.
@@ -141,6 +162,11 @@ public final class SystemCompiler {
                 }
             }
             cl = cl.getParent();
+        }
+
+        for (String extra : extraClasspathEntries) {
+            if (!sb.isEmpty()) sb.append(File.pathSeparator);
+            sb.append(extra);
         }
 
         return sb.toString();

@@ -37,6 +37,7 @@ import dev.lumenlang.lumen.pipeline.addon.bridge.TypeBindingBridge;
 import dev.lumenlang.lumen.pipeline.events.EventDefRegistry;
 import dev.lumenlang.lumen.pipeline.events.def.EventDef;
 import dev.lumenlang.lumen.pipeline.inject.InjectableHandlers;
+import dev.lumenlang.lumen.pipeline.java.compiler.system.SystemCompiler;
 import dev.lumenlang.lumen.pipeline.language.emit.EmitRegistry;
 import dev.lumenlang.lumen.pipeline.language.emit.TransformerRegistry;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
@@ -375,5 +376,15 @@ public final class LumenAPIImpl implements LumenAPI {
     @Override
     public @NotNull TransformerRegistrar transformers() {
         return transformerRegistrar;
+    }
+
+    @Override
+    public void addClasspath(@NotNull String path) {
+        SystemCompiler.addExtraClasspath(path);
+    }
+
+    @Override
+    public void removeClasspath(@NotNull String path) {
+        SystemCompiler.removeExtraClasspath(path);
     }
 }

@@ -121,4 +121,21 @@ public interface LumenAPI {
      * @return the transformer registrar
      */
     @NotNull TransformerRegistrar transformers();
+
+    /**
+     * Adds an additional path to the script compilation classpath.
+     *
+     * <p>Addons whose classes are referenced from generated Java code must register
+     * their JAR path here so the compiler can resolve them.
+     *
+     * @param path the absolute file path to add
+     */
+    void addClasspath(@NotNull String path);
+
+    /**
+     * Removes a previously registered extra classpath entry.
+     *
+     * @param path the absolute file path to remove
+     */
+    void removeClasspath(@NotNull String path);
 }
