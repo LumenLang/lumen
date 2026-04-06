@@ -1,5 +1,6 @@
 package dev.lumenlang.lumen.api.emit.transform;
 
+import dev.lumenlang.lumen.api.codegen.CodegenAccess;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -15,6 +16,16 @@ import java.util.List;
  * modifications do not affect each other within a single pass.
  */
 public interface TransformContext {
+
+    /**
+     * Returns the class-level metadata for the script being transformed.
+     *
+     * <p>Transformers can use this to add imports, fields, methods, or interfaces
+     * to the generated class.
+     *
+     * @return the codegen access
+     */
+    @NotNull CodegenAccess codegen();
 
     /**
      * Returns an unmodifiable snapshot of all emitted lines.

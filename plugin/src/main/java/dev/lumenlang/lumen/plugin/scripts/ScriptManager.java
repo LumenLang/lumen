@@ -442,7 +442,7 @@ public final class ScriptManager {
         CodeEmitter.generate(source, PatternRegistry.instance(), env, gen, output);
 
         if (LumenConfiguration.LANGUAGE.EXPERIMENTAL.CODE_TRANSFORM) {
-            TransformerRegistry.instance().transform(output);
+            TransformerRegistry.instance().transform(output, gen);
         }
 
         String javaSource = ClassBuilder.buildClass(gen.className(), gen, output);

@@ -1,5 +1,6 @@
 package dev.lumenlang.lumen.pipeline.language.emit;
 
+import dev.lumenlang.lumen.api.codegen.CodegenAccess;
 import dev.lumenlang.lumen.api.emit.transform.CodeTransformer;
 import dev.lumenlang.lumen.api.emit.transform.TaggedLine;
 import dev.lumenlang.lumen.api.emit.transform.TransformContext;
@@ -90,8 +91,9 @@ public final class TransformerRegistry {
      * pass can enable further modifications by other transformers in subsequent passes.
      *
      * @param builder the Java builder to transform
+     * @param codegen the class-level metadata for the script being transformed
      */
-    public void transform(@NotNull JavaBuilder builder) {
+    public void transform(@NotNull JavaBuilder builder, @NotNull CodegenAccess codegen) {
         if (transformers.isEmpty()) {
             return;
         }
@@ -110,13 +112,17 @@ public final class TransformerRegistry {
             for (CodeTransformer transformer : snapshot) {
                 List<String> lines = builder.lines();
                 Map<Integer, String> tags = builder.tagMap();
+                Map<Integer, JavaBuilder.ScriptLineInfo> lineMap = builder.lineMap();
 
                 List<TaggedLine> lineSnapshot = new ArrayList<>(lines.size());
                 for (int i = 0; i < lines.size(); i++) {
-                    lineSnapshot.add(new TaggedLineImpl(lines.get(i), tags.get(i), i));
+                    JavaBuilder.ScriptLineInfo info = findScriptLineInfo(i, lineMap);
+                    int scriptLine = info != null ? info.line() : -1;
+                    String scriptSource = info != null ? info.source() : null;
+                    lineSnapshot.add(new TaggedLineImpl(lines.get(i), tags.get(i), i, scriptLine, scriptSource));
                 }
 
-                TransformContextImpl ctx = new TransformContextImpl(Collections.unmodifiableList(lineSnapshot));
+                TransformContextImpl ctx = new TransformContextImpl(Collections.unmodifiableList(lineSnapshot), codegen);
                 transformer.transform(ctx);
 
                 if (applyModifications(builder, transformer.tags(), ctx)) {
@@ -124,6 +130,16 @@ public final class TransformerRegistry {
                 }
             }
         }
+    }
+
+    private static @Nullable JavaBuilder.ScriptLineInfo findScriptLineInfo(int javaLineIndex, @NotNull Map<Integer, JavaBuilder.ScriptLineInfo> lineMap) {
+        JavaBuilder.ScriptLineInfo direct = lineMap.get(javaLineIndex);
+        if (direct != null) return direct;
+        for (int i = javaLineIndex - 1; i >= 0; i--) {
+            JavaBuilder.ScriptLineInfo info = lineMap.get(i);
+            if (info != null) return info;
+        }
+        return null;
     }
 
     private static boolean applyModifications(@NotNull JavaBuilder builder,
@@ -231,17 +247,24 @@ public final class TransformerRegistry {
         tags.putAll(newTags);
     }
 
-    private record TaggedLineImpl(@NotNull String code, @Nullable String tag, int index) implements TaggedLine {
+    private record TaggedLineImpl(@NotNull String code, @Nullable String tag, int index, int scriptLine, @Nullable String scriptSource) implements TaggedLine {
     }
 
     private static final class TransformContextImpl implements TransformContext {
         private final List<TaggedLine> snapshot;
+        private final CodegenAccess codegen;
         private final List<Integer> removals = new ArrayList<>();
         private final Map<Integer, String> replacements = new HashMap<>();
         private final List<Insertion> insertions = new ArrayList<>();
 
-        private TransformContextImpl(@NotNull List<TaggedLine> snapshot) {
+        private TransformContextImpl(@NotNull List<TaggedLine> snapshot, @NotNull CodegenAccess codegen) {
             this.snapshot = snapshot;
+            this.codegen = codegen;
+        }
+
+        @Override
+        public @NotNull CodegenAccess codegen() {
+            return codegen;
         }
 
         @Override

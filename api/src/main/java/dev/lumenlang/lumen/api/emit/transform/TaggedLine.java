@@ -33,4 +33,20 @@ public interface TaggedLine {
      * @return the line index
      */
     int index();
+
+    /**
+     * Returns the 1-based script source line number this Java line was generated from,
+     * or {@code -1} if no mapping exists.
+     *
+     * @return the script line number, or -1
+     */
+    int scriptLine();
+
+    /**
+     * Returns the raw source text of the script line this Java line was generated from,
+     * or {@code null} if no mapping exists.
+     *
+     * @return the raw script source, or null
+     */
+    @Nullable String scriptSource();
 }
