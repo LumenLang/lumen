@@ -17,7 +17,7 @@ import static dev.lumenlang.lumen.api.pattern.LumaExample.top;
  * Registers event-related statement patterns.
  */
 @Registration
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "DataFlowIssue"})
 public final class EventStatements {
 
     @Call
@@ -60,7 +60,6 @@ public final class EventStatements {
                         case "absolute_top" -> "MONITOR";
                         case "top", "highest" -> "HIGHEST";
                         case "high" -> "HIGH";
-                        case "mid", "medium" -> "NORMAL";
                         case "low" -> "LOW";
                         case "lowest" -> "LOWEST";
                         default -> "NORMAL";
