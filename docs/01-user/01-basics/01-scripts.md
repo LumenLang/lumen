@@ -59,11 +59,14 @@ command test:
 
 ## Script Lifecycle
 
-When a script file is loaded, all top-level structures (commands, events, schedules, global variables, config blocks) are registered. The optional `load` block runs once immediately after loading:
+When a script file is loaded, all top-level structures (commands, events, schedules, global variables, config blocks) are registered. The optional `load`/`preload` blocks run depending on the phase of loading.
 
 ```luma
+// After script has finished loading
 load:
     broadcast "&aScript loaded!"
-```
 
-There is also a `preload` block that runs even earlier in the loading process, before events and commands are fully registered. Most scripts will not need `preload`.
+// Before anything is registered
+preload:
+    broadcast "&cThis runs before events and commands are registered!"
+```
