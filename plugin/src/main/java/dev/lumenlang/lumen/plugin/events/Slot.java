@@ -26,17 +26,20 @@ public final class Slot {
 
     private final Class<? extends Event> event;
     private final EventPriority priority;
+    private final boolean ignoreCancelled;
     private volatile Entry[] entries = new Entry[0];
 
     /**
-     * Creates a new Slot for the given event type and priority.
+     * Creates a new Slot for the given event type, priority, and ignore-cancelled setting.
      *
-     * @param event    the Bukkit event class this slot handles
-     * @param priority the priority at which this slot is registered with Bukkit
+     * @param event           the Bukkit event class this slot handles
+     * @param priority        the priority at which this slot is registered with Bukkit
+     * @param ignoreCancelled whether to skip firing when the event has already been cancelled
      */
-    public Slot(@NotNull Class<? extends Event> event, @NotNull EventPriority priority) {
+    public Slot(@NotNull Class<? extends Event> event, @NotNull EventPriority priority, boolean ignoreCancelled) {
         this.event = event;
         this.priority = priority;
+        this.ignoreCancelled = ignoreCancelled;
     }
 
     private static void logLumenException(LumenRuntimeException lre, Object target) {
@@ -65,7 +68,8 @@ public final class Slot {
                 },
                 priority,
                 (listener, ev) -> dispatch(ev),
-                Lumen.instance()
+                Lumen.instance(),
+                ignoreCancelled
         );
     }
 

@@ -159,7 +159,8 @@ public final class EventBlocks {
                             String simpleEventName = ctx.block().getEnv("__event_simple_name");
                             EventMeta eventMeta = ctx.block().getEnv("__event_meta");
                             String priority = eventMeta != null ? eventMeta.priority() : "NORMAL";
-                            out.insertLine(annotationIdx, "@LumenEvent(value = " + simpleEventName + ".class, priority = \"" + priority + "\")");
+                            boolean ignoreCancelled = eventMeta != null && eventMeta.ignoreCancelled();
+                            out.insertLine(annotationIdx, "@LumenEvent(value = " + simpleEventName + ".class, priority = \"" + priority + "\", ignoreCancelled = " + ignoreCancelled + ")");
                         }
                         out.line("}");
                     }
@@ -310,6 +311,7 @@ public final class EventBlocks {
 
     public static class EventMeta {
         private String priority = "NORMAL";
+        private boolean ignoreCancelled = false;
 
         public String priority() {
             return priority;
@@ -317,6 +319,14 @@ public final class EventBlocks {
 
         public void priority(@NotNull String priority) {
             this.priority = priority;
+        }
+
+        public boolean ignoreCancelled() {
+            return ignoreCancelled;
+        }
+
+        public void ignoreCancelled(boolean ignoreCancelled) {
+            this.ignoreCancelled = ignoreCancelled;
         }
     }
 }

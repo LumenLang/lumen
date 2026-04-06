@@ -39,7 +39,7 @@ public final class EventAnnotationBinder implements ScriptAnnotationBinder {
                         MethodType.methodType(void.class, evt.value()));
                 MethodHandle adapted = mh.asType(
                         MethodType.methodType(void.class, Object.class, Event.class));
-                EventSlots.bind(evt.value().asSubclass(Event.class), instance, adapted, EventPriority.valueOf(evt.priority()));
+                EventSlots.bind(evt.value().asSubclass(Event.class), instance, adapted, EventPriority.valueOf(evt.priority()), evt.ignoreCancelled());
             } catch (Throwable t) {
                 throw new RuntimeException(t);
             }

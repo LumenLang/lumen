@@ -7,6 +7,8 @@ import dev.lumenlang.lumen.api.pattern.Categories;
 import org.bukkit.event.Cancellable;
 import org.jetbrains.annotations.NotNull;
 
+import dev.lumenlang.lumen.plugin.defaults.block.EventBlocks.EventMeta;
+
 import static dev.lumenlang.lumen.api.pattern.LumaExample.of;
 import static dev.lumenlang.lumen.api.pattern.LumaExample.secondly;
 import static dev.lumenlang.lumen.api.pattern.LumaExample.top;
@@ -50,9 +52,9 @@ public final class EventStatements {
                 .since("1.0.0")
                 .category(Categories.EVENT)
                 .handler((line, ctx, out) -> {
-                    Object eventMetaObj = ctx.block().getEnvFromParents("__event_meta");
-                    if (eventMetaObj == null) {
-                        throw new RuntimeException("'with priority' must be used directly inside an event block, not nested");
+                    EventMeta eventMeta = ctx.block().getEnvFromParents("__event_meta");
+                    if (eventMeta == null) {
+                        throw new RuntimeException("'with priority' must be used inside an event block");
                     }
                     String priority = switch (ctx.choice(0)) {
                         case "absolute_top" -> "MONITOR";
@@ -63,11 +65,25 @@ public final class EventStatements {
                         case "lowest" -> "LOWEST";
                         default -> "NORMAL";
                     };
-                    try {
-                        eventMetaObj.getClass().getMethod("priority", String.class).invoke(eventMetaObj, priority);
-                    } catch (Exception e) {
-                        throw new RuntimeException("Failed to set event priority: " + e.getMessage(), e);
+                    eventMeta.priority(priority);
+                }));
+
+        api.patterns().statement(b -> b
+                .by("Lumen")
+                .pattern("ignore [if] cancelled [already]")
+                .description("Skips this handler if the event was already cancelled by another plugin or script before this handler runs.")
+                .example(of(
+                        top("on interact:"),
+                        secondly("ignore if cancelled already"),
+                        secondly("message player \"You interacted!\"")))
+                .since("1.0.0")
+                .category(Categories.EVENT)
+                .handler((line, ctx, out) -> {
+                    EventMeta eventMeta = ctx.block().getEnvFromParents("__event_meta");
+                    if (eventMeta == null) {
+                        throw new RuntimeException("'ignore cancelled' must be used inside an event block");
                     }
+                    eventMeta.ignoreCancelled(true);
                 }));
     }
 }

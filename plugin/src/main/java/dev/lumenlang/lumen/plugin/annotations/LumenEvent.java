@@ -24,4 +24,5 @@ import java.lang.annotation.Target;
 public @interface LumenEvent {
     Class<?> value();
     String priority() default "NORMAL";
+    boolean ignoreCancelled() default false;
 }

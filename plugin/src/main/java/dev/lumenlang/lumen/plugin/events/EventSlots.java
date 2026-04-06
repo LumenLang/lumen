@@ -25,22 +25,24 @@ public final class EventSlots {
      * <p>If no {@link Slot} exists for the event class and priority yet, one is created and
      * registered with Bukkit. The handler entry is then added to the slot.
      *
-     * @param event    the Bukkit event class to listen for
-     * @param target   the script instance that owns the handler
-     * @param handle   a MethodHandle pointing to the handler method on the target
-     * @param priority the priority at which to listen for the event
-     * @param <E>      the event type
+     * @param event           the Bukkit event class to listen for
+     * @param target          the script instance that owns the handler
+     * @param handle          a MethodHandle pointing to the handler method on the target
+     * @param priority        the priority at which to listen for the event
+     * @param ignoreCancelled whether to skip firing when the event has already been cancelled
+     * @param <E>             the event type
      */
     public static synchronized <E extends Event> void bind(
             @NotNull Class<E> event,
             @NotNull Object target,
             @NotNull MethodHandle handle,
-            @NotNull EventPriority priority
+            @NotNull EventPriority priority,
+            boolean ignoreCancelled
     ) {
-        SlotKey key = new SlotKey(event, priority);
+        SlotKey key = new SlotKey(event, priority, ignoreCancelled);
         Slot slot = slots.get(key);
         if (slot == null) {
-            slot = new Slot(event, priority);
+            slot = new Slot(event, priority, ignoreCancelled);
             slots.put(key, slot);
             slot.register();
         }
@@ -59,6 +61,6 @@ public final class EventSlots {
             slot.remove(target);
     }
 
-    private record SlotKey(@NotNull Class<?> event, @NotNull EventPriority priority) {
+    private record SlotKey(@NotNull Class<?> event, @NotNull EventPriority priority, boolean ignoreCancelled) {
     }
 }

@@ -118,3 +118,16 @@ Event listeners are called in this order:
 Priority affects all plugins globally, not just Lumen. The order applies to every plugin on the server listening to that event.
 :::
 
+## Ignoring Cancelled Events
+
+When an event is cancelled by another plugin (or by your own script), handlers that run later will still be notified unless they opt out. By default, Lumen event handlers run even if the event was already cancelled.
+
+Add `ignore if cancelled already` inside an event block to skip the handler when the event has already been cancelled before it reaches your script:
+
+```luma
+on interact:
+    ignore cancelled
+    message player "You interacted!"
+```
+
+This is especially useful when combined with priority. For example, using `highest` priority with `ignore if cancelled already` lets your script react after most plugins have made their decisions, but only when nothing cancelled the event.
