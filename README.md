@@ -13,7 +13,7 @@
     <img src="https://img.shields.io/badge/BuiltByBit-0066cc?style=for-the-badge&logo=builtbybit&logoColor=white"/>
   </a>
 </p>
-<p align="center">Lumen is a high-performance scripting language for Minecraft servers that compiles your scripts directly into native Java code, with full hot reload and on-the-fly updates.</p>
+<p align="center">Lumen is a high-performance scripting platform for Minecraft servers that compiles your scripts directly into native Java code, with full hot reload and on-the-fly updates.</p>
 <details> <summary><strong>Upcoming Breaking Changes</strong></summary> <br/> Lumen is about to go through a phase with major breaking changes.
 
 The scripting side will change heavily. Patterns and syntax will be reworked, and most of the current ones will likely not stay the same. A lot of internal systems will also be modified to improve how things behave and to remove current limitations.

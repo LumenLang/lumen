@@ -4,7 +4,7 @@ description: "Welcome to the Lumen documentation. Learn how to write scripts, us
 
 # Lumen
 
-Lumen is a scripting language for Minecraft servers. It lets you create custom commands, respond to game events, manage data, schedule tasks, and much more, all from simple `.luma` script files.
+Lumen is a scripting platform for Minecraft servers. It lets you create custom commands, respond to game events, manage data, schedule tasks, and much more, all from simple `.luma` script files.
 
 Scripts are placed in the `plugins/Lumen/scripts` folder and are loaded automatically when the server starts. Changes to script files or new scripts are picked up instantly when hot reload is on.
 

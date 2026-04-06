@@ -8,7 +8,7 @@ Patterns are the core of Lumen's syntax system. Every statement, block, conditio
 
 ## How Patterns Work
 
-Lumen is a compiled scripting language. When a script is loaded, Lumen compiles it into a Java class that runs on the server. Pattern handlers do not execute script logic themselves. Instead, they **emit Java source code** that will be compiled and executed later.
+When a script is loaded, Lumen compiles it into a Java class that runs on the server. Pattern handlers do not execute script logic themselves. Instead, they **emit Java source code** that will be compiled and executed later.
 
 Because handlers emit Java code rather than running logic directly, the values you work with in a handler are **compile time** values. A `PLAYER` parameter does not give you an actual `Player` object. It gives you the Java variable name (like `"player"`) that will refer to one at runtime.
 
