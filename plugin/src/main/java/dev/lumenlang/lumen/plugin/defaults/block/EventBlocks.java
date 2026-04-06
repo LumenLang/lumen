@@ -106,7 +106,10 @@ public final class EventBlocks {
                         }
 
                         String simpleEventName = def.className().substring(def.className().lastIndexOf('.') + 1);
-                        out.line("@LumenEvent(" + simpleEventName + ".class)");
+                        EventMeta eventMeta = new EventMeta();
+                        ctx.block().putEnv("__event_meta", eventMeta);
+                        ctx.block().putEnv("__event_annotation_idx", out.lineNum());
+                        ctx.block().putEnv("__event_simple_name", simpleEventName);
                         out.line("public void __lumen_evt_" + eventName + "_" + out.lineNum() + "("
                                 + simpleEventName
                                 + " event) {");
@@ -150,6 +153,13 @@ public final class EventBlocks {
                         if (advHandler != null) {
                             advHandler.end(ctx, out);
                             return;
+                        }
+                        Integer annotationIdx = ctx.block().getEnv("__event_annotation_idx");
+                        if (annotationIdx != null) {
+                            String simpleEventName = ctx.block().getEnv("__event_simple_name");
+                            EventMeta eventMeta = ctx.block().getEnv("__event_meta");
+                            String priority = eventMeta != null ? eventMeta.priority() : "NORMAL";
+                            out.insertLine(annotationIdx, "@LumenEvent(value = " + simpleEventName + ".class, priority = \"" + priority + "\")");
                         }
                         out.line("}");
                     }
@@ -296,5 +306,17 @@ public final class EventBlocks {
                         out.line("}");
                     }
                 }));
+    }
+
+    public static class EventMeta {
+        private String priority = "NORMAL";
+
+        public String priority() {
+            return priority;
+        }
+
+        public void priority(@NotNull String priority) {
+            this.priority = priority;
+        }
     }
 }

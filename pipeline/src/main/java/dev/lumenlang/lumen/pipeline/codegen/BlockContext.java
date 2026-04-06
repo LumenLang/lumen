@@ -268,10 +268,6 @@ public final class BlockContext implements BlockAccess {
     /**
      * Stores a value in this block's local environment map.
      *
-     * <p>Block handlers can use this to attach arbitrary data to a scope frame that
-     * child blocks can later retrieve via {@link #getEnvFromParents(String)} or
-     * {@link #getEnvUpTo(String, int)}.
-     *
      * @param key   the key
      * @param value the value
      */

@@ -83,3 +83,38 @@ on interact:
         cancel event
         message player "&cBlocked!"
 ```
+
+## Event Priority
+
+When an event fires in the game, multiple plugins (and your Lumen scripts) might be listening for it. Event priority determines the order in which they all get notified. By default, your handlers run at `NORMAL` priority along with most other plugins.
+
+You can change this using the `with priority` statement:
+
+```luma
+on player_death:
+    with high priority
+    broadcast "&c{player_name} died!"
+```
+
+### Priority Levels
+
+Event listeners are called in this order:
+
+- **`lowest`** - Runs first. Early, before most plugins.
+- **`low`** - Runs before normal priority.
+- **`normal`** / **`mid`** / **`medium`** - Default priority (used if you don't specify one).
+- **`high`** - Runs after normal, after most plugins.
+- **`highest`** / **`top`** - Runs late, after most plugins.
+- **`absolute_top`** - Runs last, after everything. Use for final decision-making or logging.
+
+### When to Use Different Priorities
+
+- Use **`lowest`** if your script needs to see the event before other plugins process it
+- Use **`normal`** for most scripts (the default)
+- Use **`high`** or **`highest`** if your script should react after most plugins have acted
+- Use **`absolute_top`** if your script needs the final state after all other plugins have finished
+
+:::alert note
+Priority affects all plugins globally, not just Lumen. The order applies to every plugin on the server listening to that event.
+:::
+

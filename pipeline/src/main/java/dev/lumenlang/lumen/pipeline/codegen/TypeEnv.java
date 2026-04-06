@@ -377,13 +377,12 @@ public final class TypeEnv implements EnvironmentAccess {
     public boolean isVarCapturedByLambda(@NotNull String name) {
         boolean passedLambdaBoundary = false;
         for (BlockContext c = currentBlock; c != null; c = c.parent()) {
+            VarRef local = c.getVarLocal(name);
             if (!passedLambdaBoundary) {
-                VarRef local = c.getVarLocal(name);
                 if (local != null) return false;
                 Object marker = c.getEnv("__lambda_block");
                 if (marker != null) passedLambdaBoundary = true;
             } else {
-                VarRef local = c.getVarLocal(name);
                 if (local != null) return true;
             }
         }

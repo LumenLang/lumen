@@ -17,9 +17,11 @@ import java.lang.annotation.Target;
  * }</pre>
  *
  * <p>The event class is determined from the annotation's {@link #value()} field.
+ * The priority is the name of an {@code EventPriority} constant and defaults to {@code "NORMAL"}.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface LumenEvent {
     Class<?> value();
+    String priority() default "NORMAL";
 }

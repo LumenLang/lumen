@@ -25,15 +25,18 @@ import java.lang.invoke.MethodHandle;
 public final class Slot {
 
     private final Class<? extends Event> event;
+    private final EventPriority priority;
     private volatile Entry[] entries = new Entry[0];
 
     /**
-     * Creates a new Slot for the given event type.
+     * Creates a new Slot for the given event type and priority.
      *
-     * @param event the Bukkit event class this slot handles
+     * @param event    the Bukkit event class this slot handles
+     * @param priority the priority at which this slot is registered with Bukkit
      */
-    public Slot(@NotNull Class<? extends Event> event) {
+    public Slot(@NotNull Class<? extends Event> event, @NotNull EventPriority priority) {
         this.event = event;
+        this.priority = priority;
     }
 
     private static void logLumenException(LumenRuntimeException lre, Object target) {
@@ -60,7 +63,7 @@ public final class Slot {
                 event,
                 new Listener() {
                 },
-                EventPriority.NORMAL,
+                priority,
                 (listener, ev) -> dispatch(ev),
                 Lumen.instance()
         );

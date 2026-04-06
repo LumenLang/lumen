@@ -7,6 +7,7 @@ import dev.lumenlang.lumen.api.binder.ScriptAnnotationBinder;
 import dev.lumenlang.lumen.plugin.annotations.LumenEvent;
 import dev.lumenlang.lumen.plugin.events.EventSlots;
 import org.bukkit.event.Event;
+import org.bukkit.event.EventPriority;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.invoke.MethodHandle;
@@ -38,7 +39,7 @@ public final class EventAnnotationBinder implements ScriptAnnotationBinder {
                         MethodType.methodType(void.class, evt.value()));
                 MethodHandle adapted = mh.asType(
                         MethodType.methodType(void.class, Object.class, Event.class));
-                EventSlots.bind(evt.value().asSubclass(Event.class), instance, adapted);
+                EventSlots.bind(evt.value().asSubclass(Event.class), instance, adapted, EventPriority.valueOf(evt.priority()));
             } catch (Throwable t) {
                 throw new RuntimeException(t);
             }
