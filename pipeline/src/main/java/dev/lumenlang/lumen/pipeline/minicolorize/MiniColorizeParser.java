@@ -69,6 +69,11 @@ public final class MiniColorizeParser {
                             flushText(nodes, textBuf);
                             return nodes;
                         }
+                        if (closingTag != null) {
+                            pos = tagStart;
+                            flushText(nodes, textBuf);
+                            return nodes;
+                        }
                         textBuf.append(input, tagStart, pos);
                         continue;
                     }

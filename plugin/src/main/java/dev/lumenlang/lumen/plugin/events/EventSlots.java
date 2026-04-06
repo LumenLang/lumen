@@ -17,8 +17,6 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class EventSlots {
 
-    private record SlotKey(@NotNull Class<?> event, @NotNull EventPriority priority) {}
-
     private static final Map<SlotKey, Slot> slots = new ConcurrentHashMap<>();
 
     /**
@@ -59,5 +57,8 @@ public final class EventSlots {
     public static synchronized void clearAll(@NotNull Object target) {
         for (Slot slot : slots.values())
             slot.remove(target);
+    }
+
+    private record SlotKey(@NotNull Class<?> event, @NotNull EventPriority priority) {
     }
 }

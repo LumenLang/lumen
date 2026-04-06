@@ -1,5 +1,6 @@
 package dev.lumenlang.lumen.plugin.minicolorize;
 
+import dev.lumenlang.lumen.pipeline.minicolorize.MiniColorize;
 import dev.lumenlang.lumen.pipeline.minicolorize.MiniColorizeSerializer;
 import dev.lumenlang.lumen.pipeline.minicolorize.node.Node;
 import dev.lumenlang.lumen.pipeline.minicolorize.node.TagNode;
@@ -23,6 +24,8 @@ import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.KeybindComponent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.chat.TranslatableComponent;
+import net.md_5.bungee.api.chat.hover.content.Entity;
+import net.md_5.bungee.api.chat.hover.content.Item;
 import net.md_5.bungee.api.chat.hover.content.Text;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,6 +44,8 @@ import java.util.Map;
  * translatable components, insertion, rainbow, gradient, and transition effects.
  */
 public final class BukkitMiniColorizeSerializer implements MiniColorizeSerializer<BaseComponent[]> {
+
+    private static final MiniColorize HOVER_MINI_COLORIZE = MiniColorize.standard();
 
     private static final Map<String, ChatColor> NAMED_COLORS = Map.ofEntries(
             Map.entry("black", ChatColor.BLACK),
@@ -74,8 +79,7 @@ public final class BukkitMiniColorizeSerializer implements MiniColorizeSerialize
         return components.toArray(new BaseComponent[0]);
     }
 
-    private void serializeNodes(@NotNull List<Node> nodes, @NotNull List<BaseComponent> out,
-                                @NotNull FormatState state) {
+    private void serializeNodes(@NotNull List<Node> nodes, @NotNull List<BaseComponent> out, @NotNull FormatState state) {
         for (Node node : nodes) {
             if (node instanceof TextNode textNode) {
                 TextComponent tc = new TextComponent(textNode.text());
@@ -87,8 +91,7 @@ public final class BukkitMiniColorizeSerializer implements MiniColorizeSerialize
         }
     }
 
-    private void serializeTagNode(@NotNull TagNode tagNode, @NotNull List<BaseComponent> out,
-                                  @NotNull FormatState parentState) {
+    private void serializeTagNode(@NotNull TagNode tagNode, @NotNull List<BaseComponent> out, @NotNull FormatState parentState) {
         Tag tag = tagNode.tag();
 
         if (tag instanceof ResetTag) {
@@ -160,8 +163,7 @@ public final class BukkitMiniColorizeSerializer implements MiniColorizeSerialize
         }
     }
 
-    private void serializeRainbow(@NotNull String text, @NotNull RainbowTag tag,
-                                  @NotNull List<BaseComponent> out, @NotNull FormatState parentState) {
+    private void serializeRainbow(@NotNull String text, @NotNull RainbowTag tag, @NotNull List<BaseComponent> out, @NotNull FormatState parentState) {
         if (text.isEmpty()) return;
 
         int len = text.length();
@@ -186,9 +188,7 @@ public final class BukkitMiniColorizeSerializer implements MiniColorizeSerialize
         }
     }
 
-    private void serializeGradient(@NotNull String text, @NotNull List<String> colorNames,
-                                   float phase, @NotNull List<BaseComponent> out,
-                                   @NotNull FormatState parentState) {
+    private void serializeGradient(@NotNull String text, @NotNull List<String> colorNames, float phase, @NotNull List<BaseComponent> out, @NotNull FormatState parentState) {
         if (text.isEmpty()) return;
 
         List<Color> colors = new ArrayList<>();
@@ -297,15 +297,57 @@ public final class BukkitMiniColorizeSerializer implements MiniColorizeSerialize
     }
 
     private @Nullable HoverEvent resolveHoverEvent(@NotNull HoverTag hoverTag) {
-        if (hoverTag.action().equals("show_text"))
-            new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(hoverTag.value()));
-        return null;
+        return switch (hoverTag.action()) {
+            case "show_text" -> new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(HOVER_MINI_COLORIZE.process(hoverTag.value(), this)));
+            case "show_item" -> resolveShowItem(hoverTag.value());
+            case "show_entity" -> resolveShowEntity(hoverTag.value());
+            default -> null;
+        };
+    }
+
+    private @NotNull HoverEvent resolveShowItem(@NotNull String value) {
+        String id = value;
+        int count = 1;
+        int lastColon = value.lastIndexOf(':');
+        if (lastColon >= 0) {
+            String suffix = value.substring(lastColon + 1);
+            try {
+                count = Integer.parseInt(suffix);
+                id = value.substring(0, lastColon);
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        if (!id.contains(":")) {
+            id = "minecraft:" + id;
+        }
+        return new HoverEvent(HoverEvent.Action.SHOW_ITEM, new Item(id, count, null));
+    }
+
+    private @Nullable HoverEvent resolveShowEntity(@NotNull String value) {
+        String[] parts = value.split(":");
+        if (parts.length < 2) {
+            return null;
+        }
+        String type;
+        String uuid;
+        String name = null;
+        if (parts.length == 2) {
+            type = "minecraft:" + parts[0];
+            uuid = parts[1];
+        } else if (parts.length == 3) {
+            type = "minecraft:" + parts[0];
+            uuid = parts[1];
+            name = parts[2];
+        } else {
+            type = parts[0] + ":" + parts[1];
+            uuid = parts[2];
+            name = value.substring(parts[0].length() + 1 + parts[1].length() + 1 + parts[2].length() + 1);
+        }
+        return new HoverEvent(HoverEvent.Action.SHOW_ENTITY, new Entity(type, uuid, name != null ? new TextComponent(name) : null));
     }
 
     private void applyState(@NotNull BaseComponent component, @NotNull FormatState state) {
-        if (state.color != null) {
-            component.setColor(state.color);
-        }
+        if (state.color != null) component.setColor(state.color);
         if (state.bold != null) component.setBold(state.bold);
         if (state.italic != null) component.setItalic(state.italic);
         if (state.underlined != null) component.setUnderlined(state.underlined);

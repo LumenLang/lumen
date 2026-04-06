@@ -25,7 +25,10 @@ public final class DefaultLoopSources {
                 .example("loop p in all players:")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler(allPlayers()));
+                .handler(ctx -> {
+                    ctx.codegen().addImport(Bukkit.class.getName());
+                    return new LoopHandler.LoopResult("Bukkit.getOnlinePlayers()", "PLAYER");
+                }));
 
         api.patterns().loop(b -> b
                 .by("Lumen")
@@ -34,7 +37,10 @@ public final class DefaultLoopSources {
                 .example("loop e in all entities in world:")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler(allEntitiesInWorld()));
+                .handler(ctx -> {
+                    String worldJava = ctx.java("world");
+                    return new LoopHandler.LoopResult(worldJava + ".getEntities()", "ENTITY");
+                }));
 
         api.patterns().loop(b -> b
                 .by("Lumen")
@@ -43,27 +49,9 @@ public final class DefaultLoopSources {
                 .example("loop w in all worlds:")
                 .since("1.0.0")
                 .category(Categories.WORLD)
-                .handler(allWorlds()));
-    }
-
-    private @NotNull LoopHandler allPlayers() {
-        return ctx -> {
-            ctx.codegen().addImport(Bukkit.class.getName());
-            return new LoopHandler.LoopResult("Bukkit.getOnlinePlayers()", "PLAYER");
-        };
-    }
-
-    private @NotNull LoopHandler allEntitiesInWorld() {
-        return ctx -> {
-            String worldJava = ctx.java("world");
-            return new LoopHandler.LoopResult(worldJava + ".getEntities()", "ENTITY");
-        };
-    }
-
-    private @NotNull LoopHandler allWorlds() {
-        return ctx -> {
-            ctx.codegen().addImport(Bukkit.class.getName());
-            return new LoopHandler.LoopResult("Bukkit.getWorlds()", "WORLD");
-        };
+                .handler(ctx -> {
+                    ctx.codegen().addImport(Bukkit.class.getName());
+                    return new LoopHandler.LoopResult("Bukkit.getWorlds()", "WORLD");
+                }));
     }
 }

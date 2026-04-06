@@ -54,8 +54,7 @@ public final class EventStatements {
                     if (eventMetaObj == null) {
                         throw new RuntimeException("'with priority' must be used directly inside an event block, not nested");
                     }
-                    String keyword = ctx.choice(0);
-                    String priority = switch (keyword) {
+                    String priority = switch (ctx.choice(0)) {
                         case "absolute_top" -> "MONITOR";
                         case "top", "highest" -> "HIGHEST";
                         case "high" -> "HIGH";
