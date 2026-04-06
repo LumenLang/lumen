@@ -85,5 +85,24 @@ public final class EventStatements {
                     }
                     eventMeta.ignoreCancelled(true);
                 }));
+
+        api.patterns().statement(b -> b
+                .by("Lumen")
+                .pattern("uncancel [the] event")
+                .description("Uncancels the current event, reversing a previous cancellation. Must be used inside an event handler block.")
+                .example("uncancel event")
+                .since("1.0.0")
+                .category(Categories.EVENT)
+                .handler((line, ctx, out) -> {
+                    if (ctx.block().getEnvFromParents("__event_block") == null) {
+                        throw new RuntimeException("'uncancel event' can only be used inside an event handler block");
+                    }
+                    Boolean cancellable = ctx.block().getEnvFromParents("__event_cancellable");
+                    if (cancellable != null && !cancellable) {
+                        throw new RuntimeException("'uncancel event' cannot be used here because this event is not cancellable");
+                    }
+                    ctx.codegen().addImport(Cancellable.class.getName());
+                    out.line("((Cancellable) event).setCancelled(false);");
+                }));
     }
 }

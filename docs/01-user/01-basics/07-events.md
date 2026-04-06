@@ -84,6 +84,16 @@ on interact:
         message player "&cBlocked!"
 ```
 
+If you need to reverse a cancellation, use `uncancel event`:
+
+```luma
+on player_move:
+    uncancel event
+    message player "Event is no longer cancelled"
+```
+
+Note that only certain events are cancellable.
+
 ## Event Priority
 
 When an event fires in the game, multiple plugins (and your Lumen scripts) might be listening for it. Event priority determines the order in which they all get notified. By default, your handlers run at `NORMAL` priority along with most other plugins.
@@ -126,7 +136,7 @@ Add `ignore if cancelled already` inside an event block to skip the handler when
 
 ```luma
 on interact:
-    ignore cancelled
+    ignore if cancelled already
     message player "You interacted!"
 ```
 
