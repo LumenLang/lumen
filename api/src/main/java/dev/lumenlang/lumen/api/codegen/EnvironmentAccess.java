@@ -261,6 +261,13 @@ public interface EnvironmentAccess {
     VarHandle defineRootVar(@NotNull String name, @Nullable RefTypeHandle refType, @NotNull String java);
 
     /**
+     * Returns the current block context, or {@code null} if not inside any block.
+     *
+     * @return the block access for the current scope
+     */
+    @Nullable BlockAccess block();
+
+    /**
      * A compile-time descriptor for a named variable that is in scope.
      *
      * @see #lookupVar(String)

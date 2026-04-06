@@ -54,7 +54,7 @@ public interface ConditionHandler {
          * @param name the parameter name
          * @return the variable handle
          */
-        EnvironmentAccess.@NotNull VarHandle ref(@NotNull String name);
+        @NotNull EnvironmentAccess.VarHandle ref(@NotNull String name);
 
         /**
          * Converts the bound value for the named parameter into a Java source
@@ -66,9 +66,7 @@ public interface ConditionHandler {
          * @return the generated Java source expression
          */
         @NotNull
-        String java(@NotNull String name,
-                    @NotNull CodegenAccess ctx,
-                    @NotNull EnvironmentAccess env);
+        String java(@NotNull String name, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env);
 
         /**
          * Returns the matched alternative text for the Nth required choice group.
@@ -99,7 +97,7 @@ public interface ConditionHandler {
          * @return the variable handle
          * @throws IndexOutOfBoundsException if the index is out of range
          */
-        EnvironmentAccess.@NotNull VarHandle ref(int index);
+        @NotNull EnvironmentAccess.VarHandle ref(int index);
 
         /**
          * Converts the bound value at the given positional index into a Java source expression.
@@ -111,9 +109,7 @@ public interface ConditionHandler {
          * @throws IndexOutOfBoundsException if the index is out of range
          */
         @NotNull
-        String java(int index,
-                    @NotNull CodegenAccess ctx,
-                    @NotNull EnvironmentAccess env);
+        String java(int index, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env);
 
         /**
          * Returns the number of bound parameters in this match.

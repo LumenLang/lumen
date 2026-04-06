@@ -83,6 +83,11 @@ public final class TypeEnv implements EnvironmentAccess {
         return currentBlock;
     }
 
+    @Override
+    public BlockContext block() {
+        return currentBlock;
+    }
+
     /**
      * Defines a named {@link VarRef} in the current block scope.
      *
