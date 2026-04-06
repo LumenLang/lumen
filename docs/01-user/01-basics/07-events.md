@@ -84,6 +84,15 @@ on interact:
         message player "&cBlocked!"
 ```
 
+You can check if an event is currently cancelled:
+
+```luma
+on player_move:
+    if this is already cancelled:
+        message player "This event was cancelled"
+```
+Or `if this is not already cancelled` to check if it is not cancelled.
+
 If you need to reverse a cancellation, use `uncancel event`:
 
 ```luma
