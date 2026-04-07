@@ -24,6 +24,7 @@ public final class AddonManager {
 
     private final List<LumenAddon> addons = new ArrayList<>();
     private final List<URLClassLoader> loaders = new ArrayList<>();
+    private final List<String> registeredClasspaths = new ArrayList<>();
     private LumenAPI api;
 
     /**
@@ -37,6 +38,7 @@ public final class AddonManager {
      */
     public void registerAddon(@NotNull LumenAddon addon) {
         addons.add(addon);
+        registerClasspath(addon);
         callOnLoad(addon);
         validateDocumentation(addon.getClass().getClassLoader(), addon);
         if (api != null) {
@@ -74,7 +76,7 @@ public final class AddonManager {
                             + " (" + addon.description() + ")");
                 }
             } catch (Throwable e) {
-                LumenLogger.warning("Failed to load addon jar: " + jar.getName() + "  -  " + e.getMessage());
+                LumenLogger.warning("Failed to load addon jar: " + jar.getName() + " - " + e.getMessage());
             }
         }
     }
@@ -104,7 +106,7 @@ public final class AddonManager {
                 addon.onDisable();
                 LumenLogger.info("Disabled addon: " + addon.name());
             } catch (Exception e) {
-                LumenLogger.warning("Failed to disable addon: " + addon.name() + "  -  " + e.getMessage());
+                LumenLogger.warning("Failed to disable addon: " + addon.name() + " - " + e.getMessage());
             }
         }
         for (URLClassLoader loader : loaders) {
@@ -116,8 +118,12 @@ public final class AddonManager {
             } catch (Exception ignored) {
             }
         }
+        for (String path : registeredClasspaths) {
+            SystemCompiler.removeExtraClasspath(path);
+        }
         addons.clear();
         loaders.clear();
+        registeredClasspaths.clear();
         api = null;
     }
 
@@ -150,6 +156,19 @@ public final class AddonManager {
      */
     public @Nullable LumenAPI api() {
         return api;
+    }
+
+    private void registerClasspath(@NotNull LumenAddon addon) {
+        try {
+            File jar = new File(addon.getClass().getProtectionDomain().getCodeSource().getLocation().toURI());
+            if (jar.isFile()) {
+                String path = jar.getAbsolutePath();
+                SystemCompiler.addExtraClasspath(path);
+                registeredClasspaths.add(path);
+            }
+        } catch (Exception e) {
+            LumenLogger.warning("Could not register classpath for addon " + addon.name() + ": " + e.getMessage());
+        }
     }
 
     private void enableSingle(@NotNull LumenAddon addon) {
