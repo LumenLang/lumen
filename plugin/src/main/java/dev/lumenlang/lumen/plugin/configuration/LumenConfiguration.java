@@ -102,6 +102,7 @@ public final class LumenConfiguration {
             case REDUCE_CLASSPATH -> PERFORMANCE.REDUCE_CLASSPATH = value;
             case ENABLE_ALL_SCRIPTS_IMMEDIATELY -> SCRIPTS.ENABLE_ALL_SCRIPTS_IMMEDIATELY_ON_STARTUP = value;
             case CODE_TRANSFORM -> LANGUAGE.EXPERIMENTAL.CODE_TRANSFORM = value;
+            case RAW_JAVA -> LANGUAGE.EXPERIMENTAL.RAW_JAVA = value;
         }
     }
 

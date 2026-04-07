@@ -39,7 +39,15 @@ public enum ConfigOption {
      * Java source. Transformers may remove, replace, or insert lines based on their
      * own logic.
      */
-    CODE_TRANSFORM("language.experimental.code-transform");
+    CODE_TRANSFORM("language.experimental.code-transform"),
+
+    /**
+     * Controls whether raw Java blocks are allowed inside scripts.
+     *
+     * <p>When enabled, scripts can contain {@code java:} blocks whose contents are
+     * emitted directly into the compiled class without any transformation.
+     */
+    RAW_JAVA("language.experimental.raw-java");
 
     private final String path;
 

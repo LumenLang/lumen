@@ -9,12 +9,6 @@ import org.jetbrains.annotations.NotNull;
  *
  * <p>Classes are sorted by {@link Registration#order()} before processing. Lower values
  * are processed first.
- *
- * <p>The actual scanning and invocation logic is provided by a {@link Backend} implementation
- * set during Lumen's initialization. Addon developers should not need to call this class
- * directly.
- *
- * @see Registration
  */
 public final class RegistrationScanner {
 
