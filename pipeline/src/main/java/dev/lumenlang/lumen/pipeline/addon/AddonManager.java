@@ -3,6 +3,7 @@ package dev.lumenlang.lumen.pipeline.addon;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.LumenAddon;
 import dev.lumenlang.lumen.pipeline.documentation.LumenDoc;
+import dev.lumenlang.lumen.pipeline.java.compiler.ScriptClassLoader;
 import dev.lumenlang.lumen.pipeline.java.compiler.system.SystemCompiler;
 import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
 import org.jetbrains.annotations.NotNull;
@@ -65,6 +66,7 @@ public final class AddonManager {
                 );
                 loaders.add(loader);
                 SystemCompiler.addExtraClasspath(jar.getAbsolutePath());
+                ScriptClassLoader.addExtraLoader(loader);
 
                 ServiceLoader<LumenAddon> sl = ServiceLoader.load(LumenAddon.class, loader);
                 for (LumenAddon addon : sl) {
@@ -113,6 +115,7 @@ public final class AddonManager {
             for (URL url : loader.getURLs()) {
                 SystemCompiler.removeExtraClasspath(new File(url.getPath()).getAbsolutePath());
             }
+            ScriptClassLoader.removeExtraLoader(loader);
             try {
                 loader.close();
             } catch (Exception ignored) {
@@ -164,6 +167,7 @@ public final class AddonManager {
             if (jar.isFile()) {
                 String path = jar.getAbsolutePath();
                 SystemCompiler.addExtraClasspath(path);
+                ScriptClassLoader.addExtraLoader(addon.getClass().getClassLoader());
                 registeredClasspaths.add(path);
             }
         } catch (Exception e) {

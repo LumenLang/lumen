@@ -26,10 +26,8 @@ public final class ScriptSourceMap {
     private static final String COMPILED_PREFIX = "dev.lumenlang.lumen.java.compiled.";
     private static final String MARKER_PREFIX = "// @lumen:";
 
-    private static final Pattern NPE_INVOKE =
-            Pattern.compile("Cannot invoke \"([^\"]+)\" because \"([^\"]+)\" is null");
-    private static final Pattern NPE_READ_FIELD =
-            Pattern.compile("Cannot read field \"([^\"]+)\" because \"([^\"]+)\" is null");
+    private static final Pattern NPE_INVOKE = Pattern.compile("Cannot invoke \"([^\"]+)\" because \"([^\"]+)\" is null");
+    private static final Pattern NPE_READ_FIELD = Pattern.compile("Cannot read field \"([^\"]+)\" because \"([^\"]+)\" is null");
 
     private static final Map<String, String> SOURCES = new ConcurrentHashMap<>();
 
@@ -53,6 +51,16 @@ public final class ScriptSourceMap {
      */
     public static void unregister(@NotNull String fqcn) {
         SOURCES.remove(fqcn);
+    }
+
+    /**
+     * Returns the generated Java source for the given fully-qualified class name.
+     *
+     * @param fqcn the fully-qualified class name
+     * @return the generated source, or null if not registered
+     */
+    public static @Nullable String source(@NotNull String fqcn) {
+        return SOURCES.get(fqcn);
     }
 
     /**
@@ -86,16 +94,14 @@ public final class ScriptSourceMap {
             String simpleMethod = fqMethod.contains(".")
                     ? fqMethod.substring(fqMethod.lastIndexOf('.') + 1)
                     : fqMethod;
-            return "'" + varName + "' was null (tried to call " + simpleMethod
-                    + "). Use 'if " + varName + " is set:' to guard it.";
+            return "'" + varName + "' was null (tried to call " + simpleMethod + "). Use 'if " + varName + " is set:' to guard it.";
         }
 
         Matcher readField = NPE_READ_FIELD.matcher(msg);
         if (readField.find()) {
             String field = readField.group(1);
             String varName = readField.group(2);
-            return "'" + varName + "' was null (tried to read field " + field
-                    + "). Use 'if " + varName + " is set:' to guard it.";
+            return "'" + varName + "' was null (tried to read field " + field + "). Use 'if " + varName + " is set:' to guard it.";
         }
 
         return msg;
