@@ -190,6 +190,8 @@ public final class MathEngine {
             if (ref == null) {
                 throw new RuntimeException("Variable not found in math expression: " + t.text());
             }
+            LumenType type = ref.resolvedType();
+            if (type == null || !type.numeric()) return "Coerce.toInt(" + ref.java() + ")";
             return ref.java();
         }
 
@@ -280,7 +282,8 @@ public final class MathEngine {
                 throw new RuntimeException("Variable not found in math expression: " + t.text());
             }
             LumenType type = ref.resolvedType();
-            return new TypedFragment(ref.java(), type != null ? type : LumenType.Primitive.INT);
+            if (type == null || !type.numeric()) return new TypedFragment("Coerce.toInt(" + ref.java() + ")", LumenType.Primitive.INT);
+            return new TypedFragment(ref.java(), type);
         }
 
         if (t.kind() == TokenKind.SYMBOL && t.text().equals("{")) {
