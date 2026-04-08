@@ -375,10 +375,10 @@ public final class EntityHelper {
     /**
      * Registers an expression that gets a string property, returning null as a fallback.
      *
-     * @param pattern        the expression pattern
-     * @param getterCall     the getter method call
-     * @param description    the description
-     * @param example        the example
+     * @param pattern     the expression pattern
+     * @param getterCall  the getter method call
+     * @param description the description
+     * @param example     the example
      * @return this builder
      */
     public @NotNull EntityHelper stringGetter(@NotNull String pattern,

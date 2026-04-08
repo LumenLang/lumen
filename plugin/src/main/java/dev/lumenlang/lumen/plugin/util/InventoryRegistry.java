@@ -52,6 +52,7 @@ public final class InventoryRegistry {
         }
         try {
             entry.method.invoke(entry.instance, player);
+            InventoryHotReload.trackViewer(player.getUniqueId(), name);
         } catch (Throwable t) {
             LumenText.send(player, "<red>Failed to open inventory '" + name + "'.");
             throw new RuntimeException("Error invoking inventory builder for '" + name + "'", t);

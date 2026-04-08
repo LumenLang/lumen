@@ -4,6 +4,7 @@ import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.plugin.util.InventoryHelper;
+import dev.lumenlang.lumen.plugin.util.InventoryHotReload;
 import dev.lumenlang.lumen.plugin.util.InventoryRegistry;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -121,7 +122,8 @@ public final class InventoryGuiStatements {
                         "open gui for player",
                         (line, ctx, out) -> {
                             ctx.codegen().addImport(INVENTORY);
-                            out.line(ctx.java("who") + ".openInventory((Inventory) " + ctx.java("inv") + ");");
+                            ctx.codegen().addImport(InventoryHotReload.class.getName());
+                            out.line("InventoryHotReload.openOrReplace(" + ctx.java("who") + ", (Inventory) " + ctx.java("inv") + ");");
                         })
                 .statement(
                         "show %inv:EXPR% to %who:PLAYER%",
@@ -129,7 +131,8 @@ public final class InventoryGuiStatements {
                         "show gui to player",
                         (line, ctx, out) -> {
                             ctx.codegen().addImport(INVENTORY);
-                            out.line(ctx.java("who") + ".openInventory((Inventory) " + ctx.java("inv") + ");");
+                            ctx.codegen().addImport(InventoryHotReload.class.getName());
+                            out.line("InventoryHotReload.openOrReplace(" + ctx.java("who") + ", (Inventory) " + ctx.java("inv") + ");");
                         })
                 .statement(
                         "open inventory [named] %name:STRING% for %who:PLAYER%",

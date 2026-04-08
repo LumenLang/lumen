@@ -28,16 +28,9 @@ import static dev.lumenlang.lumen.api.pattern.LumaExample.top;
  * Registers inventory event sugar blocks that simplify handling GUI interactions.
  *
  * <p>These blocks must be placed at the root level with a quoted string inventory name.
- * A dedicated Bukkit event listener method is generated for each:
- * <ul>
- *   <li>{@code slot 11 click in "main_menu":}</li>
- *   <li>{@code click in "main_menu":}</li>
- *   <li>{@code close of "main_menu":}</li>
- *   <li>{@code open of "main_menu":}</li>
- * </ul>
+ * A dedicated Bukkit event listener method is generated for each.
  *
- * <p>Click events are automatically cancelled since GUI clicks should
- * almost never pass through.
+ * <p>Click events are automatically cancelled by default to prevent item movement, but can be uncancelled with "uncancel event".
  */
 @Registration
 @SuppressWarnings("unused")
@@ -74,7 +67,7 @@ public final class InventoryEventBlocks {
      */
     private static void emitNameGuard(@NotNull JavaOutput out, @NotNull String name) {
         out.line("if (!(event.getView().getTopInventory().getHolder() instanceof LumenInventoryHolder __lh)"
-                + " || !__lh.getName().equals(" + name + ")) return;");
+                + " || !__lh.name().equals(" + name + ")) return;");
     }
 
     /**
