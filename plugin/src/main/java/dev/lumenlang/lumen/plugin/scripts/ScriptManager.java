@@ -244,6 +244,7 @@ public final class ScriptManager {
                     GlobalVars.clear();
                     InventoryRegistry.clear();
                     names.forEach(ScriptManager::reload);
+                    List<String> loaded = new ArrayList<>();
                     for (AsyncPreparedScript a : asyncScripts) {
                         try {
                             if (a.loader() != null) {
@@ -251,11 +252,13 @@ public final class ScriptManager {
                             } else {
                                 loadBytecodes(a.prepared().name(), a.prepared().fqcn(), a.prepared().bytecodes());
                             }
+                            postScriptLoaded(a.prepared().name());
+                            loaded.add(a.prepared().name());
                         } catch (Throwable t) {
                             LumenLogger.severe("Failed to load script: " + a.prepared().name(), t);
                         }
                     }
-                    postAllScriptsLoaded(asyncScripts.stream().map(a -> a.prepared().name()).toList());
+                    postAllScriptsLoaded(loaded);
                     future.complete(asyncScripts.stream().map(AsyncPreparedScript::prepared).toList());
                 } catch (Throwable t) {
                     future.completeExceptionally(t);
@@ -331,14 +334,17 @@ public final class ScriptManager {
         GlobalVars.clear();
         InventoryRegistry.clear();
         names.forEach(ScriptManager::reload);
+        List<String> loaded = new ArrayList<>();
         for (PreparedScript p : allPrepared) {
             try {
                 loadBytecodes(p.name(), p.fqcn(), p.bytecodes());
+                postScriptLoaded(p.name());
+                loaded.add(p.name());
             } catch (Throwable t) {
                 LumenLogger.severe("Failed to load script: " + p.name(), t);
             }
         }
-        postAllScriptsLoaded(allPrepared.stream().map(PreparedScript::name).toList());
+        postAllScriptsLoaded(loaded);
     }
 
     /**

@@ -124,7 +124,6 @@ public final class Lumen extends JavaPlugin {
         ConfigWatcher.shutdown();
         ScriptManager.unloadAllSync();
         ScriptManager.shutdownPool();
-        InventoryHotReload.clear();
         if (eventBus != null) eventBus.shutdown();
         RegistrationScanner.teardown();
         ScriptBinder.teardown();

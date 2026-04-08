@@ -8,8 +8,8 @@ import java.lang.annotation.Target;
 /**
  * Marks a method as an event subscriber on the Lumen {@link EventBus}.
  *
- * <p>The annotated method must accept exactly one parameter whose type
- * is a concrete subclass of {@link LumenEvent}.
+ * <p>The annotated method must accept exactly one parameter of type
+ * {@link LumenEvent} or any subclass or interface thereof.
  *
  * <pre>{@code
  * @Subscribe(priority = Priority.NORMAL)

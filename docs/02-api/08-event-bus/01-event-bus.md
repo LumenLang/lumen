@@ -10,7 +10,7 @@ Access it via `LumenProvider.bus()`.
 
 ## Subscribing
 
-Create a listener class with methods annotated with `@Subscribe`. Each method must accept exactly one `LumenEvent` subclass parameter.
+Create a listener class with methods annotated with `@Subscribe`. Each method must accept exactly one parameter of type `LumenEvent` or any subclass or interface.
 
 ```java
 public class MyListener {
@@ -77,14 +77,6 @@ SomeCancellableEvent event = bus.post(new SomeCancellableEvent());
 if (!event.cancelled()) {
     // proceed
 }
-```
-
-## Async Dispatch
-
-Use `postAsync` to post an event where all subscribers run on a background thread:
-
-```java
-LumenProvider.bus().postAsync(new SomeEvent());
 ```
 
 ## Subscribing to Supertypes

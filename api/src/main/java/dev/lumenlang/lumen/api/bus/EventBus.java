@@ -38,12 +38,4 @@ public interface EventBus {
      * @return the event after all subscribers have been invoked
      */
     <T extends LumenEvent> @NotNull T post(@NotNull T event);
-
-    /**
-     * Posts an event asynchronously. All subscribers are invoked on a background thread.
-     *
-     * @param event the event to post
-     * @param <T>   the event type
-     */
-    <T extends LumenEvent> void postAsync(@NotNull T event);
 }
