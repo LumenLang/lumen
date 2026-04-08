@@ -130,10 +130,10 @@ features:
   inventories:
     # Enable inventory hot reload.
     #
-    # When enabled, if a player already has an inventory open and that
-    # inventory's script is reloaded, the contents and title are replaced
-    # in place instead of closing and reopening the GUI. This makes script
-    # hot reloading seamless for players viewing an inventory.
+    # When enabled, players who have a Lumen inventory open will have its
+    # contents and title replaced in place on any script reload, instead
+    # of the inventory closing and reopening. This makes script hot reloading
+    # seamless for players viewing an inventory.
     hot-reload: true
 
 # Miscellaneous settings that don't fit into other categories

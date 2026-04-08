@@ -132,8 +132,12 @@ public final class InventoryHotReload {
                 it.remove();
                 continue;
             }
-            InventoryRegistry.open(registryName, player);
-            refreshed++;
+            try {
+                InventoryRegistry.open(registryName, player);
+                refreshed++;
+            } catch (Throwable e) {
+                LumenLogger.warning("[InventoryHotReload] Failed to refresh inventory '" + registryName + "' for " + player.getName() + ": " + e.getMessage());
+            }
         }
         if (refreshed > 0) {
             LumenLogger.info("Hot reloaded " + refreshed + " open inventor" + (refreshed == 1 ? "y" : "ies") + " for active viewers.");

@@ -11,7 +11,7 @@ When you modify and reload a Lumen script that opens an inventory, players who h
 
 ## How It Works
 
-When a script defining a `register inventory` block is reloaded, Lumen checks if any players have that inventory open. If they do, instead of closing and reopening the GUI, the following updates are applied in place:
+When any script is reloaded, Lumen checks if any players have a registered inventory open. If they do, instead of them having to close and reopen the GUI, the following behavior occurs:
 
 1. **Item replacement** - items in the inventory are replaced in place
 2. **Title update** - the inventory title is updated
