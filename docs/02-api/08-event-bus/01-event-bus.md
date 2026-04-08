@@ -10,7 +10,7 @@ Access it via `LumenProvider.bus()`.
 
 ## Subscribing
 
-Create a listener class with methods annotated with `@Subscribe`. Each method must accept exactly one parameter of type `LumenEvent` or any subclass or interface.
+Create a listener class with methods annotated with `@Subscribe`. Each method must accept exactly one parameter, which may be `LumenEvent`, any subclass of it, or any interface.
 
 ```java
 public class MyListener {
@@ -36,7 +36,7 @@ LumenProvider.bus().unregister(myListener);
 
 ### Auto-registration via @Registration
 
-If your listener is a `@Registration` class, any `@Subscribe` methods on it are automatically registered by the scanner. No manual call to `bus().register()` needed.
+If your listener is a `@Registration` class, any `@Subscribe` methods on it are automatically registered by the scanner. No manual call to `bus().register()` needed. This is the recommended approach for addons.
 
 ```java
 @Registration
@@ -49,6 +49,10 @@ public final class MyListener {
     public void onScriptLoad(@NotNull ScriptLoadEvent event) { /* ... */ }
 }
 ```
+
+:::alert warning
+Listeners registered via manual `bus().register()` calls are cleared when Lumen disables. If Lumen is disabled and re-enabled, those listeners are lost. Only use manual registration if you handle re-registration in response to Lumen's lifecycle. For reliable listener registration across Lumen restarts, use `@Registration` with `@Subscribe` instead.
+:::
 
 ## Priority
 
@@ -81,7 +85,7 @@ if (!event.cancelled()) {
 
 ## Subscribing to Supertypes
 
-A subscriber method's parameter type can be a superclass or interface. It will receive all events that are an instance of that type.
+A subscriber method's parameter type can be a superclass of `LumenEvent`, or any interface. It will receive all events whose concrete type is an instance of, or implements, that type.
 
 ```java
 @Subscribe

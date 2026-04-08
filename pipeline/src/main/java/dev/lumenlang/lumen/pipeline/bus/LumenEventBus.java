@@ -35,8 +35,8 @@ public final class LumenEventBus implements EventBus {
             Subscribe annotation = method.getAnnotation(Subscribe.class);
             if (annotation == null) continue;
             Class<?>[] params = method.getParameterTypes();
-            if (params.length != 1 || !LumenEvent.class.isAssignableFrom(params[0])) {
-                LumenLogger.warning("@Subscribe method " + listener.getClass().getName() + "#" + method.getName() + " must accept exactly one LumenEvent parameter, skipping");
+            if (params.length != 1 || (!LumenEvent.class.isAssignableFrom(params[0]) && !params[0].isInterface())) {
+                LumenLogger.warning("@Subscribe method " + listener.getClass().getName() + "#" + method.getName() + " must accept exactly one LumenEvent or interface parameter, skipping");
                 continue;
             }
             method.setAccessible(true);

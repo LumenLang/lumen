@@ -35,7 +35,6 @@ import dev.lumenlang.lumen.plugin.scripts.ScriptManager;
 import dev.lumenlang.lumen.plugin.scripts.ScriptSourceLoader;
 import dev.lumenlang.lumen.plugin.scripts.ScriptWatcher;
 import dev.lumenlang.lumen.plugin.util.BukkitValueResolver;
-import dev.lumenlang.lumen.plugin.util.InventoryHotReload;
 import net.vansencool.lsyaml.binding.watcher.ConfigWatcher;
 import net.vansencool.lsyaml.logger.JulLogAdapter;
 import net.vansencool.lsyaml.logger.LSYAMLLogger;

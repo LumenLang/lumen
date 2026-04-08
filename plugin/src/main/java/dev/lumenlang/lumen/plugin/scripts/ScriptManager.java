@@ -243,7 +243,10 @@ public final class ScriptManager {
                 try {
                     GlobalVars.clear();
                     InventoryRegistry.clear();
-                    names.forEach(ScriptManager::reload);
+                    for (String name : names) {
+                        reload(name);
+                        postScriptUnloaded(name);
+                    }
                     List<String> loaded = new ArrayList<>();
                     for (AsyncPreparedScript a : asyncScripts) {
                         try {
@@ -333,7 +336,10 @@ public final class ScriptManager {
 
         GlobalVars.clear();
         InventoryRegistry.clear();
-        names.forEach(ScriptManager::reload);
+        for (String name : names) {
+            reload(name);
+            postScriptUnloaded(name);
+        }
         List<String> loaded = new ArrayList<>();
         for (PreparedScript p : allPrepared) {
             try {
