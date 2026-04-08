@@ -12,7 +12,8 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryView;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Iterator;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -114,22 +115,21 @@ public final class InventoryHotReload {
         if (!LumenConfiguration.FEATURES.INVENTORIES.HOT_RELOAD) return;
         if (VIEWERS.isEmpty()) return;
         int refreshed = 0;
-        Iterator<Map.Entry<UUID, String>> it = VIEWERS.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry<UUID, String> entry = it.next();
+        List<UUID> toRemove = new ArrayList<>();
+        for (Map.Entry<UUID, String> entry : VIEWERS.entrySet()) {
             Player player = Bukkit.getPlayer(entry.getKey());
             if (player == null || !player.isOnline()) {
-                it.remove();
+                toRemove.add(entry.getKey());
                 continue;
             }
             InventoryView view = player.getOpenInventory();
             if (!(view.getTopInventory().getHolder() instanceof LumenInventoryHolder)) {
-                it.remove();
+                toRemove.add(entry.getKey());
                 continue;
             }
             String registryName = entry.getValue();
             if (!InventoryRegistry.isRegistered(registryName)) {
-                it.remove();
+                toRemove.add(entry.getKey());
                 continue;
             }
             try {
@@ -139,6 +139,7 @@ public final class InventoryHotReload {
                 LumenLogger.warning("[InventoryHotReload] Failed to refresh inventory '" + registryName + "' for " + player.getName() + ": " + e.getMessage());
             }
         }
+        toRemove.forEach(VIEWERS::remove);
         if (refreshed > 0) {
             LumenLogger.info("Hot reloaded " + refreshed + " open inventor" + (refreshed == 1 ? "y" : "ies") + " for active viewers.");
         }

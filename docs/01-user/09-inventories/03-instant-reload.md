@@ -4,7 +4,7 @@ description: "Hot reload inventory designs in real time as you edit scripts, wit
 
 # Instant Reload of Inventories
 
-When you modify and reload a Lumen script that opens an inventory, players who have that inventory open see the changes instantly without the inventory closing and reopening. This lets you experiment with designs, layouts, and content side-by-side, seeing your edits take effect immediately.
+When you modify and reload a Lumen script that defines a registered inventory, players who have that inventory open see the changes instantly without the inventory closing and reopening. This lets you experiment with designs, layouts, and content side-by-side, seeing your edits take effect immediately.
 
 :::video https://s3api.vansencool.net/vansen/inventory_reload.mp4
 :::

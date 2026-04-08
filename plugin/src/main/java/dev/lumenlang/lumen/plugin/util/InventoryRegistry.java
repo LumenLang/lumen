@@ -2,6 +2,7 @@ package dev.lumenlang.lumen.plugin.util;
 
 import dev.lumenlang.lumen.plugin.text.LumenText;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.InventoryView;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.invoke.MethodHandle;
@@ -52,7 +53,10 @@ public final class InventoryRegistry {
         }
         try {
             entry.method.invoke(entry.instance, player);
-            InventoryHotReload.trackViewer(player.getUniqueId(), name);
+            InventoryView view = player.getOpenInventory();
+            if (view.getTopInventory().getHolder() instanceof LumenInventoryHolder holder && holder.name().equals(name)) {
+                InventoryHotReload.trackViewer(player.getUniqueId(), name);
+            }
         } catch (Throwable t) {
             LumenText.send(player, "<red>Failed to open inventory '" + name + "'.");
             throw new RuntimeException("Error invoking inventory builder for '" + name + "'", t);
