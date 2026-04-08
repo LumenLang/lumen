@@ -25,8 +25,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * <p>When a script opens an inventory for a player who already has a
  * Lumen inventory with the same programmatic name open, this class
  * replaces the contents and title in place rather than closing and
- * reopening the GUI. This eliminates needing to reopen the GUI
- * and flickers.
+ * reopening the GUI. This eliminates the need to reopen the GUI.
  *
  * <p>When a registered inventory is opened via {@link InventoryRegistry},
  * the viewer is tracked so that script reloads can automatically refresh
