@@ -32,7 +32,10 @@ public final class GlobalVars {
     @SuppressWarnings("unchecked")
     public static <T> @Nullable T get(@NotNull String key, @Nullable T defaultValue) {
         Object val = VALUES.get(key);
-        if (val == null) return defaultValue;
+        if (val == null) {
+            if (defaultValue != null) VALUES.putIfAbsent(key, defaultValue);
+            return defaultValue;
+        }
         if (defaultValue != null && !defaultValue.getClass().isInstance(val)) {
             val = Coerce.coerce(val, defaultValue);
         }

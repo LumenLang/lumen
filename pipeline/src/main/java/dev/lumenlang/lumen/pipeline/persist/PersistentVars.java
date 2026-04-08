@@ -83,7 +83,10 @@ public final class PersistentVars {
     public static <T> @Nullable T get(@NotNull String key, @Nullable T defaultValue) {
         if (storage == null) return defaultValue;
         Object val = storage.get(key);
-        if (val == null) return defaultValue;
+        if (val == null) {
+            if (defaultValue != null) storage.set(key, defaultValue);
+            return defaultValue;
+        }
         if (valueResolver != null) val = valueResolver.apply(val);
         if (defaultValue != null && !defaultValue.getClass().isInstance(val)) {
             val = Coerce.coerce(val, defaultValue);
