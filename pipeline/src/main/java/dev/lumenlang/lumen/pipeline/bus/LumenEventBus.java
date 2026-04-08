@@ -1,6 +1,5 @@
 package dev.lumenlang.lumen.pipeline.bus;
 
-import dev.lumenlang.lumen.api.bus.Async;
 import dev.lumenlang.lumen.api.bus.EventBus;
 import dev.lumenlang.lumen.api.bus.LumenEvent;
 import dev.lumenlang.lumen.api.bus.Priority;
@@ -9,6 +8,7 @@ import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -19,16 +19,20 @@ import java.util.concurrent.Executors;
 
 /**
  * Default {@link EventBus} implementation.
+ *
+ * <p>Subscribers registered for a supertype or interface of an event will
+ * receive that event. A dispatch cache avoids repeated hierarchy traversal.
  */
 public final class LumenEventBus implements EventBus {
 
-    private static final ExecutorService ASYNC_POOL = Executors.newCachedThreadPool(r -> {
+    private final ExecutorService asyncPool = Executors.newCachedThreadPool(r -> {
         Thread t = new Thread(r, "Lumen-EventBus-Async");
         t.setDaemon(true);
         return t;
     });
 
     private final Map<Class<?>, List<Subscriber>> subscribersByType = new ConcurrentHashMap<>();
+    private final Map<Class<?>, List<Subscriber>> dispatchCache = new ConcurrentHashMap<>();
 
     @Override
     public void register(@NotNull Object listener) {
@@ -41,11 +45,11 @@ public final class LumenEventBus implements EventBus {
                 continue;
             }
             method.setAccessible(true);
-            boolean async = method.isAnnotationPresent(Async.class);
-            Subscriber sub = new Subscriber(listener, method, annotation.priority(), async, params[0]);
+            Subscriber sub = new Subscriber(listener, method, annotation.priority(), params[0]);
             subscribersByType.computeIfAbsent(params[0], k -> new CopyOnWriteArrayList<>()).add(sub);
             sortSubscribers(params[0]);
         }
+        dispatchCache.clear();
     }
 
     @Override
@@ -53,41 +57,56 @@ public final class LumenEventBus implements EventBus {
         for (List<Subscriber> subs : subscribersByType.values()) {
             subs.removeIf(s -> s.instance == listener);
         }
+        dispatchCache.clear();
     }
 
     @Override
     public <T extends LumenEvent> @NotNull T post(@NotNull T event) {
-        dispatch(event, false);
+        for (Subscriber sub : resolveSubscribers(event.getClass())) {
+            invoke(sub, event);
+        }
         return event;
     }
 
     @Override
     public <T extends LumenEvent> void postAsync(@NotNull T event) {
-        ASYNC_POOL.execute(() -> dispatch(event, true));
+        asyncPool.execute(() -> {
+            for (Subscriber sub : resolveSubscribers(event.getClass())) {
+                invoke(sub, event);
+            }
+        });
     }
 
     /**
-     * Shuts down the async thread pool. Called on plugin disable.
+     * Clears all subscribers and shuts down the async pool. Called on plugin disable.
      */
     public void shutdown() {
-        ASYNC_POOL.shutdownNow();
         subscribersByType.clear();
+        dispatchCache.clear();
+        asyncPool.shutdownNow();
     }
 
-    private void dispatch(@NotNull LumenEvent event, boolean forceAsync) {
-        List<Subscriber> subs = subscribersByType.get(event.getClass());
-        if (subs == null || subs.isEmpty()) return;
-        for (Subscriber sub : subs) {
-            if (forceAsync || sub.async) {
-                if (forceAsync) {
-                    invoke(sub, event);
-                } else {
-                    ASYNC_POOL.execute(() -> invoke(sub, event));
-                }
-            } else {
-                invoke(sub, event);
-            }
+    private @NotNull List<Subscriber> resolveSubscribers(@NotNull Class<?> eventType) {
+        return dispatchCache.computeIfAbsent(eventType, this::buildSubscriberList);
+    }
+
+    private @NotNull List<Subscriber> buildSubscriberList(@NotNull Class<?> eventType) {
+        List<Subscriber> all = new ArrayList<>();
+        Class<?> cls = eventType;
+        while (cls != null && cls != Object.class) {
+            List<Subscriber> direct = subscribersByType.get(cls);
+            if (direct != null) all.addAll(direct);
+            for (Class<?> iface : cls.getInterfaces()) collectFromInterface(iface, all);
+            cls = cls.getSuperclass();
         }
+        all.sort(Comparator.comparingInt(s -> s.priority.ordinal()));
+        return List.copyOf(all);
+    }
+
+    private void collectFromInterface(@NotNull Class<?> iface, @NotNull List<Subscriber> out) {
+        List<Subscriber> subs = subscribersByType.get(iface);
+        if (subs != null) out.addAll(subs);
+        for (Class<?> parent : iface.getInterfaces()) collectFromInterface(parent, out);
     }
 
     private void invoke(@NotNull Subscriber sub, @NotNull LumenEvent event) {
@@ -106,6 +125,7 @@ public final class LumenEventBus implements EventBus {
         subs.addAll(sorted);
     }
 
-    private record Subscriber(@NotNull Object instance, @NotNull Method method, @NotNull Priority priority, boolean async, @NotNull Class<?> eventType) {
+    private record Subscriber(@NotNull Object instance, @NotNull Method method, @NotNull Priority priority, @NotNull Class<?> eventType) {
     }
 }
+

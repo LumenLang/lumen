@@ -81,20 +81,21 @@ if (!event.cancelled()) {
 
 ## Async Dispatch
 
-Add `@Async` to a subscriber method to run it on a background thread:
-
-```java
-@Subscribe
-@Async
-public void onScriptLoad(@NotNull ScriptLoadEvent event) {
-    // runs off the main thread
-}
-```
-
-To post the entire event asynchronously (all subscribers run off the calling thread):
+Use `postAsync` to post an event where all subscribers run on a background thread:
 
 ```java
 LumenProvider.bus().postAsync(new SomeEvent());
+```
+
+## Subscribing to Supertypes
+
+A subscriber method's parameter type can be a superclass or interface. It will receive all events that are an instance of that type.
+
+```java
+@Subscribe
+public void onAnyEvent(@NotNull LumenEvent event) {
+    // receives every event posted on the bus
+}
 ```
 
 ## Built-in Events

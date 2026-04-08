@@ -14,7 +14,7 @@ public final class AllScriptsLoadedEvent extends LumenEvent {
     private final List<String> scriptNames;
 
     public AllScriptsLoadedEvent(@NotNull List<String> scriptNames) {
-        this.scriptNames = scriptNames;
+        this.scriptNames = List.copyOf(scriptNames);
     }
 
     /**

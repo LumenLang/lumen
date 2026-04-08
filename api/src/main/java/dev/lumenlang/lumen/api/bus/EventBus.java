@@ -12,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
  * }</pre>
  *
  * @see Subscribe
- * @see Async
  * @see Priority
  */
 public interface EventBus {
@@ -34,8 +33,6 @@ public interface EventBus {
     /**
      * Posts an event synchronously on the calling thread.
      *
-     * <p>Subscribers marked {@link Async} still run on a background thread.
-     *
      * @param event the event to post
      * @param <T>   the event type
      * @return the event after all subscribers have been invoked
@@ -43,8 +40,7 @@ public interface EventBus {
     <T extends LumenEvent> @NotNull T post(@NotNull T event);
 
     /**
-     * Posts an event asynchronously. All subscribers (including those not
-     * annotated with {@link Async}) are invoked on a background thread.
+     * Posts an event asynchronously. All subscribers are invoked on a background thread.
      *
      * @param event the event to post
      * @param <T>   the event type

@@ -76,7 +76,7 @@ public final class LumenProvider {
      * @throws IllegalStateException if Lumen is not yet initialized
      */
     public static @NotNull EventBus bus() {
-        if (bus == null) throw new IllegalStateException("Lumen is not initialized yet");
+        if (bus == null) throw new IllegalStateException("Event bus is not initialized yet");
         return bus;
     }
 
