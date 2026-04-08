@@ -280,7 +280,7 @@ public final class EntityHelper {
     /**
      * Registers a statement that sets an enum property using a typed enum binding.
      *
-     * <p>Unlike {@link #enumSetter}, this method expects the pattern to use a proper enum type
+     * <p>This method expects the pattern to use a proper enum type
      * binding (e.g. {@code %color:DYE_COLOR%}) rather than a raw EXPR. The binding's
      * {@link AddonTypeBinding#toJava toJava} method handles
      * enum constant resolution and imports automatically.
