@@ -90,14 +90,6 @@ public final class CodeEmitter {
         List<LumenScriptException> errors = new ArrayList<>();
         emitChildren(root, null, reg, env, ctx, out, errors);
 
-        if (!env.usedExperimental().isEmpty()) {
-            LumenLogger.info("----- Lumen Experimental Features Enabled -----");
-            for (String f : env.usedExperimental()) {
-                LumenLogger.info("Using experimental feature: " + f);
-            }
-            LumenLogger.info("-----------------------------------------------");
-        }
-
         if (!errors.isEmpty()) {
             if (errors.size() == 1) {
                 throw errors.get(0);
