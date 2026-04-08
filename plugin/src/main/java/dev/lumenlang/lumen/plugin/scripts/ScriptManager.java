@@ -89,7 +89,9 @@ public final class ScriptManager {
             CompletableFuture<CompileTimings> future = new CompletableFuture<>();
             Bukkit.getScheduler().runTask(Lumen.instance(), () -> {
                 try {
-                    reload(name);
+                    if (reload(name)) {
+                        postScriptUnloaded(name);
+                    }
                     if (async.loader() != null) {
                         activateScript(name, async.prepared().fqcn(), async.loader());
                     } else {
@@ -132,11 +134,13 @@ public final class ScriptManager {
      * configuration rather than cancelling unconditionally.
      *
      * @param name the script file name
+     * @return {@code true} if a script with the given name was loaded and unloaded,
+     *         {@code false} if no such script existed
      */
-    private static void reload(@NotNull String name) {
+    private static boolean reload(@NotNull String name) {
         LoadedScript s = scripts.remove(name);
         if (s == null)
-            return;
+            return false;
 
         String normalized = ClassBuilder.normalize(new CodegenContext(name).className());
         String fqcn = "dev.lumenlang.lumen.java.compiled." + normalized;
@@ -144,6 +148,7 @@ public final class ScriptManager {
         ScriptBinder.unbindAll(s.instance());
         ScriptScheduler.handleReload(fqcn);
         GlobalVars.deleteByPrefix(normalized + ".");
+        return true;
     }
 
     /**
@@ -244,8 +249,9 @@ public final class ScriptManager {
                     GlobalVars.clear();
                     InventoryRegistry.clear();
                     for (String name : names) {
-                        reload(name);
-                        postScriptUnloaded(name);
+                        if (reload(name)) {
+                            postScriptUnloaded(name);
+                        }
                     }
                     List<String> loaded = new ArrayList<>();
                     for (AsyncPreparedScript a : asyncScripts) {
@@ -337,8 +343,9 @@ public final class ScriptManager {
         GlobalVars.clear();
         InventoryRegistry.clear();
         for (String name : names) {
-            reload(name);
-            postScriptUnloaded(name);
+            if (reload(name)) {
+                postScriptUnloaded(name);
+            }
         }
         List<String> loaded = new ArrayList<>();
         for (PreparedScript p : allPrepared) {

@@ -85,7 +85,7 @@ if (!event.cancelled()) {
 
 ## Subscribing to Supertypes
 
-A subscriber method's parameter type can be a superclass of `LumenEvent`, or any interface. It will receive all events whose concrete type is an instance of, or implements, that type.
+A subscriber method's parameter type can be any supertype in the event's class hierarchy (e.g., `Cancellable` or `LumenEvent`), or any interface. It will receive all events whose concrete type is an instance of, or implements, that type.
 
 ```java
 @Subscribe
