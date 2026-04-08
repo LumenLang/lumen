@@ -8,7 +8,7 @@
 #   /grapple speed <value>  Set your grapple launch speed (default 2)
 
 config:
-    prefix: <gold>[Grapple]<reset>
+    prefix: "<gold>[Grapple]<reset>"
     default_speed: 2
 
 global scoped grapple_speed with default 2

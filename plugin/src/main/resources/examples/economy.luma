@@ -16,7 +16,7 @@
 #   /eco resetall <currency>                    Admin: wipe all balances for a currency
 
 config:
-    prefix: &6[Economy]&r
+    prefix: "&6[Economy]&r"
 
 global stored currencies with default new list
 global stored scoped balances with default new map
