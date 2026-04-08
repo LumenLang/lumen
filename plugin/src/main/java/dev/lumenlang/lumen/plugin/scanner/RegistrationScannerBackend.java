@@ -1,8 +1,10 @@
 package dev.lumenlang.lumen.plugin.scanner;
 
 import dev.lumenlang.lumen.api.LumenAPI;
+import dev.lumenlang.lumen.api.LumenProvider;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
+import dev.lumenlang.lumen.api.bus.Subscribe;
 import dev.lumenlang.lumen.api.scanner.RegistrationScanner;
 import org.jetbrains.annotations.NotNull;
 
@@ -116,16 +118,24 @@ public final class RegistrationScannerBackend implements RegistrationScanner.Bac
             }
 
             Object instance = clazz.getDeclaredConstructor().newInstance();
+            boolean hasSubscribers = false;
             for (Method method : clazz.getDeclaredMethods()) {
-                if (!method.isAnnotationPresent(Call.class)) continue;
-                Class<?>[] params = method.getParameterTypes();
-                if (params.length != 1 || !LumenAPI.class.isAssignableFrom(params[0])) {
-                    LOGGER.warning("@Call method " + clazz.getName() + "#" + method.getName()
-                            + " must accept exactly one LumenAPI parameter");
-                    continue;
+                if (method.isAnnotationPresent(Call.class)) {
+                    Class<?>[] params = method.getParameterTypes();
+                    if (params.length != 1 || !LumenAPI.class.isAssignableFrom(params[0])) {
+                        LOGGER.warning("@Call method " + clazz.getName() + "#" + method.getName()
+                                + " must accept exactly one LumenAPI parameter");
+                        continue;
+                    }
+                    method.setAccessible(true);
+                    method.invoke(instance, api);
                 }
-                method.setAccessible(true);
-                method.invoke(instance, api);
+                if (method.isAnnotationPresent(Subscribe.class)) {
+                    hasSubscribers = true;
+                }
+            }
+            if (hasSubscribers) {
+                LumenProvider.bus().register(instance);
             }
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Failed to process registration class: " + clazz.getName(), e);

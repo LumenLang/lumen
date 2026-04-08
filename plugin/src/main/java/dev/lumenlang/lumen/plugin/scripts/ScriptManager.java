@@ -31,6 +31,10 @@ import org.bukkit.Bukkit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static dev.lumenlang.lumen.plugin.scripts.ScriptManagerEvents.postScriptLoaded;
+import static dev.lumenlang.lumen.plugin.scripts.ScriptManagerEvents.postAllScriptsLoaded;
+import static dev.lumenlang.lumen.plugin.scripts.ScriptManagerEvents.postScriptUnloaded;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -91,6 +95,7 @@ public final class ScriptManager {
                     } else {
                         loadBytecodes(name, async.prepared().fqcn(), async.prepared().bytecodes());
                     }
+                    postScriptLoaded(name);
                     future.complete(async.prepared().timings());
                 } catch (Throwable t) {
                     unload(name);
@@ -118,6 +123,7 @@ public final class ScriptManager {
         ScriptSourceMap.unregisterByClassName(normalized);
         ScriptBinder.unbindAll(s.instance());
         ScriptScheduler.handleUnload(fqcn);
+        postScriptUnloaded(name);
     }
 
     /**
@@ -249,6 +255,7 @@ public final class ScriptManager {
                             LumenLogger.severe("Failed to load script: " + a.prepared().name(), t);
                         }
                     }
+                    postAllScriptsLoaded(asyncScripts.stream().map(a -> a.prepared().name()).toList());
                     future.complete(asyncScripts.stream().map(AsyncPreparedScript::prepared).toList());
                 } catch (Throwable t) {
                     future.completeExceptionally(t);
@@ -331,6 +338,7 @@ public final class ScriptManager {
                 LumenLogger.severe("Failed to load script: " + p.name(), t);
             }
         }
+        postAllScriptsLoaded(allPrepared.stream().map(PreparedScript::name).toList());
     }
 
     /**
