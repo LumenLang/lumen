@@ -12,11 +12,11 @@ Place a `config:` block at the top level of your script with simple `key: value`
 
 ```luma
 config:
-    prefix: "&6[Server]&r"
+    prefix: &6[Server]&r
     maxLevel: 30
 ```
 
-Each entry creates a variable with that name. Numbers stay as numbers, and text values must be wrapped in quotes.
+Each entry creates a variable with that name. Numbers stay as numbers, and everything else becomes text.
 
 ## Using Config Values
 
@@ -24,7 +24,7 @@ Once defined, config values work as regular variables. Use them in statements, c
 
 ```luma
 config:
-    prefix: "&6[Server]&r"
+    prefix: &6[Server]&r
     maxLevel: 30
 
 on join:
@@ -63,9 +63,7 @@ every spawn_interval ticks as "spawner":
 
 ## Value Types
 
-Config entries have two allowed value types:
+Config entries are typed automatically:
 
 - **Numbers** (like `30`, `100`, `5.5`) are stored as numbers and can be used in math and comparisons
-- **Quoted strings** (like `"&6[Server]&r"`, `"hello world"`) are stored as text
-
-Unquoted text is not allowed.
+- **Everything else** (like `&6[Server]&r`, `true`, `hello world`) is stored as text

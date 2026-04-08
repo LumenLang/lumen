@@ -31,7 +31,7 @@ data loot_chest:
     landed integer
 
 config:
-    prefix: "&6[LootDrop]&r"
+    prefix: &6[LootDrop]&r
     spawn_interval: 100
     fall_speed: 4
     despawn_ticks: 6000

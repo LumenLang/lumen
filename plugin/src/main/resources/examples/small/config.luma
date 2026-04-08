@@ -3,7 +3,7 @@
 # Config values become variables accessible from any block.
 
 config:
-    prefix: "&6[Server]&r"
+    prefix: &6[Server]&r
     maxLevel: 30
 
 on join:

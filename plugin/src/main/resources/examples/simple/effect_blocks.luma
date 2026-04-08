@@ -16,7 +16,7 @@ data effect_entry:
     duration number
 
 config:
-    prefix: "&d[EffectBlocks]&r"
+    prefix: &d[EffectBlocks]&r
 
 global stored effect_mappings with default new list of effect_entry
 
