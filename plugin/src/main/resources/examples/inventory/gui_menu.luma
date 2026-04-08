@@ -5,9 +5,7 @@
 # Commands:
 #   /menu   Opens the main menu GUI for the player
 
-command menu:
-    description "Opens the main menu"
-
+register inventory "main_menu":
     set gui to new inventory "main_menu" with rows 3 titled "&6&lMain Menu"
 
     set filler to new item gray_stained_glass_pane
@@ -31,6 +29,10 @@ command menu:
     set slot 15 of gui to settings
 
     open gui for player
+
+command menu:
+    description "Opens the main menu"
+    open inventory named "main_menu" for player
 
 slot 11 click in "main_menu":
     close player's inventory

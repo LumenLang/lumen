@@ -8,9 +8,7 @@
 config:
     confirm_title: "&c&lAre you sure?"
 
-command confirm:
-    description "Opens a confirmation dialog"
-
+register inventory "confirm_dialog":
     set gui to new inventory "confirm_dialog" with rows 3 titled "{confirm_title}"
 
     set filler to new item black_stained_glass_pane
@@ -28,6 +26,10 @@ command confirm:
     set slot 15 of gui to no
 
     open gui for player
+
+command confirm:
+    description "Opens a confirmation dialog"
+    open inventory named "confirm_dialog" for player
 
 slot 11 click in "confirm_dialog":
     close player's inventory

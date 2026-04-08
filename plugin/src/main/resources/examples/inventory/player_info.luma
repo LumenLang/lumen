@@ -7,6 +7,59 @@
 #   /playerinfo            Opens a player info GUI about yourself
 #   /playerinfo <name>     Opens a player info GUI about another player
 
+global scoped info_target with default no player
+
+register inventory "player_info":
+    set target to get info_target for player
+    if target is not set:
+        set target to player
+
+    set target_name to target's name
+    set target_health to target's health
+    set target_food to target's food level
+    set target_level to target's level
+    set target_x to target's x
+    set target_y to target's y
+    set target_z to target's z
+
+    set gui to new inventory "player_info" with rows 5 titled "&9&lPlayer Info"
+
+    set filler to new item blue_stained_glass_pane
+    set filler's display name to " "
+    fill slots 0 to 8 of gui with filler
+    fill slots 36 to 44 of gui with filler
+
+    set head to new item player_head
+    set head's display name to "&f{target_name}"
+    set head's lore to "&7Player profile information"
+    set slot 4 of gui to head
+
+    set health_item to new item red_dye
+    set health_item's display name to "&c&lHealth"
+    set health_item's lore to "&7Current: &c{target_health}"
+    set slot 19 of gui to health_item
+
+    set food_item to new item cooked_beef
+    set food_item's display name to "&6&lFood"
+    set food_item's lore to "&7Level: &6{target_food}"
+    set slot 21 of gui to food_item
+
+    set xp_item to new item experience_bottle
+    set xp_item's display name to "&a&lLevel"
+    set xp_item's lore to "&7Level: &a{target_level}"
+    set slot 23 of gui to xp_item
+
+    set loc_item to new item compass
+    set loc_item's display name to "&b&lLocation"
+    set loc_item's lore to "&7X: &f{target_x}|&7Y: &f{target_y}|&7Z: &f{target_z}"
+    set slot 25 of gui to loc_item
+
+    set close_btn to new item barrier
+    set close_btn's display name to "&c&lClose"
+    set slot 40 of gui to close_btn
+
+    open gui for player
+
 command playerinfo:
     description "Shows player info in a GUI"
 
@@ -21,43 +74,8 @@ command playerinfo:
             message player "&cPlayer not found: {target_name}"
 
     if target is set:
-        set gui to new inventory "player_info" with rows 5 titled "&9&lPlayer Info"
-
-        set filler to new item blue_stained_glass_pane
-        set filler's display name to " "
-        fill slots 0 to 8 of gui with filler
-        fill slots 36 to 44 of gui with filler
-
-        set head to new item player_head
-        set head's display name to "&f{target_name}"
-        set head's lore to "&7Player profile information"
-        set slot 4 of gui to head
-
-        set health_item to new item red_dye
-        set health_item's display name to "&c&lHealth"
-        set health_item's lore to "&7Current: &c{target_health}"
-        set slot 19 of gui to health_item
-
-        set food_item to new item cooked_beef
-        set food_item's display name to "&6&lFood"
-        set food_item's lore to "&7Level: &6{target_food}"
-        set slot 21 of gui to food_item
-
-        set xp_item to new item experience_bottle
-        set xp_item's display name to "&a&lLevel"
-        set xp_item's lore to "&7Level: &a{target_level}"
-        set slot 23 of gui to xp_item
-
-        set loc_item to new item compass
-        set loc_item's display name to "&b&lLocation"
-        set loc_item's lore to "&7X: &f{target_x}|&7Y: &f{target_y}|&7Z: &f{target_z}"
-        set slot 25 of gui to loc_item
-
-        set close_btn to new item barrier
-        set close_btn's display name to "&c&lClose"
-        set slot 40 of gui to close_btn
-
-        open gui for player
+        set info_target to target for player
+        open inventory named "player_info" for player
 
 slot 40 click in "player_info":
     close player's inventory
