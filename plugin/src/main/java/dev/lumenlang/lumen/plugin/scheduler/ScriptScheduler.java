@@ -87,8 +87,7 @@ public final class ScriptScheduler {
      * @param body           consumer receiving a cancel callback
      * @param delayTicks     the delay in server ticks before the task runs
      */
-    public static void schedule(@NotNull Object callerInstance,
-                                @NotNull Consumer<Runnable> body, long delayTicks) {
+    public static void schedule(@NotNull Object callerInstance, @NotNull Consumer<Runnable> body, long delayTicks) {
         String className = callerInstance.getClass().getName();
         BukkitTask[] holder = new BukkitTask[1];
         Runnable cancel = () -> {
@@ -153,8 +152,7 @@ public final class ScriptScheduler {
                 removeUnnamedTask(className, t);
             }
         };
-        BukkitTask task = Bukkit.getScheduler().runTaskTimer(Lumen.instance(),
-                () -> runSafely(className, () -> body.accept(cancel)), delayTicks, periodTicks);
+        BukkitTask task = Bukkit.getScheduler().runTaskTimer(Lumen.instance(), () -> runSafely(className, () -> body.accept(cancel)), delayTicks, periodTicks);
         holder[0] = task;
         trackUnnamedTask(className, task);
     }

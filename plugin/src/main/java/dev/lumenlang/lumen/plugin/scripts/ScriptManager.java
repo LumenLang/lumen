@@ -31,6 +31,10 @@ import org.bukkit.Bukkit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static dev.lumenlang.lumen.plugin.scripts.ScriptManagerEvents.postScriptLoaded;
+import static dev.lumenlang.lumen.plugin.scripts.ScriptManagerEvents.postAllScriptsLoaded;
+import static dev.lumenlang.lumen.plugin.scripts.ScriptManagerEvents.postScriptUnloaded;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -85,12 +89,15 @@ public final class ScriptManager {
             CompletableFuture<CompileTimings> future = new CompletableFuture<>();
             Bukkit.getScheduler().runTask(Lumen.instance(), () -> {
                 try {
-                    reload(name);
+                    if (reload(name)) {
+                        postScriptUnloaded(name);
+                    }
                     if (async.loader() != null) {
                         activateScript(name, async.prepared().fqcn(), async.loader());
                     } else {
                         loadBytecodes(name, async.prepared().fqcn(), async.prepared().bytecodes());
                     }
+                    postScriptLoaded(name);
                     future.complete(async.prepared().timings());
                 } catch (Throwable t) {
                     unload(name);
@@ -118,6 +125,7 @@ public final class ScriptManager {
         ScriptSourceMap.unregisterByClassName(normalized);
         ScriptBinder.unbindAll(s.instance());
         ScriptScheduler.handleUnload(fqcn);
+        postScriptUnloaded(name);
     }
 
     /**
@@ -126,11 +134,13 @@ public final class ScriptManager {
      * configuration rather than cancelling unconditionally.
      *
      * @param name the script file name
+     * @return {@code true} if a script with the given name was loaded and unloaded,
+     *         {@code false} if no such script existed
      */
-    private static void reload(@NotNull String name) {
+    private static boolean reload(@NotNull String name) {
         LoadedScript s = scripts.remove(name);
         if (s == null)
-            return;
+            return false;
 
         String normalized = ClassBuilder.normalize(new CodegenContext(name).className());
         String fqcn = "dev.lumenlang.lumen.java.compiled." + normalized;
@@ -138,6 +148,7 @@ public final class ScriptManager {
         ScriptBinder.unbindAll(s.instance());
         ScriptScheduler.handleReload(fqcn);
         GlobalVars.deleteByPrefix(normalized + ".");
+        return true;
     }
 
     /**
@@ -237,7 +248,12 @@ public final class ScriptManager {
                 try {
                     GlobalVars.clear();
                     InventoryRegistry.clear();
-                    names.forEach(ScriptManager::reload);
+                    for (String name : names) {
+                        if (reload(name)) {
+                            postScriptUnloaded(name);
+                        }
+                    }
+                    List<String> loaded = new ArrayList<>();
                     for (AsyncPreparedScript a : asyncScripts) {
                         try {
                             if (a.loader() != null) {
@@ -245,10 +261,13 @@ public final class ScriptManager {
                             } else {
                                 loadBytecodes(a.prepared().name(), a.prepared().fqcn(), a.prepared().bytecodes());
                             }
+                            postScriptLoaded(a.prepared().name());
+                            loaded.add(a.prepared().name());
                         } catch (Throwable t) {
                             LumenLogger.severe("Failed to load script: " + a.prepared().name(), t);
                         }
                     }
+                    postAllScriptsLoaded(loaded);
                     future.complete(asyncScripts.stream().map(AsyncPreparedScript::prepared).toList());
                 } catch (Throwable t) {
                     future.completeExceptionally(t);
@@ -323,14 +342,22 @@ public final class ScriptManager {
 
         GlobalVars.clear();
         InventoryRegistry.clear();
-        names.forEach(ScriptManager::reload);
+        for (String name : names) {
+            if (reload(name)) {
+                postScriptUnloaded(name);
+            }
+        }
+        List<String> loaded = new ArrayList<>();
         for (PreparedScript p : allPrepared) {
             try {
                 loadBytecodes(p.name(), p.fqcn(), p.bytecodes());
+                postScriptLoaded(p.name());
+                loaded.add(p.name());
             } catch (Throwable t) {
                 LumenLogger.severe("Failed to load script: " + p.name(), t);
             }
         }
+        postAllScriptsLoaded(loaded);
     }
 
     /**

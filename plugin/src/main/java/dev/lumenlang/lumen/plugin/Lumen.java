@@ -11,6 +11,7 @@ import dev.lumenlang.lumen.pipeline.addon.AddonManager;
 import dev.lumenlang.lumen.pipeline.addon.LumenAPIImpl;
 import dev.lumenlang.lumen.pipeline.addon.ScriptBinderManager;
 import dev.lumenlang.lumen.pipeline.binder.ScriptBinder;
+import dev.lumenlang.lumen.pipeline.bus.LumenEventBus;
 import dev.lumenlang.lumen.pipeline.inject.InjectableHandlers;
 import dev.lumenlang.lumen.pipeline.java.compiler.system.SystemCompiler;
 import dev.lumenlang.lumen.pipeline.language.emit.EmitRegistry;
@@ -60,6 +61,7 @@ public final class Lumen extends JavaPlugin {
     private PatternRegistry patternRegistry;
     private ScriptWatcher scriptWatcher;
     private ConfigWatcher configWatcher;
+    private LumenEventBus eventBus;
 
     /**
      * Returns the plugin instance.
@@ -121,6 +123,7 @@ public final class Lumen extends JavaPlugin {
         ConfigWatcher.shutdown();
         ScriptManager.unloadAllSync();
         ScriptManager.shutdownPool();
+        if (eventBus != null) eventBus.shutdown();
         RegistrationScanner.teardown();
         ScriptBinder.teardown();
         LumenProvider.teardown();
@@ -161,6 +164,8 @@ public final class Lumen extends JavaPlugin {
 
         addonManager = new AddonManager();
         LumenProvider.init(lumenApi, addonManager::registerAddon);
+        eventBus = new LumenEventBus();
+        LumenProvider.initBus(eventBus);
         File addonsDir = new File(getDataFolder(), "addons");
         if (!addonsDir.exists() && !addonsDir.mkdirs()) throw new RuntimeException("Failed to create addons directory");
         addonManager.loadAddons(addonsDir);
