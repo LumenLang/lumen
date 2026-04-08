@@ -44,6 +44,7 @@ public final class LumenParser {
 
             if (parent instanceof RawBlockNode rawParent) {
                 rawParent.rawLines().add(l.raw());
+                rawParent.rawLineNumbers().add(l.lineNumber());
                 continue;
             }
 
@@ -65,12 +66,7 @@ public final class LumenParser {
                 if (parent == null) {
                     throw new RuntimeException("Internal parser error: no parent block for line " + l.lineNumber());
                 }
-                parent.children().add(
-                        new StatementNode(
-                                l.indent(),
-                                l.lineNumber(),
-                                l.raw(),
-                                head));
+                parent.children().add(new StatementNode(l.indent(), l.lineNumber(), l.raw(), head));
             }
         }
 

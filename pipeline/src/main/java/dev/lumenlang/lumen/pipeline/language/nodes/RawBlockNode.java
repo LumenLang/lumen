@@ -16,6 +16,7 @@ import java.util.List;
  */
 public final class RawBlockNode extends BlockNode {
     private final List<String> rawLines = new ArrayList<>();
+    private final List<Integer> rawLineNumbers = new ArrayList<>();
 
     public RawBlockNode(int indent, int line, String raw, List<Token> head) {
         super(indent, line, raw, head);
@@ -31,5 +32,14 @@ public final class RawBlockNode extends BlockNode {
      */
     public List<String> rawLines() {
         return rawLines;
+    }
+
+    /**
+     * Returns the 1-based script line numbers corresponding to each entry in {@link #rawLines()}.
+     *
+     * @return the mutable list of line numbers, parallel to rawLines
+     */
+    public List<Integer> rawLineNumbers() {
+        return rawLineNumbers;
     }
 }

@@ -189,8 +189,12 @@ public final class CodeEmitter {
                             "Only enable this if you fully trust the script source.");
         }
 
-        for (String line : rb.rawLines()) {
-            out.line(line);
+        List<Integer> lineNums = rb.rawLineNumbers();
+        List<String> rawLines = rb.rawLines();
+        for (int i = 0; i < rawLines.size(); i++) {
+            int scriptLine = i < lineNums.size() ? lineNums.get(i) : rb.line() + 1 + i;
+            out.markScriptLine(scriptLine, rawLines.get(i));
+            out.line(rawLines.get(i));
         }
 
         env.useExperimental("raw-java");
