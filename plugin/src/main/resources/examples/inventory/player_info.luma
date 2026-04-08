@@ -14,14 +14,6 @@ register inventory "player_info":
     if target is not set:
         set target to player
 
-    set target_name to target's name
-    set target_health to target's health
-    set target_food to target's food level
-    set target_level to target's level
-    set target_x to target's x
-    set target_y to target's y
-    set target_z to target's z
-
     set gui to new inventory "player_info" with rows 5 titled "&9&lPlayer Info"
 
     set filler to new item blue_stained_glass_pane
