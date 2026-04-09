@@ -2,7 +2,7 @@ package dev.lumenlang.lumen.api.event;
 
 import dev.lumenlang.lumen.api.handler.BlockHandler;
 import dev.lumenlang.lumen.api.pattern.Category;
-import dev.lumenlang.lumen.api.type.RefTypeHandle;
+import dev.lumenlang.lumen.api.type.ObjectType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -238,10 +238,7 @@ public final class AdvancedEventBuilder {
      * @param expr     the initialiser expression
      * @return this builder
      */
-    public @NotNull AdvancedEventBuilder addVar(@NotNull String name,
-                                                @Nullable RefTypeHandle refType,
-                                                @NotNull String javaType,
-                                                @NotNull String expr) {
+    public @NotNull AdvancedEventBuilder addVar(@NotNull String name, @Nullable ObjectType refType, @NotNull String javaType, @NotNull String expr) {
         String refTypeId = refType != null ? refType.id() : null;
         vars.put(name, new EventDefinition.VarEntry(refTypeId, javaType, expr));
         this.lastVarName = name;
@@ -256,9 +253,7 @@ public final class AdvancedEventBuilder {
      * @param expr    the initialiser expression
      * @return this builder
      */
-    public @NotNull AdvancedEventBuilder addVar(@NotNull String name,
-                                                @NotNull RefTypeHandle refType,
-                                                @NotNull String expr) {
+    public @NotNull AdvancedEventBuilder addVar(@NotNull String name, @NotNull ObjectType refType, @NotNull String expr) {
         vars.put(name, new EventDefinition.VarEntry(refType.id(), refType.javaType(), expr));
         this.lastVarName = name;
         return this;

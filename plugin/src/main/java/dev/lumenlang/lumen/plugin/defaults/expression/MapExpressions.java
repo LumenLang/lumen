@@ -6,8 +6,10 @@ import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.pattern.Categories;
-import dev.lumenlang.lumen.api.type.RefTypeHandle;
+import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.api.type.Types;
+import dev.lumenlang.lumen.api.type.BuiltinLumenTypes;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -29,12 +31,12 @@ public final class MapExpressions {
         if (scopeRef == null) {
             throw new RuntimeException("Scope variable not found: " + scopeVarName);
         }
-        RefTypeHandle refType = scopeRef.type();
+        LumenType refType = scopeRef.type();
         if (refType == null) {
             throw new RuntimeException("Scope variable '" + scopeVarName
                     + "' has no ref type. Expected a typed variable like a player or entity.");
         }
-        return "\"" + info.className() + "." + varName + ".\" + " + refType.keyExpression(scopeRef.java());
+        return "\"" + info.className() + "." + varName + ".\" + " + ((ObjectType) refType).keyExpression(scopeRef.java());
     }
 
     @Call
@@ -46,12 +48,12 @@ public final class MapExpressions {
                 .example("set myMap to new map")
                 .since("1.0.0")
                 .category(Categories.MAP)
-                .returnRefTypeId(Types.MAP.id())
+                .returnRefTypeId(BuiltinLumenTypes.MAP.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(HashMap.class.getName());
                     return new ExpressionResult(
                             "new HashMap<>()",
-                            Types.MAP.id(),
+                            BuiltinLumenTypes.MAP.id(),
                             Map.of());
                 }));
 
@@ -137,13 +139,13 @@ public final class MapExpressions {
                 .example("set allKeys to keys of myMap")
                 .since("1.0.0")
                 .category(Categories.MAP)
-                .returnRefTypeId(Types.LIST.id())
+                .returnRefTypeId(BuiltinLumenTypes.LIST.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(Map.class.getName());
                     ctx.codegen().addImport(ArrayList.class.getName());
                     return new ExpressionResult(
                             "new ArrayList<>(((Map<?, ?>) " + ctx.java("map") + ").keySet())",
-                            Types.LIST.id(),
+                            BuiltinLumenTypes.LIST.id(),
                             Map.of());
                 }));
 
@@ -154,13 +156,13 @@ public final class MapExpressions {
                 .example("set allValues to values of myMap")
                 .since("1.0.0")
                 .category(Categories.MAP)
-                .returnRefTypeId(Types.LIST.id())
+                .returnRefTypeId(BuiltinLumenTypes.LIST.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(Map.class.getName());
                     ctx.codegen().addImport(ArrayList.class.getName());
                     return new ExpressionResult(
                             "new ArrayList<>(((Map<?, ?>) " + ctx.java("map") + ").values())",
-                            Types.LIST.id(),
+                            BuiltinLumenTypes.LIST.id(),
                             Map.of());
                 }));
     }

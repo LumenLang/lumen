@@ -10,8 +10,10 @@ import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
 import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.handler.BlockHandler;
 import dev.lumenlang.lumen.api.pattern.Categories;
-import dev.lumenlang.lumen.api.type.RefTypeHandle;
+import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.api.type.Types;
+import dev.lumenlang.lumen.api.type.BuiltinLumenTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +46,7 @@ public class ListBlocks {
      * @param ctx the binding access for the current pattern match
      * @return the element ref type, or {@code null} if unknown
      */
-    private static @Nullable RefTypeHandle resolveElementType(@NotNull BindingAccess ctx) {
+    private static @Nullable LumenType resolveElementType(@NotNull BindingAccess ctx) {
         Object listValue = ctx.value("list");
         if (!(listValue instanceof EnvironmentAccess.VarHandle listRef)) return null;
         if (!listRef.hasMeta("element_type")) return null;
@@ -52,7 +54,7 @@ public class ListBlocks {
         String elementType = String.valueOf(listRef.meta("element_type"));
         Object schema = ctx.env().get("data_schema_" + elementType);
         if (schema != null) {
-            return Types.DATA;
+            return BuiltinLumenTypes.DATA;
         }
         return null;
     }
@@ -111,7 +113,7 @@ public class ListBlocks {
                         String listJava = ctx.java("list");
                         out.line("for (var " + varName + " : (List<?>) " + listJava + ") {");
 
-                        RefTypeHandle elementType = resolveElementType(ctx);
+                        LumenType elementType = resolveElementType(ctx);
                         Map<String, Object> metadata = resolveElementMetadata(ctx);
                         if (metadata != null) {
                             ctx.env().defineVar(varName, elementType, varName, metadata);
@@ -180,7 +182,7 @@ public class ListBlocks {
                                     .help("make sure the variable is defined before using it")
                                     .build());
                         }
-                        RefTypeHandle refType = scopeRef.type();
+                        LumenType refType = scopeRef.type();
                         if (refType == null) {
                             throw new DiagnosticException(LumenDiagnostic.error("E502", "Scope variable '" + scopeVarName + "' has no type")
                                     .at(ctx.block().line(), ctx.block().raw())
@@ -191,7 +193,7 @@ public class ListBlocks {
 
                         ctx.codegen().addImport(List.class.getName());
                         ctx.codegen().addImport(ArrayList.class.getName());
-                        out.line("for (var " + varName + " : (List<?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") + ".get(" + "\"" + info.className() + "." + listVarName + ".\" + " + refType.keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")) {");
+                        out.line("for (var " + varName + " : (List<?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") + ".get(" + "\"" + info.className() + "." + listVarName + ".\" + " + ((ObjectType) refType).keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")) {");
                         env.defineVar(varName, null, varName);
                     }
 

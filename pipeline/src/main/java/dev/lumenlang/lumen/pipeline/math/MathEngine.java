@@ -7,7 +7,8 @@ import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.language.tokenization.TokenKind;
 import dev.lumenlang.lumen.pipeline.placeholder.PlaceholderExpander;
-import dev.lumenlang.lumen.pipeline.type.LumenType;
+import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -157,9 +158,9 @@ public final class MathEngine {
     }
 
     private static @NotNull LumenType widenTypes(@Nullable LumenType a, @Nullable LumenType b) {
-        if (a == null || b == null) return LumenType.Primitive.INT;
-        LumenType.Primitive widened = LumenType.widenNumeric(a, b);
-        return widened != null ? widened : LumenType.Primitive.INT;
+        if (a == null || b == null) return PrimitiveType.INT;
+        PrimitiveType widened = LumenType.widenNumeric(a, b);
+        return widened != null ? widened : PrimitiveType.INT;
     }
 
     private @NotNull String parseExpr() {
@@ -224,7 +225,7 @@ public final class MathEngine {
             LumenType type = ref.resolvedType();
             if (type != null && !type.numeric()) {
                 LumenDiagnostic.Builder b = LumenDiagnostic.error("E203", "Non-numeric operand in arithmetic expression").at(line, rawLine).highlight(t.start(), t.end()).label("'" + t.text() + "' is '" + type.displayName() + "', not numeric");
-                if (type.unwrap() == LumenType.Primitive.STRING) {
+                if (type.unwrap() == PrimitiveType.STRING) {
                     b.help("use 'combined string of x and y' to concatenate strings");
                 }
                 throw new DiagnosticException(b.build());
@@ -287,8 +288,8 @@ public final class MathEngine {
                 pos++;
                 TypedFragment right = parseFactorTyped();
                 LumenType widened = widenTypes(left.type, right.type);
-                if (t.text().equals("/") && widened == LumenType.Primitive.INT) {
-                    widened = LumenType.Primitive.DOUBLE;
+                if (t.text().equals("/") && widened == PrimitiveType.INT) {
+                    widened = PrimitiveType.DOUBLE;
                 }
                 left = new TypedFragment(left.java + " " + t.text() + " " + right.java, widened);
             } else {
@@ -308,7 +309,7 @@ public final class MathEngine {
 
         if (t.kind() == TokenKind.NUMBER) {
             pos++;
-            LumenType type = t.text().contains(".") ? LumenType.Primitive.DOUBLE : LumenType.Primitive.INT;
+            LumenType type = t.text().contains(".") ? PrimitiveType.DOUBLE : PrimitiveType.INT;
             return new TypedFragment(t.text(), type);
         }
 
@@ -326,12 +327,12 @@ public final class MathEngine {
             LumenType type = ref.resolvedType();
             if (type != null && !type.numeric()) {
                 LumenDiagnostic.Builder b = LumenDiagnostic.error("E203", "Non-numeric operand in arithmetic expression").at(line, rawLine).highlight(t.start(), t.end()).label("'" + t.text() + "' is '" + type.displayName() + "', not numeric");
-                if (type.unwrap() == LumenType.Primitive.STRING) {
+                if (type.unwrap() == PrimitiveType.STRING) {
                     b.help("use 'combined string of x and y' to concatenate strings");
                 }
                 throw new DiagnosticException(b.build());
             }
-            return new TypedFragment(ref.java(), type != null ? type : LumenType.Primitive.INT);
+            return new TypedFragment(ref.java(), type != null ? type : PrimitiveType.INT);
         }
 
         if (t.kind() == TokenKind.SYMBOL && t.text().equals("{")) {
@@ -346,7 +347,7 @@ public final class MathEngine {
                     throw new RuntimeException("Cannot resolve placeholder in math expression: {" + placeholder + "}");
                 }
                 LumenType phType = PlaceholderExpander.resolveExpressionType(placeholder, env);
-                return new TypedFragment(java, phType != null ? phType : LumenType.Primitive.DOUBLE);
+                return new TypedFragment(java, phType != null ? phType : PrimitiveType.DOUBLE);
             }
         }
 

@@ -6,6 +6,7 @@ import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.api.type.Types;
+import dev.lumenlang.lumen.api.type.BuiltinLumenTypes;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -103,12 +104,12 @@ public final class StringExpressions {
                 .example("set parts to myVar split by \",\"")
                 .since("1.0.0")
                 .category(Categories.TEXT)
-                .returnRefTypeId(Types.LIST.id())
+                .returnRefTypeId(BuiltinLumenTypes.LIST.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(Arrays.class.getName());
                     return new ExpressionResult(
                             "Arrays.asList(String.valueOf(" + ctx.java("s") + ").split(String.valueOf(" + ctx.java("delim") + ")))",
-                            Types.LIST.id());
+                            BuiltinLumenTypes.LIST.id());
                 }));
 
         api.patterns().expression(b -> b

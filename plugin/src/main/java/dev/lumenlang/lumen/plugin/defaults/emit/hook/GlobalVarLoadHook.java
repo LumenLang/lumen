@@ -9,8 +9,10 @@ import dev.lumenlang.lumen.api.emit.EmitContext;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.pipeline.persist.GlobalVars;
 import dev.lumenlang.lumen.pipeline.persist.PersistentVars;
-import dev.lumenlang.lumen.pipeline.type.LumenType;
-import dev.lumenlang.lumen.pipeline.var.RefType;
+import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.type.LumenTypeRegistry;
+import dev.lumenlang.lumen.api.type.ObjectType;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,21 +47,21 @@ public final class GlobalVarLoadHook implements BlockEnterHook {
      * @return a Java type name suitable for a field declaration
      */
     private static @NotNull LumenType inferLumenType(@NotNull String defaultJava) {
-        if (defaultJava.equals("true") || defaultJava.equals("false")) return LumenType.Primitive.BOOLEAN;
-        if (defaultJava.startsWith("\"")) return LumenType.Primitive.STRING;
+        if (defaultJava.equals("true") || defaultJava.equals("false")) return PrimitiveType.BOOLEAN;
+        if (defaultJava.startsWith("\"")) return PrimitiveType.STRING;
         if (defaultJava.endsWith("L") || defaultJava.endsWith("l")) {
             String num = defaultJava.substring(0, defaultJava.length() - 1);
-            if (isDigits(num)) return LumenType.Primitive.LONG;
+            if (isDigits(num)) return PrimitiveType.LONG;
         }
         if (defaultJava.contains(".")) {
             try {
                 Double.parseDouble(defaultJava);
-                return LumenType.Primitive.DOUBLE;
+                return PrimitiveType.DOUBLE;
             } catch (NumberFormatException ignored) {
             }
         }
-        if (isDigits(defaultJava)) return LumenType.Primitive.INT;
-        return LumenType.Primitive.STRING;
+        if (isDigits(defaultJava)) return PrimitiveType.INT;
+        return PrimitiveType.STRING;
     }
 
     private static boolean isDigits(@NotNull String s) {
@@ -86,13 +88,13 @@ public final class GlobalVarLoadHook implements BlockEnterHook {
             String className = g.className();
             String exprRefTypeId = g.exprRefTypeId();
             Map<String, Object> exprMetadata = g.exprMetadata();
-            RefType exprRefType = exprRefTypeId != null ? RefType.byId(exprRefTypeId) : null;
+            ObjectType exprRefType = exprRefTypeId != null ? LumenTypeRegistry.byId(exprRefTypeId) : null;
             String keyExpr = "\"" + className + "." + name + "\"";
 
             String fieldType;
             LumenType lumenType;
             if (exprRefType != null) {
-                lumenType = new LumenType.ObjectType(exprRefType);
+                lumenType = exprRefType;
                 String fqn = exprRefType.javaType();
                 ctx.codegen().addImport(fqn);
                 fieldType = lumenType.javaTypeName();

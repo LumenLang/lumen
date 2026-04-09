@@ -4,7 +4,8 @@ import dev.lumenlang.lumen.api.codegen.BindingAccess;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler;
 import dev.lumenlang.lumen.api.inject.body.InjectableExpression;
 import dev.lumenlang.lumen.pipeline.inject.PatternHinted;
-import dev.lumenlang.lumen.pipeline.var.RefType;
+import dev.lumenlang.lumen.api.type.LumenTypeRegistry;
+import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.plugin.inject.bytecode.BytecodeExtractor;
 import dev.lumenlang.lumen.plugin.inject.bytecode.ExtractedBody;
 import dev.lumenlang.lumen.plugin.inject.bytecode.MethodDecompiler;
@@ -59,7 +60,7 @@ public final class InjectableExpressionHandler implements ExpressionHandler, Pat
 
     private static @NotNull String resolveReturnType(@NotNull ExtractedBody body, @Nullable String refTypeId, @Nullable String javaType) {
         if (refTypeId != null) {
-            RefType refType = RefType.byId(refTypeId);
+            ObjectType refType = LumenTypeRegistry.byId(refTypeId);
             if (refType != null) return refType.javaType();
         }
         if (javaType != null) return javaType;

@@ -1,7 +1,7 @@
 package dev.lumenlang.lumen.api.event;
 
 import dev.lumenlang.lumen.api.pattern.Category;
-import dev.lumenlang.lumen.api.type.RefTypeHandle;
+import dev.lumenlang.lumen.api.type.ObjectType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -174,9 +174,7 @@ public final class EventBuilder {
      * @param expr    the initialiser expression (e.g. {@code "event.getPlayer()"})
      * @return this builder
      */
-    public @NotNull EventBuilder addVar(@NotNull String name,
-                                        @NotNull RefTypeHandle refType,
-                                        @NotNull String expr) {
+    public @NotNull EventBuilder addVar(@NotNull String name, @NotNull ObjectType refType, @NotNull String expr) {
         vars.put(name, new EventDefinition.VarEntry(refType.id(), refType.javaType(), expr));
         this.lastVarName = name;
         return this;

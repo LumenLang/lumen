@@ -15,7 +15,7 @@ import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.loop.LoopRegistry;
 import dev.lumenlang.lumen.pipeline.loop.RegisteredLoopMatch;
-import dev.lumenlang.lumen.pipeline.var.RefType;
+import dev.lumenlang.lumen.api.type.LumenTypeRegistry;
 import org.jetbrains.annotations.NotNull;
 
 import static dev.lumenlang.lumen.api.pattern.LumaExample.of;
@@ -74,7 +74,7 @@ public final class LoopSourceBlock {
                         LoopHandler.LoopResult result = loopMatch.reg().handler().handle(loopCtx);
                         out.line("for (var " + varName + " : " + result.iterableJava() + ") {");
                         ctx.env().defineVar(varName, result.elementTypeId() != null
-                                ? RefType.byId(result.elementTypeId())
+                                ? LumenTypeRegistry.byId(result.elementTypeId())
                                 : null, varName);
                     }
 

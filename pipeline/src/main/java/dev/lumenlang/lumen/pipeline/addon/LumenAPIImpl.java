@@ -31,8 +31,8 @@ import dev.lumenlang.lumen.api.pattern.builder.StatementBuilder;
 import dev.lumenlang.lumen.api.placeholder.PlaceholderRegistrar;
 import dev.lumenlang.lumen.api.placeholder.PlaceholderType;
 import dev.lumenlang.lumen.api.type.AddonTypeBinding;
-import dev.lumenlang.lumen.api.type.RefTypeHandle;
-import dev.lumenlang.lumen.api.type.RefTypeRegistrar;
+import dev.lumenlang.lumen.api.type.LumenTypeRegistry;
+import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.api.type.TypeRegistrar;
 import dev.lumenlang.lumen.pipeline.addon.bridge.TypeBindingBridge;
 import dev.lumenlang.lumen.pipeline.events.EventDefRegistry;
@@ -44,7 +44,6 @@ import dev.lumenlang.lumen.pipeline.language.emit.TransformerRegistry;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.placeholder.PlaceholderRegistry;
 import dev.lumenlang.lumen.pipeline.typebinding.TypeRegistry;
-import dev.lumenlang.lumen.pipeline.var.RefType;
 import dev.lumenlang.lumen.pipeline.var.VarDef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,7 +60,6 @@ public final class LumenAPIImpl implements LumenAPI {
     private final PatternRegistrar patterns;
     private final TypeRegistrar types;
     private final EventRegistrar events;
-    private final RefTypeRegistrar refTypes;
     private final PlaceholderRegistrar placeholders;
     private final EmitRegistrar emitters;
     private final TransformerRegistrar transformerRegistrar;
@@ -214,7 +212,7 @@ public final class LumenAPIImpl implements LumenAPI {
                 for (var entry : def.vars().entrySet()) {
                     String name = entry.getKey();
                     EventDefinition.VarEntry ve = entry.getValue();
-                    RefType rt = ve.refTypeId() != null ? RefType.byId(ve.refTypeId()) : null;
+                    ObjectType rt = ve.refTypeId() != null ? LumenTypeRegistry.byId(ve.refTypeId()) : null;
                     if (ve.refTypeId() != null && rt == null) {
                         throw new IllegalArgumentException(
                                 "Unknown ref type: " + ve.refTypeId());
@@ -271,41 +269,20 @@ public final class LumenAPIImpl implements LumenAPI {
             }
         };
 
-        this.refTypes = new RefTypeRegistrar() {
-            @Override
-            public @NotNull RefTypeHandle register(@NotNull String id, @NotNull String javaType) {
-                return RefType.register(id, javaType);
-            }
-
-            @Override
-            public @Nullable RefTypeHandle byId(@NotNull String id) {
-                return RefType.byId(id);
-            }
-        };
-
         this.placeholders = new PlaceholderRegistrar() {
             @Override
-            public void property(@NotNull RefTypeHandle type, @NotNull String property, @NotNull String template) {
+            public void property(@NotNull ObjectType type, @NotNull String property, @NotNull String template) {
                 property(type, property, template, PlaceholderType.STRING);
             }
 
             @Override
-            public void property(@NotNull RefTypeHandle type, @NotNull String property, @NotNull String template,
-                                 @NotNull PlaceholderType returnType) {
-                RefType internal = type instanceof RefType rt ? rt : RefType.byId(type.id());
-                if (internal == null) {
-                    throw new IllegalArgumentException("Unknown ref type: " + type.id());
-                }
-                PlaceholderRegistry.registerProperty(internal, property, template, returnType);
+            public void property(@NotNull ObjectType type, @NotNull String property, @NotNull String template, @NotNull PlaceholderType returnType) {
+                PlaceholderRegistry.registerProperty(type, property, template, returnType);
             }
 
             @Override
-            public void defaultProperty(@NotNull RefTypeHandle type, @NotNull String defaultProperty) {
-                RefType internal = type instanceof RefType rt ? rt : RefType.byId(type.id());
-                if (internal == null) {
-                    throw new IllegalArgumentException("Unknown ref type: " + type.id());
-                }
-                PlaceholderRegistry.registerDefault(internal, defaultProperty);
+            public void defaultProperty(@NotNull ObjectType type, @NotNull String defaultProperty) {
+                PlaceholderRegistry.registerDefault(type, defaultProperty);
             }
         };
 
@@ -357,11 +334,6 @@ public final class LumenAPIImpl implements LumenAPI {
     @Override
     public @NotNull EventRegistrar events() {
         return events;
-    }
-
-    @Override
-    public @NotNull RefTypeRegistrar refTypes() {
-        return refTypes;
     }
 
     @Override

@@ -2,8 +2,9 @@ package dev.lumenlang.lumen.pipeline.placeholder;
 
 import dev.lumenlang.lumen.api.placeholder.PlaceholderType;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
-import dev.lumenlang.lumen.pipeline.type.LumenType;
-import dev.lumenlang.lumen.pipeline.var.RefType;
+import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.type.ObjectType;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -127,9 +128,9 @@ public final class PlaceholderExpander {
         PlaceholderType phType = resolveType(placeholder, env);
         if (phType == null) return null;
         return switch (phType) {
-            case STRING -> LumenType.Primitive.STRING;
-            case NUMBER -> LumenType.Primitive.DOUBLE;
-            case BOOLEAN -> LumenType.Primitive.BOOLEAN;
+            case STRING -> PrimitiveType.STRING;
+            case NUMBER -> PrimitiveType.DOUBLE;
+            case BOOLEAN -> PrimitiveType.BOOLEAN;
         };
     }
 
@@ -157,7 +158,7 @@ public final class PlaceholderExpander {
         placeholder = placeholder.replace(' ', '_');
         VarRef fullRef = env.lookupVar(placeholder);
         if (fullRef != null) {
-            RefType type = fullRef.refType();
+            ObjectType type = fullRef.refType();
             if (type == null) {
                 return "String.valueOf(" + fullRef.java() + ")";
             }
@@ -188,7 +189,7 @@ public final class PlaceholderExpander {
             return null;
         }
 
-        RefType type = ref.refType();
+        ObjectType type = ref.refType();
         if (type == null) {
             return null;
         }

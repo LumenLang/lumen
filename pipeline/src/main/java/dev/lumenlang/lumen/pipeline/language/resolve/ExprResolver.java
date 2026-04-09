@@ -9,8 +9,10 @@ import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.language.pattern.registered.RegisteredExpressionMatch;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.language.tokenization.TokenKind;
-import dev.lumenlang.lumen.pipeline.type.LumenType;
-import dev.lumenlang.lumen.pipeline.var.RefType;
+import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.type.LumenTypeRegistry;
+import dev.lumenlang.lumen.api.type.ObjectType;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -165,7 +167,7 @@ public final class ExprResolver {
                 if (subResult.refTypeId() == null) continue;
 
                 String synthName = "$sub" + depth + "$" + start;
-                RefType refType = RefType.byId(subResult.refTypeId());
+                ObjectType refType = LumenTypeRegistry.byId(subResult.refTypeId());
                 VarRef synthRef = new VarRef(refType, subResult.java());
 
                 BlockContext tempBlock = new BlockContext(null, env.blockContext(), List.of(), 0);
@@ -239,7 +241,7 @@ public final class ExprResolver {
             if (resultType == null) {
                 resultType = operand.type;
             } else if (operand.type != null) {
-                LumenType.Primitive widened = LumenType.widenNumeric(resultType, operand.type);
+                LumenType widened = LumenType.widenNumeric(resultType, operand.type);
                 if (widened != null) resultType = widened;
             }
         }
@@ -267,7 +269,7 @@ public final class ExprResolver {
             Token t = tokens.get(0);
             if (t.kind() == TokenKind.NUMBER) {
                 LumenType type = t.text().contains(".")
-                        ? LumenType.Primitive.DOUBLE : LumenType.Primitive.INT;
+                        ? PrimitiveType.DOUBLE : PrimitiveType.INT;
                 return new TypedOperand(t.text(), type);
             }
             if (t.kind() == TokenKind.IDENT) {
@@ -296,7 +298,7 @@ public final class ExprResolver {
         if (type != null && !type.numeric()) {
             throw new RuntimeException("Non-numeric operand in arithmetic expression. Expression resolved to type '" + type.displayName() + "' which is not numeric.");
         }
-        return new TypedOperand(result.java(), type != null ? type : LumenType.Primitive.INT);
+        return new TypedOperand(result.java(), type != null ? type : PrimitiveType.INT);
     }
 
     private static boolean isArithmeticOp(@NotNull String s) {

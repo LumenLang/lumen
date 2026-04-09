@@ -16,7 +16,9 @@ import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.language.resolve.ExprResolver;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
-import dev.lumenlang.lumen.pipeline.var.RefType;
+import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.type.LumenTypeRegistry;
+import dev.lumenlang.lumen.api.type.ObjectType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -322,7 +324,7 @@ public final class BindingContext implements BindingAccess {
     }
 
     private static EnvironmentAccess.@NotNull VarHandle toSyntheticHandle(@NotNull ExpressionResult result) {
-        RefType refType = result.refTypeId() != null ? RefType.byId(result.refTypeId()) : null;
+        ObjectType refType = result.refTypeId() != null ? LumenTypeRegistry.byId(result.refTypeId()) : null;
         return Match.syntheticHandle(result.java(), refType, result.metadata());
     }
 }

@@ -10,6 +10,7 @@ import dev.lumenlang.lumen.api.codegen.JavaOutput;
 import dev.lumenlang.lumen.api.handler.BlockHandler;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.api.type.Types;
+import dev.lumenlang.lumen.api.type.MinecraftTypes;
 import dev.lumenlang.lumen.plugin.util.LumenInventoryHolder;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -89,15 +90,15 @@ public final class InventoryEventBlocks {
                 + " && event.getCursor().getType() != Material.AIR)"
                 + " ? event.getCursor() : null;");
 
-        env.defineVar("player", Types.PLAYER, "player");
-        env.defineVar("world", Types.WORLD, "world");
-        env.defineVar("inventory", Types.INVENTORY, "inventory");
+        env.defineVar("player", MinecraftTypes.PLAYER, "player");
+        env.defineVar("world", MinecraftTypes.WORLD, "world");
+        env.defineVar("inventory", MinecraftTypes.INVENTORY, "inventory");
         env.defineVar("slot", null, "slot");
         env.defineVar("clickType", null, "clickType");
         env.defineVar("action", null, "action");
         env.defineVar("title", null, "title");
-        env.defineVar("item", Types.ITEMSTACK, "item");
-        env.defineVar("cursor", Types.ITEMSTACK, "cursor");
+        env.defineVar("item", MinecraftTypes.ITEMSTACK, "item");
+        env.defineVar("cursor", MinecraftTypes.ITEMSTACK, "cursor");
     }
 
     /**
@@ -112,9 +113,9 @@ public final class InventoryEventBlocks {
         out.line("Inventory inventory = event.getView().getTopInventory();");
         out.line("String title = event.getView().getTitle();");
 
-        env.defineVar("player", Types.PLAYER, "player");
-        env.defineVar("world", Types.WORLD, "world");
-        env.defineVar("inventory", Types.INVENTORY, "inventory");
+        env.defineVar("player", MinecraftTypes.PLAYER, "player");
+        env.defineVar("world", MinecraftTypes.WORLD, "world");
+        env.defineVar("inventory", MinecraftTypes.INVENTORY, "inventory");
         env.defineVar("title", null, "title");
     }
 
@@ -141,11 +142,11 @@ public final class InventoryEventBlocks {
                 .category(Categories.INVENTORY)
                 .supportsRootLevel(true)
                 .supportsBlock(false)
-                .addVar("player", Types.PLAYER)
+                .addVar("player", MinecraftTypes.PLAYER)
                     .varDescription("The player who clicked")
-                .addVar("world", Types.WORLD)
+                .addVar("world", MinecraftTypes.WORLD)
                     .varDescription("The world the player is in")
-                .addVar("inventory", Types.INVENTORY)
+                .addVar("inventory", MinecraftTypes.INVENTORY)
                     .varDescription("The top inventory being interacted with")
                 .addVar("slot", Types.INT)
                     .varDescription("The raw slot index that was clicked")
@@ -155,10 +156,10 @@ public final class InventoryEventBlocks {
                     .varDescription("The inventory action triggered by the click")
                 .addVar("title", Types.STRING)
                     .varDescription("The title of the inventory view")
-                .addVar("item", Types.ITEMSTACK)
+                .addVar("item", MinecraftTypes.ITEMSTACK)
                     .withMeta("nullable", true)
                     .varDescription("The item in the clicked slot, or null if empty")
-                .addVar("cursor", Types.ITEMSTACK)
+                .addVar("cursor", MinecraftTypes.ITEMSTACK)
                     .withMeta("nullable", true)
                     .varDescription("The item on the cursor, or null if empty or air")
                 .handler(new BlockHandler() {
@@ -208,11 +209,11 @@ public final class InventoryEventBlocks {
                 .category(Categories.INVENTORY)
                 .supportsRootLevel(true)
                 .supportsBlock(false)
-                .addVar("player", Types.PLAYER)
+                .addVar("player", MinecraftTypes.PLAYER)
                     .varDescription("The player who clicked")
-                .addVar("world", Types.WORLD)
+                .addVar("world", MinecraftTypes.WORLD)
                     .varDescription("The world the player is in")
-                .addVar("inventory", Types.INVENTORY)
+                .addVar("inventory", MinecraftTypes.INVENTORY)
                     .varDescription("The top inventory being interacted with")
                 .addVar("slot", Types.INT)
                     .varDescription("The raw slot index that was clicked")
@@ -222,10 +223,10 @@ public final class InventoryEventBlocks {
                     .varDescription("The inventory action triggered by the click")
                 .addVar("title", Types.STRING)
                     .varDescription("The title of the inventory view")
-                .addVar("item", Types.ITEMSTACK)
+                .addVar("item", MinecraftTypes.ITEMSTACK)
                     .withMeta("nullable", true)
                     .varDescription("The item in the clicked slot, or null if empty")
-                .addVar("cursor", Types.ITEMSTACK)
+                .addVar("cursor", MinecraftTypes.ITEMSTACK)
                     .withMeta("nullable", true)
                     .varDescription("The item on the cursor, or null if empty or air")
                 .handler(new BlockHandler() {
@@ -271,11 +272,11 @@ public final class InventoryEventBlocks {
                 .category(Categories.INVENTORY)
                 .supportsRootLevel(true)
                 .supportsBlock(false)
-                .addVar("player", Types.PLAYER)
+                .addVar("player", MinecraftTypes.PLAYER)
                     .varDescription("The player who closed the inventory")
-                .addVar("world", Types.WORLD)
+                .addVar("world", MinecraftTypes.WORLD)
                     .varDescription("The world the player is in")
-                .addVar("inventory", Types.INVENTORY)
+                .addVar("inventory", MinecraftTypes.INVENTORY)
                     .varDescription("The top inventory that was closed")
                 .addVar("title", Types.STRING)
                     .varDescription("The title of the inventory view")
@@ -321,11 +322,11 @@ public final class InventoryEventBlocks {
                 .category(Categories.INVENTORY)
                 .supportsRootLevel(true)
                 .supportsBlock(false)
-                .addVar("player", Types.PLAYER)
+                .addVar("player", MinecraftTypes.PLAYER)
                     .varDescription("The player who opened the inventory")
-                .addVar("world", Types.WORLD)
+                .addVar("world", MinecraftTypes.WORLD)
                     .varDescription("The world the player is in")
-                .addVar("inventory", Types.INVENTORY)
+                .addVar("inventory", MinecraftTypes.INVENTORY)
                     .varDescription("The top inventory that was opened")
                 .addVar("title", Types.STRING)
                     .varDescription("The title of the inventory view")

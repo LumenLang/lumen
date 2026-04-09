@@ -6,7 +6,8 @@ import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.codegen.CodegenAccess;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.pattern.Categories;
-import dev.lumenlang.lumen.api.type.RefTypeHandle;
+import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.pipeline.persist.GlobalVars;
 import dev.lumenlang.lumen.pipeline.persist.PersistentVars;
 import org.jetbrains.annotations.NotNull;
@@ -47,12 +48,12 @@ public final class ScopedVariableConditions {
         if (scopeRef == null) {
             throw new RuntimeException("Scope variable not found: " + scopeVarName);
         }
-        RefTypeHandle refType = scopeRef.type();
+        LumenType refType = scopeRef.type();
         if (refType == null) {
             throw new RuntimeException("Scope variable '" + scopeVarName
                     + "' has no ref type. Expected a typed variable like a player or entity.");
         }
-        String scopeKeyPart = refType.keyExpression(scopeRef.java());
+        String scopeKeyPart = ((ObjectType) refType).keyExpression(scopeRef.java());
         String keyExpr = "\"" + info.className() + "." + varName + ".\" + " + scopeKeyPart;
         if (info.stored()) {
             ctx.addImport(PersistentVars.class.getName());

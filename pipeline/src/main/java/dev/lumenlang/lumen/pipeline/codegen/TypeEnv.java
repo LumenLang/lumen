@@ -1,13 +1,13 @@
 package dev.lumenlang.lumen.pipeline.codegen;
 
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
-import dev.lumenlang.lumen.api.type.RefTypeHandle;
+import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.type.LumenTypeRegistry;
+import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.pipeline.data.DataSchema;
 import dev.lumenlang.lumen.pipeline.persist.GlobalVars;
 import dev.lumenlang.lumen.pipeline.persist.PersistentVars;
 import dev.lumenlang.lumen.pipeline.placeholder.PlaceholderExpander;
-import dev.lumenlang.lumen.pipeline.type.LumenType;
-import dev.lumenlang.lumen.pipeline.var.RefType;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -263,15 +263,15 @@ public final class TypeEnv implements EnvironmentAccess {
     }
 
     /**
-     * Returns the first {@link VarRef} in scope whose {@link RefType} matches the given type.
+     * Returns the first {@link VarRef} in scope whose type matches the given object type.
      *
      * <p>Walks the scope stack from innermost to outermost scope, examining all variables
      * in each frame.
      *
-     * @param type the ref type to match against
+     * @param type the object type to match against
      * @return the first matching variable, or {@code null} if none found
      */
-    public @Nullable VarRef lookupVarByType(@NotNull RefType type) {
+    public @Nullable VarRef lookupVarByType(@NotNull ObjectType type) {
         for (BlockContext c = currentBlock; c != null; c = c.parent()) {
             VarRef found = c.findVarByType(type);
             if (found != null) return found;
@@ -280,10 +280,9 @@ public final class TypeEnv implements EnvironmentAccess {
     }
 
     @Override
-    public @Nullable VarRef lookupVarByType(@NotNull RefTypeHandle type) {
-        RefType internal = type instanceof RefType rt ? rt : RefType.byId(type.id());
-        if (internal == null) return null;
-        return lookupVarByType(internal);
+    public @Nullable VarRef lookupVarByType(@NotNull LumenType type) {
+        if (type instanceof ObjectType obj) return lookupVarByType(obj);
+        return null;
     }
 
     /**
@@ -516,9 +515,9 @@ public final class TypeEnv implements EnvironmentAccess {
     }
 
     @Override
-    public VarHandle defineRootVar(@NotNull String name, @Nullable RefTypeHandle refType, @NotNull String java) {
-        RefType internal = refType instanceof RefType rt ? rt : (refType != null ? RefType.byId(refType.id()) : null);
-        VarRef ref = new VarRef(internal, java);
+    public VarHandle defineRootVar(@NotNull String name, @Nullable LumenType type, @NotNull String java) {
+        ObjectType objType = type instanceof ObjectType obj ? obj : null;
+        VarRef ref = new VarRef(objType, java, type, Map.of());
         rootVars.put(name, ref);
         return ref;
     }
@@ -542,18 +541,17 @@ public final class TypeEnv implements EnvironmentAccess {
     }
 
     @Override
-    public VarHandle defineVar(@NotNull String name, @Nullable RefTypeHandle refType, @NotNull String java) {
-        RefType internal = refType instanceof RefType rt ? rt : (refType != null ? RefType.byId(refType.id()) : null);
-        VarRef ref = new VarRef(internal, java);
+    public VarHandle defineVar(@NotNull String name, @Nullable LumenType type, @NotNull String java) {
+        ObjectType objType = type instanceof ObjectType obj ? obj : null;
+        VarRef ref = new VarRef(objType, java, type, Map.of());
         defineVar(name, ref);
         return ref;
     }
 
     @Override
-    public VarHandle defineVar(@NotNull String name, @Nullable RefTypeHandle refType,
-                               @NotNull String java, @NotNull Map<String, Object> metadata) {
-        RefType internal = refType instanceof RefType rt ? rt : (refType != null ? RefType.byId(refType.id()) : null);
-        VarRef ref = new VarRef(internal, java, metadata);
+    public VarHandle defineVar(@NotNull String name, @Nullable LumenType type, @NotNull String java, @NotNull Map<String, Object> metadata) {
+        ObjectType objType = type instanceof ObjectType obj ? obj : null;
+        VarRef ref = new VarRef(objType, java, type, metadata);
         defineVar(name, ref);
         return ref;
     }
@@ -562,14 +560,12 @@ public final class TypeEnv implements EnvironmentAccess {
      * Defines a named variable in the current block scope with a full compile-time type.
      *
      * @param name      the variable name
-     * @param refType   the ref type for type checking, or {@code null}
+     * @param refType   the object type for type checking, or {@code null}
      * @param java      the Java variable name
      * @param lumenType the full compile-time type, or {@code null}
      * @param metadata  compile-time metadata entries
      */
-    public void defineVar(@NotNull String name, @Nullable RefType refType,
-                          @NotNull String java, @Nullable LumenType lumenType,
-                          @NotNull Map<String, Object> metadata) {
+    public void defineVar(@NotNull String name, @Nullable ObjectType refType, @NotNull String java, @Nullable LumenType lumenType, @NotNull Map<String, Object> metadata) {
         VarRef ref = new VarRef(refType, java, lumenType, metadata);
         defineVar(name, ref);
     }

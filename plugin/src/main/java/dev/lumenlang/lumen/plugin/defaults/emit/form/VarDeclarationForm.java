@@ -23,10 +23,12 @@ import dev.lumenlang.lumen.pipeline.language.typed.Expr;
 import dev.lumenlang.lumen.pipeline.language.typed.ExprParser;
 import dev.lumenlang.lumen.pipeline.language.validator.VarNameValidator;
 import dev.lumenlang.lumen.pipeline.placeholder.PlaceholderExpander;
-import dev.lumenlang.lumen.pipeline.type.LumenType;
+import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.type.LumenTypeRegistry;
+import dev.lumenlang.lumen.api.type.NullableType;
+import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.pipeline.type.TypeChecker;
 import dev.lumenlang.lumen.pipeline.util.FuzzyMatch;
-import dev.lumenlang.lumen.pipeline.var.RefType;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -178,7 +180,7 @@ public final class VarDeclarationForm implements StatementFormHandler {
         boolean isNone = exprTokens.size() == 1 && exprTokens.get(0).kind() == TokenKind.IDENT && isNullKeyword(exprTokens.get(0).text());
         if (isNone) {
             LumenType varType = ref.resolvedType();
-            if (varType != null && !(varType instanceof LumenType.NullableType)) {
+            if (varType != null && !(varType instanceof NullableType)) {
                 Token noneToken = exprTokens.get(0);
                 LumenDiagnostic diag = TypeChecker.checkNullAssignment(varType, name, ctx.line(), ctx.raw(), noneToken.start(), noneToken.end());
                 if (diag != null) throw new DiagnosticException(diag);
@@ -196,7 +198,7 @@ public final class VarDeclarationForm implements StatementFormHandler {
             if (diag != null) throw new DiagnosticException(diag);
         }
         ctx.out().line(ref.java() + " = " + resolved.java + ";");
-        if (varType instanceof LumenType.NullableType) {
+        if (varType instanceof NullableType) {
             env.markNullState(name, isNone ? TypeEnv.NullState.NULL : TypeEnv.NullState.NON_NULL, ctx.line(), ctx.raw());
         }
         if (env.isStored(name)) {
@@ -233,7 +235,7 @@ public final class VarDeclarationForm implements StatementFormHandler {
 
         String java;
         VarRef inheritedRef = null;
-        @Nullable RefType resolvedRefType = null;
+        @Nullable ObjectType resolvedRefType = null;
         @Nullable LumenType exprLumenType = null;
         @NotNull Map<String, Object> resolvedMetadata = Map.of();
 
@@ -271,7 +273,7 @@ public final class VarDeclarationForm implements StatementFormHandler {
                 if (exprResult != null) {
                     java = exprResult.java();
                     if (exprResult.refTypeId() != null) {
-                        resolvedRefType = RefType.byId(exprResult.refTypeId());
+                        resolvedRefType = LumenTypeRegistry.byId(exprResult.refTypeId());
                     }
                     exprLumenType = LumenType.resolve(exprResult.refTypeId(), exprResult.javaType());
                     resolvedMetadata = exprResult.metadata();
@@ -280,7 +282,7 @@ public final class VarDeclarationForm implements StatementFormHandler {
                     if (resolvedResult != null) {
                         java = resolvedResult.java();
                         if (resolvedResult.refTypeId() != null) {
-                            resolvedRefType = RefType.byId(resolvedResult.refTypeId());
+                            resolvedRefType = LumenTypeRegistry.byId(resolvedResult.refTypeId());
                         }
                         exprLumenType = LumenType.resolve(resolvedResult.refTypeId(), resolvedResult.javaType());
                         resolvedMetadata = resolvedResult.metadata();
@@ -323,10 +325,10 @@ public final class VarDeclarationForm implements StatementFormHandler {
             }
         }
 
-        RefType effectiveRefType = inheritedRef != null ? inheritedRef.refType() : resolvedRefType;
+        ObjectType effectiveRefType = inheritedRef != null ? inheritedRef.refType() : resolvedRefType;
         LumenType resolvedLumenType = inheritedRef != null ? inheritedRef.resolvedType() : (exprLumenType != null ? exprLumenType : e.resolvedType());
         if (resolvedLumenType == null && effectiveRefType != null) {
-            resolvedLumenType = new LumenType.ObjectType(effectiveRefType);
+            resolvedLumenType = effectiveRefType;
         }
         String typeDecl = resolvedLumenType != null ? resolvedLumenType.javaTypeName() : "var";
         ctx.out().line(typeDecl + " " + name + " = " + java + ";");
@@ -352,7 +354,7 @@ public final class VarDeclarationForm implements StatementFormHandler {
             LumenDiagnostic diag = diagBuilder.build();
             throw new DiagnosticException(diag);
         }
-        LumenType.NullableType nullableType = innerType.wrap();
+        NullableType nullableType = innerType.wrapAsNullable();
         String java;
         if (exprTokens.size() == 2) {
             java = "null";

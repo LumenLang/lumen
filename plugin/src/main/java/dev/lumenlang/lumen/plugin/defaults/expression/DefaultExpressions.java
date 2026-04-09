@@ -6,6 +6,7 @@ import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.api.type.Types;
+import dev.lumenlang.lumen.api.type.MinecraftTypes;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
@@ -72,9 +73,9 @@ public final class DefaultExpressions {
                 .example("set loc to get location player")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .returnRefTypeId(Types.LOCATION.id())
+                .returnRefTypeId(MinecraftTypes.LOCATION.id())
                 .handler(ctx -> new ExpressionResult(ctx.java("who") + ".getLocation()",
-                        Types.LOCATION.id())));
+                        MinecraftTypes.LOCATION.id())));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -83,9 +84,9 @@ public final class DefaultExpressions {
                 .example("set loc to get player's location")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .returnRefTypeId(Types.LOCATION.id())
+                .returnRefTypeId(MinecraftTypes.LOCATION.id())
                 .handler(ctx -> new ExpressionResult(ctx.java("who") + ".getLocation()",
-                        Types.LOCATION.id())));
+                        MinecraftTypes.LOCATION.id())));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -94,9 +95,9 @@ public final class DefaultExpressions {
                 .example("set w to get player's world")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .returnRefTypeId(Types.WORLD.id())
+                .returnRefTypeId(MinecraftTypes.WORLD.id())
                 .handler(ctx -> new ExpressionResult(ctx.java("who") + ".getWorld()",
-                        Types.WORLD.id())));
+                        MinecraftTypes.WORLD.id())));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -105,10 +106,10 @@ public final class DefaultExpressions {
                 .example("set p to get player by name \"Notch\"")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .returnRefTypeId(Types.PLAYER.id())
+                .returnRefTypeId(MinecraftTypes.PLAYER.id())
                 .handler(ctx -> new ExpressionResult(
                         "Bukkit.getPlayer(" + ctx.java("name") + ")",
-                        Types.PLAYER.id())));
+                        MinecraftTypes.PLAYER.id())));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -117,10 +118,10 @@ public final class DefaultExpressions {
                 .example("set p to get player by name target_name")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .returnRefTypeId(Types.PLAYER.id())
+                .returnRefTypeId(MinecraftTypes.PLAYER.id())
                 .handler(ctx -> new ExpressionResult(
                         "Bukkit.getPlayer(String.valueOf(" + ctx.java("name") + "))",
-                        Types.PLAYER.id())));
+                        MinecraftTypes.PLAYER.id())));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -129,12 +130,12 @@ public final class DefaultExpressions {
                 .example("set p to get player by uuid \"069a79f4-44e9-4726-a5be-fca90e38aaf5\"")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .returnRefTypeId(Types.PLAYER.id())
+                .returnRefTypeId(MinecraftTypes.PLAYER.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(UUID.class.getName());
                     return new ExpressionResult(
                             "Bukkit.getPlayer(UUID.fromString(" + ctx.java("uuid") + "))",
-                            Types.PLAYER.id());
+                            MinecraftTypes.PLAYER.id());
                 }));
 
         api.patterns().expression(b -> b
@@ -144,10 +145,10 @@ public final class DefaultExpressions {
                 .example("set w to get world \"world_nether\"")
                 .since("1.0.0")
                 .category(Categories.WORLD)
-                .returnRefTypeId(Types.WORLD.id())
+                .returnRefTypeId(MinecraftTypes.WORLD.id())
                 .handler(ctx -> new ExpressionResult(
                         "Bukkit.getWorld(" + ctx.java("name") + ")",
-                        Types.WORLD.id())));
+                        MinecraftTypes.WORLD.id())));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -156,13 +157,13 @@ public final class DefaultExpressions {
                 .example("set op to get offline player by name \"Notch\"")
                 .since("1.0.0")
                 .category(Categories.OFFLINE_PLAYER)
-                .returnRefTypeId(Types.OFFLINE_PLAYER.id())
+                .returnRefTypeId(MinecraftTypes.OFFLINE_PLAYER.id())
                 .handler(ctx -> {
                     String nameJava = ctx.java("name");
                     ctx.codegen().addImport(OfflinePlayer.class.getName());
                     return new ExpressionResult(
                             "Bukkit.getOfflinePlayer(" + nameJava + ")",
-                            Types.OFFLINE_PLAYER.id());
+                            MinecraftTypes.OFFLINE_PLAYER.id());
                 }));
 
         api.patterns().expression(b -> b
@@ -172,7 +173,7 @@ public final class DefaultExpressions {
                 .example("set op to get offline player by uuid \"069a79f4-44e9-4726-a5be-fca90e38aaf5\"")
                 .since("1.0.0")
                 .category(Categories.OFFLINE_PLAYER)
-                .returnRefTypeId(Types.OFFLINE_PLAYER.id())
+                .returnRefTypeId(MinecraftTypes.OFFLINE_PLAYER.id())
                 .handler(ctx -> {
                     String uuidJava = ctx.java("uuid");
                     ctx.codegen().addImport(OfflinePlayer.class.getName());
@@ -180,7 +181,7 @@ public final class DefaultExpressions {
                     return new ExpressionResult(
                             "Bukkit.getOfflinePlayer(UUID.fromString("
                                     + uuidJava + "))",
-                            Types.OFFLINE_PLAYER.id());
+                            MinecraftTypes.OFFLINE_PLAYER.id());
                 }));
 
         api.patterns().expression(b -> b
@@ -241,9 +242,9 @@ public final class DefaultExpressions {
                 .example("set loc to get offlinePlayer's bed spawn location")
                 .since("1.0.0")
                 .category(Categories.OFFLINE_PLAYER)
-                .returnRefTypeId(Types.LOCATION.id())
+                .returnRefTypeId(MinecraftTypes.LOCATION.id())
                 .handler(ctx -> new ExpressionResult(ctx.java("op") + ".getBedSpawnLocation()",
-                        Types.LOCATION.id())));
+                        MinecraftTypes.LOCATION.id())));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -304,9 +305,9 @@ public final class DefaultExpressions {
                 .example("set loc to get player's eye location")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .returnRefTypeId(Types.LOCATION.id())
+                .returnRefTypeId(MinecraftTypes.LOCATION.id())
                 .handler(ctx -> new ExpressionResult(ctx.java("who") + ".getEyeLocation()",
-                        Types.LOCATION.id())));
+                        MinecraftTypes.LOCATION.id())));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -360,13 +361,13 @@ public final class DefaultExpressions {
                 .example("set loc to new location in myWorld at 100 64 -200")
                 .since("1.0.0")
                 .category(Categories.LOCATION)
-                .returnRefTypeId(Types.LOCATION.id())
+                .returnRefTypeId(MinecraftTypes.LOCATION.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(Location.class.getName());
                     return new ExpressionResult(
                             "new Location(" + ctx.java("w") + ", " + ctx.java("x") + ", "
                                     + ctx.java("y") + ", " + ctx.java("z") + ")",
-                            Types.LOCATION.id());
+                            MinecraftTypes.LOCATION.id());
                 }));
 
         api.patterns().expression(b -> b
@@ -376,13 +377,13 @@ public final class DefaultExpressions {
                 .example("set loc to new location at 100 64 -200 in myWorld")
                 .since("1.0.0")
                 .category(Categories.LOCATION)
-                .returnRefTypeId(Types.LOCATION.id())
+                .returnRefTypeId(MinecraftTypes.LOCATION.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(Location.class.getName());
                     return new ExpressionResult(
                             "new Location(" + ctx.java("w") + ", " + ctx.java("x") + ", "
                                     + ctx.java("y") + ", " + ctx.java("z") + ")",
-                            Types.LOCATION.id());
+                            MinecraftTypes.LOCATION.id());
                 }));
     }
 
@@ -401,7 +402,7 @@ public final class DefaultExpressions {
                 .example("set mob to spawn zombie at player")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .returnRefTypeId(Types.ENTITY.id())
+                .returnRefTypeId(MinecraftTypes.ENTITY.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(Entity.class.getName());
                     String typeEnum = ctx.java("type");
@@ -411,7 +412,7 @@ public final class DefaultExpressions {
                             playerJava + ".getLocation().getWorld().spawnEntity("
                                     + playerJava + ".getLocation(), " + typeEnum
                                     + ")",
-                            Types.ENTITY.id(),
+                            MinecraftTypes.ENTITY.id(),
                             meta);
                 }));
 
@@ -422,7 +423,7 @@ public final class DefaultExpressions {
                 .example("set mob to spawn zombie at myLoc")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .returnRefTypeId(Types.ENTITY.id())
+                .returnRefTypeId(MinecraftTypes.ENTITY.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(Entity.class.getName());
                     String typeEnum = ctx.java("type");
@@ -430,7 +431,7 @@ public final class DefaultExpressions {
                     return new ExpressionResult(
                             ctx.java("loc") + ".getWorld().spawnEntity(" + ctx.java("loc")
                                     + ", " + typeEnum + ")",
-                            Types.ENTITY.id(),
+                            MinecraftTypes.ENTITY.id(),
                             meta);
                 }));
 
@@ -441,7 +442,7 @@ public final class DefaultExpressions {
                 .example("set mob to spawn zombie at get player's location")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .returnRefTypeId(Types.ENTITY.id())
+                .returnRefTypeId(MinecraftTypes.ENTITY.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(Entity.class.getName());
                     String typeEnum = ctx.java("type");
@@ -450,7 +451,7 @@ public final class DefaultExpressions {
                     return new ExpressionResult(
                             locJava + ".getWorld().spawnEntity(" + locJava
                                     + ", " + typeEnum + ")",
-                            Types.ENTITY.id(),
+                            MinecraftTypes.ENTITY.id(),
                             meta);
                 }));
     }
@@ -475,7 +476,7 @@ public final class DefaultExpressions {
                 .example("set proj to launch snowball from player")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .returnRefTypeId(Types.ENTITY.id())
+                .returnRefTypeId(MinecraftTypes.ENTITY.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(Entity.class.getName());
                     ctx.codegen().addImport(Projectile.class.getName());
@@ -483,7 +484,7 @@ public final class DefaultExpressions {
                     String player = ctx.java("who");
                     return new ExpressionResult(
                             "(Entity) " + player + ".launchProjectile((Class) " + type + ".getEntityClass())",
-                            Types.ENTITY.id());
+                            MinecraftTypes.ENTITY.id());
                 }));
 
         api.patterns().expression(b -> b
@@ -493,14 +494,14 @@ public final class DefaultExpressions {
                 .example("set proj to launch snowball from myLoc")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .returnRefTypeId(Types.ENTITY.id())
+                .returnRefTypeId(MinecraftTypes.ENTITY.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(Entity.class.getName());
                     String type = ctx.java("type");
                     String loc = ctx.java("loc");
                     return new ExpressionResult(
                             loc + ".getWorld().spawnEntity(" + loc + ", " + type + ")",
-                            Types.ENTITY.id());
+                            MinecraftTypes.ENTITY.id());
                 }));
     }
 
@@ -527,10 +528,10 @@ public final class DefaultExpressions {
                 .example("global scoped pos1 with default no location")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
-                .returnRefTypeId(Types.LOCATION.id())
+                .returnRefTypeId(MinecraftTypes.LOCATION.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(Location.class.getName());
-                    return new ExpressionResult("(Location) null", Types.LOCATION.id());
+                    return new ExpressionResult("(Location) null", MinecraftTypes.LOCATION.id());
                 }));
 
         api.patterns().expression(b -> b
@@ -540,8 +541,8 @@ public final class DefaultExpressions {
                 .example("global scoped target with default no player")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
-                .returnRefTypeId(Types.PLAYER.id())
-                .handler(ctx -> new ExpressionResult("(Player) null", Types.PLAYER.id())));
+                .returnRefTypeId(MinecraftTypes.PLAYER.id())
+                .handler(ctx -> new ExpressionResult("(Player) null", MinecraftTypes.PLAYER.id())));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -550,10 +551,10 @@ public final class DefaultExpressions {
                 .example("global scoped target with default no entity")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
-                .returnRefTypeId(Types.ENTITY.id())
+                .returnRefTypeId(MinecraftTypes.ENTITY.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(Entity.class.getName());
-                    return new ExpressionResult("(Entity) null", Types.ENTITY.id());
+                    return new ExpressionResult("(Entity) null", MinecraftTypes.ENTITY.id());
                 }));
 
         api.patterns().expression(b -> b
@@ -563,10 +564,10 @@ public final class DefaultExpressions {
                 .example("global scoped w with default no world")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
-                .returnRefTypeId(Types.WORLD.id())
+                .returnRefTypeId(MinecraftTypes.WORLD.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(World.class.getName());
-                    return new ExpressionResult("(World) null", Types.WORLD.id());
+                    return new ExpressionResult("(World) null", MinecraftTypes.WORLD.id());
                 }));
 
         api.patterns().expression(b -> b
@@ -576,10 +577,10 @@ public final class DefaultExpressions {
                 .example("global scoped target_block with default no block")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
-                .returnRefTypeId(Types.BLOCK.id())
+                .returnRefTypeId(MinecraftTypes.BLOCK.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(Block.class.getName());
-                    return new ExpressionResult("(Block) null", Types.BLOCK.id());
+                    return new ExpressionResult("(Block) null", MinecraftTypes.BLOCK.id());
                 }));
     }
 }

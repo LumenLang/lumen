@@ -9,7 +9,8 @@ import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.codegen.JavaOutput;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.pattern.Categories;
-import dev.lumenlang.lumen.api.type.RefTypeHandle;
+import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.pipeline.persist.GlobalVars;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,12 +61,12 @@ public final class VariableStatements {
         if (scopeRef == null) {
             throw new RuntimeException("Scope variable not found: " + scopeVarName);
         }
-        RefTypeHandle refType = scopeRef.type();
+        LumenType refType = scopeRef.type();
         if (refType == null) {
             throw new RuntimeException("Scope variable '" + scopeVarName
                     + "' has no ref type. Expected a typed variable like a player or entity.");
         }
-        String scopeKeyPart = refType.keyExpression(scopeRef.java());
+        String scopeKeyPart = ((ObjectType) refType).keyExpression(scopeRef.java());
         return "\"" + info.className() + "." + varName + ".\" + " + scopeKeyPart;
     }
 

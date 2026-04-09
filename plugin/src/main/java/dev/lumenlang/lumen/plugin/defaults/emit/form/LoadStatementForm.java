@@ -20,7 +20,8 @@ import dev.lumenlang.lumen.pipeline.language.typed.ExprParser;
 import dev.lumenlang.lumen.pipeline.language.validator.VarNameValidator;
 import dev.lumenlang.lumen.pipeline.persist.PersistentVars;
 import dev.lumenlang.lumen.pipeline.placeholder.PlaceholderExpander;
-import dev.lumenlang.lumen.pipeline.var.RefType;
+import dev.lumenlang.lumen.api.type.LumenTypeRegistry;
+import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -105,14 +106,14 @@ public final class LoadStatementForm implements StatementFormHandler {
         RegisteredExpressionMatch exprMatch = PatternRegistry.instance().matchExpression(exprTokens, env);
 
         String defaultJava;
-        RefType exprRefType = null;
+        ObjectType exprRefType = null;
 
         if (exprMatch != null) {
             BindingContext bc = new BindingContext(exprMatch.match(), env, ((EmitContextImpl) ctx).codegenContext(), env.blockContext());
             ExpressionResult result = exprMatch.reg().handler().handle(bc);
             defaultJava = result.java();
             if (result.refTypeId() != null) {
-                exprRefType = RefType.byId(result.refTypeId());
+                exprRefType = LumenTypeRegistry.byId(result.refTypeId());
             }
         } else {
             Expr e = ExprParser.parse(exprTokens, env);

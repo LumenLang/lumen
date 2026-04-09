@@ -9,7 +9,8 @@ import dev.lumenlang.lumen.api.codegen.JavaOutput;
 import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
 import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.pattern.Categories;
-import dev.lumenlang.lumen.api.type.RefTypeHandle;
+import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.type.ObjectType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,7 +83,7 @@ public final class MapStatements {
                     .help("make sure the variable is defined before using it")
                     .build());
         }
-        RefTypeHandle refType = scopeRef.type();
+        LumenType refType = scopeRef.type();
         if (refType == null) {
             throw new DiagnosticException(LumenDiagnostic.error("E502", "Scope variable '" + scopeVarName + "' has no type")
                     .at(ctx.block().line(), ctx.block().raw())
@@ -90,7 +91,7 @@ public final class MapStatements {
                     .help("use a typed variable like a player or entity as scope")
                     .build());
         }
-        String scopeKeyPart = refType.keyExpression(scopeRef.java());
+        String scopeKeyPart = ((ObjectType) refType).keyExpression(scopeRef.java());
         return "\"" + info.className() + "." + varName + ".\" + " + scopeKeyPart;
     }
 

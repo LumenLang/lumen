@@ -5,6 +5,7 @@ import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.type.Types;
+import dev.lumenlang.lumen.api.type.MinecraftTypes;
 import dev.lumenlang.lumen.plugin.util.InventoryHelper;
 import dev.lumenlang.lumen.plugin.util.LumenInventoryHelper;
 import dev.lumenlang.lumen.plugin.util.LumenInventoryHolder;
@@ -33,7 +34,7 @@ public final class InventoryExpressions {
                         "new inventory %name:STRING% [with] [size] %size:INT% titled %title:STRING%",
                         "Creates a new Lumen inventory with a name, size, and display title. The name identifies the GUI type programmatically.",
                         "set gui to new inventory \"main_menu\" with size 27 titled \"<gold>Test Menu\"",
-                        Types.INVENTORY.id(),
+                        MinecraftTypes.INVENTORY.id(),
                         ctx -> {
                             ctx.codegen().addImport(INVENTORY);
                             ctx.codegen().addImport(LumenInventoryHelper.class.getName());
@@ -48,7 +49,7 @@ public final class InventoryExpressions {
                         "new inventory %name:STRING% [with] [size] %size:INT%",
                         "Creates a new Lumen inventory with a name and size, without a display title.",
                         "set gui to new inventory \"shop\" with size 54",
-                        Types.INVENTORY.id(),
+                        MinecraftTypes.INVENTORY.id(),
                         ctx -> {
                             ctx.codegen().addImport(INVENTORY);
                             ctx.codegen().addImport(LumenInventoryHelper.class.getName());
@@ -63,7 +64,7 @@ public final class InventoryExpressions {
                         "Creates a new Lumen inventory with a name, row count (1 to 6), and display title. "
                                 + "The size is calculated as rows * 9. Throws a runtime error if rows is not between 1 and 6.",
                         "set gui to new inventory \"main_menu\" with rows 3 titled \"<gold>Test Menu\"",
-                        Types.INVENTORY.id(),
+                        MinecraftTypes.INVENTORY.id(),
                         ctx -> {
                             ctx.codegen().addImport(INVENTORY);
                             ctx.codegen().addImport(LumenInventoryHelper.class.getName());
@@ -79,7 +80,7 @@ public final class InventoryExpressions {
                         "Creates a new Lumen inventory with a name and row count (1 to 6), without a display title. "
                                 + "The size is calculated as rows * 9. Throws a runtime error if rows is not between 1 and 6.",
                         "set gui to new inventory \"shop\" with rows 6",
-                        Types.INVENTORY.id(),
+                        MinecraftTypes.INVENTORY.id(),
                         ctx -> {
                             ctx.codegen().addImport(INVENTORY);
                             ctx.codegen().addImport(LumenInventoryHelper.class.getName());
@@ -97,12 +98,12 @@ public final class InventoryExpressions {
                         "[get] item in slot %slot:INT% of %inv:EXPR%",
                         "Returns the item stack in a specific slot of an inventory, or null if the slot is empty.",
                         "set item to get item in slot 0 of gui",
-                        Types.ITEMSTACK.id(),
+                        MinecraftTypes.ITEMSTACK.id(),
                         ctx -> {
                             ctx.codegen().addImport(INVENTORY);
                             return new ExpressionResult(
                                     "((Inventory) " + ctx.java("inv") + ").getItem(" + ctx.java("slot") + ")",
-                                    Types.ITEMSTACK.id());
+                                    MinecraftTypes.ITEMSTACK.id());
                         })
                 .expression(
                         "[get] %inv:EXPR% inventory size",

@@ -11,8 +11,11 @@ import dev.lumenlang.lumen.api.event.AdvancedEventDefinition;
 import dev.lumenlang.lumen.api.event.EventDefinition;
 import dev.lumenlang.lumen.api.handler.BlockHandler;
 import dev.lumenlang.lumen.api.pattern.Categories;
-import dev.lumenlang.lumen.api.type.RefTypeHandle;
+import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.type.LumenTypeRegistry;
 import dev.lumenlang.lumen.api.type.Types;
+import dev.lumenlang.lumen.api.type.BuiltinLumenTypes;
+import dev.lumenlang.lumen.api.type.MinecraftTypes;
 import dev.lumenlang.lumen.pipeline.codegen.BindingContext;
 import dev.lumenlang.lumen.pipeline.events.EventDefRegistry;
 import dev.lumenlang.lumen.pipeline.language.exceptions.TokenCarryingException;
@@ -81,8 +84,8 @@ public final class EventBlocks {
                             for (var entry : advDef.vars().entrySet()) {
                                 String name = entry.getKey();
                                 EventDefinition.VarEntry v = entry.getValue();
-                                RefTypeHandle refType = v.refTypeId() != null
-                                        ? api.refTypes().byId(v.refTypeId())
+                                LumenType refType = v.refTypeId() != null
+                                        ? LumenTypeRegistry.byId(v.refTypeId())
                                         : null;
                                 env.defineVar(name, refType, v.expr());
                             }
@@ -136,8 +139,8 @@ public final class EventBlocks {
                                 out.line(simple + " " + name + " = " + expr + ";");
                             }
 
-                            RefTypeHandle refType = v.refTypeId() != null
-                                    ? api.refTypes().byId(v.refTypeId())
+                            LumenType refType = v.refTypeId() != null
+                                    ? LumenTypeRegistry.byId(v.refTypeId())
                                     : null;
                             if (v.metadata().isEmpty()) {
                                 env.defineVar(name, refType, name);
@@ -177,15 +180,15 @@ public final class EventBlocks {
                 .category(Categories.COMMAND)
                 .supportsRootLevel(true)
                 .supportsBlock(false)
-                .addVar("player", Types.PLAYER)
+                .addVar("player", MinecraftTypes.PLAYER)
                     .withMeta("nullable", true)
                     .varDescription("The player who executed the command, or null if the console ran it")
-                .addVar("sender", Types.SENDER)
+                .addVar("sender", MinecraftTypes.SENDER)
                     .varDescription("The command sender (player or console)")
-                .addVar("world", Types.WORLD)
+                .addVar("world", MinecraftTypes.WORLD)
                     .withMeta("nullable", true)
                     .varDescription("The world the player is in, or null if the console ran it")
-                .addVar("args", Types.LIST)
+                .addVar("args", BuiltinLumenTypes.LIST)
                     .varDescription("The command arguments as a mutable list of strings")
                 .handler(new BlockHandler() {
                     @Override
@@ -214,10 +217,10 @@ public final class EventBlocks {
                         out.line("CommandSender sender = __sender;");
                         out.line("World world = player != null ? player.getWorld() : null;");
 
-                        env.defineVar("player", Types.PLAYER, "player");
-                        env.defineVar("sender", Types.SENDER, "sender");
-                        env.defineVar("world", Types.WORLD, "world");
-                        env.defineVar("args", Types.LIST, "args");
+                        env.defineVar("player", MinecraftTypes.PLAYER, "player");
+                        env.defineVar("sender", MinecraftTypes.SENDER, "sender");
+                        env.defineVar("world", MinecraftTypes.WORLD, "world");
+                        env.defineVar("args", BuiltinLumenTypes.LIST, "args");
                     }
 
                     @Override
@@ -271,9 +274,9 @@ public final class EventBlocks {
                 .category(Categories.INVENTORY)
                 .supportsRootLevel(true)
                 .supportsBlock(false)
-                .addVar("player", Types.PLAYER)
+                .addVar("player", MinecraftTypes.PLAYER)
                     .varDescription("The target player who the inventory is being opened for")
-                .addVar("world", Types.WORLD)
+                .addVar("world", MinecraftTypes.WORLD)
                     .varDescription("The world the player is in")
                 .handler(new BlockHandler() {
                     @Override
@@ -298,8 +301,8 @@ public final class EventBlocks {
                         out.line("public void " + methodName + "(Player player) {");
                         out.line("World world = player.getWorld();");
 
-                        env.defineVar("player", Types.PLAYER, "player");
-                        env.defineVar("world", Types.WORLD, "world");
+                        env.defineVar("player", MinecraftTypes.PLAYER, "player");
+                        env.defineVar("world", MinecraftTypes.WORLD, "world");
                     }
 
                     @Override

@@ -6,6 +6,7 @@ import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.placeholder.PlaceholderRegistrar;
 import dev.lumenlang.lumen.api.placeholder.PlaceholderType;
 import dev.lumenlang.lumen.api.type.Types;
+import dev.lumenlang.lumen.api.type.MinecraftTypes;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -19,9 +20,9 @@ public class DefaultWorldPlaceholders {
     public void register(@NotNull LumenAPI api) {
         PlaceholderRegistrar ph = api.placeholders();
 
-        ph.property(Types.WORLD, "name", "$.getName()");
-        ph.property(Types.WORLD, "time", "$.getTime()", PlaceholderType.NUMBER);
-        ph.property(Types.WORLD, "weather", "($.hasStorm() ? \"storm\" : \"clear\")");
-        ph.defaultProperty(Types.WORLD, "name");
+        ph.property(MinecraftTypes.WORLD, "name", "$.getName()");
+        ph.property(MinecraftTypes.WORLD, "time", "$.getTime()", PlaceholderType.NUMBER);
+        ph.property(MinecraftTypes.WORLD, "weather", "($.hasStorm() ? \"storm\" : \"clear\")");
+        ph.defaultProperty(MinecraftTypes.WORLD, "name");
     }
 }

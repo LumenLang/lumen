@@ -1,6 +1,8 @@
 package dev.lumenlang.lumen.pipeline.type;
 
 import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
+import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.type.NullableType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +29,7 @@ public final class TypeChecker {
     public static @Nullable LumenDiagnostic checkAssignment(@NotNull LumenType targetType, @NotNull LumenType sourceType, @NotNull String varName, int line, @NotNull String sourceText, int colStart, int colEnd) {
         if (targetType.assignableFrom(sourceType)) return null;
 
-        if (sourceType instanceof LumenType.NullableType && !(targetType instanceof LumenType.NullableType)) {
+        if (sourceType instanceof NullableType && !(targetType instanceof NullableType)) {
             return LumenDiagnostic.error("E102", "Cannot assign nullable value to non-nullable variable")
                     .at(line, sourceText).highlight(colStart, colEnd)
                     .label("expected '" + targetType.displayName() + "', found '" + sourceType.displayName() + "'")
@@ -65,7 +67,7 @@ public final class TypeChecker {
      * @return a diagnostic if the target is non-nullable, or {@code null} if valid
      */
     public static @Nullable LumenDiagnostic checkNullAssignment(@NotNull LumenType targetType, @NotNull String varName, int line, @NotNull String sourceText, int colStart, int colEnd) {
-        if (targetType instanceof LumenType.NullableType) return null;
+        if (targetType instanceof NullableType) return null;
 
         return LumenDiagnostic.error("E101", "Cannot assign 'none' to non-nullable variable")
                 .at(line, sourceText).highlight(colStart, colEnd)
@@ -92,7 +94,7 @@ public final class TypeChecker {
      * @return a diagnostic if the access is unsafe, or {@code null} if safe
      */
     public static @Nullable LumenDiagnostic checkNullSafety(@NotNull LumenType type, @NotNull String varName, boolean isNullChecked, int line, @NotNull String sourceText, int colStart, int colEnd, int declLine, @Nullable String declSource, int nullAssignLine, @Nullable String nullAssignSource) {
-        if (!(type instanceof LumenType.NullableType)) return null;
+        if (!(type instanceof NullableType)) return null;
         if (isNullChecked) return null;
 
         LumenDiagnostic.Builder b = LumenDiagnostic.error("E301", "Variable '" + varName + "' is none")

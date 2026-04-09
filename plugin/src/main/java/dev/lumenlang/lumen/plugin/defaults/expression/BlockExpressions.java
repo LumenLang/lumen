@@ -6,6 +6,7 @@ import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.api.type.Types;
+import dev.lumenlang.lumen.api.type.MinecraftTypes;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -22,10 +23,10 @@ public final class BlockExpressions {
                 .by("Lumen").pattern("[get] block at %loc:LOCATION%")
                 .description("Returns the block at a given location.")
                 .example("set b to block at loc").since("1.0.0").category(Categories.BLOCK)
-                .returnRefTypeId(Types.BLOCK.id())
+                .returnRefTypeId(MinecraftTypes.BLOCK.id())
                 .handler(ctx -> new ExpressionResult(
                         ctx.java("loc") + ".getBlock()",
-                        Types.BLOCK.id())));
+                        MinecraftTypes.BLOCK.id())));
 
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("[get] %b:BLOCK% type")
@@ -40,19 +41,19 @@ public final class BlockExpressions {
                 .by("Lumen").pattern("[get] %b:BLOCK% location")
                 .description("Returns the location of a block.")
                 .example("set loc to block location").since("1.0.0").category(Categories.BLOCK)
-                .returnRefTypeId(Types.LOCATION.id())
+                .returnRefTypeId(MinecraftTypes.LOCATION.id())
                 .handler(ctx -> new ExpressionResult(
                         ctx.java("b") + ".getLocation()",
-                        Types.LOCATION.id())));
+                        MinecraftTypes.LOCATION.id())));
 
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("[get] %b:BLOCK% world")
                 .description("Returns the world the block is in.")
                 .example("set w to block world").since("1.0.0").category(Categories.BLOCK)
-                .returnRefTypeId(Types.WORLD.id())
+                .returnRefTypeId(MinecraftTypes.WORLD.id())
                 .handler(ctx -> new ExpressionResult(
                         ctx.java("b") + ".getWorld()",
-                        Types.WORLD.id())));
+                        MinecraftTypes.WORLD.id())));
 
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("[get] %b:BLOCK% (x|y|z)")

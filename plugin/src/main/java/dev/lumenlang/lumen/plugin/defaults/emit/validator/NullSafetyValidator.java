@@ -9,7 +9,8 @@ import dev.lumenlang.lumen.api.emit.EmitContext;
 import dev.lumenlang.lumen.api.emit.ScriptToken;
 import dev.lumenlang.lumen.api.emit.StatementValidator;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
-import dev.lumenlang.lumen.pipeline.type.LumenType;
+import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.type.NullableType;
 import dev.lumenlang.lumen.pipeline.type.TypeChecker;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +41,7 @@ public final class NullSafetyValidator implements StatementValidator {
             VarRef ref = env.lookupVar(t.text());
             if (ref == null) continue;
             LumenType type = ref.resolvedType();
-            if (!(type instanceof LumenType.NullableType)) continue;
+            if (!(type instanceof NullableType)) continue;
             TypeEnv.NullState state = env.nullState(t.text());
             if (state != TypeEnv.NullState.NULL) continue;
             TypeEnv.NullableVarInfo info = env.nullableVarInfo(t.text());

@@ -5,7 +5,7 @@ import dev.lumenlang.lumen.api.pattern.BlockVarInfo;
 import dev.lumenlang.lumen.api.pattern.Category;
 import dev.lumenlang.lumen.api.pattern.PatternMeta;
 import dev.lumenlang.lumen.api.pattern.PatternRegistrar;
-import dev.lumenlang.lumen.api.type.RefTypeHandle;
+import dev.lumenlang.lumen.api.type.ObjectType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -224,7 +224,7 @@ public final class BlockBuilder {
      * @param refType the typed reference handle (e.g. {@code Types.PLAYER})
      * @return this builder
      */
-    public @NotNull BlockBuilder addVar(@NotNull String name, @NotNull RefTypeHandle refType) {
+    public @NotNull BlockBuilder addVar(@NotNull String name, @NotNull ObjectType refType) {
         variables.put(name, new BlockVarInfo(name, refType));
         this.lastVarName = name;
         return this;

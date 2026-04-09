@@ -4,13 +4,14 @@ import dev.lumenlang.lumen.api.codegen.CodegenAccess;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.handler.ConditionHandler;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
-import dev.lumenlang.lumen.api.type.RefTypeHandle;
+import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.type.LumenTypeRegistry;
+import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.pipeline.codegen.CodegenContext;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.pipeline.language.exceptions.TokenCarryingException;
 import dev.lumenlang.lumen.pipeline.language.pattern.Pattern;
 import dev.lumenlang.lumen.pipeline.language.resolve.ExprResolver;
-import dev.lumenlang.lumen.pipeline.var.RefType;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,7 +57,7 @@ public record Match(
             ExpressionResult result = ExprResolver.resolveWithType(ie.tokens(), ctx, env);
             if (result != null) {
                 if (!bv.binding().id().equals("EXPR")) {
-                    RefType ref = result.refTypeId() != null ? RefType.byId(result.refTypeId()) : null;
+                    ObjectType ref = result.refTypeId() != null ? LumenTypeRegistry.byId(result.refTypeId()) : null;
                     return bv.binding().toJava(
                             new InlineVarRef(result.java(), ref, result.metadata()), ctx, env);
                 }
@@ -223,7 +224,7 @@ public record Match(
      */
     public static EnvironmentAccess.@NotNull VarHandle syntheticHandle(
             @NotNull String javaExpr,
-            @Nullable RefTypeHandle refType,
+            @Nullable LumenType refType,
             @NotNull Map<String, Object> metadata) {
         return new InlineVarRef(javaExpr, refType, metadata);
     }
@@ -236,12 +237,12 @@ public record Match(
      */
     private record InlineVarRef(
             @NotNull String javaExpr,
-            @Nullable RefTypeHandle refType,
+            @Nullable LumenType refType,
             @NotNull Map<String, Object> meta
     ) implements EnvironmentAccess.VarHandle {
 
         @Override
-        public @Nullable RefTypeHandle type() {
+        public @Nullable LumenType type() {
             return refType;
         }
 

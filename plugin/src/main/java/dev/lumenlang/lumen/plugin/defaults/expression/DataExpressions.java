@@ -8,6 +8,7 @@ import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.api.type.Types;
+import dev.lumenlang.lumen.api.type.BuiltinLumenTypes;
 import dev.lumenlang.lumen.pipeline.data.DataSchema;
 import dev.lumenlang.lumen.pipeline.java.compiled.DataInstance;
 import org.jetbrains.annotations.NotNull;
@@ -139,7 +140,7 @@ public final class DataExpressions {
                         "set a to new arena with name \"PvP\" x1 0 y1 0 z1 0 x2 100 y2 100 z2 100")
                 .since("1.0.0")
                 .category(Categories.DATA)
-                .returnRefTypeId(Types.DATA.id())
+                .returnRefTypeId(BuiltinLumenTypes.DATA.id())
                 .handler(ctx -> {
                     List<String> tokens = ctx.tokens("body");
                     if (tokens.isEmpty()) {
@@ -159,7 +160,7 @@ public final class DataExpressions {
                     if (tokens.size() == 1) {
                         return new ExpressionResult(
                                 "new DataInstance(\"" + typeName + "\")",
-                                Types.DATA.id(),
+                                BuiltinLumenTypes.DATA.id(),
                                 Map.of("data_type", typeName));
                     }
 
@@ -197,7 +198,7 @@ public final class DataExpressions {
 
                     return new ExpressionResult(
                             "new DataInstance(\"" + typeName + "\", " + mapBuilder + ")",
-                            Types.DATA.id(),
+                            BuiltinLumenTypes.DATA.id(),
                             Map.of("data_type", typeName));
                 }));
     }

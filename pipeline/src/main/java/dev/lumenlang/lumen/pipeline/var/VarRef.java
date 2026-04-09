@@ -1,10 +1,9 @@
 package dev.lumenlang.lumen.pipeline.var;
 
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
-import dev.lumenlang.lumen.api.type.RefTypeHandle;
-import dev.lumenlang.lumen.api.type.TypeHandle;
+import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
-import dev.lumenlang.lumen.pipeline.type.LumenType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,12 +15,12 @@ import java.util.Map;
  * A compile-time descriptor for a named variable that is in scope during code generation.
  *
  * <p>A {@code VarRef} represents knowledge that, at runtime, there will be a local variable
- * bound to the given Java name. If a {@link RefType} is present, the variable participates
+ * bound to the given Java name. If an {@link ObjectType} is present, the variable participates
  * in type checking (e.g. a player reference can be resolved by type bindings
  * when an explicit variable name is provided in script source).
  *
  * <p>An optional {@link #lumenType()} carries the full compile-time type, covering both
- * primitives and object reference types. When present, {@link #refType()} is derived from it.
+ * primitives and object reference types.
  *
  * <p>An optional {@link #metadata()} map carries additional compile-time knowledge about the
  * variable. For example, an entity variable might carry {@code {"entityType": "ZOMBIE"}} so
@@ -29,61 +28,48 @@ import java.util.Map;
  * immutable once attached; use {@link #withMeta(String, Object)} to produce a copy with
  * additional entries.
  *
- * <h2>Example</h2>
- * <pre>{@code
- * // A typed variable (player) that can be resolved by name:
- * env.defineVar("player", new VarRef(RefType.PLAYER, "player"));
- *
- * // A plain variable (args) with no type category:
- * env.defineVar("args", new VarRef(null, "args"));
- *
- * // A variable with full type and metadata:
- * VarRef mob = new VarRef(RefType.ENTITY, "mob", LumenType.fromHandle(Types.ENTITY))
- *     .withMeta("entityType", "ZOMBIE");
- * }</pre>
- *
- * @param refType   the logical type category for type checking, or {@code null} for plain variables
+ * @param refType   the object type for type checking, or {@code null} for plain variables
  * @param java      the Java variable name that will appear in generated source
  * @param lumenType the full compile-time type, or {@code null} if unknown
  * @param metadata  an unmodifiable map of compile-time metadata entries
- * @see RefType
+ * @see ObjectType
  * @see LumenType
  * @see TypeEnv
  */
 @SuppressWarnings("unused")
-public record VarRef(@Nullable RefType refType, @NotNull String java,
+public record VarRef(@Nullable ObjectType refType, @NotNull String java,
                      @Nullable LumenType lumenType, @NotNull Map<String, Object> metadata)
         implements EnvironmentAccess.VarHandle {
 
     /**
      * Creates a {@code VarRef} with no metadata and no explicit LumenType.
      *
-     * @param refType the logical type category, or {@code null}
+     * @param refType the object type, or {@code null}
      * @param java    the Java variable name
      */
-    public VarRef(@Nullable RefType refType, @NotNull String java) {
-        this(refType, java, refType != null ? new LumenType.ObjectType(refType) : null, Map.of());
+    public VarRef(@Nullable ObjectType refType, @NotNull String java) {
+        this(refType, java, refType, Map.of());
     }
 
     /**
      * Creates a {@code VarRef} with metadata but no explicit LumenType.
      *
-     * @param refType  the logical type category, or {@code null}
+     * @param refType  the object type, or {@code null}
      * @param java     the Java variable name
      * @param metadata compile-time metadata entries
      */
-    public VarRef(@Nullable RefType refType, @NotNull String java, @NotNull Map<String, Object> metadata) {
-        this(refType, java, refType != null ? new LumenType.ObjectType(refType) : null, metadata);
+    public VarRef(@Nullable ObjectType refType, @NotNull String java, @NotNull Map<String, Object> metadata) {
+        this(refType, java, refType, metadata);
     }
 
     /**
      * Creates a {@code VarRef} with a LumenType and no metadata.
      *
-     * @param refType   the logical type category, or {@code null}
+     * @param refType   the object type, or {@code null}
      * @param java      the Java variable name
      * @param lumenType the full compile-time type, or {@code null}
      */
-    public VarRef(@Nullable RefType refType, @NotNull String java, @Nullable LumenType lumenType) {
+    public VarRef(@Nullable ObjectType refType, @NotNull String java, @Nullable LumenType lumenType) {
         this(refType, java, lumenType, Map.of());
     }
 
@@ -94,37 +80,19 @@ public record VarRef(@Nullable RefType refType, @NotNull String java,
      */
     public @Nullable LumenType resolvedType() {
         if (lumenType != null) return lumenType;
-        if (refType != null) return new LumenType.ObjectType(refType);
-        return null;
-    }
-
-    @Override
-    public @Nullable RefTypeHandle type() {
         return refType;
     }
 
     @Override
-    public @Nullable TypeHandle typeHandle() {
+    public @Nullable LumenType type() {
         return resolvedType();
     }
 
-    /**
-     * Returns the metadata value for the given key, or {@code null} if absent.
-     *
-     * @param key the metadata key
-     * @return the value, or {@code null}
-     */
     @Override
     public @Nullable Object meta(@NotNull String key) {
         return metadata.get(key);
     }
 
-    /**
-     * Returns {@code true} if metadata contains the given key.
-     *
-     * @param key the metadata key
-     * @return {@code true} if present
-     */
     @Override
     public boolean hasMeta(@NotNull String key) {
         return metadata.containsKey(key);

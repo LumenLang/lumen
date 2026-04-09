@@ -6,6 +6,7 @@ import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess.VarHandle;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.type.Types;
+import dev.lumenlang.lumen.api.type.MinecraftTypes;
 import dev.lumenlang.lumen.plugin.util.EntityHelper;
 import dev.lumenlang.lumen.plugin.util.EntityValidation;
 import org.bukkit.entity.Tameable;
@@ -25,7 +26,7 @@ public final class TameableExpressions {
                         "[get] %e:ENTITY% owner",
                         "Returns the tameable entity's owner, or null if not tamed.",
                         "set owner to mob owner",
-                        Types.OFFLINE_PLAYER.id(),
+                        MinecraftTypes.OFFLINE_PLAYER.id(),
                         ctx -> {
                             VarHandle h = (VarHandle) ctx.value("e");
                             String java = ctx.java("e");
@@ -34,7 +35,7 @@ public final class TameableExpressions {
                             return new ExpressionResult(
                                     "(" + java + " instanceof Tameable _tm && _tm.getOwner() != null"
                                             + " ? _tm.getOwner() : null)",
-                                    Types.OFFLINE_PLAYER.id());
+                                    MinecraftTypes.OFFLINE_PLAYER.id());
                         });
     }
 }

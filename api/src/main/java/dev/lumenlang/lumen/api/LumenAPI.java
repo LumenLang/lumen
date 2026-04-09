@@ -6,7 +6,6 @@ import dev.lumenlang.lumen.api.emit.transform.TransformerRegistrar;
 import dev.lumenlang.lumen.api.event.EventRegistrar;
 import dev.lumenlang.lumen.api.pattern.PatternRegistrar;
 import dev.lumenlang.lumen.api.placeholder.PlaceholderRegistrar;
-import dev.lumenlang.lumen.api.type.RefTypeRegistrar;
 import dev.lumenlang.lumen.api.type.TypeRegistrar;
 import org.jetbrains.annotations.NotNull;
 
@@ -73,14 +72,7 @@ public interface LumenAPI {
     @NotNull EventRegistrar events();
 
     /**
-     * Returns the ref type registrar for registering new compile-time reference types.
-     *
-     * @return the ref type registrar
-     */
-    @NotNull RefTypeRegistrar refTypes();
-
-    /**
-     * Returns the placeholder registrar for registering placeholder properties on ref types.
+     * Returns the placeholder registrar for registering placeholder properties on types.
      *
      * @return the placeholder registrar
      */

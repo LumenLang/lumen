@@ -1,9 +1,9 @@
 package dev.lumenlang.lumen.pipeline.codegen;
 
 import dev.lumenlang.lumen.api.codegen.BlockAccess;
+import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.pipeline.language.nodes.BlockNode;
 import dev.lumenlang.lumen.pipeline.language.nodes.Node;
-import dev.lumenlang.lumen.pipeline.var.RefType;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,7 +102,7 @@ public final class BlockContext implements BlockAccess {
      * @param type the ref type to search for
      * @return the matching variable, or {@code null} if none found in this frame
      */
-    public @Nullable VarRef findVarByType(@NotNull RefType type) {
+    public @Nullable VarRef findVarByType(@NotNull ObjectType type) {
         for (VarRef ref : vars.values()) {
             if (ref.refType() != null && ref.refType().id().equals(type.id())) {
                 return ref;

@@ -6,6 +6,8 @@ import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.api.type.Types;
+import dev.lumenlang.lumen.api.type.BuiltinLumenTypes;
+import dev.lumenlang.lumen.api.type.MinecraftTypes;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
 import org.jetbrains.annotations.NotNull;
@@ -31,12 +33,12 @@ public final class ItemStackExpressions {
                 .description("Creates a new ItemStack from a material name with an amount of 1.")
                 .example("set sword to new item diamond_sword")
                 .since("1.0.0").category(Categories.ITEM)
-                .returnRefTypeId(Types.ITEMSTACK.id())
+                .returnRefTypeId(MinecraftTypes.ITEMSTACK.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(ITEM_STACK);
                     return new ExpressionResult(
                             "new ItemStack(" + ctx.java("mat") + ")",
-                            Types.ITEMSTACK.id());
+                            MinecraftTypes.ITEMSTACK.id());
                 }));
 
         api.patterns().expression(b -> b
@@ -44,12 +46,12 @@ public final class ItemStackExpressions {
                 .description("Creates a new ItemStack from a material name with the specified amount.")
                 .example("set swords to new item diamond_sword 5")
                 .since("1.0.0").category(Categories.ITEM)
-                .returnRefTypeId(Types.ITEMSTACK.id())
+                .returnRefTypeId(MinecraftTypes.ITEMSTACK.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(ITEM_STACK);
                     return new ExpressionResult(
                             "new ItemStack(" + ctx.java("mat") + ", " + ctx.java("amt") + ")",
-                            Types.ITEMSTACK.id());
+                            MinecraftTypes.ITEMSTACK.id());
                 }));
 
         api.patterns().expression(b -> b
@@ -69,14 +71,14 @@ public final class ItemStackExpressions {
                 .description("Returns the lore of an item stack as a list of strings.")
                 .example("set lore to get item's lore")
                 .since("1.0.0").category(Categories.ITEM)
-                .returnRefTypeId(Types.LIST.id())
+                .returnRefTypeId(BuiltinLumenTypes.LIST.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(List.class.getName());
                     ctx.codegen().addImport(Collections.class.getName());
                     String java = ctx.java("i");
                     return new ExpressionResult(
                             "(" + java + ".hasItemMeta() && " + java + ".getItemMeta().hasLore() ? " + java + ".getItemMeta().getLore() : Collections.<String>emptyList())",
-                            Types.LIST.id());
+                            BuiltinLumenTypes.LIST.id());
                 }));
 
         api.patterns().expression(b -> b

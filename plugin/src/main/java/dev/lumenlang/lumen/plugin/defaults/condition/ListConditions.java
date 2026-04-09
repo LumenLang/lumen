@@ -5,7 +5,8 @@ import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.pattern.Categories;
-import dev.lumenlang.lumen.api.type.RefTypeHandle;
+import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.type.ObjectType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -90,11 +91,11 @@ public final class ListConditions {
                     String scopeVarName = match.java("scope", ctx, env);
                     EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
                     if (scopeRef == null) throw new RuntimeException("Scope variable not found: " + scopeVarName);
-                    RefTypeHandle refType = scopeRef.type();
+                    LumenType refType = scopeRef.type();
                     if (refType == null) throw new RuntimeException("Scope variable '" + scopeVarName + "' has no ref type.");
                     ctx.addImport(List.class.getName());
                     ctx.addImport(ArrayList.class.getName());
-                    return "((List<?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") + ".get(" + "\"" + info.className() + "." + listVarName + ".\" + " + refType.keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")).isEmpty()";
+                    return "((List<?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") + ".get(" + "\"" + info.className() + "." + listVarName + ".\" + " + ((ObjectType) refType).keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")).isEmpty()";
                 }));
 
         api.patterns().condition(b -> b
@@ -116,11 +117,11 @@ public final class ListConditions {
                     String scopeVarName = match.java("scope", ctx, env);
                     EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
                     if (scopeRef == null) throw new RuntimeException("Scope variable not found: " + scopeVarName);
-                    RefTypeHandle refType = scopeRef.type();
+                    LumenType refType = scopeRef.type();
                     if (refType == null) throw new RuntimeException("Scope variable '" + scopeVarName + "' has no ref type.");
                     ctx.addImport(List.class.getName());
                     ctx.addImport(ArrayList.class.getName());
-                    return "!((List<?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") + ".get(" + "\"" + info.className() + "." + listVarName + ".\" + " + refType.keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")).isEmpty()";
+                    return "!((List<?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") + ".get(" + "\"" + info.className() + "." + listVarName + ".\" + " + ((ObjectType) refType).keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")).isEmpty()";
                 }));
     }
 }

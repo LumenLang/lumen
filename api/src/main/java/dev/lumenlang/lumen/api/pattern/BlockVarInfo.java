@@ -1,6 +1,6 @@
 package dev.lumenlang.lumen.api.pattern;
 
-import dev.lumenlang.lumen.api.type.RefTypeHandle;
+import dev.lumenlang.lumen.api.type.ObjectType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,7 +10,7 @@ import java.util.Map;
  * Describes a variable that a block provides to its child statements.
  *
  * <p>This record carries both a human readable type string for documentation
- * and an optional {@link RefTypeHandle} for tooling.
+ * and an optional {@link ObjectType} for tooling.
  *
  * @param name        the variable name accessible in script child statements (e.g. "player")
  * @param type        a human readable type string for documentation (e.g. "Player", "World")
@@ -21,7 +21,7 @@ import java.util.Map;
 public record BlockVarInfo(
         @NotNull String name,
         @NotNull String type,
-        @Nullable RefTypeHandle refType,
+        @Nullable ObjectType refType,
         @NotNull Map<String, Object> metadata,
         @Nullable String description) {
 
@@ -55,7 +55,7 @@ public record BlockVarInfo(
      * @param name    the variable name
      * @param refType the typed reference handle
      */
-    public BlockVarInfo(@NotNull String name, @NotNull RefTypeHandle refType) {
+    public BlockVarInfo(@NotNull String name, @NotNull ObjectType refType) {
         this(name, simpleNameOf(refType.javaType()), refType, Map.of(), null);
     }
 

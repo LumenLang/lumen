@@ -6,6 +6,7 @@ import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.api.type.Types;
+import dev.lumenlang.lumen.api.type.MinecraftTypes;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -67,8 +68,8 @@ public final class LocationExpressions {
                 .example("set b to block at player location")
                 .since("1.0.0")
                 .category(Categories.BLOCK)
-                .returnRefTypeId(Types.BLOCK.id())
-                .handler(ctx -> new ExpressionResult(ctx.java("loc") + ".getBlock()", Types.BLOCK.id())));
+                .returnRefTypeId(MinecraftTypes.BLOCK.id())
+                .handler(ctx -> new ExpressionResult(ctx.java("loc") + ".getBlock()", MinecraftTypes.BLOCK.id())));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -77,7 +78,7 @@ public final class LocationExpressions {
                 .example("set w to myLocation world")
                 .since("1.0.0")
                 .category(Categories.LOCATION)
-                .returnRefTypeId(Types.WORLD.id())
-                .handler(ctx -> new ExpressionResult(ctx.java("loc") + ".getWorld()", Types.WORLD.id())));
+                .returnRefTypeId(MinecraftTypes.WORLD.id())
+                .handler(ctx -> new ExpressionResult(ctx.java("loc") + ".getWorld()", MinecraftTypes.WORLD.id())));
     }
 }

@@ -10,7 +10,8 @@ import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
 import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.handler.BlockHandler;
 import dev.lumenlang.lumen.api.pattern.Categories;
-import dev.lumenlang.lumen.api.type.RefTypeHandle;
+import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.type.ObjectType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -148,7 +149,7 @@ public final class MapBlocks {
                                     .help("make sure the variable is defined before using it")
                                     .build());
                         }
-                        RefTypeHandle refType = scopeRef.type();
+                        LumenType refType = scopeRef.type();
                         if (refType == null) {
                             throw new DiagnosticException(LumenDiagnostic.error("E502", "Scope variable '" + scopeVarName + "' has no type")
                                     .at(ctx.block().line(), ctx.block().raw())
@@ -160,7 +161,7 @@ public final class MapBlocks {
                         ctx.codegen().addImport(Map.class.getName());
                         ctx.codegen().addImport(HashMap.class.getName());
                         String entryVar = "__entry_" + keyName + "_" + valName;
-                        out.line("for (var " + entryVar + " : ((Map<?, ?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") + ".get(" + "\"" + info.className() + "." + mapVarName + ".\" + " + refType.keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")).entrySet()) {");
+                        out.line("for (var " + entryVar + " : ((Map<?, ?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") + ".get(" + "\"" + info.className() + "." + mapVarName + ".\" + " + ((ObjectType) refType).keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")).entrySet()) {");
                         out.line("var " + keyName + " = " + entryVar + ".getKey();");
                         out.line("var " + valName + " = " + entryVar + ".getValue();");
                         env.defineVar(keyName, null, keyName);

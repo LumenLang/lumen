@@ -6,6 +6,7 @@ import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.api.type.Types;
+import dev.lumenlang.lumen.api.type.MinecraftTypes;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -23,8 +24,8 @@ public final class GenericEntityExpressions {
                 .example("set loc to get mob's location")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .returnRefTypeId(Types.LOCATION.id())
-                .handler(ctx -> new ExpressionResult(ctx.java("e") + ".getLocation()", Types.LOCATION.id())));
+                .returnRefTypeId(MinecraftTypes.LOCATION.id())
+                .handler(ctx -> new ExpressionResult(ctx.java("e") + ".getLocation()", MinecraftTypes.LOCATION.id())));
 
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("get %e:ENTITY_POSSESSIVE% world")
@@ -32,8 +33,8 @@ public final class GenericEntityExpressions {
                 .example("set w to get mob's world")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .returnRefTypeId(Types.WORLD.id())
-                .handler(ctx -> new ExpressionResult(ctx.java("e") + ".getWorld()", Types.WORLD.id())));
+                .returnRefTypeId(MinecraftTypes.WORLD.id())
+                .handler(ctx -> new ExpressionResult(ctx.java("e") + ".getWorld()", MinecraftTypes.WORLD.id())));
 
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("get %e:ENTITY_POSSESSIVE% type")
