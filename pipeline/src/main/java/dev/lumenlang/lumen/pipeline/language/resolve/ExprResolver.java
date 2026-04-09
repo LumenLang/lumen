@@ -245,7 +245,7 @@ public final class ExprResolver {
                 if (widened != null) resultType = widened;
             }
         }
-        String javaType = resultType != null ? resultType.javaType() : null;
+        String javaType = resultType != null ? resultType.id() : "Object";
         return new ExpressionResult(sb.toString(), javaType);
     }
 
@@ -274,7 +274,7 @@ public final class ExprResolver {
             }
             if (t.kind() == TokenKind.IDENT) {
                 VarRef ref = env.lookupVar(t.text());
-                if (ref != null) return new TypedOperand(ref.java(), ref.resolvedType());
+                if (ref != null) return new TypedOperand(ref.java(), ref.type());
             }
             return null;
         }
@@ -286,7 +286,7 @@ public final class ExprResolver {
             List<Token> inner = tokens.subList(1, tokens.size() - 1);
             ExpressionResult innerResolved = resolveRecursive(inner, ctx, env, depth + 1);
             if (innerResolved != null) {
-                LumenType type = innerResolved.typeId() != null ? LumenType.fromId(innerResolved.typeId()) : null;
+                LumenType type = LumenType.fromId(innerResolved.typeId());
                 return new TypedOperand("(" + innerResolved.java() + ")", type);
             }
             return null;
@@ -294,7 +294,7 @@ public final class ExprResolver {
 
         ExpressionResult result = resolveRecursive(tokens, ctx, env, depth + 1);
         if (result == null) return null;
-        LumenType type = result.typeId() != null ? LumenType.fromId(result.typeId()) : null;
+        LumenType type = LumenType.fromId(result.typeId());
         if (type != null && !type.numeric()) {
             throw new RuntimeException("Non-numeric operand in arithmetic expression. Expression resolved to type '" + type.displayName() + "' which is not numeric.");
         }

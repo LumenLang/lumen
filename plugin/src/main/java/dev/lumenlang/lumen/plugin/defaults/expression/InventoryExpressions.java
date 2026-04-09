@@ -42,7 +42,7 @@ public final class InventoryExpressions {
                             String title = ctx.java("title");
                             return new ExpressionResult(
                                     "LumenInventoryHelper.create(" + name + ", " + size + ", " + title + ")",
-                                    null);
+                                    MinecraftTypes.INVENTORY.id());
                         })
                 .expression(
                         "new inventory %name:STRING% [with] [size] %size:INT%",
@@ -55,7 +55,7 @@ public final class InventoryExpressions {
                             String size = ctx.java("size");
                             return new ExpressionResult(
                                     "LumenInventoryHelper.create(" + name + ", " + size + ")",
-                                    null);
+                                    MinecraftTypes.INVENTORY.id());
                         })
                 .expression(
                         "new inventory %name:STRING% [with] rows %rows:INT% titled %title:STRING%",
@@ -70,7 +70,7 @@ public final class InventoryExpressions {
                             String title = ctx.java("title");
                             return new ExpressionResult(
                                     "LumenInventoryHelper.createWithRows(" + name + ", " + rows + ", " + title + ")",
-                                    null);
+                                    MinecraftTypes.INVENTORY.id());
                         })
                 .expression(
                         "new inventory %name:STRING% [with] rows %rows:INT%",
@@ -84,7 +84,7 @@ public final class InventoryExpressions {
                             String rows = ctx.java("rows");
                             return new ExpressionResult(
                                     "LumenInventoryHelper.createWithRows(" + name + ", " + rows + ")",
-                                    null);
+                                    MinecraftTypes.INVENTORY.id());
                         });
     }
 

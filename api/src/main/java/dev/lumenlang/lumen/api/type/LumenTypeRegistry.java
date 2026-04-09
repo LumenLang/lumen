@@ -5,6 +5,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -27,18 +28,18 @@ public final class LumenTypeRegistry {
     }
 
     /**
-     * Registers a new object type with a default key template and no supertype.
+     * Registers a new object type with a default key template and no supertypes.
      *
      * @param id       a unique identifier (e.g. {@code "BLOCK"})
      * @param javaType the fully qualified Java class name
      * @return the registered object type
      */
     public static @NotNull ObjectType register(@NotNull String id, @NotNull String javaType) {
-        return register(id, javaType, "String.valueOf($)", null);
+        return register(id, javaType, "String.valueOf($)", List.of());
     }
 
     /**
-     * Registers a new object type with a custom key template and no supertype.
+     * Registers a new object type with a custom key template and no supertypes.
      *
      * @param id          a unique identifier
      * @param javaType    the fully qualified Java class name
@@ -46,36 +47,24 @@ public final class LumenTypeRegistry {
      * @return the registered object type
      */
     public static @NotNull ObjectType register(@NotNull String id, @NotNull String javaType, @NotNull String keyTemplate) {
-        return register(id, javaType, keyTemplate, null);
+        return register(id, javaType, keyTemplate, List.of());
     }
 
     /**
-     * Registers a new object type with a supertype relationship.
-     *
-     * @param id        a unique identifier
-     * @param javaType  the fully qualified Java class name
-     * @param superType the parent type in the hierarchy, or {@code null} for root types
-     * @return the registered object type
-     */
-    public static @NotNull ObjectType registerWithParent(@NotNull String id, @NotNull String javaType, @Nullable ObjectType superType) {
-        return register(id, javaType, "String.valueOf($)", superType);
-    }
-
-    /**
-     * Registers a new object type with a custom key template and supertype.
+     * Registers a new object type with a custom key template and supertypes.
      *
      * <p>If the id is already registered with the same Java type, the existing instance is returned.
      *
      * @param id          a unique identifier
      * @param javaType    the fully qualified Java class name
      * @param keyTemplate a template for producing a unique runtime key
-     * @param superType   the parent type in the hierarchy, or {@code null}
+     * @param superTypes  the parent types in the hierarchy
      * @return the registered object type
      */
-    public static @NotNull ObjectType register(@NotNull String id, @NotNull String javaType, @NotNull String keyTemplate, @Nullable ObjectType superType) {
+    public static @NotNull ObjectType register(@NotNull String id, @NotNull String javaType, @NotNull String keyTemplate, @NotNull List<LumenType> superTypes) {
         ObjectType existing = BY_ID.get(id);
         if (existing != null) return existing;
-        ObjectType type = new ObjectType(id, javaType, keyTemplate, superType);
+        ObjectType type = new ObjectType(id, javaType, keyTemplate, superTypes);
         BY_ID.put(id, type);
         BY_JAVA.put(javaType, type);
         return type;

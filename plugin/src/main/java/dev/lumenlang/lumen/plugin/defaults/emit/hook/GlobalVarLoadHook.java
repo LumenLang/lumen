@@ -10,8 +10,6 @@ import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.pipeline.persist.GlobalVars;
 import dev.lumenlang.lumen.pipeline.persist.PersistentVars;
 import dev.lumenlang.lumen.api.type.LumenType;
-import dev.lumenlang.lumen.api.type.LumenTypeRegistry;
-import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
@@ -86,27 +84,17 @@ public final class GlobalVarLoadHook implements BlockEnterHook {
 
             String defaultJava = g.defaultJava();
             String className = g.className();
-            String exprTypeId = g.exprTypeId();
             Map<String, Object> exprMetadata = g.exprMetadata();
-            ObjectType resolvedObjectType = exprTypeId != null ? LumenTypeRegistry.byId(exprTypeId) : null;
             String keyExpr = "\"" + className + "." + name + "\"";
 
-            String fieldType;
-            LumenType lumenType;
-            if (resolvedObjectType != null) {
-                lumenType = resolvedObjectType;
-                String fqn = resolvedObjectType.javaType();
-                ctx.codegen().addImport(fqn);
-                fieldType = lumenType.javaTypeName();
-            } else {
-                lumenType = inferLumenType(defaultJava);
-                fieldType = lumenType.javaTypeName();
-            }
+            // TODO: Completely rewrite global var type tracking
+            LumenType lumenType = inferLumenType(defaultJava);
+            String fieldType = lumenType.javaTypeName();
             String storageClass = g.stored() ? "PersistentVars" : "GlobalVars";
             ctx.codegen().addField(fieldType + " " + name + ";");
             ctx.out().taggedLine(TAG, name + " = " + storageClass + ".get(" + keyExpr + ", " + defaultJava + ");");
 
-            VarRef varRef = new VarRef(resolvedObjectType, name, lumenType, exprMetadata);
+            VarRef varRef = new VarRef(lumenType, name, exprMetadata);
             env.defineVar(name, varRef);
             env.markGlobalField(name);
             if (g.stored()) {

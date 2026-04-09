@@ -40,7 +40,7 @@ public final class GenericEntityExpressions {
                 .example("set t to get mob's type")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler(ctx -> new ExpressionResult(ctx.java("e") + ".getType()", null)));
+                .handler(ctx -> new ExpressionResult(ctx.java("e") + ".getType()", MinecraftTypes.ENTITY_TYPE.id())));
 
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("get %e:ENTITY_POSSESSIVE% name")
@@ -72,7 +72,7 @@ public final class GenericEntityExpressions {
                 .example("set vel to get mob's velocity")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler(ctx -> new ExpressionResult(ctx.java("e") + ".getVelocity()", null)));
+                .handler(ctx -> new ExpressionResult(ctx.java("e") + ".getVelocity()", MinecraftTypes.VECTOR.id())));
 
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("get %e:ENTITY_POSSESSIVE% fire ticks")

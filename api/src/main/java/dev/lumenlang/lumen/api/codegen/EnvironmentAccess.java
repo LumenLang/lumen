@@ -351,15 +351,6 @@ public interface EnvironmentAccess {
         boolean stored();
 
         /**
-         * Returns the type ID inferred from the default expression, or {@code null}.
-         *
-         * @return the expression type ID, or {@code null}
-         */
-        default @Nullable String exprTypeId() {
-            return null;
-        }
-
-        /**
          * Returns compile-time metadata from the default expression, or {@code null}.
          *
          * @return the expression metadata, or {@code null}

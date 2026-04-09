@@ -62,7 +62,7 @@ public final class DefaultExpressions {
                 .examples("global scoped pos1 with default none", "set result to none")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
-                .handler(ctx -> new ExpressionResult("(Object) null", null)));
+                .handler(ctx -> new ExpressionResult("(Object) null", "NONE")));
 
         registerTypedNulls(api);
 

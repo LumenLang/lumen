@@ -8,7 +8,6 @@ import dev.lumenlang.lumen.plugin.inject.bytecode.BytecodeExtractor;
 import dev.lumenlang.lumen.plugin.inject.bytecode.ExtractedBody;
 import dev.lumenlang.lumen.plugin.inject.bytecode.MethodDecompiler;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.List;
@@ -22,7 +21,7 @@ import java.util.Map;
 public final class InjectableExpressionHandler implements ExpressionHandler, PatternHinted {
 
     private final InjectableHandlerSupport support;
-    private final @Nullable String typeId;
+    private final @NotNull String typeId;
 
     /**
      * Creates a handler from the given injectable expression.
@@ -33,7 +32,8 @@ public final class InjectableExpressionHandler implements ExpressionHandler, Pat
         ExtractedBody body = BytecodeExtractor.extract(expression);
         String returnTypeJava = InjectableHandlerSupport.descriptorToJavaType(body.returnDescriptor());
         this.support = new InjectableHandlerSupport(body, returnTypeJava, false);
-        this.typeId = InjectableHandlerSupport.descriptorToTypeId(body.returnDescriptor());
+        String resolved = InjectableHandlerSupport.descriptorToTypeId(body.returnDescriptor());
+        this.typeId = resolved != null ? resolved : "Object";
     }
 
     /**
@@ -46,7 +46,8 @@ public final class InjectableExpressionHandler implements ExpressionHandler, Pat
         ExtractedBody body = BytecodeExtractor.extractMethod(clazz, methodName);
         String returnTypeJava = InjectableHandlerSupport.descriptorToJavaType(body.returnDescriptor());
         this.support = new InjectableHandlerSupport(body, returnTypeJava, false);
-        this.typeId = InjectableHandlerSupport.descriptorToTypeId(body.returnDescriptor());
+        String resolved = InjectableHandlerSupport.descriptorToTypeId(body.returnDescriptor());
+        this.typeId = resolved != null ? resolved : "Object";
     }
 
     @Override

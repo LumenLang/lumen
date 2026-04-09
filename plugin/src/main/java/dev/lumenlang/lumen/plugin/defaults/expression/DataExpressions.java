@@ -48,9 +48,9 @@ public final class DataExpressions {
                                                                @NotNull String rawGet) {
         DataSchema.FieldType fieldType = resolveFieldType(ctx);
         if (fieldType != null && fieldType != DataSchema.FieldType.ANY) {
-            return new ExpressionResult(fieldType.coerce(rawGet), null);
+            return new ExpressionResult(fieldType.coerce(rawGet), fieldType.javaType());
         }
-        return new ExpressionResult(rawGet, null);
+        return new ExpressionResult(rawGet, "Object");
     }
 
     /**

@@ -179,7 +179,7 @@ public final class VarDeclarationForm implements StatementFormHandler {
         }
         boolean isNone = exprTokens.size() == 1 && exprTokens.get(0).kind() == TokenKind.IDENT && isNullKeyword(exprTokens.get(0).text());
         if (isNone) {
-            LumenType varType = ref.resolvedType();
+            LumenType varType = ref.type();
             if (varType != null && !(varType instanceof NullableType)) {
                 Token noneToken = exprTokens.get(0);
                 LumenDiagnostic diag = TypeChecker.checkNullAssignment(varType, name, ctx.line(), ctx.raw(), noneToken.start(), noneToken.end());
@@ -190,7 +190,7 @@ public final class VarDeclarationForm implements StatementFormHandler {
         if (resolved == null) {
             return false;
         }
-        LumenType varType = ref.resolvedType();
+        LumenType varType = ref.type();
         if (varType != null && resolved.type != null) {
             int colStart = exprTokens.get(0).start();
             int colEnd = exprTokens.get(exprTokens.size() - 1).end();
@@ -272,19 +272,15 @@ public final class VarDeclarationForm implements StatementFormHandler {
                 ExpressionResult exprResult = tryExpressionPattern(raw.tokens(), ctx, env);
                 if (exprResult != null) {
                     java = exprResult.java();
-                    if (exprResult.typeId() != null) {
-                        resolvedObjectType = LumenTypeRegistry.byId(exprResult.typeId());
-                    }
-                    exprLumenType = exprResult.typeId() != null ? LumenType.fromId(exprResult.typeId()) : null;
+                    resolvedObjectType = LumenTypeRegistry.byId(exprResult.typeId());
+                    exprLumenType = LumenType.fromId(exprResult.typeId());
                     resolvedMetadata = exprResult.metadata();
                 } else {
                     ExpressionResult resolvedResult = ExprResolver.resolveWithType(raw.tokens(), ctx.codegenContext(), env);
                     if (resolvedResult != null) {
                         java = resolvedResult.java();
-                        if (resolvedResult.typeId() != null) {
-                            resolvedObjectType = LumenTypeRegistry.byId(resolvedResult.typeId());
-                        }
-                        exprLumenType = resolvedResult.typeId() != null ? LumenType.fromId(resolvedResult.typeId()) : null;
+                        resolvedObjectType = LumenTypeRegistry.byId(resolvedResult.typeId());
+                        exprLumenType = LumenType.fromId(resolvedResult.typeId());
                         resolvedMetadata = resolvedResult.metadata();
                     } else {
                         throw new DiagnosticException(LumenDiagnostic.error("E502", "Cannot resolve expression")
@@ -325,14 +321,20 @@ public final class VarDeclarationForm implements StatementFormHandler {
             }
         }
 
-        ObjectType effectiveObjectType = inheritedRef != null ? inheritedRef.objectType() : resolvedObjectType;
-        LumenType resolvedLumenType = inheritedRef != null ? inheritedRef.resolvedType() : (exprLumenType != null ? exprLumenType : e.resolvedType());
-        if (resolvedLumenType == null && effectiveObjectType != null) {
-            resolvedLumenType = effectiveObjectType;
+        LumenType resolvedLumenType;
+        if (inheritedRef != null) {
+            resolvedLumenType = inheritedRef.type();
+        } else if (exprLumenType != null) {
+            resolvedLumenType = exprLumenType;
+        } else {
+            resolvedLumenType = e.resolvedType();
+        }
+        if (resolvedLumenType == null && resolvedObjectType != null) {
+            resolvedLumenType = resolvedObjectType;
         }
         String typeDecl = resolvedLumenType != null ? resolvedLumenType.javaTypeName() : "var";
         ctx.out().line(typeDecl + " " + name + " = " + java + ";");
-        VarRef varRef = new VarRef(effectiveObjectType, name, resolvedLumenType, resolvedMetadata);
+        VarRef varRef = new VarRef(resolvedLumenType, name, resolvedMetadata);
         env.defineVar(name, varRef);
         if (env.blockContext().parent() != null) {
             env.blockContext().parent().defineVar(name, varRef);
@@ -371,7 +373,7 @@ public final class VarDeclarationForm implements StatementFormHandler {
             }
         }
         ctx.out().line(nullableType.javaTypeName() + " " + name + " = " + java + ";");
-        VarRef varRef = new VarRef(null, name, nullableType, Map.of());
+        VarRef varRef = new VarRef(nullableType, name);
         env.defineVar(name, varRef);
         env.recordNullableVarInfo(name, new TypeEnv.NullableVarInfo(ctx.line(), ctx.raw()));
         env.markNullState(name, exprTokens.size() == 2 ? TypeEnv.NullState.NULL : TypeEnv.NullState.NON_NULL, ctx.line(), ctx.raw());
@@ -427,22 +429,22 @@ public final class VarDeclarationForm implements StatementFormHandler {
         }
         if (e instanceof Expr.RefExpr r) {
             VarRef varRef = env.lookupVar(r.name());
-            return varRef != null ? new TypedExpression(varRef.java(), varRef.resolvedType()) : null;
+            return varRef != null ? new TypedExpression(varRef.java(), varRef.type()) : null;
         }
         if (e instanceof Expr.MathExpr m) return new TypedExpression(m.java(), m.resolvedType());
         Expr.RawExpr raw = (Expr.RawExpr) e;
         if (raw.tokens().size() > 1) {
             ExpressionResult result = tryExpressionPattern(raw.tokens(), ctx, env);
-            if (result != null) return new TypedExpression(result.java(), result.typeId() != null ? LumenType.fromId(result.typeId()) : null);
+            if (result != null) return new TypedExpression(result.java(), LumenType.fromId(result.typeId()));
             ExpressionResult resolved = ExprResolver.resolveWithType(raw.tokens(), ctx.codegenContext(), env);
-            if (resolved != null) return new TypedExpression(resolved.java(), resolved.typeId() != null ? LumenType.fromId(resolved.typeId()) : null);
+            if (resolved != null) return new TypedExpression(resolved.java(), LumenType.fromId(resolved.typeId()));
             return null;
         }
         Token single = raw.tokens().get(0);
         if (single.kind() == TokenKind.IDENT) {
             if (isNullKeyword(single.text())) return new TypedExpression("null", null);
             VarRef varRef = env.lookupVar(single.text());
-            return varRef != null ? new TypedExpression(varRef.java(), varRef.resolvedType()) : null;
+            return varRef != null ? new TypedExpression(varRef.java(), varRef.type()) : null;
         }
         return new TypedExpression(ExprResolver.joinTokens(raw.tokens()), null);
     }

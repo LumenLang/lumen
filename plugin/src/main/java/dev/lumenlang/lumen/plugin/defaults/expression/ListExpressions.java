@@ -93,7 +93,7 @@ public final class ListExpressions {
                     ctx.codegen().addImport(List.class.getName());
                     return new ExpressionResult(
                             "((List<?>) " + ctx.java("list") + ").get(" + ctx.java("i") + ")",
-                            null);
+                            "Object");
                 }));
 
         api.patterns().expression(b -> b

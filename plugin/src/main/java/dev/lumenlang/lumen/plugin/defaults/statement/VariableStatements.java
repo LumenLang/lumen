@@ -296,7 +296,8 @@ public final class VariableStatements {
                     }
                     String storageClass = resolveStorageClass(info);
                     String keyExpr = buildScopedKey(env, varName, ctx.java("scope"), info);
-                    return new ExpressionResult(storageClass + ".get(" + keyExpr + ", " + info.defaultJava() + ")", info.exprTypeId());
+                    // TODO: Completely rewrite global var type tracking
+                    return new ExpressionResult(storageClass + ".get(" + keyExpr + ", " + info.defaultJava() + ")", "Object");
                 }));
     }
 }

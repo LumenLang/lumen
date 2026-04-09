@@ -24,8 +24,8 @@ public final class BuiltinLumenTypes {
      * Must be called during plugin initialization.
      */
     public static void registerAll() {
-        LumenTypeRegistry.register(DATA.id(), DATA.javaType(), DATA.keyTemplate(), DATA.superType());
-        LumenTypeRegistry.register(LIST.id(), LIST.javaType(), LIST.keyTemplate(), LIST.superType());
-        LumenTypeRegistry.register(MAP.id(), MAP.javaType(), MAP.keyTemplate(), MAP.superType());
+        LumenTypeRegistry.register(DATA.id(), DATA.javaType(), DATA.keyTemplate(), DATA.superTypes());
+        LumenTypeRegistry.register(LIST.id(), LIST.javaType(), LIST.keyTemplate(), LIST.superTypes());
+        LumenTypeRegistry.register(MAP.id(), MAP.javaType(), MAP.keyTemplate(), MAP.superTypes());
     }
 }

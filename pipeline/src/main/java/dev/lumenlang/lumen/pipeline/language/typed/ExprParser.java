@@ -73,7 +73,7 @@ public final class ExprParser {
 
                 VarRef ref = env.lookupVar(text);
                 if (ref != null)
-                    return new Expr.RefExpr(text, ref.resolvedType());
+                    return new Expr.RefExpr(text, ref.type());
             }
         }
 

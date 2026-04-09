@@ -5,7 +5,6 @@ import dev.lumenlang.lumen.api.pattern.PatternRegistrar;
 import dev.lumenlang.lumen.api.type.MinecraftTypes;
 import dev.lumenlang.lumen.api.type.Types;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -52,18 +51,18 @@ public interface ExpressionHandler {
      * The result of an expression handler.
      *
      * @param java     the Java expression string
-     * @param typeId   the type id for the resulting variable (e.g. {@code "PLAYER"}, {@code "int"}, {@code "String"}), or null if unknown
+     * @param typeId   the type id for the resulting variable (e.g. {@code "PLAYER"}, {@code "int"}, {@code "String"}, {@code "Object"} for unknown)
      * @param metadata compile-time metadata forwarded to the resulting variable reference
      */
-    record ExpressionResult(@NotNull String java, @Nullable String typeId, @NotNull Map<String, Object> metadata) {
+    record ExpressionResult(@NotNull String java, @NotNull String typeId, @NotNull Map<String, Object> metadata) {
 
         /**
          * Creates a typed expression result with no metadata.
          *
          * @param java   the Java expression string
-         * @param typeId the type id (e.g. {@code "PLAYER"}, {@code Types.INT})
+         * @param typeId the type id (e.g. {@code "PLAYER"}, {@code Types.INT}, {@code "Object"} for unknown)
          */
-        public ExpressionResult(@NotNull String java, @Nullable String typeId) {
+        public ExpressionResult(@NotNull String java, @NotNull String typeId) {
             this(java, typeId, Map.of());
         }
     }

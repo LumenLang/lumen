@@ -222,7 +222,7 @@ public final class MathEngine {
             if (ref == null) {
                 throw new RuntimeException("Variable not found in math expression: " + t.text());
             }
-            LumenType type = ref.resolvedType();
+            LumenType type = ref.type();
             if (type != null && !type.numeric()) {
                 LumenDiagnostic.Builder b = LumenDiagnostic.error("E203", "Non-numeric operand in arithmetic expression").at(line, rawLine).highlight(t.start(), t.end()).label("'" + t.text() + "' is '" + type.displayName() + "', not numeric");
                 if (type.unwrap() == PrimitiveType.STRING) {
@@ -324,7 +324,7 @@ public final class MathEngine {
             if (ref == null) {
                 throw new RuntimeException("Variable not found in math expression: " + t.text());
             }
-            LumenType type = ref.resolvedType();
+            LumenType type = ref.type();
             if (type != null && !type.numeric()) {
                 LumenDiagnostic.Builder b = LumenDiagnostic.error("E203", "Non-numeric operand in arithmetic expression").at(line, rawLine).highlight(t.start(), t.end()).label("'" + t.text() + "' is '" + type.displayName() + "', not numeric");
                 if (type.unwrap() == PrimitiveType.STRING) {

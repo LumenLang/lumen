@@ -98,7 +98,7 @@ public final class MapExpressions {
                     return new ExpressionResult(
                             "((Map<?, ?>) " + storageClass + ".get(" + storageKey + ", "
                                     + info.defaultJava() + ")).get(" + keyJava + ")",
-                            null);
+                            "Object");
                 }));
 
         api.patterns().expression(b -> b
@@ -112,7 +112,7 @@ public final class MapExpressions {
                     ctx.codegen().addImport(Map.class.getName());
                     return new ExpressionResult(
                             "((Map<?, ?>) " + ctx.java("map") + ").get(" + ctx.java("key") + ")",
-                            null);
+                            "Object");
                 }));
 
         api.patterns().expression(b -> b

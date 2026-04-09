@@ -1,6 +1,8 @@
 package dev.lumenlang.lumen.pipeline.var;
 
+import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.ObjectType;
+import dev.lumenlang.lumen.api.type.TypeUtils;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.pipeline.events.def.EventDef;
 import org.jetbrains.annotations.NotNull;
@@ -18,10 +20,19 @@ import org.jetbrains.annotations.Nullable;
  *       type bindings can resolve it by name during pattern matching.</li>
  * </ol>
  *
- * @param objectType the object type for type checking, or {@code null} for plain variables
- * @param javaType   the fully-qualified Java class name used in the generated declaration
- * @param expr       the Java initialiser expression (e.g. {@code "event.getPlayer()"})
+ * @param type     the compile-time type, or {@code null} for plain variables
+ * @param javaType the fully-qualified Java class name used in the generated declaration
+ * @param expr     the Java initialiser expression (e.g. {@code "event.getPlayer()"})
  * @see VarRef
  */
-public record VarDef(@Nullable ObjectType objectType, @NotNull String javaType, @NotNull String expr) {
+public record VarDef(@Nullable LumenType type, @NotNull String javaType, @NotNull String expr) {
+
+    /**
+     * Narrows the compile-time type to {@link ObjectType} if possible.
+     *
+     * @return the object type, or {@code null} if this variable's type is not an ObjectType
+     */
+    public @Nullable ObjectType objectType() {
+        return TypeUtils.asObject(type);
+    }
 }

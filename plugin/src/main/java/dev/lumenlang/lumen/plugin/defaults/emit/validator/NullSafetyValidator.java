@@ -40,7 +40,7 @@ public final class NullSafetyValidator implements StatementValidator {
             if (t.tokenType() != ScriptToken.TokenType.IDENT) continue;
             VarRef ref = env.lookupVar(t.text());
             if (ref == null) continue;
-            LumenType type = ref.resolvedType();
+            LumenType type = ref.type();
             if (!(type instanceof NullableType)) continue;
             TypeEnv.NullState state = env.nullState(t.text());
             if (state != TypeEnv.NullState.NULL) continue;
