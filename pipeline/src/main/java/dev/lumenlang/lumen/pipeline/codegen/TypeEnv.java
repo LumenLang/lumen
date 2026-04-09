@@ -53,7 +53,70 @@ public final class TypeEnv implements EnvironmentAccess {
     private final List<ConfigEntry> configEntries = new ArrayList<>();
     private final Map<String, VarRef> rootVars = new HashMap<>();
     private final Map<String, DataSchema> dataSchemas = new HashMap<>();
+    private final Map<String, NullState> nullStates = new HashMap<>();
+    private final Map<String, NullableVarInfo> nullableVarInfos = new HashMap<>();
     private BlockContext currentBlock;
+
+    /**
+     * Tracks whether a nullable variable is currently known to be null or non-null.
+     *
+     * <p>This is a definite state, not a probability. {@code NULL} means the variable
+     * is certainly null at this point in the code (declared without default, or last reassigned to none).
+     * {@code NON_NULL} means a concrete value was provided (default value or reassignment to a value).
+     */
+    public enum NullState {
+        NULL,
+        NON_NULL
+    }
+
+    /**
+     * Records the declaration site of a nullable variable for use in multi-line diagnostics.
+     *
+     * @param declarationLine the line where the variable was declared
+     * @param declarationRaw  the raw source text of the declaration line
+     */
+    public record NullableVarInfo(int declarationLine, @NotNull String declarationRaw) {
+    }
+
+    /**
+     * Sets the current null state for a nullable variable.
+     *
+     * @param name  the variable name
+     * @param state the null state
+     */
+    public void markNullState(@NotNull String name, @NotNull NullState state) {
+        nullStates.put(name, state);
+    }
+
+    /**
+     * Returns the current null state of a variable, or {@code null} if not tracked.
+     *
+     * @param name the variable name
+     * @return the null state, or {@code null}
+     */
+    public @Nullable NullState nullState(@NotNull String name) {
+        return nullStates.get(name);
+    }
+
+    /**
+     * Records the declaration site of a nullable variable.
+     *
+     * @param name the variable name
+     * @param info the declaration info
+     */
+    public void recordNullableVarInfo(@NotNull String name, @NotNull NullableVarInfo info) {
+        nullableVarInfos.put(name, info);
+    }
+
+    /**
+     * Returns the declaration site info for a nullable variable, or {@code null} if not recorded.
+     *
+     * @param name the variable name
+     * @return the declaration info, or {@code null}
+     */
+    public @Nullable NullableVarInfo nullableVarInfo(@NotNull String name) {
+        return nullableVarInfos.get(name);
+    }
 
     /**
      * Pushes a new {@link BlockContext} onto the scope stack, making it the active scope.

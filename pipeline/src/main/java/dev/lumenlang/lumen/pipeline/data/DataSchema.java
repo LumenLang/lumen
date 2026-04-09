@@ -32,8 +32,8 @@ public record DataSchema(@NotNull String name, @NotNull Map<String, FieldType> f
      */
     public enum FieldType {
         TEXT("String", "String.valueOf($)"),
-        NUMBER("double", "Coerce.toDouble($)"),
-        INTEGER("int", "Coerce.toInt($)"),
+        NUMBER("double", "((Number) $).doubleValue()"),
+        INTEGER("int", "((Number) $).intValue()"),
         BOOLEAN("boolean", "Boolean.parseBoolean(String.valueOf($))"),
         ANY("Object", "$");
 

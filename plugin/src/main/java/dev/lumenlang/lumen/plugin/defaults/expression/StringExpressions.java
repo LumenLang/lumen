@@ -153,7 +153,7 @@ public final class StringExpressions {
                 .handler(ctx -> {
                     String val = ctx.java("s");
                     return new ExpressionResult(
-                            "Coerce.toDouble(" + val + ")",
+                            "Double.parseDouble(String.valueOf(" + val + "))",
                             null, Types.DOUBLE);
                 }));
 
@@ -168,7 +168,7 @@ public final class StringExpressions {
                 .handler(ctx -> {
                     String val = ctx.java("s");
                     return new ExpressionResult(
-                            "Coerce.toInt(" + val + ")",
+                            "Integer.parseInt(String.valueOf(" + val + "))",
                             null, Types.INT);
                 }));
 

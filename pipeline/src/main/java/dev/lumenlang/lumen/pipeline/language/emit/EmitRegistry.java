@@ -3,6 +3,7 @@ package dev.lumenlang.lumen.pipeline.language.emit;
 import dev.lumenlang.lumen.api.emit.BlockEnterHook;
 import dev.lumenlang.lumen.api.emit.BlockFormHandler;
 import dev.lumenlang.lumen.api.emit.StatementFormHandler;
+import dev.lumenlang.lumen.api.emit.StatementValidator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -21,6 +22,7 @@ public final class EmitRegistry {
     private final List<StatementFormHandler> statementForms = new ArrayList<>();
     private final List<BlockFormHandler> blockForms = new ArrayList<>();
     private final List<BlockEnterHook> blockEnterHooks = new ArrayList<>();
+    private final List<StatementValidator> statementValidators = new ArrayList<>();
 
     /**
      * Sets the global singleton instance.
@@ -72,6 +74,15 @@ public final class EmitRegistry {
     }
 
     /**
+     * Registers a statement validator.
+     *
+     * @param validator the validator to register
+     */
+    public void addStatementValidator(@NotNull StatementValidator validator) {
+        statementValidators.add(validator);
+    }
+
+    /**
      * Returns an unmodifiable view of all registered statement form handlers.
      *
      * @return the statement form handlers
@@ -96,5 +107,14 @@ public final class EmitRegistry {
      */
     public @NotNull List<BlockEnterHook> blockEnterHooks() {
         return Collections.unmodifiableList(blockEnterHooks);
+    }
+
+    /**
+     * Returns an unmodifiable view of all registered statement validators.
+     *
+     * @return the statement validators
+     */
+    public @NotNull List<StatementValidator> statementValidators() {
+        return Collections.unmodifiableList(statementValidators);
     }
 }

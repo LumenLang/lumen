@@ -486,7 +486,11 @@ public final class ScriptManager {
             try {
                 generated.add(parse(ss.name(), ss.source()));
             } catch (LumenScriptException e) {
-                LumenLogger.severe("Script error in " + ss.name() + ": " + e.getMessage());
+                if (e.diagnostic() != null) {
+                    LumenLogger.severe("Script error in " + ss.name() + ":\n" + e.getMessage());
+                } else {
+                    LumenLogger.severe("Script error in " + ss.name() + ": " + e.getMessage());
+                }
             } catch (Throwable t) {
                 LumenLogger.severe("Failed to generate script: " + ss.name(), t);
             }

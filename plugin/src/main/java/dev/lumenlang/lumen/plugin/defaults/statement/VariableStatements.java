@@ -89,8 +89,8 @@ public final class VariableStatements {
         String storageClass = resolveStorageClass(info);
         String keyExpr = buildScopedKey(env, varName, scopeVarName, info);
         out.line("{");
-        out.line("    var __sv = " + storageClass + ".get(" + keyExpr + ", " + info.defaultJava() + ");");
-        out.line("    __sv = Coerce.toInt(__sv) " + op.replace("=", "") + " " + operand + ";");
+        out.line("    int __sv = ((Number) " + storageClass + ".get(" + keyExpr + ", " + info.defaultJava() + ")).intValue();");
+        out.line("    __sv " + op + " " + operand + ";");
         out.line("    " + storageClass + ".set(" + keyExpr + ", __sv);");
         out.line("}");
     }
@@ -143,7 +143,7 @@ public final class VariableStatements {
                     EnvironmentAccess.VarHandle ref = env.lookupVar(varName);
                     if (ref == null)
                         throw new RuntimeException("Variable not found: " + varName);
-                    out.line(ref.java() + " = Coerce.toInt(" + ref.java() + ") + " + ctx.java("n") + ";");
+                    out.line(ref.java() + " += " + ctx.java("n") + ";");
                     emitAutoSave(env, varName, ref, out);
                 }));
 
@@ -171,7 +171,7 @@ public final class VariableStatements {
                     EnvironmentAccess.VarHandle ref = env.lookupVar(varName);
                     if (ref == null)
                         throw new RuntimeException("Variable not found: " + varName);
-                    out.line(ref.java() + " = Coerce.toInt(" + ref.java() + ") - " + ctx.java("n") + ";");
+                    out.line(ref.java() + " -= " + ctx.java("n") + ";");
                     emitAutoSave(env, varName, ref, out);
                 }));
 
@@ -199,7 +199,7 @@ public final class VariableStatements {
                     EnvironmentAccess.VarHandle ref = env.lookupVar(varName);
                     if (ref == null)
                         throw new RuntimeException("Variable not found: " + varName);
-                    out.line(ref.java() + " = Coerce.toInt(" + ref.java() + ") * " + ctx.java("n") + ";");
+                    out.line(ref.java() + " *= " + ctx.java("n") + ";");
                     emitAutoSave(env, varName, ref, out);
                 }));
 
@@ -227,7 +227,7 @@ public final class VariableStatements {
                     EnvironmentAccess.VarHandle ref = env.lookupVar(varName);
                     if (ref == null)
                         throw new RuntimeException("Variable not found: " + varName);
-                    out.line(ref.java() + " = Coerce.toInt(" + ref.java() + ") / " + ctx.java("n") + ";");
+                    out.line(ref.java() + " /= " + ctx.java("n") + ";");
                     emitAutoSave(env, varName, ref, out);
                 }));
 

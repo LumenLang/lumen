@@ -59,7 +59,11 @@ public final class ScriptWatcher {
             ScriptManager.load(name, source).exceptionally(t -> {
                 Throwable cause = t.getCause() != null ? t.getCause() : t;
                 if (cause instanceof LumenScriptException lse) {
-                    LumenLogger.severe("[Watcher] Script error in " + name + ": " + lse.getMessage());
+                    if (lse.diagnostic() != null) {
+                        LumenLogger.severe("[Watcher] Script error in " + name + ":\n" + lse.getMessage());
+                    } else {
+                        LumenLogger.severe("[Watcher] Script error in " + name + ": " + lse.getMessage());
+                    }
                 } else {
                     LumenLogger.severe(
                             "[Watcher] Failed to load/reload script: " + name + " (" + cause.getMessage() + ")");

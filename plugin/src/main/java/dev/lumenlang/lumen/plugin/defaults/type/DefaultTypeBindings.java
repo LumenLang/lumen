@@ -181,7 +181,7 @@ public final class DefaultTypeBindings {
             public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx,
                                           @NotNull EnvironmentAccess env) {
                 if (value instanceof VarHandle ref) {
-                    return "Coerce.toInt(" + ref.java() + ")";
+                    return ref.java();
                 }
                 return value.toString();
             }
@@ -225,7 +225,7 @@ public final class DefaultTypeBindings {
             public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx,
                                           @NotNull EnvironmentAccess env) {
                 if (value instanceof VarHandle ref) {
-                    return "((long) Coerce.toDouble(" + ref.java() + "))";
+                    return "((long) " + ref.java() + ")";
                 }
                 return value + "L";
             }
@@ -266,7 +266,7 @@ public final class DefaultTypeBindings {
             public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx,
                                           @NotNull EnvironmentAccess env) {
                 if (value instanceof VarHandle ref) {
-                    return "Coerce.toDouble(" + ref.java() + ")";
+                    return "((double) " + ref.java() + ")";
                 }
                 return formatDouble((Double) value);
             }
@@ -323,7 +323,7 @@ public final class DefaultTypeBindings {
             public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx,
                                           @NotNull EnvironmentAccess env) {
                 if (value instanceof VarHandle ref) {
-                    return "Coerce.toDouble(" + ref.java() + ")";
+                    return "((double) " + ref.java() + ")";
                 }
                 if (value instanceof Double d) {
                     return formatDouble(d);

@@ -35,6 +35,20 @@ public final class ExprParser {
      * @throws RuntimeException if the token list is empty
      */
     public static @NotNull Expr parse(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
+        return parse(tokens, env, 0, "");
+    }
+
+    /**
+     * Parses the given tokens into the most specific {@link Expr} variant possible.
+     *
+     * @param tokens  the tokens forming the expression (must not be empty)
+     * @param env     the type environment for variable lookups
+     * @param line    the script line number for diagnostic messages
+     * @param rawLine the raw source text of the script line
+     * @return the parsed expression
+     * @throws RuntimeException if the token list is empty
+     */
+    public static @NotNull Expr parse(@NotNull List<Token> tokens, @NotNull TypeEnv env, int line, @NotNull String rawLine) {
         if (tokens.isEmpty())
             throw new RuntimeException("Empty expression");
 
@@ -44,8 +58,12 @@ public final class ExprParser {
             if (t.kind() == TokenKind.STRING)
                 return new Expr.Literal(t.text(), LumenType.Primitive.STRING);
 
-            if (t.kind() == TokenKind.NUMBER)
+            if (t.kind() == TokenKind.NUMBER) {
+                if (t.text().contains(".")) {
+                    return new Expr.Literal(Double.parseDouble(t.text()), LumenType.Primitive.DOUBLE);
+                }
                 return new Expr.Literal(Integer.parseInt(t.text()), LumenType.Primitive.INT);
+            }
 
             if (t.kind() == TokenKind.IDENT) {
                 String text = t.text();
@@ -68,7 +86,7 @@ public final class ExprParser {
         }
 
         if (MathEngine.isMathExpression(tokens, env)) {
-            MathEngine.TypedResult result = MathEngine.compileTyped(tokens, env);
+            MathEngine.TypedResult result = MathEngine.compileTyped(tokens, env, line, rawLine);
             return new Expr.MathExpr(result.java(), result.type());
         }
 

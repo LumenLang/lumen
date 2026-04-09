@@ -6,6 +6,7 @@ import dev.lumenlang.lumen.api.emit.BlockEnterHook;
 import dev.lumenlang.lumen.api.emit.BlockFormHandler;
 import dev.lumenlang.lumen.api.emit.EmitRegistrar;
 import dev.lumenlang.lumen.api.emit.StatementFormHandler;
+import dev.lumenlang.lumen.api.emit.StatementValidator;
 import dev.lumenlang.lumen.api.emit.transform.CodeTransformer;
 import dev.lumenlang.lumen.api.emit.transform.TransformerRegistrar;
 import dev.lumenlang.lumen.api.event.AdvancedEventBuilder;
@@ -322,6 +323,11 @@ public final class LumenAPIImpl implements LumenAPI {
             @Override
             public void blockEnterHook(@NotNull BlockEnterHook hook) {
                 emitRegistry.addBlockEnterHook(hook);
+            }
+
+            @Override
+            public void statementValidator(@NotNull StatementValidator validator) {
+                emitRegistry.addStatementValidator(validator);
             }
         };
 

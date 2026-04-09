@@ -1,9 +1,11 @@
 package dev.lumenlang.lumen.pipeline.language.emit;
 
+import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
 import dev.lumenlang.lumen.api.emit.BlockEnterHook;
 import dev.lumenlang.lumen.api.emit.BlockFormHandler;
 import dev.lumenlang.lumen.api.emit.ScriptLine;
 import dev.lumenlang.lumen.api.emit.StatementFormHandler;
+import dev.lumenlang.lumen.api.emit.StatementValidator;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.pipeline.codegen.BindingContext;
 import dev.lumenlang.lumen.pipeline.codegen.BlockContext;
@@ -126,6 +128,8 @@ public final class CodeEmitter {
                     emit(children.get(i), null, children, i, reg, env, ctx, out, errors);
                 } catch (LumenScriptException e) {
                     errors.add(e);
+                } catch (DiagnosticException e) {
+                    errors.add(new LumenScriptException(e));
                 } catch (RuntimeException e) {
                     Node node = children.get(i);
                     errors.add(new LumenScriptException(node.line(), node.raw(), e.getMessage(), e));
@@ -297,6 +301,16 @@ public final class CodeEmitter {
             }
         }
 
+        for (StatementValidator validator : emitReg.statementValidators()) {
+            try {
+                validator.validate(tokens, emitCtx);
+            } catch (LumenScriptException e) {
+                throw e;
+            } catch (RuntimeException e) {
+                throw wrapRuntimeException(st.line(), st.raw(), e);
+            }
+        }
+
         TypedStatement ts = StatementClassifier.classify(st, reg, env);
 
         if (ts instanceof TypedStatement.PatternStmt ps) {
@@ -338,6 +352,9 @@ public final class CodeEmitter {
 
     private static @NotNull LumenScriptException wrapRuntimeException(int line, @NotNull String raw,
                                                                       @NotNull RuntimeException e) {
+        if (e instanceof DiagnosticException de) {
+            return new LumenScriptException(de);
+        }
         if (e instanceof TokenCarryingException tce) {
             return new LumenScriptException(line, raw, tce.getMessage(), tce.tokens());
         }

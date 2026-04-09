@@ -9,6 +9,7 @@ import dev.lumenlang.lumen.api.emit.EmitContext;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.pipeline.persist.GlobalVars;
 import dev.lumenlang.lumen.pipeline.persist.PersistentVars;
+import dev.lumenlang.lumen.pipeline.type.LumenType;
 import dev.lumenlang.lumen.pipeline.var.RefType;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
@@ -43,22 +44,22 @@ public final class GlobalVarLoadHook implements BlockEnterHook {
      * @param defaultJava the Java default value expression
      * @return a Java type name suitable for a field declaration
      */
-    private static @NotNull String inferFieldType(@NotNull String defaultJava) {
-        if (defaultJava.equals("true") || defaultJava.equals("false")) return "boolean";
-        if (defaultJava.startsWith("\"")) return "String";
+    private static @NotNull LumenType inferLumenType(@NotNull String defaultJava) {
+        if (defaultJava.equals("true") || defaultJava.equals("false")) return LumenType.Primitive.BOOLEAN;
+        if (defaultJava.startsWith("\"")) return LumenType.Primitive.STRING;
         if (defaultJava.endsWith("L") || defaultJava.endsWith("l")) {
             String num = defaultJava.substring(0, defaultJava.length() - 1);
-            if (isDigits(num)) return "long";
+            if (isDigits(num)) return LumenType.Primitive.LONG;
         }
         if (defaultJava.contains(".")) {
             try {
                 Double.parseDouble(defaultJava);
-                return "double";
+                return LumenType.Primitive.DOUBLE;
             } catch (NumberFormatException ignored) {
             }
         }
-        if (isDigits(defaultJava)) return "int";
-        return "Object";
+        if (isDigits(defaultJava)) return LumenType.Primitive.INT;
+        return LumenType.Primitive.STRING;
     }
 
     private static boolean isDigits(@NotNull String s) {
@@ -89,18 +90,21 @@ public final class GlobalVarLoadHook implements BlockEnterHook {
             String keyExpr = "\"" + className + "." + name + "\"";
 
             String fieldType;
+            LumenType lumenType;
             if (exprRefType != null) {
+                lumenType = new LumenType.ObjectType(exprRefType);
                 String fqn = exprRefType.javaType();
                 ctx.codegen().addImport(fqn);
-                fieldType = fqn.substring(fqn.lastIndexOf('.') + 1);
+                fieldType = lumenType.javaTypeName();
             } else {
-                fieldType = inferFieldType(defaultJava);
+                lumenType = inferLumenType(defaultJava);
+                fieldType = lumenType.javaTypeName();
             }
             String storageClass = g.stored() ? "PersistentVars" : "GlobalVars";
             ctx.codegen().addField(fieldType + " " + name + ";");
             ctx.out().taggedLine(TAG, name + " = " + storageClass + ".get(" + keyExpr + ", " + defaultJava + ");");
 
-            VarRef varRef = new VarRef(exprRefType, name, exprMetadata);
+            VarRef varRef = new VarRef(exprRefType, name, lumenType, exprMetadata);
             env.defineVar(name, varRef);
             env.markGlobalField(name);
             if (g.stored()) {

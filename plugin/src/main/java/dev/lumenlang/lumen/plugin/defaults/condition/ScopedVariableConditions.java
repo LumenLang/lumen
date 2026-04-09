@@ -7,7 +7,6 @@ import dev.lumenlang.lumen.api.codegen.CodegenAccess;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.api.type.RefTypeHandle;
-import dev.lumenlang.lumen.pipeline.java.compiled.Coerce;
 import dev.lumenlang.lumen.pipeline.persist.GlobalVars;
 import dev.lumenlang.lumen.pipeline.persist.PersistentVars;
 import org.jetbrains.annotations.NotNull;
@@ -81,8 +80,7 @@ public final class ScopedVariableConditions {
                     String op = match.java("op", ctx, env);
                     String readExpr = buildScopedRead(env, ctx, varName, scopeVarName);
                     if (op.equals("<") || op.equals(">") || op.equals("<=") || op.equals(">=")) {
-                        ctx.addImport(Coerce.class.getName());
-                        return "Coerce.toDouble(" + readExpr + ") " + op + " Coerce.toDouble(" + bVal + ")";
+                        return "((double) " + readExpr + ") " + op + " ((double) " + bVal + ")";
                     }
                     return readExpr + " " + op + " " + bVal;
                 }));
