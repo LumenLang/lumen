@@ -3,6 +3,7 @@ package dev.lumenlang.lumen.plugin.inject.handler;
 import dev.lumenlang.lumen.api.codegen.BindingAccess;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler;
 import dev.lumenlang.lumen.api.inject.body.InjectableExpression;
+import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.pipeline.inject.PatternHinted;
 import dev.lumenlang.lumen.plugin.inject.bytecode.BytecodeExtractor;
 import dev.lumenlang.lumen.plugin.inject.bytecode.ExtractedBody;
@@ -21,7 +22,7 @@ import java.util.Map;
 public final class InjectableExpressionHandler implements ExpressionHandler, PatternHinted {
 
     private final InjectableHandlerSupport support;
-    private final @NotNull String typeId;
+    private final @NotNull LumenType resolvedType;
 
     /**
      * Creates a handler from the given injectable expression.
@@ -33,7 +34,9 @@ public final class InjectableExpressionHandler implements ExpressionHandler, Pat
         String returnTypeJava = InjectableHandlerSupport.descriptorToJavaType(body.returnDescriptor());
         this.support = new InjectableHandlerSupport(body, returnTypeJava, false);
         String resolved = InjectableHandlerSupport.descriptorToTypeId(body.returnDescriptor());
-        this.typeId = resolved != null ? resolved : "Object";
+        LumenType type = resolved != null ? LumenType.fromId(resolved) : null;
+        if (type == null) throw new IllegalStateException("Injectable expression must declare a known return type, got descriptor: " + body.returnDescriptor());
+        this.resolvedType = type;
     }
 
     /**
@@ -47,7 +50,9 @@ public final class InjectableExpressionHandler implements ExpressionHandler, Pat
         String returnTypeJava = InjectableHandlerSupport.descriptorToJavaType(body.returnDescriptor());
         this.support = new InjectableHandlerSupport(body, returnTypeJava, false);
         String resolved = InjectableHandlerSupport.descriptorToTypeId(body.returnDescriptor());
-        this.typeId = resolved != null ? resolved : "Object";
+        LumenType type = resolved != null ? LumenType.fromId(resolved) : null;
+        if (type == null) throw new IllegalStateException("Injectable expression must declare a known return type, got descriptor: " + body.returnDescriptor());
+        this.resolvedType = type;
     }
 
     @Override
@@ -70,7 +75,7 @@ public final class InjectableExpressionHandler implements ExpressionHandler, Pat
                 bindingExpressions.put(binding.bindingName(), ctx.java(binding.bindingName()));
             }
             String expression = support.replaceBindings(inlineBody.returnExpression(), bindingExpressions);
-            return new ExpressionResult(expression, typeId);
+            return new ExpressionResult(expression, resolvedType);
         }
 
         List<ExtractedBody.FakeBinding> bindings = support.emitIfNeeded(ctx.codegen());
@@ -81,6 +86,6 @@ public final class InjectableExpressionHandler implements ExpressionHandler, Pat
             call.append(ctx.java(bindings.get(i).bindingName()));
         }
         call.append(")");
-        return new ExpressionResult(call.toString(), typeId);
+        return new ExpressionResult(call.toString(), resolvedType);
     }
 }

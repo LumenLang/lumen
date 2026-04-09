@@ -73,7 +73,7 @@ import java.util.concurrent.CompletableFuture;
  *   <li>{@code supportsRootLevel} - {@code true} if the block is allowed at script root level.</li>
  *   <li>{@code supportsBlock} - {@code true} if the block is allowed inside another block.</li>
  *   <li>{@code variables} - list of variables injected into the block scope, each with:
- *     {@code name}, {@code type}, {@code objectType} (type ID or {@code null}),
+ *     {@code name}, {@code type}, {@code lumenType} (type ID),
  *     {@code nullable}, {@code description}, and optionally {@code metadata}.</li>
  * </ul>
  *
@@ -302,7 +302,7 @@ public final class DocumentationDumper {
                     Map<String, Object> varObj = new LinkedHashMap<>();
                     varObj.put("name", v.name());
                     varObj.put("type", v.type());
-                    varObj.put("objectType", v.objectType() != null ? v.objectType().id() : null);
+                    varObj.put("lumenType", v.lumenType() != null ? v.lumenType().id() : null);
                     varObj.put("nullable", v.metadata().getOrDefault("nullable", false));
                     varObj.put("description", v.description());
                     if (!v.metadata().isEmpty()) {
@@ -370,8 +370,8 @@ public final class DocumentationDumper {
                 Map<String, Object> varObj = new LinkedHashMap<>();
                 EventDefinition.VarEntry var = varEntry.getValue();
                 varObj.put("name", varEntry.getKey());
-                varObj.put("javaType", var.javaType());
-                varObj.put("typeId", var.typeId());
+                varObj.put("javaType", var.type().javaType());
+                varObj.put("typeId", var.type().id());
                 varObj.put("description", var.description());
                 varObj.put("nullable", var.metadata().getOrDefault("nullable", false));
                 if (!var.metadata().isEmpty()) {
@@ -401,8 +401,8 @@ public final class DocumentationDumper {
                 Map<String, Object> varObj = new LinkedHashMap<>();
                 EventDefinition.VarEntry ve = varEntry.getValue();
                 varObj.put("name", varEntry.getKey());
-                varObj.put("javaType", ve.javaType());
-                varObj.put("typeId", ve.typeId());
+                varObj.put("javaType", ve.type().javaType());
+                varObj.put("typeId", ve.type().id());
                 varObj.put("description", ve.description());
                 varObj.put("nullable", ve.metadata().getOrDefault("nullable", false));
                 if (!ve.metadata().isEmpty()) {

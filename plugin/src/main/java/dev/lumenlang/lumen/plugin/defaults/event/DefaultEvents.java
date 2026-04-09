@@ -7,7 +7,7 @@ import dev.lumenlang.lumen.api.codegen.BindingAccess;
 import dev.lumenlang.lumen.api.codegen.JavaOutput;
 import dev.lumenlang.lumen.api.handler.BlockHandler;
 import dev.lumenlang.lumen.api.pattern.Categories;
-import dev.lumenlang.lumen.api.type.Types;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.api.type.MinecraftTypes;
 import dev.lumenlang.lumen.plugin.Lumen;
 import dev.lumenlang.lumen.plugin.util.LumenInventoryHolder;
@@ -144,7 +144,7 @@ public final class DefaultEvents {
                 .cancellable(true)
                 .addVar("player", MinecraftTypes.PLAYER, "event.getPlayer()")
                 .varDescription("The player who toggled flight")
-                .addVar("flying", Types.BOOLEAN, "event.isFlying()")
+                .addVar("flying", PrimitiveType.BOOLEAN, "event.isFlying()")
                 .varDescription("Whether the player is now flying")
                 .build());
 
@@ -190,7 +190,7 @@ public final class DefaultEvents {
                 .cancellable(true)
                 .addVar("entity", MinecraftTypes.ENTITY, "event.getEntity()")
                 .varDescription("The entity that took damage")
-                .addVar("damage", Types.DOUBLE, "event.getDamage()")
+                .addVar("damage", PrimitiveType.DOUBLE, "event.getDamage()")
                 .varDescription("The amount of damage dealt")
                 .build());
         api.events().register(api.events().builder("entity_damage_by_entity").by("Lumen")
@@ -213,7 +213,7 @@ public final class DefaultEvents {
                                 }""")
                 .varDescription("The player who dealt the damage, or null if the damager is not a player")
                 .withMeta("nullable", true)
-                .addVar("damage", Types.DOUBLE, "event.getDamage()")
+                .addVar("damage", PrimitiveType.DOUBLE, "event.getDamage()")
                 .varDescription("The amount of damage dealt")
                 .addImport(Material.class.getName())
                 .addVar("item", MinecraftTypes.ITEMSTACK,
@@ -326,7 +326,7 @@ public final class DefaultEvents {
                 .cancellable(true)
                 .addVar("player", MinecraftTypes.PLAYER, "event.getPlayer()")
                 .varDescription("The player who interacted")
-                .addVar("action", "String", "event.getAction().name()")
+                .addVar("action", PrimitiveType.STRING, "event.getAction().name()")
                 .varDescription("The action type: LEFT_CLICK_BLOCK, RIGHT_CLICK_BLOCK, LEFT_CLICK_AIR, RIGHT_CLICK_AIR, " +
                         "or PHYSICAL (triggering a block by stepping on or colliding with it, such as pressure plates or farmland).")
                 .addVar("block", MinecraftTypes.BLOCK,
@@ -369,9 +369,9 @@ public final class DefaultEvents {
                                 }""")
                 .varDescription("The player who clicked")
                 .withMeta("nullable", false)
-                .addVar("inventory", Inventory.class.getName(), "event.getView().getTopInventory()")
+                .addVar("inventory", MinecraftTypes.INVENTORY, "event.getView().getTopInventory()")
                 .varDescription("The top inventory being viewed")
-                .addVar("name", Types.STRING,
+                .addVar("name", PrimitiveType.STRING,
                         """
                                 if (event.getView().getTopInventory().getHolder() instanceof LumenInventoryHolder __lh) {
                                     name = __lh.name();
@@ -380,15 +380,15 @@ public final class DefaultEvents {
                                 }""")
                 .varDescription("The Lumen inventory name, or empty if not a Lumen inventory")
                 .withMeta("nullable", false)
-                .addVar("slot", Types.INT, "event.getSlot()")
+                .addVar("slot", PrimitiveType.INT, "event.getSlot()")
                 .varDescription("The slot index that was clicked")
-                .addVar("rawSlot", Types.INT, "event.getRawSlot()")
+                .addVar("rawSlot", PrimitiveType.INT, "event.getRawSlot()")
                 .varDescription("The raw slot index including both top and bottom inventory")
-                .addVar("clickType", "String", "event.getClick().name()")
+                .addVar("clickType", PrimitiveType.STRING, "event.getClick().name()")
                 .varDescription("The click type: LEFT, RIGHT, SHIFT_LEFT, SHIFT_RIGHT, MIDDLE, etc.")
-                .addVar("action", "String", "event.getAction().name()")
+                .addVar("action", PrimitiveType.STRING, "event.getAction().name()")
                 .varDescription("The inventory action: PICKUP_ALL, PLACE_ALL, SWAP_WITH_CURSOR, etc.")
-                .addVar("title", "String", "event.getView().getTitle()")
+                .addVar("title", PrimitiveType.STRING, "event.getView().getTitle()")
                 .varDescription("The display title of the inventory")
                 .addVar("item", MinecraftTypes.ITEMSTACK,
                         """
@@ -427,9 +427,9 @@ public final class DefaultEvents {
                 .varDescription("The player who closed the inventory, or null if the viewer is not a player (unlikely)")
                 .withMeta("nullable", true)
                 .addImport(LumenInventoryHolder.class.getName())
-                .addVar("inventory", Inventory.class.getName(), "event.getView().getTopInventory()")
+                .addVar("inventory", MinecraftTypes.INVENTORY, "event.getView().getTopInventory()")
                 .varDescription("The top inventory that was closed")
-                .addVar("name", Types.STRING,
+                .addVar("name", PrimitiveType.STRING,
                         """
                                 if (event.getView().getTopInventory().getHolder() instanceof LumenInventoryHolder __lh) {
                                     name = __lh.name();
@@ -438,7 +438,7 @@ public final class DefaultEvents {
                                 }""")
                 .varDescription("The Lumen inventory name, or null if not a Lumen inventory")
                 .withMeta("nullable", true)
-                .addVar("title", "String", "event.getView().getTitle()")
+                .addVar("title", PrimitiveType.STRING, "event.getView().getTitle()")
                 .varDescription("The display title of the inventory")
                 .build());
 
@@ -459,9 +459,9 @@ public final class DefaultEvents {
                 .varDescription("The player who opened the inventory, or null if the viewer is not a player (unlikely)")
                 .withMeta("nullable", true)
                 .addImport(LumenInventoryHolder.class.getName())
-                .addVar("inventory", Inventory.class.getName(), "event.getView().getTopInventory()")
+                .addVar("inventory", MinecraftTypes.INVENTORY, "event.getView().getTopInventory()")
                 .varDescription("The top inventory that was opened")
-                .addVar("name", Types.STRING,
+                .addVar("name", PrimitiveType.STRING,
                         """
                                 if (event.getView().getTopInventory().getHolder() instanceof LumenInventoryHolder __lh) {
                                     name = __lh.name();
@@ -470,7 +470,7 @@ public final class DefaultEvents {
                                 }""")
                 .varDescription("The Lumen inventory name, or null if not a Lumen inventory")
                 .withMeta("nullable", true)
-                .addVar("title", "String", "event.getView().getTitle()")
+                .addVar("title", PrimitiveType.STRING, "event.getView().getTitle()")
                 .varDescription("The display title of the inventory")
                 .build());
 
@@ -491,9 +491,9 @@ public final class DefaultEvents {
                 .varDescription("The player who dragged items, or null if the dragger is not a player (unlikely)")
                 .withMeta("nullable", true)
                 .addImport(LumenInventoryHolder.class.getName())
-                .addVar("inventory", Inventory.class.getName(), "event.getView().getTopInventory()")
+                .addVar("inventory", MinecraftTypes.INVENTORY, "event.getView().getTopInventory()")
                 .varDescription("The top inventory being viewed")
-                .addVar("name", Types.STRING,
+                .addVar("name", PrimitiveType.STRING,
                         """
                                 if (event.getView().getTopInventory().getHolder() instanceof LumenInventoryHolder __lh) {
                                     name = __lh.name();
@@ -502,7 +502,7 @@ public final class DefaultEvents {
                                 }""")
                 .varDescription("The Lumen inventory name, or null if not a Lumen inventory")
                 .withMeta("nullable", true)
-                .addVar("title", "String", "event.getView().getTitle()")
+                .addVar("title", PrimitiveType.STRING, "event.getView().getTitle()")
                 .varDescription("The display title of the inventory")
                 .build());
 
@@ -519,7 +519,7 @@ public final class DefaultEvents {
                 .addVar("player", MinecraftTypes.PLAYER, "player")
                 .withMeta("nullable", false)
                 .varDescription("The player who sent the chat message")
-                .addVar("text", "String", "text")
+                .addVar("text", PrimitiveType.STRING, "text")
                 .withMeta("nullable", false)
                 .varDescription("The chat message content")
                 .handler(new BlockHandler() {
@@ -571,7 +571,7 @@ public final class DefaultEvents {
                                 }""")
                 .varDescription("The fishing rod in the player's main hand, or null if empty")
                 .withMeta("nullable", true)
-                .addVar("state", "String", "event.getState().name()")
+                .addVar("state", PrimitiveType.STRING, "event.getState().name()")
                 .varDescription("The fishing state: FISHING, CAUGHT_FISH, CAUGHT_ENTITY, IN_GROUND, FAILED_ATTEMPT, REEL_IN, BITE, or LURED")
                 .build());
 

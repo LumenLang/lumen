@@ -1,6 +1,6 @@
 package dev.lumenlang.lumen.api.pattern;
 
-import dev.lumenlang.lumen.api.type.ObjectType;
+import dev.lumenlang.lumen.api.type.LumenType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,23 +10,23 @@ import java.util.Map;
  * Describes a variable that a block provides to its child statements.
  *
  * <p>This record carries both a human readable type string for documentation
- * and an optional {@link ObjectType} for tooling.
+ * and an optional {@link LumenType} for tooling and type checking.
  *
  * @param name        the variable name accessible in script child statements (e.g. "player")
  * @param type        a human readable type string for documentation (e.g. "Player", "World")
- * @param objectType  the typed reference handle for tooling, or {@code null} if untyped
+ * @param lumenType   the compile-time type for tooling, or {@code null} if untyped
  * @param metadata    compile-time metadata entries (e.g. "nullable" to true)
  * @param description a human readable description of this variable, or {@code null}
  */
 public record BlockVarInfo(
         @NotNull String name,
         @NotNull String type,
-        @Nullable ObjectType objectType,
+        @Nullable LumenType lumenType,
         @NotNull Map<String, Object> metadata,
         @Nullable String description) {
 
     /**
-     * Creates a BlockVarInfo with no object type, no metadata, and no description.
+     * Creates a BlockVarInfo with no type, no metadata, and no description.
      *
      * @param name the variable name
      * @param type the human readable type string
@@ -36,7 +36,7 @@ public record BlockVarInfo(
     }
 
     /**
-     * Creates a BlockVarInfo with no object type.
+     * Creates a BlockVarInfo with no type.
      *
      * @param name        the variable name
      * @param type        the human readable type string
@@ -49,14 +49,14 @@ public record BlockVarInfo(
     }
 
     /**
-     * Creates a BlockVarInfo from an {@link ObjectType}, deriving the human readable
-     * type string from the Java class simple name.
+     * Creates a BlockVarInfo from a {@link LumenType}, deriving the human readable
+     * type string from the type's display name.
      *
-     * @param name       the variable name
-     * @param objectType the object type
+     * @param name      the variable name
+     * @param lumenType the compile-time type
      */
-    public BlockVarInfo(@NotNull String name, @NotNull ObjectType objectType) {
-        this(name, simpleNameOf(objectType.javaType()), objectType, Map.of(), null);
+    public BlockVarInfo(@NotNull String name, @NotNull LumenType lumenType) {
+        this(name, lumenType.displayName(), lumenType, Map.of(), null);
     }
 
     private static @NotNull String simpleNameOf(@NotNull String fqcn) {

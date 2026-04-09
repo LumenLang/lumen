@@ -6,7 +6,7 @@ import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.codegen.CodegenAccess;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.pattern.Categories;
-import dev.lumenlang.lumen.api.type.Types;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.plugin.Lumen;
 import org.bukkit.NamespacedKey;
 import org.bukkit.persistence.PersistentDataType;
@@ -41,7 +41,7 @@ public final class PersistentDataExpressions {
                     return new ExpressionResult(
                             ctx.java("e") + ".getPersistentDataContainer().getOrDefault(new NamespacedKey(Lumen.instance(), "
                                     + ctx.java("key") + "), PersistentDataType.STRING, \"\")",
-                            Types.STRING);
+                            PrimitiveType.STRING);
                 }));
 
         api.patterns().expression(b -> b
@@ -55,7 +55,7 @@ public final class PersistentDataExpressions {
                     return new ExpressionResult(
                             "(" + itemJava + ".hasItemMeta() ? " + itemJava + ".getItemMeta().getPersistentDataContainer().getOrDefault(new NamespacedKey(Lumen.instance(), "
                                     + ctx.java("key") + "), PersistentDataType.STRING, \"\") : \"\")",
-                            Types.STRING);
+                            PrimitiveType.STRING);
                 }));
 
         api.patterns().expression(b -> b
@@ -68,7 +68,7 @@ public final class PersistentDataExpressions {
                     return new ExpressionResult(
                             ctx.java("bl") + ".getState().getPersistentDataContainer().getOrDefault(new NamespacedKey(Lumen.instance(), "
                                     + ctx.java("key") + "), PersistentDataType.STRING, \"\")",
-                            Types.STRING);
+                            PrimitiveType.STRING);
                 }));
     }
 }

@@ -212,12 +212,7 @@ public final class LumenAPIImpl implements LumenAPI {
                 for (var entry : def.vars().entrySet()) {
                     String name = entry.getKey();
                     EventDefinition.VarEntry ve = entry.getValue();
-                    ObjectType rt = ve.typeId() != null ? LumenTypeRegistry.byId(ve.typeId()) : null;
-                    if (ve.typeId() != null && rt == null) {
-                        throw new IllegalArgumentException(
-                                "Unknown type: " + ve.typeId());
-                    }
-                    internal.vars.put(name, new VarDef(rt, ve.javaType(), ve.expr()));
+                    internal.vars.put(name, new VarDef(ve.type(), ve.type().javaType(), ve.expr()));
                 }
                 EventDefRegistry.register(internal);
                 EventDefRegistry.registerApiDefinition(def);
@@ -245,8 +240,7 @@ public final class LumenAPIImpl implements LumenAPI {
                         .className(internal.className);
                 for (var entry : internal.vars.entrySet()) {
                     VarDef vd = entry.getValue();
-                    if (vd.objectType() != null) b.addVar(entry.getKey(), vd.objectType(), vd.expr());
-                    else b.addVar(entry.getKey(), vd.javaType(), vd.expr());
+                    if (vd.type() != null) b.addVar(entry.getKey(), vd.type(), vd.expr());
                 }
                 return b.build();
             }

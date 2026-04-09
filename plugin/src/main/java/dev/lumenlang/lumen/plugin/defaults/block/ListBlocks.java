@@ -12,7 +12,7 @@ import dev.lumenlang.lumen.api.handler.BlockHandler;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.ObjectType;
-import dev.lumenlang.lumen.api.type.Types;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.api.type.BuiltinLumenTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -89,8 +89,8 @@ public class ListBlocks {
                         secondly("broadcast item")))
                 .since("1.0.0")
                 .category(Categories.LIST)
-                .addVar("var", "Object")
-                    .varDescription("The current element in the list, named by the user (e.g. 'item' in 'loop item in myList'). Inherits the element type for typed lists.")
+                .addVar("var", PrimitiveType.STRING)
+                    .varDescription("The current element in the list, named by the user (e.g. 'item' in 'loop item in myList'). The type depends on the list being looped over and is accurate at runtime.")
                 .handler(new BlockHandler() {
                     @Override
                     public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
@@ -135,7 +135,7 @@ public class ListBlocks {
                 .example("loop item in todos for player:")
                 .since("1.0.0")
                 .category(Categories.LIST)
-                .addVar("var", "Object")
+                .addVar("var", PrimitiveType.STRING)
                     .varDescription("The current element in the list")
                 .handler(new BlockHandler() {
                     @Override

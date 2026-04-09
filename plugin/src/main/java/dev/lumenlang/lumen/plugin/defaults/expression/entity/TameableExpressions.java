@@ -5,7 +5,7 @@ import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess.VarHandle;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
-import dev.lumenlang.lumen.api.type.Types;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.api.type.MinecraftTypes;
 import dev.lumenlang.lumen.plugin.util.EntityHelper;
 import dev.lumenlang.lumen.plugin.util.EntityValidation;
@@ -34,7 +34,7 @@ public final class TameableExpressions {
                             return new ExpressionResult(
                                     "(" + java + " instanceof Tameable _tm && _tm.getOwner() != null"
                                             + " ? _tm.getOwner() : null)",
-                                    MinecraftTypes.OFFLINE_PLAYER.id());
+                                    MinecraftTypes.OFFLINE_PLAYER);
                         });
     }
 }

@@ -5,7 +5,7 @@ import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess.VarHandle;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
-import dev.lumenlang.lumen.api.type.Types;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.plugin.util.EntityHelper;
 import dev.lumenlang.lumen.plugin.util.EntityValidation;
 import org.bukkit.entity.Enderman;
@@ -33,7 +33,7 @@ public final class EndermanExpressions {
                             return new ExpressionResult(
                                     "(" + java + " instanceof Enderman _en && _en.getCarriedBlock() != null"
                                             + " ? _en.getCarriedBlock().getMaterial().name() : null)",
-                                    Types.STRING);
+                                    PrimitiveType.STRING);
                         });
     }
 }

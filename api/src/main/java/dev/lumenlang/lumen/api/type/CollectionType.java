@@ -1,38 +1,56 @@
 package dev.lumenlang.lumen.api.type;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
- * A generic collection type with element or key/value type parameters.
+ * A parameterized type combining a raw object type with generic type arguments.
+ * Supports lists, maps, and any other generic container type addons may define.
  *
- * @param kind        the collection kind
- * @param elementType the element type (for lists) or value type (for maps)
- * @param keyType     the key type (only for maps, {@code null} for lists)
+ * @param rawType       the underlying object type (e.g. LIST, MAP, SET)
+ * @param typeArguments the generic type parameters
  */
-@SuppressWarnings("DataFlowIssue")
-public record CollectionType(@NotNull CollectionKind kind, @NotNull LumenType elementType, @Nullable LumenType keyType) implements LumenType {
+public record CollectionType(@NotNull ObjectType rawType, @NotNull List<LumenType> typeArguments) implements LumenType {
 
     @Override
     public @NotNull String id() {
-        return kind.id();
+        return rawType.id();
     }
 
     @Override
     public @NotNull String javaType() {
-        return kind.javaType();
+        return rawType.javaType();
     }
 
     @Override
     public @NotNull String javaTypeName() {
-        if (kind == CollectionKind.LIST) return "List<" + boxedType(elementType) + ">";
-        return "Map<" + boxedType(keyType) + ", " + boxedType(elementType) + ">";
+        if (typeArguments.isEmpty()) return rawType.javaTypeName();
+        String args = typeArguments.stream().map(CollectionType::boxedType).collect(Collectors.joining(", "));
+        return rawType.javaTypeName() + "<" + args + ">";
     }
 
     @Override
     public @NotNull String displayName() {
-        if (kind == CollectionKind.LIST) return "list of " + elementType.displayName();
-        return "map of " + keyType.displayName() + " to " + elementType.displayName();
+        if (typeArguments.isEmpty()) return rawType.displayName();
+        if (typeArguments.size() == 1) return rawType.displayName() + " of " + typeArguments.get(0).displayName();
+        if (typeArguments.size() == 2) return rawType.displayName() + " of " + typeArguments.get(0).displayName() + " to " + typeArguments.get(1).displayName();
+        String args = typeArguments.stream().map(LumenType::displayName).collect(Collectors.joining(", "));
+        return rawType.displayName() + " of " + args;
+    }
+
+    @Override
+    public boolean assignableFrom(@NotNull LumenType source) {
+        if (source instanceof NullableType) return false;
+        LumenType src = source.unwrap();
+        if (!(src instanceof CollectionType other)) return false;
+        if (!rawType.id().equals(other.rawType.id())) return false;
+        if (typeArguments.size() != other.typeArguments.size()) return false;
+        for (int i = 0; i < typeArguments.size(); i++) {
+            if (!typeArguments.get(i).equals(other.typeArguments.get(i))) return false;
+        }
+        return true;
     }
 
     private static @NotNull String boxedType(@NotNull LumenType type) {

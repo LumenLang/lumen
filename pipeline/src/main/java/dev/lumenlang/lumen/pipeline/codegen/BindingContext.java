@@ -324,7 +324,6 @@ public final class BindingContext implements BindingAccess {
     }
 
     private static EnvironmentAccess.@NotNull VarHandle toSyntheticHandle(@NotNull ExpressionResult result) {
-        ObjectType resolvedType = LumenTypeRegistry.byId(result.typeId());
-        return Match.syntheticHandle(result.java(), resolvedType, result.metadata());
+        return Match.syntheticHandle(result.java(), result.type(), result.metadata());
     }
 }

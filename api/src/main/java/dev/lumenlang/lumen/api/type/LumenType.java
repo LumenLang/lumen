@@ -61,27 +61,6 @@ public sealed interface LumenType permits PrimitiveType, ObjectType, CollectionT
     }
 
     /**
-     * Creates a typed list type.
-     *
-     * @param element the element type
-     * @return the collection type for a list
-     */
-    static @NotNull CollectionType listOf(@NotNull LumenType element) {
-        return new CollectionType(CollectionKind.LIST, element, null);
-    }
-
-    /**
-     * Creates a typed map type.
-     *
-     * @param key   the key type
-     * @param value the value type
-     * @return the collection type for a map
-     */
-    static @NotNull CollectionType mapOf(@NotNull LumenType key, @NotNull LumenType value) {
-        return new CollectionType(CollectionKind.MAP, value, key);
-    }
-
-    /**
      * Resolves a {@code LumenType} from a Java type name string.
      *
      * @param javaType the fully qualified Java type name
@@ -109,36 +88,69 @@ public sealed interface LumenType permits PrimitiveType, ObjectType, CollectionT
         return PrimitiveType.INT;
     }
 
+    /**
+     * Returns the type identifier used for registry lookups and comparisons.
+     *
+     * @return the type identifier (e.g. {@code "PLAYER"}, {@code "int"}, {@code "LIST"})
+     */
     @NotNull String id();
 
+    /**
+     * Returns the fully qualified Java type name for imports and runtime reflection.
+     *
+     * @return the Java type name (e.g. {@code "org.bukkit.entity.Player"}, {@code "int"})
+     */
     @NotNull String javaType();
 
     /**
      * Returns the Java type name for use in generated code.
+     *
+     * <p>For parameterized types like {@link CollectionType}, this includes generic
+     * arguments (e.g. {@code "List<String>"}).
      *
      * @return the Java type name for code emission
      */
     @NotNull String javaTypeName();
 
     /**
-     * Returns a human-readable type name for error messages.
+     * Returns a human-readable type name for error messages and documentation.
      *
-     * @return the display name
+     * @return the display name (e.g. {@code "Player"}, {@code "list of String"})
      */
     @NotNull String displayName();
 
+    /**
+     * Returns whether this type represents a numeric value.
+     *
+     * @return {@code true} if this type supports arithmetic operations
+     */
     default boolean numeric() {
         return false;
     }
 
+    /**
+     * Unwraps this type, stripping any {@link NullableType} wrapper.
+     *
+     * @return the inner type if this is nullable, otherwise {@code this}
+     */
     default @NotNull LumenType unwrap() {
         return this;
     }
 
+    /**
+     * Returns whether this type is nullable.
+     *
+     * @return {@code true} if this is a {@link NullableType}
+     */
     default boolean nullable() {
         return false;
     }
 
+    /**
+     * Wraps this type as a {@link NullableType}.
+     *
+     * @return a nullable version of this type
+     */
     default @NotNull NullableType wrapAsNullable() {
         return new NullableType(this);
     }

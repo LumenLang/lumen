@@ -109,7 +109,7 @@ public final class LoadStatementForm implements StatementFormHandler {
             BindingContext bc = new BindingContext(exprMatch.match(), env, ((EmitContextImpl) ctx).codegenContext(), env.blockContext());
             ExpressionResult result = exprMatch.reg().handler().handle(bc);
             defaultJava = result.java();
-            resolvedObjectType = LumenTypeRegistry.byId(result.typeId());
+            resolvedObjectType = result.type() instanceof ObjectType ot ? ot : null;
         } else {
             Expr e = ExprParser.parse(exprTokens, env);
             if (e instanceof Expr.Literal l) {

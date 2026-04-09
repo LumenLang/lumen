@@ -12,8 +12,7 @@ import dev.lumenlang.lumen.api.event.EventDefinition;
 import dev.lumenlang.lumen.api.handler.BlockHandler;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.api.type.LumenType;
-import dev.lumenlang.lumen.api.type.LumenTypeRegistry;
-import dev.lumenlang.lumen.api.type.Types;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.api.type.BuiltinLumenTypes;
 import dev.lumenlang.lumen.api.type.MinecraftTypes;
 import dev.lumenlang.lumen.pipeline.codegen.BindingContext;
@@ -84,10 +83,7 @@ public final class EventBlocks {
                             for (var entry : advDef.vars().entrySet()) {
                                 String name = entry.getKey();
                                 EventDefinition.VarEntry v = entry.getValue();
-                                LumenType scopeType = v.typeId() != null
-                                        ? LumenTypeRegistry.byId(v.typeId())
-                                        : null;
-                                env.defineVar(name, scopeType, v.expr());
+                                env.defineVar(name, v.type(), v.expr());
                             }
 
                             advDef.handler().begin(ctx, out);
@@ -122,7 +118,7 @@ public final class EventBlocks {
                             String name = entry.getKey();
                             EventDefinition.VarEntry v = entry.getValue();
 
-                            String fqcn = v.javaType();
+                            String fqcn = v.type().javaType();
                             if (fqcn.contains(".")) {
                                 jctx.addImport(fqcn);
                             }
@@ -139,13 +135,10 @@ public final class EventBlocks {
                                 out.line(simple + " " + name + " = " + expr + ";");
                             }
 
-                            LumenType scopeType = v.typeId() != null
-                                    ? LumenTypeRegistry.byId(v.typeId())
-                                    : null;
                             if (v.metadata().isEmpty()) {
-                                env.defineVar(name, scopeType, name);
+                                env.defineVar(name, v.type(), name);
                             } else {
-                                env.defineVar(name, scopeType, name, v.metadata());
+                                env.defineVar(name, v.type(), name, v.metadata());
                             }
                         }
                     }
@@ -188,7 +181,7 @@ public final class EventBlocks {
                 .addVar("world", MinecraftTypes.WORLD)
                     .withMeta("nullable", true)
                     .varDescription("The world the player is in, or null if the console ran it")
-                .addVar("args", BuiltinLumenTypes.LIST)
+                .addVar("args", BuiltinLumenTypes.listOf(PrimitiveType.STRING))
                     .varDescription("The command arguments as a mutable list of strings")
                 .handler(new BlockHandler() {
                     @Override
@@ -220,7 +213,7 @@ public final class EventBlocks {
                         env.defineVar("player", MinecraftTypes.PLAYER, "player");
                         env.defineVar("sender", MinecraftTypes.SENDER, "sender");
                         env.defineVar("world", MinecraftTypes.WORLD, "world");
-                        env.defineVar("args", BuiltinLumenTypes.LIST, "args");
+                        env.defineVar("args", BuiltinLumenTypes.listOf(PrimitiveType.STRING), "args");
                     }
 
                     @Override

@@ -272,15 +272,15 @@ public final class VarDeclarationForm implements StatementFormHandler {
                 ExpressionResult exprResult = tryExpressionPattern(raw.tokens(), ctx, env);
                 if (exprResult != null) {
                     java = exprResult.java();
-                    resolvedObjectType = LumenTypeRegistry.byId(exprResult.typeId());
-                    exprLumenType = LumenType.fromId(exprResult.typeId());
+                    resolvedObjectType = exprResult.type() instanceof ObjectType ot ? ot : null;
+                    exprLumenType = exprResult.type();
                     resolvedMetadata = exprResult.metadata();
                 } else {
                     ExpressionResult resolvedResult = ExprResolver.resolveWithType(raw.tokens(), ctx.codegenContext(), env);
                     if (resolvedResult != null) {
                         java = resolvedResult.java();
-                        resolvedObjectType = LumenTypeRegistry.byId(resolvedResult.typeId());
-                        exprLumenType = LumenType.fromId(resolvedResult.typeId());
+                        resolvedObjectType = resolvedResult.type() instanceof ObjectType ot ? ot : null;
+                        exprLumenType = resolvedResult.type();
                         resolvedMetadata = resolvedResult.metadata();
                     } else {
                         throw new DiagnosticException(LumenDiagnostic.error("E502", "Cannot resolve expression")
@@ -435,9 +435,9 @@ public final class VarDeclarationForm implements StatementFormHandler {
         Expr.RawExpr raw = (Expr.RawExpr) e;
         if (raw.tokens().size() > 1) {
             ExpressionResult result = tryExpressionPattern(raw.tokens(), ctx, env);
-            if (result != null) return new TypedExpression(result.java(), LumenType.fromId(result.typeId()));
+            if (result != null) return new TypedExpression(result.java(), result.type());
             ExpressionResult resolved = ExprResolver.resolveWithType(raw.tokens(), ctx.codegenContext(), env);
-            if (resolved != null) return new TypedExpression(resolved.java(), LumenType.fromId(resolved.typeId()));
+            if (resolved != null) return new TypedExpression(resolved.java(), resolved.type());
             return null;
         }
         Token single = raw.tokens().get(0);

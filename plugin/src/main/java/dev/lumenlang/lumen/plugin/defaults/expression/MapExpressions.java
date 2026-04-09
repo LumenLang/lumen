@@ -6,9 +6,10 @@ import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.pattern.Categories;
+import dev.lumenlang.lumen.api.type.CollectionType;
 import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.ObjectType;
-import dev.lumenlang.lumen.api.type.Types;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.api.type.BuiltinLumenTypes;
 import org.jetbrains.annotations.NotNull;
 
@@ -62,12 +63,13 @@ public final class MapExpressions {
                 .category(Categories.MAP)
                 .handler(ctx -> {
                     ctx.codegen().addImport(HashMap.class.getName());
-                    String keyType = ctx.tokens("keyType").get(0).toLowerCase();
-                    String valueType = ctx.tokens("valueType").get(0).toLowerCase();
-                    return new ExpressionResult(
-                            "new HashMap<>()",
-                            BuiltinLumenTypes.MAP.id(),
-                            Map.of("key_type", keyType, "value_type", valueType));
+                    String keyTypeName = ctx.tokens("keyType").get(0).toLowerCase();
+                    String valueTypeName = ctx.tokens("valueType").get(0).toLowerCase();
+                    LumenType keyType = LumenType.fromName(keyTypeName);
+                    if (keyType == null) throw new RuntimeException("Unknown map key type: " + keyTypeName);
+                    LumenType valueType = LumenType.fromName(valueTypeName);
+                    if (valueType == null) throw new RuntimeException("Unknown map value type: " + valueTypeName);
+                    return new ExpressionResult("new HashMap<>()", BuiltinLumenTypes.mapOf(keyType, valueType));
                 }));
 
         api.patterns().expression(b -> b
@@ -98,7 +100,7 @@ public final class MapExpressions {
                     return new ExpressionResult(
                             "((Map<?, ?>) " + storageClass + ".get(" + storageKey + ", "
                                     + info.defaultJava() + ")).get(" + keyJava + ")",
-                            "Object");
+                            PrimitiveType.STRING);
                 }));
 
         api.patterns().expression(b -> b
@@ -110,9 +112,14 @@ public final class MapExpressions {
                 .category(Categories.MAP)
                 .handler(ctx -> {
                     ctx.codegen().addImport(Map.class.getName());
+                    Object mapVal = ctx.value("map");
+                    LumenType valueType = PrimitiveType.STRING;
+                    if (mapVal instanceof EnvironmentAccess.VarHandle ref && ref.type() instanceof CollectionType ct && ct.typeArguments().size() >= 2) {
+                        valueType = ct.typeArguments().get(1);
+                    }
                     return new ExpressionResult(
                             "((Map<?, ?>) " + ctx.java("map") + ").get(" + ctx.java("key") + ")",
-                            "Object");
+                            valueType);
                 }));
 
         api.patterns().expression(b -> b
@@ -126,7 +133,7 @@ public final class MapExpressions {
                     ctx.codegen().addImport(Map.class.getName());
                     return new ExpressionResult(
                             "((Map<?, ?>) " + ctx.java("map") + ").size()",
-                            Types.INT);
+                            PrimitiveType.INT);
                 }));
 
         api.patterns().expression(b -> b
@@ -140,7 +147,7 @@ public final class MapExpressions {
                     ctx.codegen().addImport(Map.class.getName());
                     return new ExpressionResult(
                             "((Map<?, ?>) " + ctx.java("map") + ").size()",
-                            Types.INT);
+                            PrimitiveType.INT);
                 }));
 
         api.patterns().expression(b -> b
@@ -155,8 +162,7 @@ public final class MapExpressions {
                     ctx.codegen().addImport(ArrayList.class.getName());
                     return new ExpressionResult(
                             "new ArrayList<>(((Map<?, ?>) " + ctx.java("map") + ").keySet())",
-                            BuiltinLumenTypes.LIST.id(),
-                            Map.of());
+                            BuiltinLumenTypes.listOf(PrimitiveType.STRING));
                 }));
 
         api.patterns().expression(b -> b
@@ -169,10 +175,14 @@ public final class MapExpressions {
                 .handler(ctx -> {
                     ctx.codegen().addImport(Map.class.getName());
                     ctx.codegen().addImport(ArrayList.class.getName());
+                    Object mapVal = ctx.value("map");
+                    LumenType valueType = PrimitiveType.STRING;
+                    if (mapVal instanceof EnvironmentAccess.VarHandle ref && ref.type() instanceof CollectionType ct && ct.typeArguments().size() >= 2) {
+                        valueType = ct.typeArguments().get(1);
+                    }
                     return new ExpressionResult(
                             "new ArrayList<>(((Map<?, ?>) " + ctx.java("map") + ").values())",
-                            BuiltinLumenTypes.LIST.id(),
-                            Map.of());
+                            BuiltinLumenTypes.listOf(valueType));
                 }));
     }
 }

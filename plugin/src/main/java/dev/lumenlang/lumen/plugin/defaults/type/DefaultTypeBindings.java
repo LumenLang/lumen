@@ -8,10 +8,11 @@ import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess.VarHandle;
 import dev.lumenlang.lumen.api.exceptions.ParseFailureException;
 import dev.lumenlang.lumen.api.type.AddonTypeBinding;
+import dev.lumenlang.lumen.api.type.CollectionType;
 import dev.lumenlang.lumen.api.type.EnumTypeBinding;
 import dev.lumenlang.lumen.api.type.RegistryTypeBinding;
 import dev.lumenlang.lumen.api.type.TypeBindingMeta;
-import dev.lumenlang.lumen.api.type.Types;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.api.type.BuiltinLumenTypes;
 import dev.lumenlang.lumen.api.type.MinecraftTypes;
 import dev.lumenlang.lumen.api.version.MinecraftVersion;
@@ -491,7 +492,7 @@ public final class DefaultTypeBindings {
             }
 
             private boolean isPlayer(@NotNull VarHandle ref) {
-                return ref.type() != null && ref.type().id().equals(MinecraftTypes.PLAYER.id());
+                return ref.type() != null && ref.type().id().equals(MinecraftTypes.PLAYER);
             }
         });
 
@@ -535,7 +536,7 @@ public final class DefaultTypeBindings {
             }
 
             private boolean isPlayer(@NotNull VarHandle ref) {
-                return ref.type() != null && ref.type().id().equals(MinecraftTypes.PLAYER.id());
+                return ref.type() != null && ref.type().id().equals(MinecraftTypes.PLAYER);
             }
         });
     }
@@ -580,7 +581,7 @@ public final class DefaultTypeBindings {
             }
 
             private boolean isOfflinePlayer(@NotNull VarHandle ref) {
-                return ref.type() != null && ref.type().id().equals(MinecraftTypes.OFFLINE_PLAYER.id());
+                return ref.type() != null && ref.type().id().equals(MinecraftTypes.OFFLINE_PLAYER);
             }
         });
 
@@ -624,7 +625,7 @@ public final class DefaultTypeBindings {
             }
 
             private boolean isOfflinePlayer(@NotNull VarHandle ref) {
-                return ref.type() != null && ref.type().id().equals(MinecraftTypes.OFFLINE_PLAYER.id());
+                return ref.type() != null && ref.type().id().equals(MinecraftTypes.OFFLINE_PLAYER);
             }
         });
     }
@@ -818,7 +819,7 @@ public final class DefaultTypeBindings {
                 if (ref.type() == null)
                     return false;
                 String id = ref.type().id();
-                return id.equals(MinecraftTypes.ENTITY.id()) || id.equals(MinecraftTypes.PLAYER.id());
+                return id.equals(MinecraftTypes.ENTITY) || id.equals(MinecraftTypes.PLAYER);
             }
         });
 
@@ -865,7 +866,7 @@ public final class DefaultTypeBindings {
                 if (ref.type() == null)
                     return false;
                 String id = ref.type().id();
-                return id.equals(MinecraftTypes.ENTITY.id()) || id.equals(MinecraftTypes.PLAYER.id());
+                return id.equals(MinecraftTypes.ENTITY) || id.equals(MinecraftTypes.PLAYER);
             }
         });
 
@@ -975,7 +976,7 @@ public final class DefaultTypeBindings {
                     return 1;
                 VarHandle ref = env.lookupVar(tokens.get(0));
                 if (ref != null) {
-                    if (ref.type() != null && ref.type().id().equals(MinecraftTypes.ITEMSTACK.id()))
+                    if (ref.type() != null && ref.type().id().equals(MinecraftTypes.ITEMSTACK))
                         throw new ParseFailureException("ITEM does not accept ITEMSTACK variable: " + tokens.get(0));
                     return 1;
                 }
@@ -991,7 +992,7 @@ public final class DefaultTypeBindings {
                     return normalized;
                 VarHandle ref = env.lookupVar(raw);
                 if (ref != null) {
-                    if (ref.type() != null && ref.type().id().equals(MinecraftTypes.ITEMSTACK.id()))
+                    if (ref.type() != null && ref.type().id().equals(MinecraftTypes.ITEMSTACK))
                         throw new ParseFailureException("ITEM does not accept ITEMSTACK variable: " + raw);
                     return ref;
                 }
@@ -1051,7 +1052,7 @@ public final class DefaultTypeBindings {
             }
 
             private boolean isItemStack(@NotNull VarHandle ref) {
-                return ref.type() != null && ref.type().id().equals(MinecraftTypes.ITEMSTACK.id());
+                return ref.type() != null && ref.type().id().equals(MinecraftTypes.ITEMSTACK);
             }
         });
 
@@ -1094,7 +1095,7 @@ public final class DefaultTypeBindings {
             }
 
             private boolean isItemStack(@NotNull VarHandle ref) {
-                return ref.type() != null && ref.type().id().equals(MinecraftTypes.ITEMSTACK.id());
+                return ref.type() != null && ref.type().id().equals(MinecraftTypes.ITEMSTACK);
             }
         });
     }
@@ -1134,7 +1135,7 @@ public final class DefaultTypeBindings {
             }
 
             private boolean isWorld(@NotNull VarHandle ref) {
-                return ref.type() != null && ref.type().id().equals(MinecraftTypes.WORLD.id());
+                return ref.type() != null && ref.type().id().equals(MinecraftTypes.WORLD);
             }
         });
     }
@@ -1174,7 +1175,7 @@ public final class DefaultTypeBindings {
             }
 
             private boolean isLocation(@NotNull VarHandle ref) {
-                return ref.type() != null && ref.type().id().equals(MinecraftTypes.LOCATION.id());
+                return ref.type() != null && ref.type().id().equals(MinecraftTypes.LOCATION);
             }
         });
     }
@@ -1226,7 +1227,7 @@ public final class DefaultTypeBindings {
             }
 
             private boolean isList(@NotNull VarHandle ref) {
-                return ref.type() != null && ref.type().id().equals(BuiltinLumenTypes.LIST.id());
+                return ref.type() instanceof CollectionType ct && ct.rawType().id().equals("LIST");
             }
         });
     }
@@ -1278,7 +1279,7 @@ public final class DefaultTypeBindings {
             }
 
             private boolean isMap(@NotNull VarHandle ref) {
-                return ref.type() != null && ref.type().id().equals(BuiltinLumenTypes.MAP.id());
+                return ref.type() instanceof CollectionType ct && ct.rawType().id().equals("MAP");
             }
         });
     }
@@ -1332,7 +1333,7 @@ public final class DefaultTypeBindings {
             }
 
             private boolean isData(@NotNull VarHandle ref) {
-                return ref.type() != null && ref.type().id().equals(BuiltinLumenTypes.DATA.id());
+                return BuiltinLumenTypes.DATA.equals(ref.type());
             }
         });
     }
@@ -1374,7 +1375,7 @@ public final class DefaultTypeBindings {
             }
 
             private boolean isBlock(@NotNull VarHandle ref) {
-                return ref.type() != null && ref.type().id().equals(MinecraftTypes.BLOCK.id());
+                return ref.type() != null && ref.type().id().equals(MinecraftTypes.BLOCK);
             }
         });
     }

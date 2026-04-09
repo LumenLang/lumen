@@ -5,7 +5,7 @@ import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.pattern.Categories;
-import dev.lumenlang.lumen.api.type.Types;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.api.type.BuiltinLumenTypes;
 import dev.lumenlang.lumen.api.type.MinecraftTypes;
 import org.bukkit.inventory.ItemStack;
@@ -37,7 +37,7 @@ public final class ItemStackExpressions {
                     ctx.codegen().addImport(ITEM_STACK);
                     return new ExpressionResult(
                             "new ItemStack(" + ctx.java("mat") + ")",
-                            MinecraftTypes.ITEMSTACK.id());
+                            MinecraftTypes.ITEMSTACK);
                 }));
 
         api.patterns().expression(b -> b
@@ -49,7 +49,7 @@ public final class ItemStackExpressions {
                     ctx.codegen().addImport(ITEM_STACK);
                     return new ExpressionResult(
                             "new ItemStack(" + ctx.java("mat") + ", " + ctx.java("amt") + ")",
-                            MinecraftTypes.ITEMSTACK.id());
+                            MinecraftTypes.ITEMSTACK);
                 }));
 
         api.patterns().expression(b -> b
@@ -61,7 +61,7 @@ public final class ItemStackExpressions {
                     String java = ctx.java("i");
                     return new ExpressionResult(
                             "(" + java + ".hasItemMeta() && " + java + ".getItemMeta().hasDisplayName() ? " + java + ".getItemMeta().getDisplayName() : " + java + ".getType().name())",
-                            Types.STRING);
+                            PrimitiveType.STRING);
                 }));
 
         api.patterns().expression(b -> b
@@ -75,7 +75,7 @@ public final class ItemStackExpressions {
                     String java = ctx.java("i");
                     return new ExpressionResult(
                             "(" + java + ".hasItemMeta() && " + java + ".getItemMeta().hasLore() ? " + java + ".getItemMeta().getLore() : Collections.<String>emptyList())",
-                            BuiltinLumenTypes.LIST.id());
+                            BuiltinLumenTypes.listOf(PrimitiveType.STRING));
                 }));
 
         api.patterns().expression(b -> b
@@ -83,14 +83,14 @@ public final class ItemStackExpressions {
                 .description("Returns the stack amount of an item.")
                 .example("set amt to get item's amount")
                 .since("1.0.0").category(Categories.ITEM)
-                .handler(ctx -> new ExpressionResult(ctx.java("i") + ".getAmount()", Types.INT)));
+                .handler(ctx -> new ExpressionResult(ctx.java("i") + ".getAmount()", PrimitiveType.INT)));
 
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("get %i:ITEMSTACK_POSSESSIVE% type")
                 .description("Returns the material type name of an item stack.")
                 .example("set mat to get item's type")
                 .since("1.0.0").category(Categories.ITEM)
-                .handler(ctx -> new ExpressionResult(ctx.java("i") + ".getType().name()", Types.STRING)));
+                .handler(ctx -> new ExpressionResult(ctx.java("i") + ".getType().name()", PrimitiveType.STRING)));
 
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("get %i:ITEMSTACK_POSSESSIVE% durability")
@@ -102,7 +102,7 @@ public final class ItemStackExpressions {
                     String java = ctx.java("i");
                     return new ExpressionResult(
                             "(" + java + ".getItemMeta() instanceof Damageable __dmg ? __dmg.getDamage() : 0)",
-                            Types.INT);
+                            PrimitiveType.INT);
                 }));
 
         api.patterns().expression(b -> b
@@ -110,7 +110,7 @@ public final class ItemStackExpressions {
                 .description("Returns the maximum durability of the item's material.")
                 .example("set maxDmg to get item's max durability")
                 .since("1.0.0").category(Categories.ITEM)
-                .handler(ctx -> new ExpressionResult(ctx.java("i") + ".getType().getMaxDurability()", Types.INT)));
+                .handler(ctx -> new ExpressionResult(ctx.java("i") + ".getType().getMaxDurability()", PrimitiveType.INT)));
 
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("get %i:ITEMSTACK_POSSESSIVE% custom model data")
@@ -121,7 +121,7 @@ public final class ItemStackExpressions {
                     String java = ctx.java("i");
                     return new ExpressionResult(
                             "(" + java + ".hasItemMeta() && " + java + ".getItemMeta().hasCustomModelData() ? " + java + ".getItemMeta().getCustomModelData() : 0)",
-                            Types.INT);
+                            PrimitiveType.INT);
                 }));
     }
 }

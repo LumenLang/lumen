@@ -6,7 +6,7 @@ import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess.VarHandle;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.pattern.Categories;
-import dev.lumenlang.lumen.api.type.Types;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.plugin.defaults.util.AttributeNames;
 import dev.lumenlang.lumen.plugin.util.EntityValidation;
 import org.bukkit.attribute.Attribute;
@@ -37,11 +37,11 @@ public final class LivingEntityExpressions {
                     boolean known = EntityValidation.requireLivingEntity(h, "get health");
                     ctx.codegen().addImport(LIVING_ENTITY);
                     if (known) {
-                        return new ExpressionResult("((LivingEntity) " + java + ").getHealth()", Types.DOUBLE);
+                        return new ExpressionResult("((LivingEntity) " + java + ").getHealth()", PrimitiveType.DOUBLE);
                     }
                     return new ExpressionResult(
                             "(" + java + " instanceof LivingEntity _le ? _le.getHealth() : 0.0)",
-                            Types.DOUBLE);
+                            PrimitiveType.DOUBLE);
                 }));
 
         api.patterns().expression(b -> b
@@ -60,11 +60,11 @@ public final class LivingEntityExpressions {
                     if (known) {
                         return new ExpressionResult(
                                 "((LivingEntity) " + java + ").getAttribute(Attribute." + attrName + ").getValue()",
-                                Types.DOUBLE);
+                                PrimitiveType.DOUBLE);
                     }
                     return new ExpressionResult(
                             "(" + java + " instanceof LivingEntity _le ? _le.getAttribute(Attribute." + attrName + ").getValue() : 0.0)",
-                            Types.DOUBLE);
+                            PrimitiveType.DOUBLE);
                 }));
     }
 }

@@ -57,9 +57,8 @@ public record Match(
             ExpressionResult result = ExprResolver.resolveWithType(ie.tokens(), ctx, env);
             if (result != null) {
                 if (!bv.binding().id().equals("EXPR")) {
-                    ObjectType ref = LumenTypeRegistry.byId(result.typeId());
                     return bv.binding().toJava(
-                            new InlineVarRef(result.java(), ref, result.metadata()), ctx, env);
+                            new InlineVarRef(result.java(), result.type(), result.metadata()), ctx, env);
                 }
                 return result.java();
             }

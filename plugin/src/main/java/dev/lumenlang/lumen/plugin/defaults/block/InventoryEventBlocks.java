@@ -9,7 +9,7 @@ import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.codegen.JavaOutput;
 import dev.lumenlang.lumen.api.handler.BlockHandler;
 import dev.lumenlang.lumen.api.pattern.Categories;
-import dev.lumenlang.lumen.api.type.Types;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.api.type.MinecraftTypes;
 import dev.lumenlang.lumen.plugin.util.LumenInventoryHolder;
 import org.bukkit.Material;
@@ -148,13 +148,13 @@ public final class InventoryEventBlocks {
                     .varDescription("The world the player is in")
                 .addVar("inventory", MinecraftTypes.INVENTORY)
                     .varDescription("The top inventory being interacted with")
-                .addVar("slot", Types.INT)
+                .addVar("slot", PrimitiveType.INT)
                     .varDescription("The raw slot index that was clicked")
-                .addVar("clickType", Types.STRING)
+                .addVar("clickType", PrimitiveType.STRING)
                     .varDescription("The type of click performed (e.g. LEFT, RIGHT, SHIFT_LEFT)")
-                .addVar("action", Types.STRING)
+                .addVar("action", PrimitiveType.STRING)
                     .varDescription("The inventory action triggered by the click")
-                .addVar("title", Types.STRING)
+                .addVar("title", PrimitiveType.STRING)
                     .varDescription("The title of the inventory view")
                 .addVar("item", MinecraftTypes.ITEMSTACK)
                     .withMeta("nullable", true)
@@ -215,13 +215,13 @@ public final class InventoryEventBlocks {
                     .varDescription("The world the player is in")
                 .addVar("inventory", MinecraftTypes.INVENTORY)
                     .varDescription("The top inventory being interacted with")
-                .addVar("slot", Types.INT)
+                .addVar("slot", PrimitiveType.INT)
                     .varDescription("The raw slot index that was clicked")
-                .addVar("clickType", Types.STRING)
+                .addVar("clickType", PrimitiveType.STRING)
                     .varDescription("The type of click performed (e.g. LEFT, RIGHT, SHIFT_LEFT)")
-                .addVar("action", Types.STRING)
+                .addVar("action", PrimitiveType.STRING)
                     .varDescription("The inventory action triggered by the click")
-                .addVar("title", Types.STRING)
+                .addVar("title", PrimitiveType.STRING)
                     .varDescription("The title of the inventory view")
                 .addVar("item", MinecraftTypes.ITEMSTACK)
                     .withMeta("nullable", true)
@@ -278,7 +278,7 @@ public final class InventoryEventBlocks {
                     .varDescription("The world the player is in")
                 .addVar("inventory", MinecraftTypes.INVENTORY)
                     .varDescription("The top inventory that was closed")
-                .addVar("title", Types.STRING)
+                .addVar("title", PrimitiveType.STRING)
                     .varDescription("The title of the inventory view")
                 .handler(new BlockHandler() {
                     @Override
@@ -328,7 +328,7 @@ public final class InventoryEventBlocks {
                     .varDescription("The world the player is in")
                 .addVar("inventory", MinecraftTypes.INVENTORY)
                     .varDescription("The top inventory that was opened")
-                .addVar("title", Types.STRING)
+                .addVar("title", PrimitiveType.STRING)
                     .varDescription("The title of the inventory view")
                 .handler(new BlockHandler() {
                     @Override

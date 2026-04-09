@@ -5,7 +5,7 @@ import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.pattern.Categories;
-import dev.lumenlang.lumen.api.type.Types;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.api.type.MinecraftTypes;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +25,7 @@ public final class BlockExpressions {
                 .example("set b to block at loc").since("1.0.0").category(Categories.BLOCK)
                 .handler(ctx -> new ExpressionResult(
                         ctx.java("loc") + ".getBlock()",
-                        MinecraftTypes.BLOCK.id())));
+                        MinecraftTypes.BLOCK)));
 
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("[get] %b:BLOCK% type")
@@ -33,7 +33,7 @@ public final class BlockExpressions {
                 .example("set t to block type").since("1.0.0").category(Categories.BLOCK)
                 .handler(ctx -> new ExpressionResult(
                         ctx.java("b") + ".getType().name()",
-                        Types.STRING)));
+                        PrimitiveType.STRING)));
 
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("[get] %b:BLOCK% location")
@@ -41,7 +41,7 @@ public final class BlockExpressions {
                 .example("set loc to block location").since("1.0.0").category(Categories.BLOCK)
                 .handler(ctx -> new ExpressionResult(
                         ctx.java("b") + ".getLocation()",
-                        MinecraftTypes.LOCATION.id())));
+                        MinecraftTypes.LOCATION)));
 
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("[get] %b:BLOCK% world")
@@ -49,7 +49,7 @@ public final class BlockExpressions {
                 .example("set w to block world").since("1.0.0").category(Categories.BLOCK)
                 .handler(ctx -> new ExpressionResult(
                         ctx.java("b") + ".getWorld()",
-                        MinecraftTypes.WORLD.id())));
+                        MinecraftTypes.WORLD)));
 
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("[get] %b:BLOCK% (x|y|z)")
@@ -65,7 +65,7 @@ public final class BlockExpressions {
                     };
                     return new ExpressionResult(
                             matched + method,
-                            Types.INT);
+                            PrimitiveType.INT);
                 }));
 
         api.patterns().expression(b -> b
@@ -74,7 +74,7 @@ public final class BlockExpressions {
                 .example("set light to block light level").since("1.0.0").category(Categories.BLOCK)
                 .handler(ctx -> new ExpressionResult(
                         ctx.java("b") + ".getLightLevel()",
-                        Types.INT)));
+                        PrimitiveType.INT)));
 
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("[get] %b:BLOCK% data [string]")
@@ -82,6 +82,6 @@ public final class BlockExpressions {
                 .example("set data to block data").since("1.0.0").category(Categories.BLOCK)
                 .handler(ctx -> new ExpressionResult(
                         ctx.java("b") + ".getBlockData().getAsString()",
-                        Types.STRING)));
+                        PrimitiveType.STRING)));
     }
 }

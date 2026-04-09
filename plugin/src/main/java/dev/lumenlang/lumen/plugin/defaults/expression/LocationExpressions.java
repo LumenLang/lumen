@@ -5,7 +5,7 @@ import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.pattern.Categories;
-import dev.lumenlang.lumen.api.type.Types;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.api.type.MinecraftTypes;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,7 +28,7 @@ public final class LocationExpressions {
                 .example("set px to player location x")
                 .since("1.0.0")
                 .category(Categories.LOCATION)
-                .handler(ctx -> new ExpressionResult(ctx.java("loc") + ".getX()", Types.DOUBLE)));
+                .handler(ctx -> new ExpressionResult(ctx.java("loc") + ".getX()", PrimitiveType.DOUBLE)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -37,7 +37,7 @@ public final class LocationExpressions {
                 .example("set py to player location y")
                 .since("1.0.0")
                 .category(Categories.LOCATION)
-                .handler(ctx -> new ExpressionResult(ctx.java("loc") + ".getY()", Types.DOUBLE)));
+                .handler(ctx -> new ExpressionResult(ctx.java("loc") + ".getY()", PrimitiveType.DOUBLE)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -46,7 +46,7 @@ public final class LocationExpressions {
                 .example("set pz to player location z")
                 .since("1.0.0")
                 .category(Categories.LOCATION)
-                .handler(ctx -> new ExpressionResult(ctx.java("loc") + ".getZ()", Types.DOUBLE)));
+                .handler(ctx -> new ExpressionResult(ctx.java("loc") + ".getZ()", PrimitiveType.DOUBLE)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -55,7 +55,7 @@ public final class LocationExpressions {
                 .example("set dist to distance between player location and targetLoc")
                 .since("1.0.0")
                 .category(Categories.LOCATION)
-                .handler(ctx -> new ExpressionResult(ctx.java("a") + ".distance(" + ctx.java("b") + ")", Types.DOUBLE)));
+                .handler(ctx -> new ExpressionResult(ctx.java("a") + ".distance(" + ctx.java("b") + ")", PrimitiveType.DOUBLE)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -64,7 +64,7 @@ public final class LocationExpressions {
                 .example("set b to block at player location")
                 .since("1.0.0")
                 .category(Categories.BLOCK)
-                .handler(ctx -> new ExpressionResult(ctx.java("loc") + ".getBlock()", MinecraftTypes.BLOCK.id())));
+                .handler(ctx -> new ExpressionResult(ctx.java("loc") + ".getBlock()", MinecraftTypes.BLOCK)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -73,6 +73,6 @@ public final class LocationExpressions {
                 .example("set w to myLocation world")
                 .since("1.0.0")
                 .category(Categories.LOCATION)
-                .handler(ctx -> new ExpressionResult(ctx.java("loc") + ".getWorld()", MinecraftTypes.WORLD.id())));
+                .handler(ctx -> new ExpressionResult(ctx.java("loc") + ".getWorld()", MinecraftTypes.WORLD)));
     }
 }

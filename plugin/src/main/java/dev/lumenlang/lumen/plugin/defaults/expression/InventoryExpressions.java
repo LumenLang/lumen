@@ -4,7 +4,7 @@ import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
-import dev.lumenlang.lumen.api.type.Types;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.api.type.MinecraftTypes;
 import dev.lumenlang.lumen.plugin.util.InventoryHelper;
 import dev.lumenlang.lumen.plugin.util.LumenInventoryHelper;
@@ -42,7 +42,7 @@ public final class InventoryExpressions {
                             String title = ctx.java("title");
                             return new ExpressionResult(
                                     "LumenInventoryHelper.create(" + name + ", " + size + ", " + title + ")",
-                                    MinecraftTypes.INVENTORY.id());
+                                    MinecraftTypes.INVENTORY);
                         })
                 .expression(
                         "new inventory %name:STRING% [with] [size] %size:INT%",
@@ -55,7 +55,7 @@ public final class InventoryExpressions {
                             String size = ctx.java("size");
                             return new ExpressionResult(
                                     "LumenInventoryHelper.create(" + name + ", " + size + ")",
-                                    MinecraftTypes.INVENTORY.id());
+                                    MinecraftTypes.INVENTORY);
                         })
                 .expression(
                         "new inventory %name:STRING% [with] rows %rows:INT% titled %title:STRING%",
@@ -70,7 +70,7 @@ public final class InventoryExpressions {
                             String title = ctx.java("title");
                             return new ExpressionResult(
                                     "LumenInventoryHelper.createWithRows(" + name + ", " + rows + ", " + title + ")",
-                                    MinecraftTypes.INVENTORY.id());
+                                    MinecraftTypes.INVENTORY);
                         })
                 .expression(
                         "new inventory %name:STRING% [with] rows %rows:INT%",
@@ -84,7 +84,7 @@ public final class InventoryExpressions {
                             String rows = ctx.java("rows");
                             return new ExpressionResult(
                                     "LumenInventoryHelper.createWithRows(" + name + ", " + rows + ")",
-                                    MinecraftTypes.INVENTORY.id());
+                                    MinecraftTypes.INVENTORY);
                         });
     }
 
@@ -98,7 +98,7 @@ public final class InventoryExpressions {
                             ctx.codegen().addImport(INVENTORY);
                             return new ExpressionResult(
                                     "((Inventory) " + ctx.java("inv") + ").getItem(" + ctx.java("slot") + ")",
-                                    MinecraftTypes.ITEMSTACK.id());
+                                    MinecraftTypes.ITEMSTACK);
                         })
                 .expression(
                         "[get] %inv:EXPR% inventory size",
@@ -108,7 +108,7 @@ public final class InventoryExpressions {
                             ctx.codegen().addImport(INVENTORY);
                             return new ExpressionResult(
                                     "((Inventory) " + ctx.java("inv") + ").getSize()",
-                                    Types.INT);
+                                    PrimitiveType.INT);
                         })
                 .expression(
                         "[get] first empty slot of %inv:EXPR%",
@@ -118,7 +118,7 @@ public final class InventoryExpressions {
                             ctx.codegen().addImport(INVENTORY);
                             return new ExpressionResult(
                                     "((Inventory) " + ctx.java("inv") + ").firstEmpty()",
-                                    Types.INT);
+                                    PrimitiveType.INT);
                         })
                 .expression(
                         "[get] name of %inv:EXPR%",
@@ -130,7 +130,7 @@ public final class InventoryExpressions {
                             String inv = ctx.java("inv");
                             return new ExpressionResult(
                                     "(((Inventory) " + inv + ").getHolder() instanceof LumenInventoryHolder __lh ? __lh.name() : null)",
-                                    Types.STRING);
+                                    PrimitiveType.STRING);
                         });
     }
 }

@@ -165,8 +165,7 @@ public final class ExprResolver {
                 }
 
                 String synthName = "$sub" + depth + "$" + start;
-                ObjectType resolvedType = LumenTypeRegistry.byId(subResult.typeId());
-                VarRef synthRef = new VarRef(resolvedType, subResult.java());
+                VarRef synthRef = new VarRef(subResult.type(), subResult.java());
 
                 BlockContext tempBlock = new BlockContext(null, env.blockContext(), List.of(), 0);
                 env.enterBlock(tempBlock);
@@ -243,8 +242,8 @@ public final class ExprResolver {
                 if (widened != null) resultType = widened;
             }
         }
-        String javaType = resultType != null ? resultType.id() : "Object";
-        return new ExpressionResult(sb.toString(), javaType);
+        if (resultType == null) throw new RuntimeException("Cannot determine type of math expression");
+        return new ExpressionResult(sb.toString(), resultType);
     }
 
     /**
@@ -284,19 +283,18 @@ public final class ExprResolver {
             List<Token> inner = tokens.subList(1, tokens.size() - 1);
             ExpressionResult innerResolved = resolveRecursive(inner, ctx, env, depth + 1);
             if (innerResolved != null) {
-                LumenType type = LumenType.fromId(innerResolved.typeId());
-                return new TypedOperand("(" + innerResolved.java() + ")", type);
+                return new TypedOperand("(" + innerResolved.java() + ")", innerResolved.type());
             }
             return null;
         }
 
         ExpressionResult result = resolveRecursive(tokens, ctx, env, depth + 1);
         if (result == null) return null;
-        LumenType type = LumenType.fromId(result.typeId());
-        if (type != null && !type.numeric()) {
+        LumenType type = result.type();
+        if (!type.numeric()) {
             throw new RuntimeException("Non-numeric operand in arithmetic expression. Expression resolved to type '" + type.displayName() + "' which is not numeric.");
         }
-        return new TypedOperand(result.java(), type != null ? type : PrimitiveType.INT);
+        return new TypedOperand(result.java(), type);
     }
 
     private static boolean isArithmeticOp(@NotNull String s) {

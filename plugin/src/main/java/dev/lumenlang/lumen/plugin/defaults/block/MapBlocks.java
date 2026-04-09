@@ -12,6 +12,7 @@ import dev.lumenlang.lumen.api.handler.BlockHandler;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.ObjectType;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -40,10 +41,10 @@ public final class MapBlocks {
                         secondly("broadcast \"%{k}%: %{v}%\"")))
                 .since("1.0.0")
                 .category(Categories.MAP)
-                .addVar("key", "Object")
-                    .varDescription("The current map key, named by the user (e.g. 'k' in 'loop k v in myMap')")
-                .addVar("val", "Object")
-                    .varDescription("The current map value, named by the user (e.g. 'v' in 'loop k v in myMap')")
+                .addVar("key", PrimitiveType.STRING)
+                    .varDescription("The current map key, named by the user (e.g. 'k' in 'loop k v in myMap'). The type depends on the map being looped over and is accurate at runtime.")
+                .addVar("val", PrimitiveType.STRING)
+                    .varDescription("The current map value, named by the user (e.g. 'v' in 'loop k v in myMap'). The type depends on the map being looped over and is accurate at runtime.")
                 .handler(new BlockHandler() {
                     @Override
                     public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
@@ -92,10 +93,10 @@ public final class MapBlocks {
                 .example("loop k v in stats for player:")
                 .since("1.0.0")
                 .category(Categories.MAP)
-                .addVar("key", "Object")
-                    .varDescription("The current map key")
-                .addVar("val", "Object")
-                    .varDescription("The current map value")
+                .addVar("key", PrimitiveType.STRING)
+                    .varDescription("The current map key, named by the user (e.g. 'k' in 'loop k v in stats for player'). The type depends on the map being looped over and is accurate at runtime.")
+                .addVar("val", PrimitiveType.STRING)
+                    .varDescription("The current map value, named by the user (e.g. 'v' in 'loop k v in stats for player'). The type depends on the map being looped over and is accurate at runtime.")
                 .handler(new BlockHandler() {
                     @Override
                     public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {

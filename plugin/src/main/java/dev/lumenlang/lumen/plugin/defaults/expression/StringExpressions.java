@@ -5,7 +5,7 @@ import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.pattern.Categories;
-import dev.lumenlang.lumen.api.type.Types;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.api.type.BuiltinLumenTypes;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,7 +29,7 @@ public final class StringExpressions {
                 .example("set len to length of \"hello\"")
                 .since("1.0.0")
                 .category(Categories.TEXT)
-                .handler(ctx -> new ExpressionResult("String.valueOf(" + ctx.java("s") + ").length()", Types.INT)));
+                .handler(ctx -> new ExpressionResult("String.valueOf(" + ctx.java("s") + ").length()", PrimitiveType.INT)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -39,7 +39,7 @@ public final class StringExpressions {
                 .example("set lower to myVar to lowercase")
                 .since("1.0.0")
                 .category(Categories.TEXT)
-                .handler(ctx -> new ExpressionResult("String.valueOf(" + ctx.java("s") + ").toLowerCase()", Types.STRING)));
+                .handler(ctx -> new ExpressionResult("String.valueOf(" + ctx.java("s") + ").toLowerCase()", PrimitiveType.STRING)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -49,7 +49,7 @@ public final class StringExpressions {
                 .example("set upper to myVar to uppercase")
                 .since("1.0.0")
                 .category(Categories.TEXT)
-                .handler(ctx -> new ExpressionResult("String.valueOf(" + ctx.java("s") + ").toUpperCase()", Types.STRING)));
+                .handler(ctx -> new ExpressionResult("String.valueOf(" + ctx.java("s") + ").toUpperCase()", PrimitiveType.STRING)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -58,7 +58,7 @@ public final class StringExpressions {
                 .example("set clean to myVar trimmed")
                 .since("1.0.0")
                 .category(Categories.TEXT)
-                .handler(ctx -> new ExpressionResult("String.valueOf(" + ctx.java("s") + ").trim()", Types.STRING)));
+                .handler(ctx -> new ExpressionResult("String.valueOf(" + ctx.java("s") + ").trim()", PrimitiveType.STRING)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -68,7 +68,7 @@ public final class StringExpressions {
                 .since("1.0.0")
                 .category(Categories.TEXT)
                 .handler(ctx -> new ExpressionResult(
-                        "String.valueOf(" + ctx.java("s") + ").substring(" + ctx.java("start") + ", " + ctx.java("end") + ")", Types.STRING)));
+                        "String.valueOf(" + ctx.java("s") + ").substring(" + ctx.java("start") + ", " + ctx.java("end") + ")", PrimitiveType.STRING)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -78,7 +78,7 @@ public final class StringExpressions {
                 .since("1.0.0")
                 .category(Categories.TEXT)
                 .handler(ctx -> new ExpressionResult(
-                        "String.valueOf(" + ctx.java("s") + ").substring(" + ctx.java("start") + ")", Types.STRING)));
+                        "String.valueOf(" + ctx.java("s") + ").substring(" + ctx.java("start") + ")", PrimitiveType.STRING)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -88,7 +88,7 @@ public final class StringExpressions {
                 .since("1.0.0")
                 .category(Categories.TEXT)
                 .handler(ctx -> new ExpressionResult(
-                        "String.valueOf(" + ctx.java("s") + ").replace(String.valueOf(" + ctx.java("old") + "), String.valueOf(" + ctx.java("new") + "))", Types.STRING)));
+                        "String.valueOf(" + ctx.java("s") + ").replace(String.valueOf(" + ctx.java("old") + "), String.valueOf(" + ctx.java("new") + "))", PrimitiveType.STRING)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -101,7 +101,7 @@ public final class StringExpressions {
                     ctx.codegen().addImport(Arrays.class.getName());
                     return new ExpressionResult(
                             "Arrays.asList(String.valueOf(" + ctx.java("s") + ").split(String.valueOf(" + ctx.java("delim") + ")))",
-                            BuiltinLumenTypes.LIST.id());
+                            BuiltinLumenTypes.listOf(PrimitiveType.STRING));
                 }));
 
         api.patterns().expression(b -> b
@@ -111,7 +111,7 @@ public final class StringExpressions {
                 .example("set idx to index of \"l\" in \"hello\"")
                 .since("1.0.0")
                 .category(Categories.TEXT)
-                .handler(ctx -> new ExpressionResult("String.valueOf(" + ctx.java("haystack") + ").indexOf(String.valueOf(" + ctx.java("needle") + "))", Types.INT)));
+                .handler(ctx -> new ExpressionResult("String.valueOf(" + ctx.java("haystack") + ").indexOf(String.valueOf(" + ctx.java("needle") + "))", PrimitiveType.INT)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -130,7 +130,7 @@ public final class StringExpressions {
                             "((List<?>) " + listJava + ").stream()"
                                     + ".map(String::valueOf)"
                                     + ".collect(Collectors.joining(" + delimJava + "))",
-                            Types.STRING);
+                            PrimitiveType.STRING);
                 }));
 
         api.patterns().expression(b -> b
@@ -144,7 +144,7 @@ public final class StringExpressions {
                     String val = ctx.java("s");
                     return new ExpressionResult(
                             "Double.parseDouble(String.valueOf(" + val + "))",
-                            Types.DOUBLE);
+                            PrimitiveType.DOUBLE);
                 }));
 
         api.patterns().expression(b -> b
@@ -158,7 +158,7 @@ public final class StringExpressions {
                     String val = ctx.java("s");
                     return new ExpressionResult(
                             "Integer.parseInt(String.valueOf(" + val + "))",
-                            Types.INT);
+                            PrimitiveType.INT);
                 }));
 
         api.patterns().expression(b -> b
@@ -168,6 +168,6 @@ public final class StringExpressions {
                 .example("set combined to combined string of \"hello\" and \"world\"")
                 .since("1.0.0")
                 .category(Categories.TEXT)
-                .handler(ctx -> new ExpressionResult("String.valueOf(" + ctx.java("s1") + ") + String.valueOf(" + ctx.java("s2") + ")", Types.STRING)));
+                .handler(ctx -> new ExpressionResult("String.valueOf(" + ctx.java("s1") + ") + String.valueOf(" + ctx.java("s2") + ")", PrimitiveType.STRING)));
     }
 }

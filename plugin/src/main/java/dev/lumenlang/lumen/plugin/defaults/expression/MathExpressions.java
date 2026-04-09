@@ -5,7 +5,7 @@ import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.pattern.Categories;
-import dev.lumenlang.lumen.api.type.Types;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.ThreadLocalRandom;
@@ -37,7 +37,7 @@ public final class MathExpressions {
                     return new ExpressionResult(
                             "ThreadLocalRandom.current().nextInt("
                                     + min + ", " + max + " + 1)",
-                            Types.INT);
+                            PrimitiveType.INT);
                 }));
 
         api.patterns().expression(b -> b
@@ -56,7 +56,7 @@ public final class MathExpressions {
                     return new ExpressionResult(
                             "ThreadLocalRandom.current().nextDouble("
                                     + min + ", " + max + ")",
-                            Types.DOUBLE);
+                            PrimitiveType.DOUBLE);
                 }));
 
         api.patterns().expression(b -> b
@@ -73,7 +73,7 @@ public final class MathExpressions {
                     return new ExpressionResult(
                             "(ThreadLocalRandom.current().nextDouble(100.0) < ((Number)((Object) "
                                     + pct + ")).doubleValue())",
-                            Types.BOOLEAN);
+                            PrimitiveType.BOOLEAN);
                 }));
 
         api.patterns().expression(b -> b
@@ -87,7 +87,7 @@ public final class MathExpressions {
                 .category(Categories.MATH)
                 .handler(ctx -> new ExpressionResult(
                         "Math.min(" + ctx.java("x") + ", " + ctx.java("y") + ")",
-                        Types.DOUBLE)));
+                        PrimitiveType.DOUBLE)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -100,7 +100,7 @@ public final class MathExpressions {
                 .category(Categories.MATH)
                 .handler(ctx -> new ExpressionResult(
                         "Math.max(" + ctx.java("x") + ", " + ctx.java("y") + ")",
-                        Types.DOUBLE)));
+                        PrimitiveType.DOUBLE)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -111,7 +111,7 @@ public final class MathExpressions {
                 .category(Categories.MATH)
                 .handler(ctx -> new ExpressionResult(
                         "Math.abs(" + ctx.java("x") + ")",
-                        Types.DOUBLE)));
+                        PrimitiveType.DOUBLE)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -122,7 +122,7 @@ public final class MathExpressions {
                 .category(Categories.MATH)
                 .handler(ctx -> new ExpressionResult(
                         "Math.round(((Number) ((Object) " + ctx.java("x") + ")).doubleValue())",
-                        Types.LONG)));
+                        PrimitiveType.LONG)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -133,7 +133,7 @@ public final class MathExpressions {
                 .category(Categories.MATH)
                 .handler(ctx -> new ExpressionResult(
                         "(int) Math.floor(((Number) ((Object) " + ctx.java("x") + ")).doubleValue())",
-                        Types.INT)));
+                        PrimitiveType.INT)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -144,7 +144,7 @@ public final class MathExpressions {
                 .category(Categories.MATH)
                 .handler(ctx -> new ExpressionResult(
                         "(int) Math.ceil(((Number) ((Object) " + ctx.java("x") + ")).doubleValue())",
-                        Types.INT)));
+                        PrimitiveType.INT)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -156,6 +156,6 @@ public final class MathExpressions {
                 .handler(ctx -> new ExpressionResult(
                         "Math.max(" + ctx.java("min") + ", Math.min(" + ctx.java("x")
                                 + ", " + ctx.java("max") + "))",
-                        Types.DOUBLE)));
+                        PrimitiveType.DOUBLE)));
     }
 }

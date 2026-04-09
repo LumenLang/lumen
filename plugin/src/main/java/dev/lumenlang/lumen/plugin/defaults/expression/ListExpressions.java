@@ -6,9 +6,10 @@ import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.pattern.Categories;
+import dev.lumenlang.lumen.api.type.CollectionType;
 import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.ObjectType;
-import dev.lumenlang.lumen.api.type.Types;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.api.type.BuiltinLumenTypes;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,11 +48,10 @@ public final class ListExpressions {
                 .category(Categories.LIST)
                 .handler(ctx -> {
                     ctx.codegen().addImport(ArrayList.class.getName());
-                    String elementType = ctx.tokens("type").get(0).toLowerCase();
-                    return new ExpressionResult(
-                            "new ArrayList<>()",
-                            BuiltinLumenTypes.LIST.id(),
-                            Map.of("element_type", elementType));
+                    String elementTypeName = ctx.tokens("type").get(0).toLowerCase();
+                    LumenType elementType = LumenType.fromName(elementTypeName);
+                    if (elementType == null) throw new RuntimeException("Unknown list element type: " + elementTypeName);
+                    return new ExpressionResult("new ArrayList<>()", BuiltinLumenTypes.listOf(elementType));
                 }));
 
         api.patterns().expression(b -> b
@@ -65,7 +65,7 @@ public final class ListExpressions {
                     ctx.codegen().addImport(List.class.getName());
                     return new ExpressionResult(
                             "((List<?>) " + ctx.java("list") + ").size()",
-                            Types.INT);
+                            PrimitiveType.INT);
                 }));
 
         api.patterns().expression(b -> b
@@ -79,7 +79,7 @@ public final class ListExpressions {
                     ctx.codegen().addImport(List.class.getName());
                     return new ExpressionResult(
                             "((List<?>) " + ctx.java("list") + ").size()",
-                            Types.INT);
+                            PrimitiveType.INT);
                 }));
 
         api.patterns().expression(b -> b
@@ -91,9 +91,14 @@ public final class ListExpressions {
                 .category(Categories.LIST)
                 .handler(ctx -> {
                     ctx.codegen().addImport(List.class.getName());
+                    Object listVal = ctx.value("list");
+                    LumenType elementType = PrimitiveType.STRING;
+                    if (listVal instanceof EnvironmentAccess.VarHandle ref && ref.type() instanceof CollectionType ct && !ct.typeArguments().isEmpty()) {
+                        elementType = ct.typeArguments().get(0);
+                    }
                     return new ExpressionResult(
                             "((List<?>) " + ctx.java("list") + ").get(" + ctx.java("i") + ")",
-                            "Object");
+                            elementType);
                 }));
 
         api.patterns().expression(b -> b
@@ -107,7 +112,7 @@ public final class ListExpressions {
                     ctx.codegen().addImport(List.class.getName());
                     return new ExpressionResult(
                             "((List<?>) " + ctx.java("list") + ").indexOf(" + ctx.java("val") + ")",
-                            Types.INT);
+                            PrimitiveType.INT);
                 }));
 
         api.patterns().expression(b -> b
@@ -130,7 +135,7 @@ public final class ListExpressions {
                     if (scopeType == null) throw new RuntimeException("Scope variable '" + scopeVarName + "' has no type.");
                     ctx.codegen().addImport(List.class.getName());
                     ctx.codegen().addImport(ArrayList.class.getName());
-                    return new ExpressionResult("((List<?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") + ".get(" + "\"" + info.className() + "." + listVarName + ".\" + " + ((ObjectType) scopeType).keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")).size()", Types.INT);
+                    return new ExpressionResult("((List<?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") + ".get(" + "\"" + info.className() + "." + listVarName + ".\" + " + ((ObjectType) scopeType).keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")).size()", PrimitiveType.INT);
                 }));
 
         api.patterns().expression(b -> b
@@ -153,7 +158,7 @@ public final class ListExpressions {
                     if (scopeType == null) throw new RuntimeException("Scope variable '" + scopeVarName + "' has no type.");
                     ctx.codegen().addImport(List.class.getName());
                     ctx.codegen().addImport(ArrayList.class.getName());
-                    return new ExpressionResult("((List<?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") + ".get(" + "\"" + info.className() + "." + listVarName + ".\" + " + ((ObjectType) scopeType).keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")).size()", Types.INT);
+                    return new ExpressionResult("((List<?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") + ".get(" + "\"" + info.className() + "." + listVarName + ".\" + " + ((ObjectType) scopeType).keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")).size()", PrimitiveType.INT);
                 }));
     }
 }

@@ -1,7 +1,7 @@
 package dev.lumenlang.lumen.api.event;
 
 import dev.lumenlang.lumen.api.pattern.Category;
-import dev.lumenlang.lumen.api.type.ObjectType;
+import dev.lumenlang.lumen.api.type.LumenType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -165,35 +165,19 @@ public final class EventBuilder {
     }
 
     /**
-     * Adds a typed variable whose Java type is inferred from the object type.
+     * Adds a typed variable that will be available inside the event block.
      *
-     * <p>This is the preferred overload for variables with a known object type.
+     * <p>The variable is emitted as a local declaration at the top of the generated
+     * handler method body. The type controls both type checking and the Java type
+     * used in the declaration.
      *
-     * @param name       the variable name accessible in script child statements
-     * @param objectType the logical type category for type checking
-     * @param expr       the initialiser expression (e.g. {@code "event.getPlayer()"})
+     * @param name the variable name accessible in script child statements
+     * @param type the compile-time type for type checking and code generation
+     * @param expr the initialiser expression (e.g. {@code "event.getPlayer()"})
      * @return this builder
      */
-    public @NotNull EventBuilder addVar(@NotNull String name, @NotNull ObjectType objectType, @NotNull String expr) {
-        vars.put(name, new EventDefinition.VarEntry(objectType.id(), objectType.javaType(), expr));
-        this.lastVarName = name;
-        return this;
-    }
-
-    /**
-     * Adds a plain variable (no object type) to this event definition.
-     *
-     * <p>Use this for primitives, strings.
-     *
-     * @param name     the variable name accessible in script child statements
-     * @param javaType the Java type name (e.g. {@code Types.BOOLEAN} or a fully qualified class name)
-     * @param expr     the initialiser expression (e.g. {@code "event.isSneaking()"})
-     * @return this builder
-     */
-    public @NotNull EventBuilder addVar(@NotNull String name,
-                                        @NotNull String javaType,
-                                        @NotNull String expr) {
-        vars.put(name, new EventDefinition.VarEntry(null, javaType, expr));
+    public @NotNull EventBuilder addVar(@NotNull String name, @NotNull LumenType type, @NotNull String expr) {
+        vars.put(name, new EventDefinition.VarEntry(type, expr));
         this.lastVarName = name;
         return this;
     }
@@ -218,7 +202,7 @@ public final class EventBuilder {
         Map<String, Object> newMeta = new HashMap<>(existing.metadata());
         newMeta.put(key, value);
         vars.put(lastVarName, new EventDefinition.VarEntry(
-                existing.typeId(), existing.javaType(), existing.expr(),
+                existing.type(), existing.expr(),
                 Collections.unmodifiableMap(newMeta), existing.description()));
         return this;
     }
@@ -239,7 +223,7 @@ public final class EventBuilder {
         }
         EventDefinition.VarEntry existing = vars.get(lastVarName);
         vars.put(lastVarName, new EventDefinition.VarEntry(
-                existing.typeId(), existing.javaType(), existing.expr(),
+                existing.type(), existing.expr(),
                 existing.metadata(), description));
         return this;
     }

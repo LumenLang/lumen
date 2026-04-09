@@ -16,6 +16,7 @@ import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.loop.LoopRegistry;
 import dev.lumenlang.lumen.pipeline.loop.RegisteredLoopMatch;
 import dev.lumenlang.lumen.api.type.LumenTypeRegistry;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import org.jetbrains.annotations.NotNull;
 
 import static dev.lumenlang.lumen.api.pattern.LumaExample.of;
@@ -43,7 +44,7 @@ public final class LoopSourceBlock {
                         secondly("message p \"Hello!\"")))
                 .since("1.0.0")
                 .category(Categories.CONTROL_FLOW)
-                .addVar("var", "Object")
+                .addVar("var", PrimitiveType.STRING)
                     .varDescription("The current element from the loop source, named by the user (e.g. 'p' in 'loop p in all players'). The type depends on the loop source; for example, 'all players' produces Player-typed elements.")
                 .handler(new BlockHandler() {
                     @Override
@@ -53,8 +54,7 @@ public final class LoopSourceBlock {
                         }
                         String varName = ctx.java("var");
                         if (ctx.env().lookupVar(varName) != null) {
-                            throw new RuntimeException(
-                                    "Loop variable '" + varName + "' is already defined in this scope.");
+                            throw new RuntimeException("Loop variable '" + varName + "' is already defined in this scope.");
                         }
                         BindingContext bc = (BindingContext) ctx;
                         TypeEnv env = (TypeEnv) ctx.env();
@@ -66,11 +66,9 @@ public final class LoopSourceBlock {
                         }
                         if (loopMatch == null) {
                             throw new RuntimeException(
-                                    "Unknown loop source: '" + ctx.java("source")
-                                            + "'. Expected a list variable or a registered loop source like 'all players'.");
+                                    "Unknown loop source: '" + ctx.java("source") + "'. Expected a list variable or a registered loop source like 'all players'.");
                         }
-                        BindingContext loopCtx = new BindingContext(loopMatch.match(), env,
-                                (CodegenContext) ctx.codegen(), (BlockContext) ctx.block());
+                        BindingContext loopCtx = new BindingContext(loopMatch.match(), env, (CodegenContext) ctx.codegen(), (BlockContext) ctx.block());
                         LoopHandler.LoopResult result = loopMatch.reg().handler().handle(loopCtx);
                         out.line("for (var " + varName + " : " + result.iterableJava() + ") {");
                         ctx.env().defineVar(varName, result.elementTypeId() != null

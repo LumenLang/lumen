@@ -9,7 +9,7 @@ import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.handler.StatementHandler;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.api.type.AddonTypeBinding;
-import dev.lumenlang.lumen.api.type.Types;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Locale;
@@ -364,7 +364,7 @@ public final class EntityHelper {
                     return new ExpressionResult(
                             "(" + java + " instanceof " + simpleName + " " + alias
                                     + " ? " + alias + "." + getterCall + " : 0)",
-                            Types.INT);
+                            PrimitiveType.INT);
                 }));
         return this;
     }
@@ -396,7 +396,7 @@ public final class EntityHelper {
                     return new ExpressionResult(
                             "(" + java + " instanceof " + simpleName + " " + alias
                                     + " ? " + alias + "." + getterCall + " : null)",
-                            Types.STRING);
+                            PrimitiveType.STRING);
                 }));
         return this;
     }
@@ -428,7 +428,7 @@ public final class EntityHelper {
                     return new ExpressionResult(
                             "(" + java + " instanceof " + simpleName + " " + alias
                                     + " && " + alias + "." + getterCall + ")",
-                            Types.BOOLEAN);
+                            PrimitiveType.BOOLEAN);
                 }));
         return this;
     }

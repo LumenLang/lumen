@@ -7,7 +7,8 @@ import dev.lumenlang.lumen.api.codegen.BindingAccess;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.pattern.Categories;
-import dev.lumenlang.lumen.api.type.Types;
+import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.api.type.BuiltinLumenTypes;
 import dev.lumenlang.lumen.pipeline.data.DataSchema;
 import dev.lumenlang.lumen.pipeline.java.compiled.DataInstance;
@@ -48,9 +49,11 @@ public final class DataExpressions {
                                                                @NotNull String rawGet) {
         DataSchema.FieldType fieldType = resolveFieldType(ctx);
         if (fieldType != null && fieldType != DataSchema.FieldType.ANY) {
-            return new ExpressionResult(fieldType.coerce(rawGet), fieldType.javaType());
+            LumenType resolvedType = LumenType.fromId(fieldType.javaType());
+            if (resolvedType == null) throw new RuntimeException("Cannot determine type of data field: " + fieldType.javaType());
+            return new ExpressionResult(fieldType.coerce(rawGet), resolvedType);
         }
-        return new ExpressionResult(rawGet, "Object");
+        throw new RuntimeException("Cannot determine type of data field. Ensure the data class schema defines a type for this field.");
     }
 
     /**
@@ -159,7 +162,7 @@ public final class DataExpressions {
                     if (tokens.size() == 1) {
                         return new ExpressionResult(
                                 "new DataInstance(\"" + typeName + "\")",
-                                BuiltinLumenTypes.DATA.id(),
+                                BuiltinLumenTypes.DATA,
                                 Map.of("data_type", typeName));
                     }
 
@@ -197,7 +200,7 @@ public final class DataExpressions {
 
                     return new ExpressionResult(
                             "new DataInstance(\"" + typeName + "\", " + mapBuilder + ")",
-                            BuiltinLumenTypes.DATA.id(),
+                            BuiltinLumenTypes.DATA,
                             Map.of("data_type", typeName));
                 }));
     }

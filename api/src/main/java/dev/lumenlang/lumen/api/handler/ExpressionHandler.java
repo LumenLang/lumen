@@ -2,8 +2,9 @@ package dev.lumenlang.lumen.api.handler;
 
 import dev.lumenlang.lumen.api.codegen.BindingAccess;
 import dev.lumenlang.lumen.api.pattern.PatternRegistrar;
+import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.MinecraftTypes;
-import dev.lumenlang.lumen.api.type.Types;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -19,14 +20,14 @@ import java.util.Map;
  * <h2>Example</h2>
  * <pre>{@code
  * api.patterns().expression("get player %name:STRING%", ctx ->
- *     new ExpressionResult("Bukkit.getPlayer(" + ctx.java("name") + ")", MinecraftTypes.PLAYER.id())
+ *     new ExpressionResult("Bukkit.getPlayer(" + ctx.java("name") + ")", MinecraftTypes.PLAYER)
  * );
  * }</pre>
  *
  * <p>When the expression evaluates to a primitive or common Java type, use
- * {@link Types} constants:
+ * {@link PrimitiveType} constants:
  * <pre>{@code
- * new ExpressionResult(expr, Types.DOUBLE)
+ * new ExpressionResult(expr, PrimitiveType.DOUBLE)
  * }</pre>
  *
  * <p>Scripts can then write:
@@ -43,7 +44,7 @@ public interface ExpressionHandler {
      * Generates a Java expression for the matched pattern.
      *
      * @param ctx the bound parameters from the pattern match
-     * @return the expression result containing the Java expression and optional type id
+     * @return the expression result containing the Java expression and its type
      */
     @NotNull ExpressionResult handle(@NotNull BindingAccess ctx);
 
@@ -51,19 +52,19 @@ public interface ExpressionHandler {
      * The result of an expression handler.
      *
      * @param java     the Java expression string
-     * @param typeId   the type id for the resulting variable (e.g. {@code "PLAYER"}, {@code "int"}, {@code "String"}, {@code "Object"} for unknown)
+     * @param type     the compile-time type of the resulting expression
      * @param metadata compile-time metadata forwarded to the resulting variable reference
      */
-    record ExpressionResult(@NotNull String java, @NotNull String typeId, @NotNull Map<String, Object> metadata) {
+    record ExpressionResult(@NotNull String java, @NotNull LumenType type, @NotNull Map<String, Object> metadata) {
 
         /**
          * Creates a typed expression result with no metadata.
          *
-         * @param java   the Java expression string
-         * @param typeId the type id (e.g. {@code "PLAYER"}, {@code Types.INT}, {@code "Object"} for unknown)
+         * @param java the Java expression string
+         * @param type the compile-time type of the expression
          */
-        public ExpressionResult(@NotNull String java, @NotNull String typeId) {
-            this(java, typeId, Map.of());
+        public ExpressionResult(@NotNull String java, @NotNull LumenType type) {
+            this(java, type, Map.of());
         }
     }
 }
