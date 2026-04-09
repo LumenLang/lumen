@@ -6,6 +6,8 @@ import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.LumenAddon;
 import dev.lumenlang.lumen.api.LumenProvider;
 import dev.lumenlang.lumen.api.scanner.RegistrationScanner;
+import dev.lumenlang.lumen.api.type.BuiltinLumenTypes;
+import dev.lumenlang.lumen.api.type.MinecraftTypes;
 import dev.lumenlang.lumen.api.version.MinecraftVersion;
 import dev.lumenlang.lumen.pipeline.addon.AddonManager;
 import dev.lumenlang.lumen.pipeline.addon.LumenAPIImpl;
@@ -144,6 +146,8 @@ public final class Lumen extends JavaPlugin {
      * loads jar-based addons, and enables them.
      */
     private void initApi() {
+        MinecraftTypes.registerAll();
+        BuiltinLumenTypes.registerAll();
         InjectableHandlers.factory(new InjectableHandlerFactoryImpl());
         TypeRegistry types = new TypeRegistry();
         BuiltinTypeBindings.register(types);

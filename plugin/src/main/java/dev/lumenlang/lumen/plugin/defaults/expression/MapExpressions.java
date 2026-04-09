@@ -44,17 +44,31 @@ public final class MapExpressions {
         api.patterns().expression(b -> b
                 .by("Lumen")
                 .pattern("new map")
-                .description("Creates a new empty map.")
+                .description("Creates a new empty map. Deprecated: use 'new map of <key-type> to <value-type>' instead.")
                 .example("set myMap to new map")
                 .since("1.0.0")
                 .category(Categories.MAP)
                 .returnRefTypeId(BuiltinLumenTypes.MAP.id())
                 .handler(ctx -> {
+                    throw new RuntimeException("Untyped maps are no longer supported. Use 'new map of <key-type> to <value-type>' instead, for example: 'set myMap to new map of string to int'"); // TODO: Remove in 1.4.0
+                }));
+
+        api.patterns().expression(b -> b
+                .by("Lumen")
+                .pattern("new map [of] %keyType:EXPR% to %valueType:EXPR%")
+                .description("Creates a new empty typed map. Entries added to this map will be validated against the declared key and value types.")
+                .examples("set scores to new map of string to int", "set data to new map string to player")
+                .since("1.2.0")
+                .category(Categories.MAP)
+                .returnRefTypeId(BuiltinLumenTypes.MAP.id())
+                .handler(ctx -> {
                     ctx.codegen().addImport(HashMap.class.getName());
+                    String keyType = ctx.tokens("keyType").get(0).toLowerCase();
+                    String valueType = ctx.tokens("valueType").get(0).toLowerCase();
                     return new ExpressionResult(
                             "new HashMap<>()",
                             BuiltinLumenTypes.MAP.id(),
-                            Map.of());
+                            Map.of("key_type", keyType, "value_type", valueType));
                 }));
 
         api.patterns().expression(b -> b

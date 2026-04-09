@@ -28,24 +28,20 @@ public final class ListExpressions {
         api.patterns().expression(b -> b
                 .by("Lumen")
                 .pattern("new list")
-                .description("Creates a new empty list.")
+                .description("Creates a new empty list. Deprecated: use 'new list of <type>' instead.")
                 .example("set myList to new list")
                 .since("1.0.0")
                 .category(Categories.LIST)
                 .returnRefTypeId(BuiltinLumenTypes.LIST.id())
                 .handler(ctx -> {
-                    ctx.codegen().addImport(ArrayList.class.getName());
-                    return new ExpressionResult(
-                            "new ArrayList<>()",
-                            BuiltinLumenTypes.LIST.id(),
-                            Map.of());
+                    throw new RuntimeException("Untyped lists are no longer supported. Use 'new list of <type>' instead, for example: 'set myList to new list of string'"); // TODO: Remove in 1.4.0
                 }));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
-                .pattern("new list of %type:EXPR%")
+                .pattern("new list [of] %type:EXPR%")
                 .description("Creates a new empty typed list. Elements added to this list will be validated against the declared type.")
-                .examples("set arenas to new list of arena", "set scores to new list of number")
+                .examples("set arenas to new list of arena", "set scores to new list of number", "set names to new list string")
                 .since("1.0.0")
                 .category(Categories.LIST)
                 .returnRefTypeId(BuiltinLumenTypes.LIST.id())
