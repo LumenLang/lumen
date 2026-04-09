@@ -14,11 +14,19 @@
   </a>
 </p>
 <p align="center">Lumen is a high-performance scripting platform for Minecraft servers that compiles your scripts directly into native Java code, with full hot reload and on-the-fly updates.</p>
-<details> <summary><strong>Upcoming Breaking Changes</strong></summary> <br/> Lumen is about to go through a phase with major breaking changes.
+<details>
+<summary><strong>Upcoming Breaking Changes</strong></summary>
+<br/>
 
-The scripting side will change heavily. Patterns and syntax will be reworked, and most of the current ones will likely not stay the same. A lot of internal systems will also be modified to improve how things behave and to remove current limitations.
+Lumen is about to go through a phase with major breaking changes.
 
-There are many incremental fixes planned, and the current TODO list is quite large, so changes will happen across multiple parts of the project over time, not just in one area.
+A full type system overhaul is planned. This will introduce proper and consistent typing across the language, and will likely break most existing scripts. The goal of this change is to eliminate compile-time issues, improve validation, and make behavior more predictable.
+
+The scripting side will change heavily. Patterns and syntax will be reworked, and many existing patterns may be modified or removed as part of this transition.
+
+A lot of internal systems will also be updated to improve consistency, remove limitations, and better support future features such as advanced validation, debugging, and AI tooling.
+
+There are many incremental fixes planned, and the current TODO list is quite large. Changes will happen across multiple parts of the project over time, not just in one area.
 
 Because of this, things may break between versions for a while. This is expected during this phase.
 
