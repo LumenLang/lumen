@@ -68,9 +68,6 @@ public final class LoadStatementForm implements StatementFormHandler {
 
         if (idx < t.size() && t.get(idx).text().equalsIgnoreCase("for")) {
             idx++;
-            if (idx + 1 < t.size() && t.get(idx).text().equalsIgnoreCase("ref") && t.get(idx + 1).text().equalsIgnoreCase("type")) {
-                idx += 2;
-            }
             if (idx >= t.size()) {
                 throw new LumenScriptException(ctx.line(), ctx.raw(), "Expected scope variable after 'for'. Correct syntax: load " + name + " for <scope> with default ...");
             }
@@ -112,9 +109,7 @@ public final class LoadStatementForm implements StatementFormHandler {
             BindingContext bc = new BindingContext(exprMatch.match(), env, ((EmitContextImpl) ctx).codegenContext(), env.blockContext());
             ExpressionResult result = exprMatch.reg().handler().handle(bc);
             defaultJava = result.java();
-            if (result.typeId() != null) {
-                resolvedObjectType = LumenTypeRegistry.byId(result.typeId());
-            }
+            resolvedObjectType = LumenTypeRegistry.byId(result.typeId());
         } else {
             Expr e = ExprParser.parse(exprTokens, env);
             if (e instanceof Expr.Literal l) {

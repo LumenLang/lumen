@@ -94,22 +94,6 @@ public sealed interface LumenType permits PrimitiveType, ObjectType, CollectionT
     }
 
     /**
-     * Resolves a {@code LumenType} from a combination of type ID and Java type string.
-     *
-     * @param typeId   the type ID, or {@code null}
-     * @param javaType the Java type name, or {@code null}
-     * @return the resolved type, or {@code null} if both are null or unrecognized
-     */
-    static @Nullable LumenType resolve(@Nullable String typeId, @Nullable String javaType) {
-        if (typeId != null) {
-            LumenType t = fromId(typeId);
-            if (t != null) return t;
-        }
-        if (javaType != null) return fromJavaType(javaType);
-        return null;
-    }
-
-    /**
      * Returns the numeric widening result of combining two types in arithmetic.
      *
      * @param a the left operand type

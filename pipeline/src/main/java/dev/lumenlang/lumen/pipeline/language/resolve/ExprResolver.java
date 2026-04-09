@@ -164,8 +164,6 @@ public final class ExprResolver {
                     continue;
                 }
 
-                if (subResult.typeId() == null) continue;
-
                 String synthName = "$sub" + depth + "$" + start;
                 ObjectType resolvedType = LumenTypeRegistry.byId(subResult.typeId());
                 VarRef synthRef = new VarRef(resolvedType, subResult.java());
