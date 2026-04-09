@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 public final class LumenInventoryHolder implements InventoryHolder {
 
     private final @NotNull String name;
+    private @Nullable String title;
     private @Nullable Inventory inventory;
 
     /**
@@ -34,8 +35,27 @@ public final class LumenInventoryHolder implements InventoryHolder {
      *
      * @return the inventory name, never null
      */
-    public @NotNull String getName() {
+    public @NotNull String name() {
         return name;
+    }
+
+    /**
+     * Returns the display title of this inventory, or null if created without one.
+     *
+     * @return the display title, or null
+     */
+    public @Nullable String title() {
+        return title;
+    }
+
+    /**
+     * Assigns the display title for this inventory. Called internally
+     * after creation so the hot reload system can detect title changes.
+     *
+     * @param title the display title
+     */
+    public void title(@NotNull String title) {
+        this.title = title;
     }
 
     @Override
@@ -52,7 +72,7 @@ public final class LumenInventoryHolder implements InventoryHolder {
      *
      * @param inventory the created inventory
      */
-    public void setInventory(@NotNull Inventory inventory) {
+    public void inventory(@NotNull Inventory inventory) {
         this.inventory = inventory;
     }
 }

@@ -118,7 +118,7 @@ language:
     # can register their own through the API.
     code-transform: false
 
-# Optional platform integrations
+# Features that can be toggled on or off, related to compatibility or quality of life improvements.
 features:
   # Translate legacy & color codes (e.g. &a, &7, &l) into colored text.
   # Works alongside MiniMessage when both are enabled.
@@ -126,6 +126,15 @@ features:
 
   # Enable Paper-only APIs and optimizations.
   paper-only-features: true
+
+  inventories:
+    # Enable inventory hot reload.
+    #
+    # When enabled, players who have a Lumen inventory open will have its
+    # contents and title replaced in place on any script reload, instead
+    # of the inventory closing and reopening. This makes script hot reloading
+    # seamless for players viewing an inventory.
+    hot-reload: true
 
 # Miscellaneous settings that don't fit into other categories
 extra:

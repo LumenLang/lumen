@@ -373,7 +373,7 @@ public final class DefaultEvents {
                 .addVar("name", Types.STRING,
                         """
                                 if (event.getView().getTopInventory().getHolder() instanceof LumenInventoryHolder __lh) {
-                                    name = __lh.getName();
+                                    name = __lh.name();
                                 } else {
                                     name = "";
                                 }""")
@@ -431,7 +431,7 @@ public final class DefaultEvents {
                 .addVar("name", Types.STRING,
                         """
                                 if (event.getView().getTopInventory().getHolder() instanceof LumenInventoryHolder __lh) {
-                                    name = __lh.getName();
+                                    name = __lh.name();
                                 } else {
                                     name = null;
                                 }""")
@@ -463,7 +463,7 @@ public final class DefaultEvents {
                 .addVar("name", Types.STRING,
                         """
                                 if (event.getView().getTopInventory().getHolder() instanceof LumenInventoryHolder __lh) {
-                                    name = __lh.getName();
+                                    name = __lh.name();
                                 } else {
                                     name = null;
                                 }""")
@@ -495,7 +495,7 @@ public final class DefaultEvents {
                 .addVar("name", Types.STRING,
                         """
                                 if (event.getView().getTopInventory().getHolder() instanceof LumenInventoryHolder __lh) {
-                                    name = __lh.getName();
+                                    name = __lh.name();
                                 } else {
                                     name = null;
                                 }""")

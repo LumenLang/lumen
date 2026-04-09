@@ -47,7 +47,15 @@ public enum ConfigOption {
      * <p>When enabled, scripts can contain {@code java:} blocks whose contents are
      * emitted directly into the compiled class without any transformation.
      */
-    RAW_JAVA("language.experimental.raw-java");
+    RAW_JAVA("language.experimental.raw-java"),
+
+    /**
+     * Controls whether inventory hot reload is enabled.
+     *
+     * <p>When enabled, if a player already has an inventory open and its script is reloaded,
+     * the contents and title are replaced in place instead of closing and reopening the GUI.
+     */
+    INVENTORY_HOT_RELOAD("features.inventories.hot-reload");
 
     private final String path;
 

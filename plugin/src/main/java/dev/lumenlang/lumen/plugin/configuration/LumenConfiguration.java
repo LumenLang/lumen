@@ -103,6 +103,7 @@ public final class LumenConfiguration {
             case ENABLE_ALL_SCRIPTS_IMMEDIATELY -> SCRIPTS.ENABLE_ALL_SCRIPTS_IMMEDIATELY_ON_STARTUP = value;
             case CODE_TRANSFORM -> LANGUAGE.EXPERIMENTAL.CODE_TRANSFORM = value;
             case RAW_JAVA -> LANGUAGE.EXPERIMENTAL.RAW_JAVA = value;
+            case INVENTORY_HOT_RELOAD -> FEATURES.INVENTORIES.HOT_RELOAD = value;
         }
     }
 
@@ -205,6 +206,14 @@ public final class LumenConfiguration {
 
         @Key("paper-only-features")
         public boolean PAPER_ONLY_FEATURES = true;
+
+        public Inventories INVENTORIES = new Inventories();
+
+        public static final class Inventories {
+
+            @Key("hot-reload")
+            public boolean HOT_RELOAD = true;
+        }
     }
 
     public static final class Extra {

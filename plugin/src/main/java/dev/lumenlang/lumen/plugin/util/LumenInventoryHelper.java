@@ -30,8 +30,10 @@ public final class LumenInventoryHelper {
             throw new RuntimeException("Inventory size must be a multiple of 9, got " + size);
         }
         LumenInventoryHolder holder = new LumenInventoryHolder(name);
-        Inventory inv = Bukkit.createInventory(holder, size, LumenText.colorize(title));
-        holder.setInventory(inv);
+        String colorized = LumenText.colorize(title);
+        holder.title(colorized);
+        Inventory inv = Bukkit.createInventory(holder, size, colorized);
+        holder.inventory(inv);
         return inv;
     }
 
@@ -48,7 +50,7 @@ public final class LumenInventoryHelper {
         }
         LumenInventoryHolder holder = new LumenInventoryHolder(name);
         Inventory inv = Bukkit.createInventory(holder, size);
-        holder.setInventory(inv);
+        holder.inventory(inv);
         return inv;
     }
 

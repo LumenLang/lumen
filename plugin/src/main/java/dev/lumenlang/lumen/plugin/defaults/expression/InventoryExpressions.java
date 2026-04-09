@@ -139,7 +139,7 @@ public final class InventoryExpressions {
                             ctx.codegen().addImport(LumenInventoryHolder.class.getName());
                             String inv = ctx.java("inv");
                             return new ExpressionResult(
-                                    "(((Inventory) " + inv + ").getHolder() instanceof LumenInventoryHolder __lh ? __lh.getName() : null)",
+                                    "(((Inventory) " + inv + ").getHolder() instanceof LumenInventoryHolder __lh ? __lh.name() : null)",
                                     null, Types.STRING);
                         });
     }
