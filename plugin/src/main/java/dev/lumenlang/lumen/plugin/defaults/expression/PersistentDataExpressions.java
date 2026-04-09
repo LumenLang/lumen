@@ -36,7 +36,6 @@ public final class PersistentDataExpressions {
                 .description("Retrieves a string value from an entity's PersistentDataContainer.")
                 .example("set val to get pdc \"myKey\" of entity")
                 .since("1.0.0").category(Categories.ENTITY)
-                .returnType(Types.STRING)
                 .handler(ctx -> {
                     pdcImports(ctx.codegen());
                     return new ExpressionResult(
@@ -50,7 +49,6 @@ public final class PersistentDataExpressions {
                 .description("Retrieves a string value from an item stack's PersistentDataContainer.")
                 .example("set val to get pdc \"custom_id\" of item")
                 .since("1.0.0").category(Categories.ITEM)
-                .returnType(Types.STRING)
                 .handler(ctx -> {
                     pdcImports(ctx.codegen());
                     String itemJava = ctx.java("i");
@@ -65,7 +63,6 @@ public final class PersistentDataExpressions {
                 .description("Retrieves a string value from a block's PersistentDataContainer.")
                 .example("set val to get pdc \"owner\" of block")
                 .since("1.0.0").category(Categories.BLOCK)
-                .returnType(Types.STRING)
                 .handler(ctx -> {
                     pdcImports(ctx.codegen());
                     return new ExpressionResult(

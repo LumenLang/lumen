@@ -41,7 +41,6 @@ public final class ExpressionBuilder {
     private @Nullable String since;
     private @Nullable Category category;
     private boolean deprecated;
-    private @Nullable String returnType;
     private @Nullable ExpressionHandler handler;
     private @Nullable InjectableExpression injectableExpression;
     private @Nullable Class<?> injectableClass;
@@ -152,21 +151,6 @@ public final class ExpressionBuilder {
     }
 
     /**
-     * Declares the type this expression statically produces.
-     *
-     * <p>When set, tooling can resolve the type of a variable assigned from
-     * this expression without executing the handler. Expressions whose return
-     * type depends on runtime input should leave this unset ({@code null}).
-     *
-     * @param returnType the type id (e.g. {@code MinecraftTypes.PLAYER.id()}, {@code Types.INT}), or {@code null}
-     * @return this builder
-     */
-    public @NotNull ExpressionBuilder returnType(@Nullable String returnType) {
-        this.returnType = returnType;
-        return this;
-    }
-
-    /**
      * Sets the handler that returns the Java expression result.
      *
      * @param handler the expression handler
@@ -181,9 +165,6 @@ public final class ExpressionBuilder {
      * Sets an injectable expression whose bytecode will be extracted and injected
      * into the compiled script class. This is an alternative to {@link #handler}.
      *
-     * <p>When using this, set {@link #returnType}
-     * to declare what type the expression produces.
-     *
      * @param expression the injectable expression
      * @return this builder
      */
@@ -195,9 +176,6 @@ public final class ExpressionBuilder {
     /**
      * Sets a static method whose bytecode will be extracted and injected
      * into the compiled script class. This is an alternative to {@link #handler}.
-     *
-     * <p>When using this, set {@link #returnType}
-     * to declare what type the expression produces.
      *
      * @param clazz the class containing the static method
      * @param methodName the name of the static method
@@ -229,10 +207,6 @@ public final class ExpressionBuilder {
 
     public @Nullable String getInjectableMethodName() {
         return injectableMethodName;
-    }
-
-    public @Nullable String getReturnType() {
-        return returnType;
     }
 
     public @NotNull PatternMeta buildMeta() {

@@ -35,7 +35,6 @@ public final class AttributeExpressions {
                 .example("set hp to mob's max_health")
                 .since("1.0.0")
                 .category(Categories.ATTRIBUTE)
-                .returnType(Types.DOUBLE)
                 .handler(ctx -> {
                     VarHandle h = (VarHandle) ctx.value("e");
                     boolean known = EntityValidation.requireSubtype(h, LIVING, "get attribute base value");
@@ -58,7 +57,6 @@ public final class AttributeExpressions {
                 .example("set totalHp to mob's max_health effective")
                 .since("1.0.0")
                 .category(Categories.ATTRIBUTE)
-                .returnType(Types.DOUBLE)
                 .handler(ctx -> {
                     VarHandle h = (VarHandle) ctx.value("e");
                     boolean known = EntityValidation.requireSubtype(h, LIVING, "get attribute effective value");
@@ -81,7 +79,6 @@ public final class AttributeExpressions {
                 .example("set defaultHp to mob's max_health default")
                 .since("1.0.0")
                 .category(Categories.ATTRIBUTE)
-                .returnType(Types.DOUBLE)
                 .handler(ctx -> {
                     VarHandle h = (VarHandle) ctx.value("e");
                     boolean known = EntityValidation.requireSubtype(h, LIVING, "get attribute default value");

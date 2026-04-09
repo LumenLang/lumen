@@ -33,7 +33,6 @@ public final class ListExpressions {
                 .deprecated(true)
                 .since("1.0.0")
                 .category(Categories.LIST)
-                .returnType(BuiltinLumenTypes.LIST.id())
                 .handler(ctx -> {
                     throw new RuntimeException("Untyped lists are no longer supported. Use 'new list of <type>' instead, for example: 'set myList to new list of string'"); // TODO: Remove in 1.4.0
                 }));
@@ -46,7 +45,6 @@ public final class ListExpressions {
                 .since("1.0.0")
                 .deprecated(true)
                 .category(Categories.LIST)
-                .returnType(BuiltinLumenTypes.LIST.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(ArrayList.class.getName());
                     String elementType = ctx.tokens("type").get(0).toLowerCase();
@@ -63,7 +61,6 @@ public final class ListExpressions {
                 .example("set count to size of myList")
                 .since("1.0.0")
                 .category(Categories.LIST)
-                .returnType(Types.INT)
                 .handler(ctx -> {
                     ctx.codegen().addImport(List.class.getName());
                     return new ExpressionResult(
@@ -78,7 +75,6 @@ public final class ListExpressions {
                 .example("set count to myList size")
                 .since("1.0.0")
                 .category(Categories.LIST)
-                .returnType(Types.INT)
                 .handler(ctx -> {
                     ctx.codegen().addImport(List.class.getName());
                     return new ExpressionResult(
@@ -107,7 +103,6 @@ public final class ListExpressions {
                 .example("set idx to myList index of \"hello\"")
                 .since("1.0.0")
                 .category(Categories.LIST)
-                .returnType(Types.INT)
                 .handler(ctx -> {
                     ctx.codegen().addImport(List.class.getName());
                     return new ExpressionResult(
@@ -122,7 +117,6 @@ public final class ListExpressions {
                 .example("set count to size of todos for player")
                 .since("1.0.0")
                 .category(Categories.LIST)
-                .returnType(Types.INT)
                 .handler(ctx -> {
                     EnvironmentAccess env = ctx.env();
                     String listVarName = ctx.tokens("list").get(0);
@@ -146,7 +140,6 @@ public final class ListExpressions {
                 .example("set count to todos size for player")
                 .since("1.0.0")
                 .category(Categories.LIST)
-                .returnType(Types.INT)
                 .handler(ctx -> {
                     EnvironmentAccess env = ctx.env();
                     String listVarName = ctx.tokens("list").get(0);

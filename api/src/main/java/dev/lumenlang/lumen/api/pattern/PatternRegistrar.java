@@ -15,7 +15,6 @@ import dev.lumenlang.lumen.api.pattern.builder.ExpressionBuilder;
 import dev.lumenlang.lumen.api.pattern.builder.LoopBuilder;
 import dev.lumenlang.lumen.api.pattern.builder.StatementBuilder;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -211,26 +210,24 @@ public interface PatternRegistrar {
      * the compiled script class after compilation.
      *
      * <pre>{@code
-     * api.patterns().injectableExpression("location of %who:PLAYER%", MinecraftTypes.LOCATION.id(), () -> {
+     * api.patterns().injectableExpression("location of %who:PLAYER%", () -> {
      *     Player player = Fakes.fake("who");
      *     return player.getLocation();
      * });
      * }</pre>
      *
      * @param pattern the pattern string
-     * @param typeId the type id for the return value, or null
      * @param expression the injectable expression
      */
-    void injectableExpression(@NotNull String pattern, @Nullable String typeId, @NotNull InjectableExpression expression);
+    void injectableExpression(@NotNull String pattern, @NotNull InjectableExpression expression);
 
     /**
      * Registers multiple pattern strings that all map to the same injectable expression.
      *
      * @param patterns the list of pattern strings
-     * @param typeId the type id for the return value, or null
      * @param expression the injectable expression
      */
-    void injectableExpression(@NotNull List<String> patterns, @Nullable String typeId, @NotNull InjectableExpression expression);
+    void injectableExpression(@NotNull List<String> patterns, @NotNull InjectableExpression expression);
 
     /**
      * Registers a condition pattern with an injectable condition.

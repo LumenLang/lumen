@@ -11,7 +11,6 @@ import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.api.type.AddonTypeBinding;
 import dev.lumenlang.lumen.api.type.Types;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
 import java.util.Objects;
@@ -358,7 +357,6 @@ public final class EntityHelper {
                 .example(example)
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .returnType(Types.INT)
                 .handler(ctx -> {
                     String java = ctx.java("e");
                     EntityValidation.requireSubtype((VarHandle) ctx.value("e"), fqcn, pattern);
@@ -391,7 +389,6 @@ public final class EntityHelper {
                 .example(example)
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .returnType(Types.STRING)
                 .handler(ctx -> {
                     String java = ctx.java("e");
                     EntityValidation.requireSubtype((VarHandle) ctx.value("e"), fqcn, pattern);
@@ -424,7 +421,6 @@ public final class EntityHelper {
                 .example(example)
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .returnType(Types.BOOLEAN)
                 .handler(ctx -> {
                     String java = ctx.java("e");
                     EntityValidation.requireSubtype((VarHandle) ctx.value("e"), fqcn, pattern);
@@ -450,24 +446,6 @@ public final class EntityHelper {
                                             @NotNull String description,
                                             @NotNull String example,
                                             @NotNull ExpressionHandler handler) {
-        return expression(pattern, description, example, null, handler);
-    }
-
-    /**
-     * Registers an expression with a fully custom handler and a static return type.
-     *
-     * @param pattern    the expression pattern
-     * @param description the description
-     * @param example     the example
-     * @param returnType the static return type id for tooling, or null
-     * @param handler    the expression handler
-     * @return this builder
-     */
-    public @NotNull EntityHelper expression(@NotNull String pattern,
-                                            @NotNull String description,
-                                            @NotNull String example,
-                                            @Nullable String returnType,
-                                            @NotNull ExpressionHandler handler) {
         api.patterns().expression(b -> b
                 .by("Lumen")
                 .pattern(pattern)
@@ -475,7 +453,6 @@ public final class EntityHelper {
                 .example(example)
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .returnType(returnType)
                 .handler(handler));
         return this;
     }

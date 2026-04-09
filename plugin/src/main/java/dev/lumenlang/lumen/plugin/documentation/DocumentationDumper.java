@@ -68,11 +68,6 @@ import java.util.concurrent.CompletableFuture;
  *   <li>{@code deprecated} - {@code true} if the pattern is deprecated.</li>
  * </ul>
  *
- * <h2>Extra fields for expressions</h2>
- * <ul>
- *   <li>{@code returnTypeId} - the type ID of the return value (e.g. {@code "PLAYER"} or {@code "int"}), or {@code null}.</li>
- * </ul>
- *
  * <h2>Extra fields for blocks</h2>
  * <ul>
  *   <li>{@code supportsRootLevel} - {@code true} if the block is allowed at script root level.</li>
@@ -231,7 +226,6 @@ public final class DocumentationDumper {
     private static @NotNull Map<String, List<Map<String, Object>>> groupExpressions(@NotNull List<RegisteredExpression> expressions) {
         IdentityHashMap<Object, List<String>> handlerToPatterns = new IdentityHashMap<>();
         IdentityHashMap<Object, PatternMeta> handlerToMeta = new IdentityHashMap<>();
-        IdentityHashMap<Object, String> handlerToReturnType = new IdentityHashMap<>();
         List<Object> handlerOrder = new ArrayList<>();
 
         for (RegisteredExpression re : expressions) {
@@ -241,16 +235,12 @@ public final class DocumentationDumper {
                 return new ArrayList<>();
             }).add(re.pattern().raw());
             handlerToMeta.putIfAbsent(handler, re.meta());
-            if (re.returnTypeId() != null) {
-                handlerToReturnType.putIfAbsent(handler, re.returnTypeId());
-            }
         }
 
         Map<String, List<Map<String, Object>>> result = new LinkedHashMap<>();
         for (Object handler : handlerOrder) {
             PatternMeta meta = handlerToMeta.get(handler);
             Map<String, Object> entry = buildPatternEntry(handlerToPatterns.get(handler), meta);
-            entry.put("returnTypeId", handlerToReturnType.get(handler));
             result.computeIfAbsent(ownerOf(meta.by()), k -> new ArrayList<>()).add(entry);
         }
         return result;

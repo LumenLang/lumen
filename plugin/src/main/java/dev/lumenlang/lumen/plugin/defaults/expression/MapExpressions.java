@@ -49,7 +49,6 @@ public final class MapExpressions {
                 .since("1.0.0")
                 .category(Categories.MAP)
                 .deprecated(true)
-                .returnType(BuiltinLumenTypes.MAP.id())
                 .handler(ctx -> {
                     throw new RuntimeException("Untyped maps are no longer supported. Use 'new map of <key-type> to <value-type>' instead, for example: 'set myMap to new map of string to int'"); // TODO: Remove in 1.4.0
                 }));
@@ -61,7 +60,6 @@ public final class MapExpressions {
                 .examples("set scores to new map of string to int", "set data to new map string to player")
                 .since("1.2.0")
                 .category(Categories.MAP)
-                .returnType(BuiltinLumenTypes.MAP.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(HashMap.class.getName());
                     String keyType = ctx.tokens("keyType").get(0).toLowerCase();
@@ -124,7 +122,6 @@ public final class MapExpressions {
                 .example("set count to size of myMap")
                 .since("1.0.0")
                 .category(Categories.MAP)
-                .returnType(Types.INT)
                 .handler(ctx -> {
                     ctx.codegen().addImport(Map.class.getName());
                     return new ExpressionResult(
@@ -139,7 +136,6 @@ public final class MapExpressions {
                 .example("set count to myMap size")
                 .since("1.0.0")
                 .category(Categories.MAP)
-                .returnType(Types.INT)
                 .handler(ctx -> {
                     ctx.codegen().addImport(Map.class.getName());
                     return new ExpressionResult(
@@ -154,7 +150,6 @@ public final class MapExpressions {
                 .example("set allKeys to keys of myMap")
                 .since("1.0.0")
                 .category(Categories.MAP)
-                .returnType(BuiltinLumenTypes.LIST.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(Map.class.getName());
                     ctx.codegen().addImport(ArrayList.class.getName());
@@ -171,7 +166,6 @@ public final class MapExpressions {
                 .example("set allValues to values of myMap")
                 .since("1.0.0")
                 .category(Categories.MAP)
-                .returnType(BuiltinLumenTypes.LIST.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(Map.class.getName());
                     ctx.codegen().addImport(ArrayList.class.getName());

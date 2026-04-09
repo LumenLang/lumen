@@ -26,7 +26,6 @@ public final class TameableExpressions {
                         "[get] %e:ENTITY% owner",
                         "Returns the tameable entity's owner, or null if not tamed.",
                         "set owner to mob owner",
-                        MinecraftTypes.OFFLINE_PLAYER.id(),
                         ctx -> {
                             VarHandle h = (VarHandle) ctx.value("e");
                             String java = ctx.java("e");

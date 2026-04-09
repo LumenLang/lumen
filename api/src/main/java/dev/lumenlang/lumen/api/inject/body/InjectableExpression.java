@@ -11,7 +11,6 @@ import java.io.Serializable;
  * api.patterns().expression(b -> b
  *     .by("MyAddon")
  *     .pattern("location of %who:PLAYER%")
- *     .returnType(MinecraftTypes.LOCATION.id())
  *     .injectableHandler(() -> {
  *         Player player = Fakes.fake("who");
  *         return player.getLocation();

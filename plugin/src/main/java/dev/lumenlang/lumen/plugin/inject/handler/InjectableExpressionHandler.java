@@ -4,8 +4,6 @@ import dev.lumenlang.lumen.api.codegen.BindingAccess;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler;
 import dev.lumenlang.lumen.api.inject.body.InjectableExpression;
 import dev.lumenlang.lumen.pipeline.inject.PatternHinted;
-import dev.lumenlang.lumen.api.type.LumenTypeRegistry;
-import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.plugin.inject.bytecode.BytecodeExtractor;
 import dev.lumenlang.lumen.plugin.inject.bytecode.ExtractedBody;
 import dev.lumenlang.lumen.plugin.inject.bytecode.MethodDecompiler;
@@ -30,13 +28,12 @@ public final class InjectableExpressionHandler implements ExpressionHandler, Pat
      * Creates a handler from the given injectable expression.
      *
      * @param expression the injectable expression whose bytecode will be extracted and injected
-     * @param typeId     the type id for the return value (e.g. "PLAYER" or "int"), or null
      */
-    public InjectableExpressionHandler(@NotNull InjectableExpression expression, @Nullable String typeId) {
+    public InjectableExpressionHandler(@NotNull InjectableExpression expression) {
         ExtractedBody body = BytecodeExtractor.extract(expression);
-        String returnTypeJava = resolveReturnType(body, typeId);
+        String returnTypeJava = InjectableHandlerSupport.descriptorToJavaType(body.returnDescriptor());
         this.support = new InjectableHandlerSupport(body, returnTypeJava, false);
-        this.typeId = typeId;
+        this.typeId = InjectableHandlerSupport.descriptorToTypeId(body.returnDescriptor());
     }
 
     /**
@@ -44,22 +41,12 @@ public final class InjectableExpressionHandler implements ExpressionHandler, Pat
      *
      * @param clazz      the class containing the method
      * @param methodName the name of the static method
-     * @param typeId     the type id for the return value, or null
      */
-    public InjectableExpressionHandler(@NotNull Class<?> clazz, @NotNull String methodName, @Nullable String typeId) {
+    public InjectableExpressionHandler(@NotNull Class<?> clazz, @NotNull String methodName) {
         ExtractedBody body = BytecodeExtractor.extractMethod(clazz, methodName);
-        String returnTypeJava = resolveReturnType(body, typeId);
+        String returnTypeJava = InjectableHandlerSupport.descriptorToJavaType(body.returnDescriptor());
         this.support = new InjectableHandlerSupport(body, returnTypeJava, false);
-        this.typeId = typeId;
-    }
-
-    private static @NotNull String resolveReturnType(@NotNull ExtractedBody body, @Nullable String typeId) {
-        if (typeId != null) {
-            ObjectType resolvedType = LumenTypeRegistry.byId(typeId);
-            if (resolvedType != null) return resolvedType.javaType();
-            return typeId;
-        }
-        return InjectableHandlerSupport.descriptorToJavaType(body.returnDescriptor());
+        this.typeId = InjectableHandlerSupport.descriptorToTypeId(body.returnDescriptor());
     }
 
     @Override

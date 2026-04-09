@@ -7,7 +7,6 @@ import dev.lumenlang.lumen.api.inject.body.InjectableBody;
 import dev.lumenlang.lumen.api.inject.body.InjectableCondition;
 import dev.lumenlang.lumen.api.inject.body.InjectableExpression;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Factory bridge for creating injectable handlers. The concrete implementation
@@ -29,12 +28,12 @@ public final class InjectableHandlers {
         return factory.statement(clazz, methodName, methodBased);
     }
 
-    public static @NotNull ExpressionHandler expression(@NotNull InjectableExpression expression, @Nullable String typeId) {
-        return factory.expression(expression, typeId);
+    public static @NotNull ExpressionHandler expression(@NotNull InjectableExpression expression) {
+        return factory.expression(expression);
     }
 
-    public static @NotNull ExpressionHandler expression(@NotNull Class<?> clazz, @NotNull String methodName, @Nullable String typeId) {
-        return factory.expression(clazz, methodName, typeId);
+    public static @NotNull ExpressionHandler expression(@NotNull Class<?> clazz, @NotNull String methodName) {
+        return factory.expression(clazz, methodName);
     }
 
     public static @NotNull ConditionHandler condition(@NotNull InjectableCondition condition) {
@@ -51,9 +50,9 @@ public final class InjectableHandlers {
 
         @NotNull StatementHandler statement(@NotNull Class<?> clazz, @NotNull String methodName, boolean methodBased);
 
-        @NotNull ExpressionHandler expression(@NotNull InjectableExpression expression, @Nullable String typeId);
+        @NotNull ExpressionHandler expression(@NotNull InjectableExpression expression);
 
-        @NotNull ExpressionHandler expression(@NotNull Class<?> clazz, @NotNull String methodName, @Nullable String typeId);
+        @NotNull ExpressionHandler expression(@NotNull Class<?> clazz, @NotNull String methodName);
 
         @NotNull ConditionHandler condition(@NotNull InjectableCondition condition);
 

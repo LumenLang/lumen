@@ -7,7 +7,6 @@ import dev.lumenlang.lumen.api.handler.ExpressionHandler;
 import dev.lumenlang.lumen.api.handler.StatementHandler;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -164,24 +163,6 @@ public final class InventoryHelper {
                                                @NotNull String description,
                                                @NotNull String example,
                                                @NotNull ExpressionHandler handler) {
-        return expression(pattern, description, example, null, handler);
-    }
-
-    /**
-     * Registers an expression pattern with a static return type.
-     *
-     * @param pattern    the pattern string
-     * @param description human-readable description
-     * @param example    usage example
-     * @param returnType the static return type id for tooling, or null
-     * @param handler    the expression handler
-     * @return this builder
-     */
-    public @NotNull InventoryHelper expression(@NotNull String pattern,
-                                               @NotNull String description,
-                                               @NotNull String example,
-                                               @Nullable String returnType,
-                                               @NotNull ExpressionHandler handler) {
         api.patterns().expression(b -> b
                 .by("Lumen")
                 .pattern(pattern)
@@ -189,7 +170,6 @@ public final class InventoryHelper {
                 .example(example)
                 .since("1.0.0")
                 .category(Categories.INVENTORY)
-                .returnType(returnType)
                 .handler(handler));
         return this;
     }

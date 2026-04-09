@@ -34,7 +34,6 @@ public final class InventoryExpressions {
                         "new inventory %name:STRING% [with] [size] %size:INT% titled %title:STRING%",
                         "Creates a new Lumen inventory with a name, size, and display title. The name identifies the GUI type programmatically.",
                         "set gui to new inventory \"main_menu\" with size 27 titled \"<gold>Test Menu\"",
-                        MinecraftTypes.INVENTORY.id(),
                         ctx -> {
                             ctx.codegen().addImport(INVENTORY);
                             ctx.codegen().addImport(LumenInventoryHelper.class.getName());
@@ -49,7 +48,6 @@ public final class InventoryExpressions {
                         "new inventory %name:STRING% [with] [size] %size:INT%",
                         "Creates a new Lumen inventory with a name and size, without a display title.",
                         "set gui to new inventory \"shop\" with size 54",
-                        MinecraftTypes.INVENTORY.id(),
                         ctx -> {
                             ctx.codegen().addImport(INVENTORY);
                             ctx.codegen().addImport(LumenInventoryHelper.class.getName());
@@ -64,7 +62,6 @@ public final class InventoryExpressions {
                         "Creates a new Lumen inventory with a name, row count (1 to 6), and display title. "
                                 + "The size is calculated as rows * 9. Throws a runtime error if rows is not between 1 and 6.",
                         "set gui to new inventory \"main_menu\" with rows 3 titled \"<gold>Test Menu\"",
-                        MinecraftTypes.INVENTORY.id(),
                         ctx -> {
                             ctx.codegen().addImport(INVENTORY);
                             ctx.codegen().addImport(LumenInventoryHelper.class.getName());
@@ -80,7 +77,6 @@ public final class InventoryExpressions {
                         "Creates a new Lumen inventory with a name and row count (1 to 6), without a display title. "
                                 + "The size is calculated as rows * 9. Throws a runtime error if rows is not between 1 and 6.",
                         "set gui to new inventory \"shop\" with rows 6",
-                        MinecraftTypes.INVENTORY.id(),
                         ctx -> {
                             ctx.codegen().addImport(INVENTORY);
                             ctx.codegen().addImport(LumenInventoryHelper.class.getName());
@@ -98,7 +94,6 @@ public final class InventoryExpressions {
                         "[get] item in slot %slot:INT% of %inv:EXPR%",
                         "Returns the item stack in a specific slot of an inventory, or null if the slot is empty.",
                         "set item to get item in slot 0 of gui",
-                        MinecraftTypes.ITEMSTACK.id(),
                         ctx -> {
                             ctx.codegen().addImport(INVENTORY);
                             return new ExpressionResult(
@@ -109,7 +104,6 @@ public final class InventoryExpressions {
                         "[get] %inv:EXPR% inventory size",
                         "Returns the total number of slots in an inventory.",
                         "set sz to get gui inventory size",
-                        Types.INT,
                         ctx -> {
                             ctx.codegen().addImport(INVENTORY);
                             return new ExpressionResult(
@@ -120,7 +114,6 @@ public final class InventoryExpressions {
                         "[get] first empty slot of %inv:EXPR%",
                         "Returns the index of the first empty slot in an inventory, or -1 if full.",
                         "set freeSlot to get first empty slot of gui",
-                        Types.INT,
                         ctx -> {
                             ctx.codegen().addImport(INVENTORY);
                             return new ExpressionResult(
@@ -131,7 +124,6 @@ public final class InventoryExpressions {
                         "[get] name of %inv:EXPR%",
                         "Returns the name of a Lumen inventory, or null if the inventory was not created by Lumen.",
                         "set gui_name to get name of inventory",
-                        Types.STRING,
                         ctx -> {
                             ctx.codegen().addImport(INVENTORY);
                             ctx.codegen().addImport(LumenInventoryHolder.class.getName());
