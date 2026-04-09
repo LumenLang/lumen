@@ -28,8 +28,9 @@ public final class ListExpressions {
         api.patterns().expression(b -> b
                 .by("Lumen")
                 .pattern("new list")
-                .description("Creates a new empty list. Deprecated: use 'new list of <type>' instead.")
+                .description("Creates a new empty list. WILL ALWAYS THROW AN ERROR, use 'new list of <type>'")
                 .example("set myList to new list")
+                .deprecated(true)
                 .since("1.0.0")
                 .category(Categories.LIST)
                 .returnRefTypeId(BuiltinLumenTypes.LIST.id())
@@ -43,6 +44,7 @@ public final class ListExpressions {
                 .description("Creates a new empty typed list. Elements added to this list will be validated against the declared type.")
                 .examples("set arenas to new list of arena", "set scores to new list of number", "set names to new list string")
                 .since("1.0.0")
+                .deprecated(true)
                 .category(Categories.LIST)
                 .returnRefTypeId(BuiltinLumenTypes.LIST.id())
                 .handler(ctx -> {

@@ -44,10 +44,11 @@ public final class MapExpressions {
         api.patterns().expression(b -> b
                 .by("Lumen")
                 .pattern("new map")
-                .description("Creates a new empty map. Deprecated: use 'new map of <key-type> to <value-type>' instead.")
+                .description("Creates a new empty map. WILL ALWAYS THROW AN ERROR, use 'new map of <key-type> to <value-type>' instead.")
                 .example("set myMap to new map")
                 .since("1.0.0")
                 .category(Categories.MAP)
+                .deprecated(true)
                 .returnRefTypeId(BuiltinLumenTypes.MAP.id())
                 .handler(ctx -> {
                     throw new RuntimeException("Untyped maps are no longer supported. Use 'new map of <key-type> to <value-type>' instead, for example: 'set myMap to new map of string to int'"); // TODO: Remove in 1.4.0
