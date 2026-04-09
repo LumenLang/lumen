@@ -82,19 +82,6 @@ public final class MathEngine {
      * Compiles a list of tokens into a Java expression string and resolves the numeric
      * result type by tracking type widening through operations.
      *
-     * @param tokens the token list representing the math expression
-     * @param env    the compile-time symbol table for variable resolution
-     * @return a typed result containing the Java expression and its resolved type
-     * @throws RuntimeException if the expression is malformed or references an unknown variable
-     */
-    public static @NotNull TypedResult compileTyped(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
-        return compileTyped(tokens, env, 0, "");
-    }
-
-    /**
-     * Compiles a list of tokens into a Java expression string and resolves the numeric
-     * result type by tracking type widening through operations.
-     *
      * @param tokens  the token list representing the math expression
      * @param env     the compile-time symbol table for variable resolution
      * @param line    the script line number for diagnostic messages
