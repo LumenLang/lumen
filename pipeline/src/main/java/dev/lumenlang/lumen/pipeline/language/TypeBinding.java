@@ -149,7 +149,7 @@ public interface TypeBinding {
      * empty list. This signals that the binding produces a value without
      * consuming input (e.g. a default or implicit value).</li>
      * <li><b>1+</b>: Consume exactly this many tokens (typical for PLAYER,
-     * MATERIAL, INT).</li>
+     * MATERIAL, INT, etc.).</li>
      * </ul>
      *
      * <p>

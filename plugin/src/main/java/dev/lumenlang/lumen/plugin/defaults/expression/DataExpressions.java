@@ -42,8 +42,7 @@ public final class DataExpressions {
      * @param rawGet the Java expression for the raw {@code DataInstance.get()} call
      * @return an expression result with the coerced (or raw) Java expression
      */
-    private static @NotNull ExpressionResult coerceFieldResult(@NotNull BindingAccess ctx,
-                                                               @NotNull String rawGet) {
+    private static @NotNull ExpressionResult coerceFieldResult(@NotNull BindingAccess ctx, @NotNull String rawGet) {
         DataSchema.FieldType fieldType = resolveFieldType(ctx);
         if (fieldType != null && fieldType != DataSchema.FieldType.ANY) {
             return new ExpressionResult(fieldType.coerce(rawGet), null);
@@ -125,17 +124,13 @@ public final class DataExpressions {
 
     /**
      * Registers the data constructor expression.
-     *
-     * <p>Syntax: {@code new <type>} or {@code new <type> with field1 val1 field2 val2 ...}
-     * <p>The field-value pairs after "with" can use literal values or variable references.
      */
     private void registerConstructor(@NotNull LumenAPI api) {
         api.patterns().expression(b -> b
                 .by("Lumen")
                 .pattern("new %body:EXPR%")
                 .description("Creates a new data instance. Use 'with' to set fields: new arena with name \"x\" x1 5")
-                .examples("set a to new arena",
-                        "set a to new arena with name \"PvP\" x1 0 y1 0 z1 0 x2 100 y2 100 z2 100")
+                .examples("set a to new arena", "set a to new arena with name \"PvP\" x1 0 y1 0 z1 0 x2 100 y2 100 z2 100")
                 .since("1.0.0")
                 .category(Categories.DATA)
                 .returnRefTypeId(Types.DATA.id())
@@ -180,9 +175,7 @@ public final class DataExpressions {
                         String fieldName = fieldTokens.get(i);
 
                         if (!schema.fields().containsKey(fieldName)) {
-                            throw new RuntimeException("Unknown field '" + fieldName
-                                    + "' in data type '" + typeName + "'. Known fields: "
-                                    + String.join(", ", schema.fields().keySet()));
+                            throw new RuntimeException("Unknown field '" + fieldName + "' in data type '" + typeName + "'. Known fields: " + String.join(", ", schema.fields().keySet()));
                         }
 
                         String valueToken = fieldTokens.get(i + 1);
@@ -202,45 +195,19 @@ public final class DataExpressions {
     }
 
     /**
-     * Registers field access expression patterns.
-     *
-     * <p>Syntax: {@code get field "<field>" of <obj>} or {@code <obj> field "<field>"}
-     *
-     * <p>When the data type and field name are both known at compile time, the returned
-     * expression is automatically coerced to the schema's declared type (e.g. {@code double}
-     * for number fields). Otherwise the raw {@code Object} value from {@code DataInstance.get()}
-     * is returned, leaving coercion to the caller.
+     * Registers field access expression pattern.
      */
     private void registerFieldAccess(@NotNull LumenAPI api) {
         api.patterns().expression(b -> b
                 .by("Lumen")
-                .pattern("get field %field:STRING% (of|from) %obj:EXPR%")
+                .patterns("%obj:DATA% field [of] %field:STRING%", "get field %field:STRING% (of|from) %obj:DATA%")
                 .description("Gets a field value from a data instance.")
-                .examples("set name to get field \"name\" of myArena",
-                        "set x to get field \"x1\" from myArena")
+                .examples("set name to get field \"name\" of myArena", "set x to get field \"x1\" from myArena")
                 .since("1.0.0")
                 .category(Categories.DATA)
                 .handler(ctx -> {
                     ctx.codegen().addImport(DataInstance.class.getName());
-                    String objJava = ctx.java("obj");
-                    String fieldJava = ctx.java("field");
-                    String rawGet = "((DataInstance) " + objJava + ").get(" + fieldJava + ")";
-                    return coerceFieldResult(ctx, rawGet);
-                }));
-
-        api.patterns().expression(b -> b
-                .by("Lumen")
-                .pattern("%obj:EXPR% field [of] %field:STRING%")
-                .description("Gets a field value from a data instance using postfix syntax.")
-                .example("set name to myArena field \"name\"")
-                .since("1.0.0")
-                .category(Categories.DATA)
-                .handler(ctx -> {
-                    ctx.codegen().addImport(DataInstance.class.getName());
-                    String objJava = ctx.java("obj");
-                    String fieldJava = ctx.java("field");
-                    String rawGet = "((DataInstance) " + objJava + ").get(" + fieldJava + ")";
-                    return coerceFieldResult(ctx, rawGet);
+                    return coerceFieldResult(ctx, "((DataInstance) " + ctx.java("obj") + ").get(" + ctx.java("field") + ")");
                 }));
     }
 }
