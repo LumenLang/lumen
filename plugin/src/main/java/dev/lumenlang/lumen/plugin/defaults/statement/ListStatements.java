@@ -6,6 +6,8 @@ import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.codegen.BindingAccess;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.codegen.JavaOutput;
+import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
+import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.api.type.RefTypeHandle;
 import org.jetbrains.annotations.NotNull;
@@ -47,13 +49,19 @@ public final class ListStatements {
             if (valRef != null && valRef.hasMeta("data_type")) {
                 String valDataType = (String) valRef.meta("data_type");
                 if (valDataType == null) {
-                    throw new RuntimeException(
-                            "Cannot determine data type of value for list element type validation, expected '" + elementType + "'");
+                    throw new DiagnosticException(LumenDiagnostic.error("E401", "Cannot determine data type of value")
+                            .at(ctx.block().line(), ctx.block().raw())
+                            .label("type unknown")
+                            .note("list expects '" + elementType + "' elements")
+                            .help("ensure the value has a known data type")
+                            .build());
                 }
                 if (!valDataType.equalsIgnoreCase(elementType)) {
-                    throw new RuntimeException(
-                            "Type mismatch: list expects '" + elementType
-                                    + "' elements, but got '" + valDataType + "'");
+                    throw new DiagnosticException(LumenDiagnostic.error("E401", "List element type mismatch")
+                            .at(ctx.block().line(), ctx.block().raw())
+                            .label("expected '" + elementType + "', got '" + valDataType + "'")
+                            .help("this list only accepts '" + elementType + "' elements")
+                            .build());
                 }
             }
         }
@@ -70,22 +78,41 @@ public final class ListStatements {
         }
     }
 
-    private static @NotNull String buildScopedKey(@NotNull EnvironmentAccess env,
+    private static @NotNull String buildScopedKey(@NotNull BindingAccess ctx,
                                                   @NotNull String varName,
                                                   @NotNull String scopeVarName,
                                                   @NotNull EnvironmentAccess.GlobalInfo info) {
+        EnvironmentAccess env = ctx.env();
         EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
-        if (scopeRef == null) throw new RuntimeException("Scope variable not found: " + scopeVarName);
+        if (scopeRef == null) {
+            throw new DiagnosticException(LumenDiagnostic.error("E500", "Scope variable '" + scopeVarName + "' not found")
+                    .at(ctx.block().line(), ctx.block().raw())
+                    .label("undefined variable")
+                    .help("make sure the variable is defined before using it")
+                    .build());
+        }
         RefTypeHandle refType = scopeRef.type();
-        if (refType == null) throw new RuntimeException("Scope variable '" + scopeVarName + "' has no ref type.");
+        if (refType == null) {
+            throw new DiagnosticException(LumenDiagnostic.error("E502", "Scope variable '" + scopeVarName + "' has no type")
+                    .at(ctx.block().line(), ctx.block().raw())
+                    .label("expected a typed variable")
+                    .help("use a typed variable like a player or entity as scope")
+                    .build());
+        }
         return "\"" + info.className() + "." + varName + ".\" + " + refType.keyExpression(scopeRef.java());
     }
 
     private static void emitScopedMutation(@NotNull BindingAccess ctx, @NotNull JavaOutput out, @NotNull String listVarName, @NotNull String scopeVarName, @NotNull Function<String, String> mutation) {
         EnvironmentAccess.GlobalInfo info = ctx.env().getGlobalInfo(listVarName);
-        if (info == null) throw new RuntimeException("'" + listVarName + "' is not a global variable.");
+        if (info == null) {
+            throw new DiagnosticException(LumenDiagnostic.error("E500", "'" + listVarName + "' is not a global variable")
+                    .at(ctx.block().line(), ctx.block().raw())
+                    .label("not a global")
+                    .help("declare with 'global " + listVarName + " with default new list'")
+                    .build());
+        }
         String storageClass = info.stored() ? "PersistentVars" : "GlobalVars";
-        String scopeKey = buildScopedKey(ctx.env(), listVarName, scopeVarName, info);
+        String scopeKey = buildScopedKey(ctx, listVarName, scopeVarName, info);
         String tmp = "__scoped_" + listVarName + "_" + out.lineNum();
         ctx.codegen().addImport(List.class.getName());
         ctx.codegen().addImport(ArrayList.class.getName());

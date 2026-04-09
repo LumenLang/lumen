@@ -55,6 +55,7 @@ public final class TypeEnv implements EnvironmentAccess {
     private final Map<String, DataSchema> dataSchemas = new HashMap<>();
     private final Map<String, NullState> nullStates = new HashMap<>();
     private final Map<String, NullableVarInfo> nullableVarInfos = new HashMap<>();
+    private final Map<String, NullAssignmentInfo> nullAssignments = new HashMap<>();
     private BlockContext currentBlock;
 
     /**
@@ -79,6 +80,15 @@ public final class TypeEnv implements EnvironmentAccess {
     }
 
     /**
+     * Records where a variable was last set to none, for use in value flow diagnostics.
+     *
+     * @param line the line number where the variable became null
+     * @param raw  the raw source text of that line
+     */
+    public record NullAssignmentInfo(int line, @NotNull String raw) {
+    }
+
+    /**
      * Sets the current null state for a nullable variable.
      *
      * @param name  the variable name
@@ -86,6 +96,23 @@ public final class TypeEnv implements EnvironmentAccess {
      */
     public void markNullState(@NotNull String name, @NotNull NullState state) {
         nullStates.put(name, state);
+    }
+
+    /**
+     * Sets the current null state for a nullable variable and records where the null assignment happened.
+     *
+     * @param name  the variable name
+     * @param state the null state
+     * @param line  the line number where the state changed
+     * @param raw   the raw source text of that line
+     */
+    public void markNullState(@NotNull String name, @NotNull NullState state, int line, @NotNull String raw) {
+        nullStates.put(name, state);
+        if (state == NullState.NULL) {
+            nullAssignments.put(name, new NullAssignmentInfo(line, raw));
+        } else {
+            nullAssignments.remove(name);
+        }
     }
 
     /**
@@ -116,6 +143,31 @@ public final class TypeEnv implements EnvironmentAccess {
      */
     public @Nullable NullableVarInfo nullableVarInfo(@NotNull String name) {
         return nullableVarInfos.get(name);
+    }
+
+    /**
+     * Returns info about where a variable was last set to none, or {@code null} if not tracked.
+     *
+     * @param name the variable name
+     * @return the null assignment info, or {@code null}
+     */
+    public @Nullable NullAssignmentInfo nullAssignmentInfo(@NotNull String name) {
+        return nullAssignments.get(name);
+    }
+
+    /**
+     * Returns all variable names visible from the current scope.
+     *
+     * <p>Walks the scope stack from innermost to outermost, then includes root variables.
+     *
+     * @return a set of all visible variable names
+     */
+    public @NotNull Set<String> allVisibleVarNames() {
+        Set<String> names = new HashSet<>(rootVars.keySet());
+        for (BlockContext c = currentBlock; c != null; c = c.parent()) {
+            names.addAll(c.varNames());
+        }
+        return names;
     }
 
     /**

@@ -10,15 +10,31 @@ import java.util.List;
  * A rich diagnostic produced during Lumen script compilation or runtime.
  *
  * <p>Diagnostics capture source location, error context, and actionable suggestions.
- * They are formatted in a Rust-inspired style with underlines and contextual hints.
+ * They are formatted in a Rust-inspired style with underlines, contextual highlights,
+ * notes, and help messages.
  *
  * <p>This is the standard error representation for the entire Lumen system.
- * All error paths (type mismatches, parse errors, pattern failures, addon errors)
- * should produce diagnostics through this class.
+ * All error paths (type mismatches, parse errors, null safety violations, pattern
+ * failures, and addon errors) should produce diagnostics through this class.
  *
- * <p>Example output:
+ * <h2>Error Code Convention</h2>
+ * <p>Core Lumen diagnostics use plain numeric codes prefixed with {@code E}:
+ * <ul>
+ *   <li>{@code E1xx} for type errors (mismatch, null assignment, lossy conversion)</li>
+ *   <li>{@code E2xx} for operator and arithmetic errors</li>
+ *   <li>{@code E3xx} for null safety errors</li>
+ *   <li>{@code E4xx} for collection errors</li>
+ *   <li>{@code E5xx} for resolution errors (undefined variable, unknown type)</li>
+ * </ul>
+ *
+ * <p>Addons should prefix their error codes with a short identifier derived from the
+ * addon name, followed by {@code E} and a number. For example, an addon called
+ * "MyAddon" would use codes like {@code MAE100}, {@code MAE201}, etc. This avoids
+ * collisions with core codes and makes it clear which addon produced the diagnostic.
+ *
+ * <h2>Example Output</h2>
  * <pre>
- * error[E001]: Type mismatch in assignment
+ * error[E100]: Type mismatch in assignment
  *   -> line 3: set x to "hello"
  *   |
  * 3 | set x to "hello"
@@ -42,59 +58,96 @@ public final class LumenDiagnostic {
     private final @NotNull List<String> notes;
     private final @Nullable String help;
 
-    private LumenDiagnostic(@NotNull Severity severity, @NotNull String code, @NotNull String title, int line, @NotNull String sourceText, int columnStart, int columnEnd, @Nullable String underlineLabel, @NotNull List<ContextLine> contextLines, @NotNull List<String> notes, @Nullable String help) {
-        this.severity = severity;
-        this.code = code;
-        this.title = title;
-        this.line = line;
-        this.sourceText = sourceText;
-        this.underlineLabel = underlineLabel;
-        this.contextLines = contextLines;
-        this.notes = notes;
-        this.help = help;
-        if (columnStart == -1 && columnEnd == -1) {
+    private LumenDiagnostic(@NotNull Builder builder) {
+        this.severity = builder.severity;
+        this.code = builder.code;
+        this.title = builder.title;
+        this.line = builder.line;
+        this.sourceText = builder.sourceText;
+        this.underlineLabel = builder.underlineLabel;
+        this.contextLines = List.copyOf(builder.contextLines);
+        this.notes = List.copyOf(builder.notes);
+        this.help = builder.help;
+        if (builder.columnStart == -1 && builder.columnEnd == -1) {
             String stripped = sourceText.stripTrailing();
-            int leading = stripped.length() - stripped.stripLeading().length();
-            this.columnStart = leading;
+            this.columnStart = stripped.length() - stripped.stripLeading().length();
             this.columnEnd = stripped.length();
         } else {
-            this.columnStart = columnStart;
-            this.columnEnd = columnEnd;
+            this.columnStart = builder.columnStart;
+            this.columnEnd = builder.columnEnd;
         }
     }
 
     /**
      * A secondary source line shown for additional context in a multi-line diagnostic.
      *
-     * @param line        the 1-based line number
+     * <p>Context lines appear before the primary source line in the formatted output,
+     * each with their own underline highlight and optional label. They are used to show
+     * related code such as the declaration site or a previous assignment.
+     *
+     * @param line        the 1-based line number in the source file
      * @param source      the raw source text of the line
-     * @param columnStart the 0-based start column of the highlight
-     * @param columnEnd   the 0-based end column (exclusive) of the highlight
-     * @param label       the label shown under the highlight
+     * @param columnStart the 0-based start column of the highlight (inclusive)
+     * @param columnEnd   the 0-based end column of the highlight (exclusive)
+     * @param label       the label shown under the highlight, or {@code null} for no label
      */
     public record ContextLine(int line, @NotNull String source, int columnStart, int columnEnd, @Nullable String label) {
     }
 
+    /**
+     * Creates a new error diagnostic builder with the given code and title.
+     *
+     * @param code  the error code (e.g. {@code "E100"} for core, {@code "MAE100"} for addons)
+     * @param title a short human-readable description of the error
+     * @return a new builder
+     */
     public static @NotNull Builder error(@NotNull String code, @NotNull String title) {
         return new Builder(Severity.ERROR, code, title);
     }
 
+    /**
+     * Creates a new warning diagnostic builder with the given code and title.
+     *
+     * @param code  the warning code (e.g. {@code "W100"} for core, {@code "MAW100"} for addons)
+     * @param title a short human-readable description of the warning
+     * @return a new builder
+     */
     public static @NotNull Builder warning(@NotNull String code, @NotNull String title) {
         return new Builder(Severity.WARNING, code, title);
     }
 
+    /**
+     * Returns the severity level of this diagnostic.
+     *
+     * @return the severity
+     */
     public @NotNull Severity severity() {
         return severity;
     }
 
+    /**
+     * Returns the error or warning code (e.g. {@code "E100"}).
+     *
+     * @return the diagnostic code
+     */
     public @NotNull String code() {
         return code;
     }
 
+    /**
+     * Returns the short title describing the error.
+     *
+     * @return the diagnostic title
+     */
     public @NotNull String title() {
         return title;
     }
 
+    /**
+     * Returns the 1-based line number in the source file where the error occurred.
+     *
+     * @return the source line number
+     */
     public int line() {
         return line;
     }
@@ -102,7 +155,10 @@ public final class LumenDiagnostic {
     /**
      * Formats this diagnostic into a multi-line Rust-inspired error string.
      *
-     * @return the formatted diagnostic
+     * <p>The output includes the error header, source location, highlighted source lines
+     * with underlines and labels, context lines, notes, and help suggestions.
+     *
+     * @return the formatted diagnostic string
      */
     public @NotNull String format() {
         StringBuilder sb = new StringBuilder();
@@ -153,11 +209,26 @@ public final class LumenDiagnostic {
         return sb.toString();
     }
 
+    /**
+     * The severity level of a diagnostic.
+     */
     public enum Severity {
+        /** A fatal error that prevents compilation. */
         ERROR,
+        /** A non-fatal warning that does not prevent compilation. */
         WARNING
     }
 
+    /**
+     * Fluent builder for constructing {@link LumenDiagnostic} instances.
+     *
+     * <p>Use {@link LumenDiagnostic#error(String, String)} or
+     * {@link LumenDiagnostic#warning(String, String)} to obtain a builder, then chain
+     * calls to configure the diagnostic before calling {@link #build()}.
+     *
+     * <p>If {@link #highlight(int, int)} is not called, the entire source line content
+     * (excluding leading whitespace) is highlighted by default.
+     */
     public static final class Builder {
         private final @NotNull Severity severity;
         private final @NotNull String code;
@@ -177,40 +248,100 @@ public final class LumenDiagnostic {
             this.title = title;
         }
 
+        /**
+         * Sets the primary source location for this diagnostic.
+         *
+         * @param line       the 1-based line number where the error occurred
+         * @param sourceText the raw source text of that line
+         * @return this builder
+         */
         public @NotNull Builder at(int line, @NotNull String sourceText) {
             this.line = line;
             this.sourceText = sourceText;
             return this;
         }
 
+        /**
+         * Sets the column range to highlight in the primary source line.
+         *
+         * <p>If this method is not called, the entire line content (excluding leading
+         * whitespace) is highlighted by default.
+         *
+         * @param columnStart the 0-based start column (inclusive)
+         * @param columnEnd   the 0-based end column (exclusive)
+         * @return this builder
+         */
         public @NotNull Builder highlight(int columnStart, int columnEnd) {
             this.columnStart = columnStart;
             this.columnEnd = columnEnd;
             return this;
         }
 
+        /**
+         * Sets the label displayed under the primary highlight.
+         *
+         * @param label a short description of the problem at this location
+         * @return this builder
+         */
         public @NotNull Builder label(@NotNull String label) {
             this.underlineLabel = label;
             return this;
         }
 
+        /**
+         * Adds a secondary context line to the diagnostic.
+         *
+         * <p>Context lines appear before the primary source line and are used to show
+         * related code (e.g. the original declaration, a previous assignment, or a
+         * conflicting definition).
+         *
+         * @param line        the 1-based line number of the context line
+         * @param source      the raw source text
+         * @param columnStart the 0-based start column of the highlight
+         * @param columnEnd   the 0-based end column of the highlight
+         * @param label       the label under the highlight, or {@code null}
+         * @return this builder
+         */
         public @NotNull Builder context(int line, @NotNull String source, int columnStart, int columnEnd, @Nullable String label) {
             this.contextLines.add(new ContextLine(line, source, columnStart, columnEnd, label));
             return this;
         }
 
+        /**
+         * Adds an informational note to the diagnostic.
+         *
+         * <p>Notes provide additional context such as where a variable was originally
+         * declared or why a constraint exists.
+         *
+         * @param note the note text
+         * @return this builder
+         */
         public @NotNull Builder note(@NotNull String note) {
             this.notes.add(note);
             return this;
         }
 
+        /**
+         * Sets the help suggestion for the diagnostic.
+         *
+         * <p>The help text should describe a concrete action the user can take to fix
+         * the problem.
+         *
+         * @param help the help text
+         * @return this builder
+         */
         public @NotNull Builder help(@NotNull String help) {
             this.help = help;
             return this;
         }
 
+        /**
+         * Builds the diagnostic from this builder's state.
+         *
+         * @return the constructed diagnostic
+         */
         public @NotNull LumenDiagnostic build() {
-            return new LumenDiagnostic(severity, code, title, line, sourceText, columnStart, columnEnd, underlineLabel, List.copyOf(contextLines), List.copyOf(notes), help);
+            return new LumenDiagnostic(this);
         }
     }
 }

@@ -6,6 +6,8 @@ import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.codegen.BindingAccess;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.codegen.JavaOutput;
+import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
+import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.handler.BlockHandler;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.api.type.RefTypeHandle;
@@ -91,13 +93,20 @@ public class ListBlocks {
                     @Override
                     public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
                         if (ctx.block().isRoot()) {
-                            throw new RuntimeException("A 'loop' block cannot be top-level");
+                            throw new DiagnosticException(LumenDiagnostic.error("E502", "A 'loop' block cannot be top level")
+                                    .at(ctx.block().line(), ctx.block().raw())
+                                    .label("top level loop not allowed")
+                                    .help("place 'loop' inside an event, command, or other block")
+                                    .build());
                         }
                         ctx.codegen().addImport(List.class.getName());
                         String varName = ctx.java("var");
                         if (ctx.env().lookupVar(varName) != null) {
-                            throw new RuntimeException(
-                                    "Loop variable '" + varName + "' is already defined in this scope.");
+                            throw new DiagnosticException(LumenDiagnostic.error("E502", "Loop variable '" + varName + "' is already defined")
+                                    .at(ctx.block().line(), ctx.block().raw())
+                                    .label("'" + varName + "' already exists in this scope")
+                                    .help("use a different variable name")
+                                    .build());
                         }
                         String listJava = ctx.java("list");
                         out.line("for (var " + varName + " : (List<?>) " + listJava + ") {");
@@ -130,21 +139,55 @@ public class ListBlocks {
                     @Override
                     public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
                         if (ctx.block().isRoot()) {
-                            throw new RuntimeException("A 'loop' block cannot be top-level");
+                            throw new DiagnosticException(LumenDiagnostic.error("E502", "A 'loop' block cannot be top level")
+                                    .at(ctx.block().line(), ctx.block().raw())
+                                    .label("top level loop not allowed")
+                                    .help("place 'loop' inside an event, command, or other block")
+                                    .build());
                         }
                         EnvironmentAccess env = ctx.env();
                         String varName = ctx.java("var");
-                        if (env.lookupVar(varName) != null) throw new RuntimeException("Loop variable '" + varName + "' is already defined in this scope.");
+                        if (env.lookupVar(varName) != null) {
+                            throw new DiagnosticException(LumenDiagnostic.error("E502", "Loop variable '" + varName + "' is already defined")
+                                    .at(ctx.block().line(), ctx.block().raw())
+                                    .label("'" + varName + "' already exists in this scope")
+                                    .help("use a different variable name")
+                                    .build());
+                        }
 
                         String listVarName = ctx.tokens("list").get(0);
                         String scopeVarName = ctx.java("scope");
                         EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(listVarName);
-                        if (info == null) throw new RuntimeException("'" + listVarName + "' is not a global variable.");
-                        if (!info.scoped()) throw new RuntimeException("'" + listVarName + "' is not a scoped global. Declare it with 'global scoped " + listVarName + "' to use per-entity access.");
+                        if (info == null) {
+                            throw new DiagnosticException(LumenDiagnostic.error("E500", "'" + listVarName + "' is not a global variable")
+                                    .at(ctx.block().line(), ctx.block().raw())
+                                    .label("not a global")
+                                    .help("declare with 'global " + listVarName + " with default new list'")
+                                    .build());
+                        }
+                        if (!info.scoped()) {
+                            throw new DiagnosticException(LumenDiagnostic.error("E502", "'" + listVarName + "' is not a scoped global")
+                                    .at(ctx.block().line(), ctx.block().raw())
+                                    .label("not scoped")
+                                    .help("declare with 'global scoped " + listVarName + "' to use per-entity access")
+                                    .build());
+                        }
                         EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
-                        if (scopeRef == null) throw new RuntimeException("Scope variable not found: " + scopeVarName);
+                        if (scopeRef == null) {
+                            throw new DiagnosticException(LumenDiagnostic.error("E500", "Scope variable '" + scopeVarName + "' not found")
+                                    .at(ctx.block().line(), ctx.block().raw())
+                                    .label("undefined variable")
+                                    .help("make sure the variable is defined before using it")
+                                    .build());
+                        }
                         RefTypeHandle refType = scopeRef.type();
-                        if (refType == null) throw new RuntimeException("Scope variable '" + scopeVarName + "' has no ref type.");
+                        if (refType == null) {
+                            throw new DiagnosticException(LumenDiagnostic.error("E502", "Scope variable '" + scopeVarName + "' has no type")
+                                    .at(ctx.block().line(), ctx.block().raw())
+                                    .label("expected a typed variable")
+                                    .help("use a typed variable like a player or entity as scope")
+                                    .build());
+                        }
 
                         ctx.codegen().addImport(List.class.getName());
                         ctx.codegen().addImport(ArrayList.class.getName());

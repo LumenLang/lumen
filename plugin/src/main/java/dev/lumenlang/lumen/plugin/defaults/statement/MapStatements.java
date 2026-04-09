@@ -6,6 +6,8 @@ import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.codegen.BindingAccess;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.codegen.JavaOutput;
+import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
+import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.api.type.RefTypeHandle;
 import org.jetbrains.annotations.NotNull;
@@ -43,10 +45,22 @@ public final class MapStatements {
 
     private static void emitScopedMutation(@NotNull BindingAccess ctx, @NotNull JavaOutput out, @NotNull String mapVarName, @NotNull String scopeVarName, @NotNull Function<String, String> mutation) {
         EnvironmentAccess.GlobalInfo info = ctx.env().getGlobalInfo(mapVarName);
-        if (info == null) throw new RuntimeException("'" + mapVarName + "' is not a global variable.");
-        if (!info.scoped()) throw new RuntimeException("'" + mapVarName + "' is not a scoped global. Declare it with 'global scoped " + mapVarName + "' to use per-entity access.");
+        if (info == null) {
+            throw new DiagnosticException(LumenDiagnostic.error("E500", "'" + mapVarName + "' is not a global variable")
+                    .at(ctx.block().line(), ctx.block().raw())
+                    .label("not a global")
+                    .help("declare with 'global " + mapVarName + " with default new map'")
+                    .build());
+        }
+        if (!info.scoped()) {
+            throw new DiagnosticException(LumenDiagnostic.error("E502", "'" + mapVarName + "' is not a scoped global")
+                    .at(ctx.block().line(), ctx.block().raw())
+                    .label("not scoped")
+                    .help("declare with 'global scoped " + mapVarName + "' to use per-entity access")
+                    .build());
+        }
         String storageClass = info.stored() ? "PersistentVars" : "GlobalVars";
-        String scopeKey = buildScopedKey(ctx.env(), mapVarName, scopeVarName, info);
+        String scopeKey = buildScopedKey(ctx, mapVarName, scopeVarName, info);
         String tmp = "__scoped_" + mapVarName + "_" + out.lineNum();
         ctx.codegen().addImport(Map.class.getName());
         ctx.codegen().addImport(HashMap.class.getName());
@@ -55,18 +69,26 @@ public final class MapStatements {
         out.line(storageClass + ".set(" + scopeKey + ", " + tmp + ");");
     }
 
-    private static @NotNull String buildScopedKey(@NotNull EnvironmentAccess env,
+    private static @NotNull String buildScopedKey(@NotNull BindingAccess ctx,
                                                   @NotNull String varName,
                                                   @NotNull String scopeVarName,
                                                   @NotNull EnvironmentAccess.GlobalInfo info) {
+        EnvironmentAccess env = ctx.env();
         EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
         if (scopeRef == null) {
-            throw new RuntimeException("Scope variable not found: " + scopeVarName);
+            throw new DiagnosticException(LumenDiagnostic.error("E500", "Scope variable '" + scopeVarName + "' not found")
+                    .at(ctx.block().line(), ctx.block().raw())
+                    .label("undefined variable")
+                    .help("make sure the variable is defined before using it")
+                    .build());
         }
         RefTypeHandle refType = scopeRef.type();
         if (refType == null) {
-            throw new RuntimeException("Scope variable '" + scopeVarName
-                    + "' has no ref type. Expected a typed variable like a player or entity.");
+            throw new DiagnosticException(LumenDiagnostic.error("E502", "Scope variable '" + scopeVarName + "' has no type")
+                    .at(ctx.block().line(), ctx.block().raw())
+                    .label("expected a typed variable")
+                    .help("use a typed variable like a player or entity as scope")
+                    .build());
         }
         String scopeKeyPart = refType.keyExpression(scopeRef.java());
         return "\"" + info.className() + "." + varName + ".\" + " + scopeKeyPart;

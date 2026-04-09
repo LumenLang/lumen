@@ -4,14 +4,8 @@ import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 /**
  * Static type checking utilities for the Lumen type system.
- *
- * <p>Each method validates a specific class of type constraint and produces a rich
- * {@link LumenDiagnostic} when the constraint is violated. These diagnostics include
- * the exact source location, expected and actual types, and actionable suggestions.
  */
 public final class TypeChecker {
 
@@ -82,170 +76,38 @@ public final class TypeChecker {
     }
 
     /**
-     * Validates that both operands of a binary arithmetic operator have compatible numeric types.
+     * Validates that a nullable variable is being accessed safely, with full value flow context.
      *
-     * @param op         the operator symbol (e.g. {@code "+"}, {@code "-"})
-     * @param leftType   the left operand type
-     * @param rightType  the right operand type
-     * @param line       the script line number
-     * @param sourceText the raw script line
-     * @param colStart   the start column of the expression
-     * @param colEnd     the end column of the expression
-     * @return a diagnostic if the operands are incompatible, or {@code null} if valid
-     */
-    public static @Nullable LumenDiagnostic checkArithmetic(@NotNull String op, @NotNull LumenType leftType, @NotNull LumenType rightType, int line, @NotNull String sourceText, int colStart, int colEnd) {
-        LumenType left = leftType.unwrap();
-        LumenType right = rightType.unwrap();
-
-        if (!left.numeric() || !right.numeric()) {
-            String label;
-            if (!left.numeric() && !right.numeric()) {
-                label = "left is '" + left.displayName() + "', right is '" + right.displayName() + "'";
-            } else if (!left.numeric()) {
-                label = "left operand '" + left.displayName() + "' is not numeric";
-            } else {
-                label = "right operand '" + right.displayName() + "' is not numeric";
-            }
-            LumenDiagnostic.Builder b = LumenDiagnostic.error("E201", "Invalid operands for '" + op + "'")
-                    .at(line, sourceText).highlight(colStart, colEnd).label(label);
-            if (left == LumenType.Primitive.STRING || right == LumenType.Primitive.STRING) {
-                b.help("use 'combined string of x and y' to concatenate strings");
-            }
-            return b.build();
-        }
-
-        return null;
-    }
-
-    /**
-     * Validates that a comparison operator is applied to compatible types.
-     *
-     * @param leftType   the left operand type
-     * @param rightType  the right operand type
-     * @param line       the script line number
-     * @param sourceText the raw script line
-     * @param colStart   the start column
-     * @param colEnd     the end column
-     * @return a diagnostic if the types are incompatible, or {@code null} if valid
-     */
-    public static @Nullable LumenDiagnostic checkComparison(@NotNull LumenType leftType, @NotNull LumenType rightType, int line, @NotNull String sourceText, int colStart, int colEnd) {
-        LumenType left = leftType.unwrap();
-        LumenType right = rightType.unwrap();
-        if (left.equals(right)) return null;
-        if (left.numeric() && right.numeric()) return null;
-
-        return LumenDiagnostic.error("E202", "Cannot compare values of different types")
-                .at(line, sourceText).highlight(colStart, colEnd)
-                .label("expected '" + leftType.displayName() + "', found '" + rightType.displayName() + "'")
-                .build();
-    }
-
-    /**
-     * Validates that a nullable variable is being accessed safely (after a null check).
-     *
-     * @param type          the variable type
-     * @param varName       the variable name
-     * @param isNullChecked whether the variable has been verified non-null in this scope
-     * @param line          the script line number
-     * @param sourceText    the raw script line
-     * @param colStart      the start column
-     * @param colEnd        the end column
+     * @param type            the variable type
+     * @param varName         the variable name
+     * @param isNullChecked   whether the variable has been verified non-null in this scope
+     * @param line            the script line number of the usage
+     * @param sourceText      the raw script line of the usage
+     * @param colStart        the start column of the usage
+     * @param colEnd          the end column of the usage
+     * @param declLine        the line where the variable was declared, or {@code -1} if unknown
+     * @param declSource      the raw source text of the declaration line, or {@code null} if unknown
+     * @param nullAssignLine  the line where the variable was last set to none, or {@code -1} if same as declaration
+     * @param nullAssignSource the raw source text of the null assignment line, or {@code null}
      * @return a diagnostic if the access is unsafe, or {@code null} if safe
      */
-    public static @Nullable LumenDiagnostic checkNullSafety(@NotNull LumenType type, @NotNull String varName, boolean isNullChecked, int line, @NotNull String sourceText, int colStart, int colEnd) {
-        return checkNullSafety(type, varName, isNullChecked, line, sourceText, colStart, colEnd, -1, null);
-    }
-
-    /**
-     * Validates that a nullable variable is being accessed safely, with optional declaration context for multi-line diagnostics.
-     *
-     * @param type          the variable type
-     * @param varName       the variable name
-     * @param isNullChecked whether the variable has been verified non-null in this scope
-     * @param line          the script line number of the usage
-     * @param sourceText    the raw script line of the usage
-     * @param colStart      the start column of the usage
-     * @param colEnd        the end column of the usage
-     * @param declLine      the line where the variable was declared, or {@code -1} if unknown
-     * @param declSource    the raw source text of the declaration line, or {@code null} if unknown
-     * @return a diagnostic if the access is unsafe, or {@code null} if safe
-     */
-    public static @Nullable LumenDiagnostic checkNullSafety(@NotNull LumenType type, @NotNull String varName, boolean isNullChecked, int line, @NotNull String sourceText, int colStart, int colEnd, int declLine, @Nullable String declSource) {
+    public static @Nullable LumenDiagnostic checkNullSafety(@NotNull LumenType type, @NotNull String varName, boolean isNullChecked, int line, @NotNull String sourceText, int colStart, int colEnd, int declLine, @Nullable String declSource, int nullAssignLine, @Nullable String nullAssignSource) {
         if (!(type instanceof LumenType.NullableType)) return null;
         if (isNullChecked) return null;
 
         LumenDiagnostic.Builder b = LumenDiagnostic.error("E301", "Variable '" + varName + "' is none")
                 .at(line, sourceText).highlight(colStart, colEnd)
                 .label("'" + varName + "' is 'none' here");
-        if (declLine > 0 && declSource != null) {
-            b.context(declLine, declSource, 0, declSource.stripTrailing().length(), "declared as nullable here");
+        if (nullAssignLine > 0 && nullAssignSource != null && nullAssignLine != declLine) {
+            b.context(nullAssignLine, nullAssignSource, 0, nullAssignSource.stripTrailing().length(), "set to 'none' here");
+            b.note("'" + varName + "' was set to 'none' on line " + nullAssignLine);
+        } else if (declLine > 0 && declSource != null) {
+            b.context(declLine, declSource, 0, declSource.stripTrailing().length(), "declared without a value here");
+            b.note("'" + varName + "' was declared without a default value on line " + declLine);
+        } else {
+            b.note("'" + varName + "' has type '" + type.displayName() + "' and no value was assigned");
         }
-        b.note("'" + varName + "' has type '" + type.displayName() + "' and no value was assigned")
-                .help("provide a default value like 'set " + varName + " to nullable " + ((LumenType.NullableType) type).inner().displayName() + " \"...\"', or reassign to a non-null value before using");
+        b.help("provide a default value, or check with 'if " + varName + " is not none:' before using");
         return b.build();
-    }
-
-    /**
-     * Validates that an element being added to a collection matches the collection's element type.
-     *
-     * @param collectionType the collection type
-     * @param elementType    the type of the element being added
-     * @param line           the script line number
-     * @param sourceText     the raw script line
-     * @param colStart       the start column
-     * @param colEnd         the end column
-     * @return a diagnostic if the element type is incompatible, or {@code null} if valid
-     */
-    public static @Nullable LumenDiagnostic checkCollectionElement(@NotNull LumenType.CollectionType collectionType, @NotNull LumenType elementType, int line, @NotNull String sourceText, int colStart, int colEnd) {
-        if (collectionType.elementType().assignableFrom(elementType)) return null;
-
-        return LumenDiagnostic.error("E401", "Collection element type mismatch")
-                .at(line, sourceText).highlight(colStart, colEnd)
-                .label("expected '" + collectionType.elementType().displayName() + "', found '" + elementType.displayName() + "'")
-                .note("this " + collectionType.displayName() + " only accepts '" + collectionType.elementType().displayName() + "' elements")
-                .build();
-    }
-
-    /**
-     * Validates that a variable used in a math expression is numeric.
-     *
-     * @param type       the variable type
-     * @param varName    the variable name
-     * @param line       the script line number
-     * @param sourceText the raw script line
-     * @param colStart   the start column
-     * @param colEnd     the end column
-     * @return a diagnostic if the type is non-numeric, or {@code null} if numeric
-     */
-    public static @Nullable LumenDiagnostic checkNumericOperand(@NotNull LumenType type, @NotNull String varName, int line, @NotNull String sourceText, int colStart, int colEnd) {
-        if (type.unwrap().numeric()) return null;
-
-        LumenDiagnostic.Builder b = LumenDiagnostic.error("E203", "Non-numeric operand in arithmetic expression")
-                .at(line, sourceText).highlight(colStart, colEnd)
-                .label("'" + varName + "' is '" + type.displayName() + "', not numeric");
-        if (type.unwrap() == LumenType.Primitive.STRING) {
-            b.help("use 'combined string of x and y' to concatenate strings instead of '+'");
-        }
-        return b.build();
-    }
-
-    /**
-     * Creates a diagnostic for declaring a variable without type information.
-     *
-     * @param varName    the variable name
-     * @param exprText   the expression text that could not be typed
-     * @param line       the script line number
-     * @param sourceText the raw script line
-     * @param colStart   the start column
-     * @param colEnd     the end column
-     * @return the diagnostic
-     */
-    public static @NotNull LumenDiagnostic unresolvableType(@NotNull String varName, @NotNull String exprText, int line, @NotNull String sourceText, int colStart, int colEnd) {
-        return LumenDiagnostic.error("E501", "Cannot determine type of expression")
-                .at(line, sourceText).highlight(colStart, colEnd)
-                .label("type unknown")
-                .note("expression '" + exprText + "' does not have a known type")
-                .help("ensure all expressions return a typed result")
-                .build();
     }
 }

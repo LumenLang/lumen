@@ -4,7 +4,7 @@ description: "Working with maps: creating, setting, getting, removing, looping, 
 
 # Maps
 
-A map stores entries by name. Each entry is a key (always text) pointing to a value. This is useful for things like per-player stats, where each stat has a name and a number.
+A map stores entries by name. Each entry is a key (always text) pointing to a value. This is useful for things like per player stats, where each stat has a name and a number.
 
 ## Creating a Map
 
@@ -18,7 +18,7 @@ For a global or stored map:
 global stored scoped stats with default new map
 ```
 
-This creates a per-player map that is saved across restarts, starting empty for each new player.
+This creates a per player map that is saved across restarts, starting empty for each new player.
 
 ## Setting Values
 
@@ -65,7 +65,7 @@ clear stats
 
 ## Looping
 
-Loop over every key-value pair in the map:
+Loop over every key value pair in the map:
 
 ```luma
 loop key val in stats:
@@ -74,7 +74,7 @@ loop key val in stats:
 
 ## Scoped Map Operations
 
-When a map is declared as a scoped global (with `scoped`), you can operate on it directly using `for <scope>` without loading it into a local variable first.
+When a map is declared as a scoped global (with `scoped`), you can operate on it directly using `for <scope>` without loading it into a local variable first. The scope must be a typed variable like `player` or another entity.
 
 ```luma
 global stored scoped stats with default new map

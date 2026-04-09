@@ -1,35 +1,40 @@
 ---
-description: "Working with lists: creating, adding, removing, looping, and typed lists."
+description: "Working with lists: creating typed lists, adding, removing, looping, and scoped operations."
 ---
 
 # Lists
 
-Lists are ordered collections of items. You can store text, numbers, or other values in a list, then add to it, remove from it, loop over it, and check its contents.
+Lists are ordered, typed collections. Every list is declared with a type so the compiler knows what kind of elements it holds.
 
-## Creating a List
+## Creating a Typed List
+
+Use `new list of <type>` to create a list with a known element type:
 
 ```luma
-set items to new list
+set names to new list of string
+set scores to new list of int
 ```
 
 For a global or stored list:
 
 ```luma
-global stored notes with default new list
+global stored warps with default new list of warp
 ```
 
-This creates a list that is saved across restarts, starting empty.
+This creates a list that is saved across restarts, starting empty, and only accepts `warp` entries.
 
 ## Adding Items
 
 Use `add ... to` to append an item:
 
 ```luma
-set fruits to new list
+set fruits to new list of string
 add "apple" to fruits
 add "banana" to fruits
 add "cherry" to fruits
 ```
+
+Adding the wrong type to a typed list will produce a parse time error. For example, adding something that is not a `warp` to a list declared as `new list of warp` will be rejected.
 
 ## Getting Items by Index
 
@@ -78,7 +83,7 @@ Remove by index:
 remove index 0 from fruits
 ```
 
-Practical example where a player provides a 1-based number that needs converting to a 0-based index:
+Practical example where a player provides a 1 based number that needs converting to a 0 based index:
 
 ```luma
 set num to get args at index 1
@@ -109,35 +114,9 @@ loop entry in warps:
 
 For more on looping syntax, including loop sources and maps, see the [Loops](../01-basics/05-loops.md) page.
 
-## Scoped List Operations
+## Using Typed Lists with Data Classes
 
-When a list is declared as a scoped global (with `scoped`), you can operate on it directly using `for <scope>` without loading it into a local variable first.
-
-```luma
-global stored scoped todos with default new list
-```
-
-```luma
-add "Do something" to todos for player
-
-if todos is empty for player:
-    message player "&7No todos yet."
-
-loop item in todos for player:
-    message player "&e{item}"
-
-remove "Do something" from todos for player
-
-clear todos for player
-```
-
-## Typed Lists
-
-Lists can hold custom data types. When defining a list for a specific type, use `new list of <type>`:
-
-:::alert warning
-Typed lists are usually recommended over untyped lists for safety, support for untyped lists may be removed in the future.
-:::
+When combining typed lists with data classes, the loop variable automatically inherits the element type. This means field access works without any extra annotations:
 
 ```luma
 data warp:
@@ -148,8 +127,6 @@ data warp:
 
 global stored warps with default new list of warp
 ```
-
-You can then add data instances and loop over them, reading fields:
 
 ```luma
 set entry to new warp with name "Spawn" x 0 y 64 z 0
@@ -165,7 +142,7 @@ loop entry in warps:
 When a list is declared as a scoped global (with `scoped`), you can operate on it directly using `for <scope>` without loading it into a local variable first.
 
 ```luma
-global stored scoped todos with default new list
+global stored scoped todos with default new list of string
 ```
 
 ```luma

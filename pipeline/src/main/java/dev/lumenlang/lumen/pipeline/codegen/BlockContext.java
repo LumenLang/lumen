@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Represents a single scope frame on the {@link TypeEnv} scope stack.
@@ -84,6 +85,15 @@ public final class BlockContext implements BlockAccess {
      */
     public @Nullable VarRef getVarLocal(@NotNull String name) {
         return vars.get(name);
+    }
+
+    /**
+     * Returns all variable names defined in this scope frame (no parent walk).
+     *
+     * @return a set of variable names in this frame
+     */
+    public @NotNull Set<String> varNames() {
+        return vars.keySet();
     }
 
     /**

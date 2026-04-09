@@ -1,11 +1,12 @@
 package dev.lumenlang.lumen.pipeline.type;
 
-import dev.lumenlang.lumen.api.type.RefTypeHandle;
 import dev.lumenlang.lumen.api.type.TypeHandle;
 import dev.lumenlang.lumen.pipeline.var.RefType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -14,22 +15,8 @@ import java.util.Locale;
  * <p>Every variable, expression, placeholder, and symbol in a Lumen script is described
  * by a {@code LumenType}. The type system is strict: once a variable is declared with a type,
  * that type cannot change. There is no implicit coercion between incompatible types.
- *
- * <p>Nullability is explicit. Variables are non-null by default and must be declared with
- * {@link NullableType} to hold {@code none}.
- *
- * @see Primitive
- * @see ObjectType
- * @see CollectionType
- * @see NullableType
- * @see VoidType
  */
-public sealed interface LumenType extends TypeHandle permits
-        LumenType.Primitive,
-        LumenType.ObjectType,
-        LumenType.CollectionType,
-        LumenType.NullableType,
-        LumenType.VoidType {
+public sealed interface LumenType extends TypeHandle permits LumenType.Primitive, LumenType.ObjectType, LumenType.CollectionType, LumenType.NullableType {
 
     /**
      * Resolves a {@code LumenType} from a ref type ID string.
@@ -69,19 +56,22 @@ public sealed interface LumenType extends TypeHandle permits
     }
 
     /**
-     * Infers a {@code LumenType} from a Java literal value.
+     * Returns all known type names that can be used in Lumen source.
      *
-     * @param value the literal value
-     * @return the inferred type
+     * <p>Includes primitive names (e.g. {@code "int"}, {@code "string"}) and
+     * all registered {@link RefType} names (lowercased, e.g. {@code "player"}).
+     *
+     * @return a list of all recognized type names
      */
-    static @NotNull LumenType fromLiteral(@NotNull Object value) {
-        if (value instanceof Integer) return Primitive.INT;
-        if (value instanceof Long) return Primitive.LONG;
-        if (value instanceof Double) return Primitive.DOUBLE;
-        if (value instanceof Float) return Primitive.FLOAT;
-        if (value instanceof Boolean) return Primitive.BOOLEAN;
-        if (value instanceof String) return Primitive.STRING;
-        return Primitive.STRING;
+    static @NotNull List<String> allKnownTypeNames() {
+        List<String> names = new ArrayList<>();
+        for (Primitive p : Primitive.values()) {
+            names.addAll(p.names());
+        }
+        for (RefType ref : RefType.values()) {
+            names.add(ref.id.toLowerCase(Locale.ROOT));
+        }
+        return names;
     }
 
     /**
@@ -103,22 +93,6 @@ public sealed interface LumenType extends TypeHandle permits
      */
     static @NotNull CollectionType mapOf(@NotNull LumenType key, @NotNull LumenType value) {
         return new CollectionType(CollectionKind.MAP, value, key);
-    }
-
-    /**
-     * Resolves a {@code LumenType} from a {@link RefTypeHandle}.
-     *
-     * @param handle the ref type handle
-     * @return the corresponding object type
-     */
-    static @NotNull LumenType fromHandle(@NotNull RefTypeHandle handle) {
-        if (handle instanceof RefType rt) {
-            return new ObjectType(rt);
-        }
-        RefType ref = RefType.byId(handle.id());
-        if (ref != null) return new ObjectType(ref);
-        RefType registered = RefType.register(handle.id(), handle.javaType());
-        return new ObjectType(registered);
     }
 
     /**
@@ -262,23 +236,25 @@ public sealed interface LumenType extends TypeHandle permits
      * Primitive value types that map directly to Java primitives or String.
      */
     enum Primitive implements LumenType {
-        INT("int", "int", "Integer", 1),
-        LONG("long", "long", "Long", 2),
-        DOUBLE("double", "double", "Double", 4),
-        FLOAT("float", "float", "Float", 3),
-        BOOLEAN("boolean", "boolean", "Boolean", 0),
-        STRING("String", "java.lang.String", "String", 0);
+        INT("int", "int", "Integer", 1, List.of("int", "integer")),
+        LONG("long", "long", "Long", 2, List.of("long")),
+        DOUBLE("double", "double", "Double", 4, List.of("double")),
+        FLOAT("float", "float", "Float", 3, List.of("float")),
+        BOOLEAN("boolean", "boolean", "Boolean", 0, List.of("boolean", "bool")),
+        STRING("String", "java.lang.String", "String", 0, List.of("string", "text"));
 
         private final @NotNull String id;
         private final @NotNull String javaType;
         private final @NotNull String boxedName;
         private final int numericRank;
+        private final @NotNull List<String> names;
 
-        Primitive(@NotNull String id, @NotNull String javaType, @NotNull String boxedName, int numericRank) {
+        Primitive(@NotNull String id, @NotNull String javaType, @NotNull String boxedName, int numericRank, @NotNull List<String> names) {
             this.id = id;
             this.javaType = javaType;
             this.boxedName = boxedName;
             this.numericRank = numericRank;
+            this.names = names;
         }
 
         /**
@@ -306,15 +282,10 @@ public sealed interface LumenType extends TypeHandle permits
          * @return the matching primitive, or {@code null} if not a primitive
          */
         public static @Nullable Primitive fromName(@NotNull String name) {
-            return switch (name) {
-                case "int", "integer" -> INT;
-                case "long" -> LONG;
-                case "double" -> DOUBLE;
-                case "float" -> FLOAT;
-                case "boolean", "bool" -> BOOLEAN;
-                case "string", "text" -> STRING;
-                default -> null;
-            };
+            for (Primitive p : values()) {
+                if (p.names.contains(name)) return p;
+            }
+            return null;
         }
 
         /**
@@ -326,6 +297,10 @@ public sealed interface LumenType extends TypeHandle permits
          */
         public int numericRank() {
             return numericRank;
+        }
+
+        public @NotNull List<String> names() {
+            return names;
         }
 
         /**
@@ -419,6 +394,7 @@ public sealed interface LumenType extends TypeHandle permits
      * @param elementType the element type (for lists) or value type (for maps)
      * @param keyType     the key type (only for maps, {@code null} for lists)
      */
+    @SuppressWarnings("DataFlowIssue")
     record CollectionType(
             @NotNull CollectionKind kind,
             @NotNull LumenType elementType,
@@ -519,33 +495,6 @@ public sealed interface LumenType extends TypeHandle permits
         public boolean assignableFrom(@NotNull LumenType source) {
             LumenType src = source.unwrap();
             return inner.unwrap().equals(src) || inner.assignableFrom(source);
-        }
-    }
-
-    /**
-     * Represents the absence of a value (statement return type).
-     */
-    record VoidType() implements LumenType {
-        public static final VoidType INSTANCE = new VoidType();
-
-        @Override
-        public @NotNull String id() {
-            return "void";
-        }
-
-        @Override
-        public @NotNull String javaType() {
-            return "void";
-        }
-
-        @Override
-        public @NotNull String javaTypeName() {
-            return "void";
-        }
-
-        @Override
-        public @NotNull String displayName() {
-            return "void";
         }
     }
 }

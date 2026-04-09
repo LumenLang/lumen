@@ -24,7 +24,7 @@ import java.util.List;
  * a diagnostic error is thrown.
  */
 @Registration(order = -1999)
-@SuppressWarnings({"unused", "DataFlowIssue"})
+@SuppressWarnings("unused")
 public final class NullSafetyValidator implements StatementValidator {
 
     @Call
@@ -44,9 +44,12 @@ public final class NullSafetyValidator implements StatementValidator {
             TypeEnv.NullState state = env.nullState(t.text());
             if (state != TypeEnv.NullState.NULL) continue;
             TypeEnv.NullableVarInfo info = env.nullableVarInfo(t.text());
+            TypeEnv.NullAssignmentInfo nullInfo = env.nullAssignmentInfo(t.text());
             int declLine = info != null ? info.declarationLine() : -1;
             String declRaw = info != null ? info.declarationRaw() : null;
-            LumenDiagnostic diag = TypeChecker.checkNullSafety(type, t.text(), false, ctx.line(), ctx.raw(), t.start(), t.end(), declLine, declRaw);
+            int nullLine = nullInfo != null ? nullInfo.line() : -1;
+            String nullRaw = nullInfo != null ? nullInfo.raw() : null;
+            LumenDiagnostic diag = TypeChecker.checkNullSafety(type, t.text(), false, ctx.line(), ctx.raw(), t.start(), t.end(), declLine, declRaw, nullLine, nullRaw);
             if (diag != null) throw new DiagnosticException(diag);
         }
     }
