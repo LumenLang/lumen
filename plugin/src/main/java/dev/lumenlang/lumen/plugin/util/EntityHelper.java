@@ -358,7 +358,7 @@ public final class EntityHelper {
                 .example(example)
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .returnJavaType(Types.INT)
+                .returnType(Types.INT)
                 .handler(ctx -> {
                     String java = ctx.java("e");
                     EntityValidation.requireSubtype((VarHandle) ctx.value("e"), fqcn, pattern);
@@ -366,7 +366,6 @@ public final class EntityHelper {
                     return new ExpressionResult(
                             "(" + java + " instanceof " + simpleName + " " + alias
                                     + " ? " + alias + "." + getterCall + " : 0)",
-                            null,
                             Types.INT);
                 }));
         return this;
@@ -392,7 +391,7 @@ public final class EntityHelper {
                 .example(example)
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .returnJavaType(Types.STRING)
+                .returnType(Types.STRING)
                 .handler(ctx -> {
                     String java = ctx.java("e");
                     EntityValidation.requireSubtype((VarHandle) ctx.value("e"), fqcn, pattern);
@@ -400,7 +399,6 @@ public final class EntityHelper {
                     return new ExpressionResult(
                             "(" + java + " instanceof " + simpleName + " " + alias
                                     + " ? " + alias + "." + getterCall + " : null)",
-                            null,
                             Types.STRING);
                 }));
         return this;
@@ -426,7 +424,7 @@ public final class EntityHelper {
                 .example(example)
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .returnJavaType(Types.BOOLEAN)
+                .returnType(Types.BOOLEAN)
                 .handler(ctx -> {
                     String java = ctx.java("e");
                     EntityValidation.requireSubtype((VarHandle) ctx.value("e"), fqcn, pattern);
@@ -434,7 +432,6 @@ public final class EntityHelper {
                     return new ExpressionResult(
                             "(" + java + " instanceof " + simpleName + " " + alias
                                     + " && " + alias + "." + getterCall + ")",
-                            null,
                             Types.BOOLEAN);
                 }));
         return this;
@@ -457,19 +454,19 @@ public final class EntityHelper {
     }
 
     /**
-     * Registers an expression with a fully custom handler and a static return ref type.
+     * Registers an expression with a fully custom handler and a static return type.
      *
-     * @param pattern         the expression pattern
-     * @param description     the description
-     * @param example         the example
-     * @param returnRefTypeId the static return ref type id for tooling, or null
-     * @param handler         the expression handler
+     * @param pattern    the expression pattern
+     * @param description the description
+     * @param example     the example
+     * @param returnType the static return type id for tooling, or null
+     * @param handler    the expression handler
      * @return this builder
      */
     public @NotNull EntityHelper expression(@NotNull String pattern,
                                             @NotNull String description,
                                             @NotNull String example,
-                                            @Nullable String returnRefTypeId,
+                                            @Nullable String returnType,
                                             @NotNull ExpressionHandler handler) {
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -478,7 +475,7 @@ public final class EntityHelper {
                 .example(example)
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .returnRefTypeId(returnRefTypeId)
+                .returnType(returnType)
                 .handler(handler));
         return this;
     }

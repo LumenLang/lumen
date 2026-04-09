@@ -216,16 +216,16 @@ public final class BlockBuilder {
     /**
      * Adds a typed variable that this block provides to its child statements.
      *
-     * <p>The human readable type string is derived from the ref type's Java class
-     * simple name. The {@link RefTypeHandle} is stored so that any tool
+     * <p>The human readable type string is derived from the object type's Java class
+     * simple name. The {@link ObjectType} is stored so that any tool
      * can resolve the actual compile time type of this variable.
      *
-     * @param name    the variable name accessible in script child statements
-     * @param refType the typed reference handle (e.g. {@code Types.PLAYER})
+     * @param name       the variable name accessible in script child statements
+     * @param objectType the object type (e.g. {@code MinecraftTypes.PLAYER})
      * @return this builder
      */
-    public @NotNull BlockBuilder addVar(@NotNull String name, @NotNull ObjectType refType) {
-        variables.put(name, new BlockVarInfo(name, refType));
+    public @NotNull BlockBuilder addVar(@NotNull String name, @NotNull ObjectType objectType) {
+        variables.put(name, new BlockVarInfo(name, objectType));
         this.lastVarName = name;
         return this;
     }
@@ -249,7 +249,7 @@ public final class BlockBuilder {
         Map<String, Object> newMeta = new HashMap<>(existing.metadata());
         newMeta.put(key, value);
         variables.put(lastVarName, new BlockVarInfo(
-                existing.name(), existing.type(), existing.refType(),
+                existing.name(), existing.type(), existing.objectType(),
                 Collections.unmodifiableMap(newMeta), existing.description()));
         return this;
     }
@@ -270,7 +270,7 @@ public final class BlockBuilder {
         }
         BlockVarInfo existing = variables.get(lastVarName);
         variables.put(lastVarName, new BlockVarInfo(
-                existing.name(), existing.type(), existing.refType(),
+                existing.name(), existing.type(), existing.objectType(),
                 existing.metadata(), description));
         return this;
     }

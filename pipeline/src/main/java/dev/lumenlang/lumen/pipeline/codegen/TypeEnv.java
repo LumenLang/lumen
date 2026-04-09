@@ -459,7 +459,7 @@ public final class TypeEnv implements EnvironmentAccess {
         } else {
             globalVars.add(new GlobalVarInfo(
                     info.name(), info.defaultJava(), info.className(),
-                    info.scoped(), info.exprRefTypeId(), info.stored(),
+                    info.scoped(), info.exprTypeId(), info.stored(),
                     info.exprMetadata()));
         }
     }
@@ -559,14 +559,14 @@ public final class TypeEnv implements EnvironmentAccess {
     /**
      * Defines a named variable in the current block scope with a full compile-time type.
      *
-     * @param name      the variable name
-     * @param refType   the object type for type checking, or {@code null}
-     * @param java      the Java variable name
-     * @param lumenType the full compile-time type, or {@code null}
-     * @param metadata  compile-time metadata entries
+     * @param name       the variable name
+     * @param objectType the object type for type checking, or {@code null}
+     * @param java       the Java variable name
+     * @param lumenType  the full compile-time type, or {@code null}
+     * @param metadata   compile-time metadata entries
      */
-    public void defineVar(@NotNull String name, @Nullable ObjectType refType, @NotNull String java, @Nullable LumenType lumenType, @NotNull Map<String, Object> metadata) {
-        VarRef ref = new VarRef(refType, java, lumenType, metadata);
+    public void defineVar(@NotNull String name, @Nullable ObjectType objectType, @NotNull String java, @Nullable LumenType lumenType, @NotNull Map<String, Object> metadata) {
+        VarRef ref = new VarRef(objectType, java, lumenType, metadata);
         defineVar(name, ref);
     }
 
@@ -583,17 +583,17 @@ public final class TypeEnv implements EnvironmentAccess {
     /**
      * Information about a script-wide variable declared with {@code global}.
      *
-     * @param name          the variable name
-     * @param defaultJava   the Java expression for the default value
-     * @param className     the script class name at the time of declaration
-     * @param scoped        whether the global is scoped per entity rather than server-wide
-     * @param exprRefTypeId the optional expression ref type id
-     * @param stored        whether the variable is persisted to disk ({@code true}) or in-memory only ({@code false})
-     * @param exprMetadata  compile-time metadata from the default expression, or {@code null}
+     * @param name         the variable name
+     * @param defaultJava  the Java expression for the default value
+     * @param className    the script class name at the time of declaration
+     * @param scoped       whether the global is scoped per entity rather than server-wide
+     * @param exprTypeId   the optional expression type id
+     * @param stored       whether the variable is persisted to disk ({@code true}) or in-memory only ({@code false})
+     * @param exprMetadata compile-time metadata from the default expression, or {@code null}
      */
     public record GlobalVarInfo(@NotNull String name, @NotNull String defaultJava,
                                 @NotNull String className, boolean scoped,
-                                @Nullable String exprRefTypeId, boolean stored,
+                                @Nullable String exprTypeId, boolean stored,
                                 @Nullable Map<String, Object> exprMetadata)
             implements EnvironmentAccess.GlobalInfo {
     }

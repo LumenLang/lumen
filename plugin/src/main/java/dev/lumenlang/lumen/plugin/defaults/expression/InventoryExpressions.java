@@ -109,31 +109,28 @@ public final class InventoryExpressions {
                         "[get] %inv:EXPR% inventory size",
                         "Returns the total number of slots in an inventory.",
                         "set sz to get gui inventory size",
-                        null,
                         Types.INT,
                         ctx -> {
                             ctx.codegen().addImport(INVENTORY);
                             return new ExpressionResult(
                                     "((Inventory) " + ctx.java("inv") + ").getSize()",
-                                    null, Types.INT);
+                                    Types.INT);
                         })
                 .expression(
                         "[get] first empty slot of %inv:EXPR%",
                         "Returns the index of the first empty slot in an inventory, or -1 if full.",
                         "set freeSlot to get first empty slot of gui",
-                        null,
                         Types.INT,
                         ctx -> {
                             ctx.codegen().addImport(INVENTORY);
                             return new ExpressionResult(
                                     "((Inventory) " + ctx.java("inv") + ").firstEmpty()",
-                                    null, Types.INT);
+                                    Types.INT);
                         })
                 .expression(
                         "[get] name of %inv:EXPR%",
                         "Returns the name of a Lumen inventory, or null if the inventory was not created by Lumen.",
                         "set gui_name to get name of inventory",
-                        null,
                         Types.STRING,
                         ctx -> {
                             ctx.codegen().addImport(INVENTORY);
@@ -141,7 +138,7 @@ public final class InventoryExpressions {
                             String inv = ctx.java("inv");
                             return new ExpressionResult(
                                     "(((Inventory) " + inv + ").getHolder() instanceof LumenInventoryHolder __lh ? __lh.name() : null)",
-                                    null, Types.STRING);
+                                    Types.STRING);
                         });
     }
 }

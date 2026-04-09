@@ -91,11 +91,11 @@ public final class ListConditions {
                     String scopeVarName = match.java("scope", ctx, env);
                     EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
                     if (scopeRef == null) throw new RuntimeException("Scope variable not found: " + scopeVarName);
-                    LumenType refType = scopeRef.type();
-                    if (refType == null) throw new RuntimeException("Scope variable '" + scopeVarName + "' has no ref type.");
+                    LumenType scopeType = scopeRef.type();
+                    if (scopeType == null) throw new RuntimeException("Scope variable '" + scopeVarName + "' has no type.");
                     ctx.addImport(List.class.getName());
                     ctx.addImport(ArrayList.class.getName());
-                    return "((List<?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") + ".get(" + "\"" + info.className() + "." + listVarName + ".\" + " + ((ObjectType) refType).keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")).isEmpty()";
+                    return "((List<?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") + ".get(" + "\"" + info.className() + "." + listVarName + ".\" + " + ((ObjectType) scopeType).keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")).isEmpty()";
                 }));
 
         api.patterns().condition(b -> b
@@ -117,11 +117,11 @@ public final class ListConditions {
                     String scopeVarName = match.java("scope", ctx, env);
                     EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
                     if (scopeRef == null) throw new RuntimeException("Scope variable not found: " + scopeVarName);
-                    LumenType refType = scopeRef.type();
-                    if (refType == null) throw new RuntimeException("Scope variable '" + scopeVarName + "' has no ref type.");
+                    LumenType scopeType = scopeRef.type();
+                    if (scopeType == null) throw new RuntimeException("Scope variable '" + scopeVarName + "' has no type.");
                     ctx.addImport(List.class.getName());
                     ctx.addImport(ArrayList.class.getName());
-                    return "!((List<?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") + ".get(" + "\"" + info.className() + "." + listVarName + ".\" + " + ((ObjectType) refType).keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")).isEmpty()";
+                    return "!((List<?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") + ".get(" + "\"" + info.className() + "." + listVarName + ".\" + " + ((ObjectType) scopeType).keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")).isEmpty()";
                 }));
     }
 }

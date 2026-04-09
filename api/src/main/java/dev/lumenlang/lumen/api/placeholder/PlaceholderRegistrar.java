@@ -36,23 +36,23 @@ import org.jetbrains.annotations.NotNull;
 public interface PlaceholderRegistrar {
 
     /**
-     * Registers a property placeholder for a given ref type with {@link PlaceholderType#STRING}
+     * Registers a property placeholder for a given type with {@link PlaceholderType#STRING}
      * return type.
      *
-     * @param type     the ref type this property belongs to
+     * @param type     the type this property belongs to
      * @param property the property name (e.g. "name", "world")
      * @param template the Java expression template where {@code $} is replaced by the variable name
      */
     void property(@NotNull ObjectType type, @NotNull String property, @NotNull String template);
 
     /**
-     * Registers a property placeholder for a given ref type with an explicit return type.
+     * Registers a property placeholder for a given type with an explicit return type.
      *
      * <p>Properties with {@link PlaceholderType#NUMBER} can be used in math expressions
      * (e.g. {@code set yBelow to {player_y} - 1}). Properties with {@link PlaceholderType#STRING}
      * can only be used in string contexts.
      *
-     * @param type       the ref type this property belongs to
+     * @param type       the type this property belongs to
      * @param property   the property name (e.g. "health", "x", "y", "z")
      * @param template   the Java expression template where {@code $} is replaced by the variable name
      * @param returnType the return type of the property
@@ -60,7 +60,7 @@ public interface PlaceholderRegistrar {
     void property(@NotNull ObjectType type, @NotNull String property, @NotNull String template, @NotNull PlaceholderType returnType);
 
     /**
-     * Sets the default property for a ref type, used when no property is specified
+     * Sets the default property for a type, used when no property is specified
      * (e.g. {@code {player}} instead of {@code {player_name}}).
      *
      * @param type            the object type

@@ -61,12 +61,12 @@ public final class VariableStatements {
         if (scopeRef == null) {
             throw new RuntimeException("Scope variable not found: " + scopeVarName);
         }
-        LumenType refType = scopeRef.type();
-        if (refType == null) {
+        LumenType scopeType = scopeRef.type();
+        if (scopeType == null) {
             throw new RuntimeException("Scope variable '" + scopeVarName
-                    + "' has no ref type. Expected a typed variable like a player or entity.");
+                    + "' has no type. Expected a typed variable like a player or entity.");
         }
-        String scopeKeyPart = ((ObjectType) refType).keyExpression(scopeRef.java());
+        String scopeKeyPart = ((ObjectType) scopeType).keyExpression(scopeRef.java());
         return "\"" + info.className() + "." + varName + ".\" + " + scopeKeyPart;
     }
 
@@ -296,7 +296,7 @@ public final class VariableStatements {
                     }
                     String storageClass = resolveStorageClass(info);
                     String keyExpr = buildScopedKey(env, varName, ctx.java("scope"), info);
-                    return new ExpressionResult(storageClass + ".get(" + keyExpr + ", " + info.defaultJava() + ")", info.exprRefTypeId());
+                    return new ExpressionResult(storageClass + ".get(" + keyExpr + ", " + info.defaultJava() + ")", info.exprTypeId());
                 }));
     }
 }

@@ -174,13 +174,13 @@ public final class LumenAPIImpl implements LumenAPI {
             }
 
             @Override
-            public void injectableExpression(@NotNull String pattern, @Nullable String refTypeId, @Nullable String javaType, @NotNull InjectableExpression expression) {
-                patternRegistry.expression(pattern, InjectableHandlers.expression(expression, refTypeId, javaType));
+            public void injectableExpression(@NotNull String pattern, @Nullable String typeId, @NotNull InjectableExpression expression) {
+                patternRegistry.expression(pattern, InjectableHandlers.expression(expression, typeId));
             }
 
             @Override
-            public void injectableExpression(@NotNull List<String> patterns, @Nullable String refTypeId, @Nullable String javaType, @NotNull InjectableExpression expression) {
-                patternRegistry.expression(patterns, InjectableHandlers.expression(expression, refTypeId, javaType));
+            public void injectableExpression(@NotNull List<String> patterns, @Nullable String typeId, @NotNull InjectableExpression expression) {
+                patternRegistry.expression(patterns, InjectableHandlers.expression(expression, typeId));
             }
 
             @Override
@@ -212,10 +212,10 @@ public final class LumenAPIImpl implements LumenAPI {
                 for (var entry : def.vars().entrySet()) {
                     String name = entry.getKey();
                     EventDefinition.VarEntry ve = entry.getValue();
-                    ObjectType rt = ve.refTypeId() != null ? LumenTypeRegistry.byId(ve.refTypeId()) : null;
-                    if (ve.refTypeId() != null && rt == null) {
+                    ObjectType rt = ve.typeId() != null ? LumenTypeRegistry.byId(ve.typeId()) : null;
+                    if (ve.typeId() != null && rt == null) {
                         throw new IllegalArgumentException(
-                                "Unknown ref type: " + ve.refTypeId());
+                                "Unknown type: " + ve.typeId());
                     }
                     internal.vars.put(name, new VarDef(rt, ve.javaType(), ve.expr()));
                 }
@@ -245,7 +245,7 @@ public final class LumenAPIImpl implements LumenAPI {
                         .className(internal.className);
                 for (var entry : internal.vars.entrySet()) {
                     VarDef vd = entry.getValue();
-                    if (vd.refType() != null) b.addVar(entry.getKey(), vd.refType(), vd.expr());
+                    if (vd.objectType() != null) b.addVar(entry.getKey(), vd.objectType(), vd.expr());
                     else b.addVar(entry.getKey(), vd.javaType(), vd.expr());
                 }
                 return b.build();

@@ -24,7 +24,7 @@ public final class GenericEntityExpressions {
                 .example("set loc to get mob's location")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .returnRefTypeId(MinecraftTypes.LOCATION.id())
+                .returnType(MinecraftTypes.LOCATION.id())
                 .handler(ctx -> new ExpressionResult(ctx.java("e") + ".getLocation()", MinecraftTypes.LOCATION.id())));
 
         api.patterns().expression(b -> b
@@ -33,7 +33,7 @@ public final class GenericEntityExpressions {
                 .example("set w to get mob's world")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .returnRefTypeId(MinecraftTypes.WORLD.id())
+                .returnType(MinecraftTypes.WORLD.id())
                 .handler(ctx -> new ExpressionResult(ctx.java("e") + ".getWorld()", MinecraftTypes.WORLD.id())));
 
         api.patterns().expression(b -> b
@@ -50,8 +50,8 @@ public final class GenericEntityExpressions {
                 .example("set n to get mob's name")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .returnJavaType(Types.STRING)
-                .handler(ctx -> new ExpressionResult(ctx.java("e") + ".getName()", null, Types.STRING)));
+                .returnType(Types.STRING)
+                .handler(ctx -> new ExpressionResult(ctx.java("e") + ".getName()", Types.STRING)));
 
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("get %e:ENTITY_POSSESSIVE% custom name")
@@ -59,8 +59,8 @@ public final class GenericEntityExpressions {
                 .example("set cn to get mob's custom name")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .returnJavaType(Types.STRING)
-                .handler(ctx -> new ExpressionResult(ctx.java("e") + ".getCustomName()", null, Types.STRING)));
+                .returnType(Types.STRING)
+                .handler(ctx -> new ExpressionResult(ctx.java("e") + ".getCustomName()", Types.STRING)));
 
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("get %e:ENTITY_POSSESSIVE% uuid")
@@ -68,8 +68,8 @@ public final class GenericEntityExpressions {
                 .example("set id to get mob's uuid")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .returnJavaType(Types.STRING)
-                .handler(ctx -> new ExpressionResult(ctx.java("e") + ".getUniqueId().toString()", null, Types.STRING)));
+                .returnType(Types.STRING)
+                .handler(ctx -> new ExpressionResult(ctx.java("e") + ".getUniqueId().toString()", Types.STRING)));
 
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("get %e:ENTITY_POSSESSIVE% velocity")
@@ -85,8 +85,8 @@ public final class GenericEntityExpressions {
                 .example("set ft to get mob's fire ticks")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .returnJavaType(Types.INT)
-                .handler(ctx -> new ExpressionResult(ctx.java("e") + ".getFireTicks()", null, Types.INT)));
+                .returnType(Types.INT)
+                .handler(ctx -> new ExpressionResult(ctx.java("e") + ".getFireTicks()", Types.INT)));
 
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("get %e:ENTITY_POSSESSIVE% passenger count")
@@ -94,7 +94,7 @@ public final class GenericEntityExpressions {
                 .example("set count to get mob's passenger count")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .returnJavaType(Types.INT)
-                .handler(ctx -> new ExpressionResult(ctx.java("e") + ".getPassengers().size()", null, Types.INT)));
+                .returnType(Types.INT)
+                .handler(ctx -> new ExpressionResult(ctx.java("e") + ".getPassengers().size()", Types.INT)));
     }
 }

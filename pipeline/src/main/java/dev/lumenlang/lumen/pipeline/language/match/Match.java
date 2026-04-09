@@ -57,7 +57,7 @@ public record Match(
             ExpressionResult result = ExprResolver.resolveWithType(ie.tokens(), ctx, env);
             if (result != null) {
                 if (!bv.binding().id().equals("EXPR")) {
-                    ObjectType ref = result.refTypeId() != null ? LumenTypeRegistry.byId(result.refTypeId()) : null;
+                    ObjectType ref = result.typeId() != null ? LumenTypeRegistry.byId(result.typeId()) : null;
                     return bv.binding().toJava(
                             new InlineVarRef(result.java(), ref, result.metadata()), ctx, env);
                 }
@@ -218,15 +218,15 @@ public record Match(
      * expression together with type and metadata from the original expression result.
      *
      * @param javaExpr  the resolved Java expression
-     * @param refType   the ref type of the expression, or {@code null}
+     * @param type      the type of the expression, or {@code null}
      * @param metadata  compile-time metadata from the expression result
      * @return a VarHandle backed by the expression with full type info
      */
     public static EnvironmentAccess.@NotNull VarHandle syntheticHandle(
             @NotNull String javaExpr,
-            @Nullable LumenType refType,
+            @Nullable LumenType type,
             @NotNull Map<String, Object> metadata) {
-        return new InlineVarRef(javaExpr, refType, metadata);
+        return new InlineVarRef(javaExpr, type, metadata);
     }
 
     /**
@@ -237,13 +237,13 @@ public record Match(
      */
     private record InlineVarRef(
             @NotNull String javaExpr,
-            @Nullable LumenType refType,
+            @Nullable LumenType lumenType,
             @NotNull Map<String, Object> meta
     ) implements EnvironmentAccess.VarHandle {
 
         @Override
         public @Nullable LumenType type() {
-            return refType;
+            return lumenType;
         }
 
         @Override

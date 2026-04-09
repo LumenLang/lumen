@@ -86,16 +86,16 @@ public final class GlobalVarLoadHook implements BlockEnterHook {
 
             String defaultJava = g.defaultJava();
             String className = g.className();
-            String exprRefTypeId = g.exprRefTypeId();
+            String exprTypeId = g.exprTypeId();
             Map<String, Object> exprMetadata = g.exprMetadata();
-            ObjectType exprRefType = exprRefTypeId != null ? LumenTypeRegistry.byId(exprRefTypeId) : null;
+            ObjectType resolvedObjectType = exprTypeId != null ? LumenTypeRegistry.byId(exprTypeId) : null;
             String keyExpr = "\"" + className + "." + name + "\"";
 
             String fieldType;
             LumenType lumenType;
-            if (exprRefType != null) {
-                lumenType = exprRefType;
-                String fqn = exprRefType.javaType();
+            if (resolvedObjectType != null) {
+                lumenType = resolvedObjectType;
+                String fqn = resolvedObjectType.javaType();
                 ctx.codegen().addImport(fqn);
                 fieldType = lumenType.javaTypeName();
             } else {
@@ -106,7 +106,7 @@ public final class GlobalVarLoadHook implements BlockEnterHook {
             ctx.codegen().addField(fieldType + " " + name + ";");
             ctx.out().taggedLine(TAG, name + " = " + storageClass + ".get(" + keyExpr + ", " + defaultJava + ");");
 
-            VarRef varRef = new VarRef(exprRefType, name, lumenType, exprMetadata);
+            VarRef varRef = new VarRef(resolvedObjectType, name, lumenType, exprMetadata);
             env.defineVar(name, varRef);
             env.markGlobalField(name);
             if (g.stored()) {

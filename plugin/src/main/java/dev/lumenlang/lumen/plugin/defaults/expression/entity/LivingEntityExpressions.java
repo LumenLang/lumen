@@ -31,18 +31,18 @@ public final class LivingEntityExpressions {
                 .example("set hp to get mob's health")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .returnJavaType(Types.DOUBLE)
+                .returnType(Types.DOUBLE)
                 .handler(ctx -> {
                     VarHandle h = (VarHandle) ctx.value("e");
                     String java = ctx.java("e");
                     boolean known = EntityValidation.requireLivingEntity(h, "get health");
                     ctx.codegen().addImport(LIVING_ENTITY);
                     if (known) {
-                        return new ExpressionResult("((LivingEntity) " + java + ").getHealth()", null, Types.DOUBLE);
+                        return new ExpressionResult("((LivingEntity) " + java + ").getHealth()", Types.DOUBLE);
                     }
                     return new ExpressionResult(
                             "(" + java + " instanceof LivingEntity _le ? _le.getHealth() : 0.0)",
-                            null, Types.DOUBLE);
+                            Types.DOUBLE);
                 }));
 
         api.patterns().expression(b -> b
@@ -51,7 +51,7 @@ public final class LivingEntityExpressions {
                 .example("set maxHp to get mob's max health")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .returnJavaType(Types.DOUBLE)
+                .returnType(Types.DOUBLE)
                 .handler(ctx -> {
                     VarHandle h = (VarHandle) ctx.value("e");
                     String java = ctx.java("e");
@@ -62,11 +62,11 @@ public final class LivingEntityExpressions {
                     if (known) {
                         return new ExpressionResult(
                                 "((LivingEntity) " + java + ").getAttribute(Attribute." + attrName + ").getValue()",
-                                null, Types.DOUBLE);
+                                Types.DOUBLE);
                     }
                     return new ExpressionResult(
                             "(" + java + " instanceof LivingEntity _le ? _le.getAttribute(Attribute." + attrName + ").getValue() : 0.0)",
-                            null, Types.DOUBLE);
+                            Types.DOUBLE);
                 }));
     }
 }

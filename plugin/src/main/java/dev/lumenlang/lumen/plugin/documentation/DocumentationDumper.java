@@ -70,8 +70,7 @@ import java.util.concurrent.CompletableFuture;
  *
  * <h2>Extra fields for expressions</h2>
  * <ul>
- *   <li>{@code returnRefTypeId} - the ref-type ID of the return value (e.g. {@code "PLAYER"}), or {@code null} if Java-typed.</li>
- *   <li>{@code returnJavaType} - the fully qualified Java return type, or {@code null} if ref-typed.</li>
+ *   <li>{@code returnTypeId} - the type ID of the return value (e.g. {@code "PLAYER"} or {@code "int"}), or {@code null}.</li>
  * </ul>
  *
  * <h2>Extra fields for blocks</h2>
@@ -79,7 +78,7 @@ import java.util.concurrent.CompletableFuture;
  *   <li>{@code supportsRootLevel} - {@code true} if the block is allowed at script root level.</li>
  *   <li>{@code supportsBlock} - {@code true} if the block is allowed inside another block.</li>
  *   <li>{@code variables} - list of variables injected into the block scope, each with:
- *     {@code name}, {@code type}, {@code refType} (ref-type ID or {@code null}),
+ *     {@code name}, {@code type}, {@code objectType} (type ID or {@code null}),
  *     {@code nullable}, {@code description}, and optionally {@code metadata}.</li>
  * </ul>
  *
@@ -96,13 +95,13 @@ import java.util.concurrent.CompletableFuture;
  *   <li>{@code interfaces} - list of implemented interface names (advanced events only).</li>
  *   <li>{@code fields} - map of field name to value (advanced events only).</li>
  *   <li>{@code variables} - list of event variables, each with:
- *     {@code name}, {@code javaType}, {@code refTypeId}, {@code description},
+ *     {@code name}, {@code javaType}, {@code typeId}, {@code description},
  *     {@code nullable}, and optionally {@code metadata}.</li>
  * </ul>
  *
  * <h2>Type binding entry fields</h2>
  * <ul>
- *   <li>{@code id} - the unique ref-type identifier (e.g. {@code "PLAYER"}).</li>
+ *   <li>{@code id} - the unique type identifier (e.g. {@code "PLAYER"}).</li>
  *   <li>{@code description} - human-readable explanation, or {@code null}.</li>
  *   <li>{@code javaType} - the fully qualified Java type this ID maps to, or {@code null}.</li>
  *   <li>{@code examples} - list of example usage strings.</li>
@@ -232,8 +231,7 @@ public final class DocumentationDumper {
     private static @NotNull Map<String, List<Map<String, Object>>> groupExpressions(@NotNull List<RegisteredExpression> expressions) {
         IdentityHashMap<Object, List<String>> handlerToPatterns = new IdentityHashMap<>();
         IdentityHashMap<Object, PatternMeta> handlerToMeta = new IdentityHashMap<>();
-        IdentityHashMap<Object, String> handlerToReturnRefType = new IdentityHashMap<>();
-        IdentityHashMap<Object, String> handlerToReturnJavaType = new IdentityHashMap<>();
+        IdentityHashMap<Object, String> handlerToReturnType = new IdentityHashMap<>();
         List<Object> handlerOrder = new ArrayList<>();
 
         for (RegisteredExpression re : expressions) {
@@ -243,11 +241,8 @@ public final class DocumentationDumper {
                 return new ArrayList<>();
             }).add(re.pattern().raw());
             handlerToMeta.putIfAbsent(handler, re.meta());
-            if (re.returnRefTypeId() != null) {
-                handlerToReturnRefType.putIfAbsent(handler, re.returnRefTypeId());
-            }
-            if (re.returnJavaType() != null) {
-                handlerToReturnJavaType.putIfAbsent(handler, re.returnJavaType());
+            if (re.returnTypeId() != null) {
+                handlerToReturnType.putIfAbsent(handler, re.returnTypeId());
             }
         }
 
@@ -255,8 +250,7 @@ public final class DocumentationDumper {
         for (Object handler : handlerOrder) {
             PatternMeta meta = handlerToMeta.get(handler);
             Map<String, Object> entry = buildPatternEntry(handlerToPatterns.get(handler), meta);
-            entry.put("returnRefTypeId", handlerToReturnRefType.get(handler));
-            entry.put("returnJavaType", handlerToReturnJavaType.get(handler));
+            entry.put("returnTypeId", handlerToReturnType.get(handler));
             result.computeIfAbsent(ownerOf(meta.by()), k -> new ArrayList<>()).add(entry);
         }
         return result;
@@ -318,7 +312,7 @@ public final class DocumentationDumper {
                     Map<String, Object> varObj = new LinkedHashMap<>();
                     varObj.put("name", v.name());
                     varObj.put("type", v.type());
-                    varObj.put("refType", v.refType() != null ? v.refType().id() : null);
+                    varObj.put("objectType", v.objectType() != null ? v.objectType().id() : null);
                     varObj.put("nullable", v.metadata().getOrDefault("nullable", false));
                     varObj.put("description", v.description());
                     if (!v.metadata().isEmpty()) {
@@ -387,7 +381,7 @@ public final class DocumentationDumper {
                 EventDefinition.VarEntry var = varEntry.getValue();
                 varObj.put("name", varEntry.getKey());
                 varObj.put("javaType", var.javaType());
-                varObj.put("refTypeId", var.refTypeId());
+                varObj.put("typeId", var.typeId());
                 varObj.put("description", var.description());
                 varObj.put("nullable", var.metadata().getOrDefault("nullable", false));
                 if (!var.metadata().isEmpty()) {
@@ -418,7 +412,7 @@ public final class DocumentationDumper {
                 EventDefinition.VarEntry ve = varEntry.getValue();
                 varObj.put("name", varEntry.getKey());
                 varObj.put("javaType", ve.javaType());
-                varObj.put("refTypeId", ve.refTypeId());
+                varObj.put("typeId", ve.typeId());
                 varObj.put("description", ve.description());
                 varObj.put("nullable", ve.metadata().getOrDefault("nullable", false));
                 if (!ve.metadata().isEmpty()) {

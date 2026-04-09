@@ -18,10 +18,10 @@ import org.jetbrains.annotations.Nullable;
  *       type bindings can resolve it by name during pattern matching.</li>
  * </ol>
  *
- * @param refType  the object type for type checking, or {@code null} for plain variables
- * @param javaType the fully-qualified Java class name used in the generated declaration
- * @param expr     the Java initialiser expression (e.g. {@code "event.getPlayer()"})
+ * @param objectType the object type for type checking, or {@code null} for plain variables
+ * @param javaType   the fully-qualified Java class name used in the generated declaration
+ * @param expr       the Java initialiser expression (e.g. {@code "event.getPlayer()"})
  * @see VarRef
  */
-public record VarDef(@Nullable ObjectType refType, @NotNull String javaType, @NotNull String expr) {
+public record VarDef(@Nullable ObjectType objectType, @NotNull String javaType, @NotNull String expr) {
 }

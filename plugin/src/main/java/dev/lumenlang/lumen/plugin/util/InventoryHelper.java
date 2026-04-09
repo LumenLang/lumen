@@ -164,43 +164,23 @@ public final class InventoryHelper {
                                                @NotNull String description,
                                                @NotNull String example,
                                                @NotNull ExpressionHandler handler) {
-        return expression(pattern, description, example, null, null, handler);
+        return expression(pattern, description, example, null, handler);
     }
 
     /**
-     * Registers an expression pattern with a static return ref type.
+     * Registers an expression pattern with a static return type.
      *
-     * @param pattern         the pattern string
-     * @param description     human-readable description
-     * @param example         usage example
-     * @param returnRefTypeId the static return ref type id for tooling, or null
-     * @param handler         the expression handler
+     * @param pattern    the pattern string
+     * @param description human-readable description
+     * @param example    usage example
+     * @param returnType the static return type id for tooling, or null
+     * @param handler    the expression handler
      * @return this builder
      */
     public @NotNull InventoryHelper expression(@NotNull String pattern,
                                                @NotNull String description,
                                                @NotNull String example,
-                                               @Nullable String returnRefTypeId,
-                                               @NotNull ExpressionHandler handler) {
-        return expression(pattern, description, example, returnRefTypeId, null, handler);
-    }
-
-    /**
-     * Registers an expression pattern with a static return ref type and Java type.
-     *
-     * @param pattern         the pattern string
-     * @param description     human-readable description
-     * @param example         usage example
-     * @param returnRefTypeId the static return ref type id for tooling, or null
-     * @param returnJavaType  the Java type for tooling (e.g. "int", "String"), or null
-     * @param handler         the expression handler
-     * @return this builder
-     */
-    public @NotNull InventoryHelper expression(@NotNull String pattern,
-                                               @NotNull String description,
-                                               @NotNull String example,
-                                               @Nullable String returnRefTypeId,
-                                               @Nullable String returnJavaType,
+                                               @Nullable String returnType,
                                                @NotNull ExpressionHandler handler) {
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -209,8 +189,7 @@ public final class InventoryHelper {
                 .example(example)
                 .since("1.0.0")
                 .category(Categories.INVENTORY)
-                .returnRefTypeId(returnRefTypeId)
-                .returnJavaType(returnJavaType)
+                .returnType(returnType)
                 .handler(handler));
         return this;
     }

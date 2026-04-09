@@ -149,7 +149,7 @@ public final class VarDeclarationForm implements StatementFormHandler {
             else diagBuilder.help("make sure the variable is defined before using it");
             throw new DiagnosticException(diagBuilder.build());
         }
-        if (scopeRef.refType() == null) {
+        if (scopeRef.objectType() == null) {
             throw new DiagnosticException(LumenDiagnostic.error("E502", "Scope variable '" + scopeVarName + "' has no type")
                     .at(ctx.line(), ctx.raw())
                     .highlight(scopeTokens.get(0).start(), scopeTokens.get(0).end())
@@ -159,7 +159,7 @@ public final class VarDeclarationForm implements StatementFormHandler {
         }
 
         String storageClass = info.stored() ? "PersistentVars" : "GlobalVars";
-        String keyExpr = "\"" + info.className() + "." + name + ".\" + " + scopeRef.refType().keyExpression(scopeRef.java());
+        String keyExpr = "\"" + info.className() + "." + name + ".\" + " + scopeRef.objectType().keyExpression(scopeRef.java());
         ctx.out().line(storageClass + ".set(" + keyExpr + ", " + valueJava + ");");
         VarRef fieldRef = env.lookupVar(name);
         if (fieldRef != null) {
@@ -235,7 +235,7 @@ public final class VarDeclarationForm implements StatementFormHandler {
 
         String java;
         VarRef inheritedRef = null;
-        @Nullable ObjectType resolvedRefType = null;
+        @Nullable ObjectType resolvedObjectType = null;
         @Nullable LumenType exprLumenType = null;
         @NotNull Map<String, Object> resolvedMetadata = Map.of();
 
@@ -272,19 +272,19 @@ public final class VarDeclarationForm implements StatementFormHandler {
                 ExpressionResult exprResult = tryExpressionPattern(raw.tokens(), ctx, env);
                 if (exprResult != null) {
                     java = exprResult.java();
-                    if (exprResult.refTypeId() != null) {
-                        resolvedRefType = LumenTypeRegistry.byId(exprResult.refTypeId());
+                    if (exprResult.typeId() != null) {
+                        resolvedObjectType = LumenTypeRegistry.byId(exprResult.typeId());
                     }
-                    exprLumenType = LumenType.resolve(exprResult.refTypeId(), exprResult.javaType());
+                    exprLumenType = exprResult.typeId() != null ? LumenType.fromId(exprResult.typeId()) : null;
                     resolvedMetadata = exprResult.metadata();
                 } else {
                     ExpressionResult resolvedResult = ExprResolver.resolveWithType(raw.tokens(), ctx.codegenContext(), env);
                     if (resolvedResult != null) {
                         java = resolvedResult.java();
-                        if (resolvedResult.refTypeId() != null) {
-                            resolvedRefType = LumenTypeRegistry.byId(resolvedResult.refTypeId());
+                        if (resolvedResult.typeId() != null) {
+                            resolvedObjectType = LumenTypeRegistry.byId(resolvedResult.typeId());
                         }
-                        exprLumenType = LumenType.resolve(resolvedResult.refTypeId(), resolvedResult.javaType());
+                        exprLumenType = resolvedResult.typeId() != null ? LumenType.fromId(resolvedResult.typeId()) : null;
                         resolvedMetadata = resolvedResult.metadata();
                     } else {
                         throw new DiagnosticException(LumenDiagnostic.error("E502", "Cannot resolve expression")
@@ -325,14 +325,14 @@ public final class VarDeclarationForm implements StatementFormHandler {
             }
         }
 
-        ObjectType effectiveRefType = inheritedRef != null ? inheritedRef.refType() : resolvedRefType;
+        ObjectType effectiveObjectType = inheritedRef != null ? inheritedRef.objectType() : resolvedObjectType;
         LumenType resolvedLumenType = inheritedRef != null ? inheritedRef.resolvedType() : (exprLumenType != null ? exprLumenType : e.resolvedType());
-        if (resolvedLumenType == null && effectiveRefType != null) {
-            resolvedLumenType = effectiveRefType;
+        if (resolvedLumenType == null && effectiveObjectType != null) {
+            resolvedLumenType = effectiveObjectType;
         }
         String typeDecl = resolvedLumenType != null ? resolvedLumenType.javaTypeName() : "var";
         ctx.out().line(typeDecl + " " + name + " = " + java + ";");
-        VarRef varRef = new VarRef(effectiveRefType, name, resolvedLumenType, resolvedMetadata);
+        VarRef varRef = new VarRef(effectiveObjectType, name, resolvedLumenType, resolvedMetadata);
         env.defineVar(name, varRef);
         if (env.blockContext().parent() != null) {
             env.blockContext().parent().defineVar(name, varRef);
@@ -433,9 +433,9 @@ public final class VarDeclarationForm implements StatementFormHandler {
         Expr.RawExpr raw = (Expr.RawExpr) e;
         if (raw.tokens().size() > 1) {
             ExpressionResult result = tryExpressionPattern(raw.tokens(), ctx, env);
-            if (result != null) return new TypedExpression(result.java(), LumenType.resolve(result.refTypeId(), result.javaType()));
+            if (result != null) return new TypedExpression(result.java(), result.typeId() != null ? LumenType.fromId(result.typeId()) : null);
             ExpressionResult resolved = ExprResolver.resolveWithType(raw.tokens(), ctx.codegenContext(), env);
-            if (resolved != null) return new TypedExpression(resolved.java(), LumenType.resolve(resolved.refTypeId(), resolved.javaType()));
+            if (resolved != null) return new TypedExpression(resolved.java(), resolved.typeId() != null ? LumenType.fromId(resolved.typeId()) : null);
             return null;
         }
         Token single = raw.tokens().get(0);

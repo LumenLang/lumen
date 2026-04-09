@@ -29,12 +29,12 @@ public final class InjectableHandlers {
         return factory.statement(clazz, methodName, methodBased);
     }
 
-    public static @NotNull ExpressionHandler expression(@NotNull InjectableExpression expression, @Nullable String refTypeId, @Nullable String javaType) {
-        return factory.expression(expression, refTypeId, javaType);
+    public static @NotNull ExpressionHandler expression(@NotNull InjectableExpression expression, @Nullable String typeId) {
+        return factory.expression(expression, typeId);
     }
 
-    public static @NotNull ExpressionHandler expression(@NotNull Class<?> clazz, @NotNull String methodName, @Nullable String refTypeId, @Nullable String javaType) {
-        return factory.expression(clazz, methodName, refTypeId, javaType);
+    public static @NotNull ExpressionHandler expression(@NotNull Class<?> clazz, @NotNull String methodName, @Nullable String typeId) {
+        return factory.expression(clazz, methodName, typeId);
     }
 
     public static @NotNull ConditionHandler condition(@NotNull InjectableCondition condition) {
@@ -51,9 +51,9 @@ public final class InjectableHandlers {
 
         @NotNull StatementHandler statement(@NotNull Class<?> clazz, @NotNull String methodName, boolean methodBased);
 
-        @NotNull ExpressionHandler expression(@NotNull InjectableExpression expression, @Nullable String refTypeId, @Nullable String javaType);
+        @NotNull ExpressionHandler expression(@NotNull InjectableExpression expression, @Nullable String typeId);
 
-        @NotNull ExpressionHandler expression(@NotNull Class<?> clazz, @NotNull String methodName, @Nullable String refTypeId, @Nullable String javaType);
+        @NotNull ExpressionHandler expression(@NotNull Class<?> clazz, @NotNull String methodName, @Nullable String typeId);
 
         @NotNull ConditionHandler condition(@NotNull InjectableCondition condition);
 

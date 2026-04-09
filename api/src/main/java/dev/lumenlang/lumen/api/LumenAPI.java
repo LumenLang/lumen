@@ -10,7 +10,7 @@ import dev.lumenlang.lumen.api.type.TypeRegistrar;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Top-level API handle for extending Lumen with custom patterns, events, types, and ref types.
+ * Top-level API handle for extending Lumen with custom patterns, events, and types.
  *
  * <p>Addons receive this handle via {@link LumenAddon#onEnable(LumenAPI)}, or plugins can
  * access it via {@link LumenProvider#api()} after Lumen has enabled.
@@ -36,8 +36,7 @@ import org.jetbrains.annotations.NotNull;
  *   <li>{@link #patterns()}  -  register statement, block, and condition patterns</li>
  *   <li>{@link #types()}  -  register custom type bindings (e.g. a new {@code ENTITY} type)</li>
  *   <li>{@link #events()}  -  register event definitions for {@code on <name>:} syntax</li>
- *   <li>{@link #refTypes()}  -  register new compile-time reference types</li>
- *   <li>{@link #placeholders()}  -  register placeholder properties for ref types</li>
+ *   <li>{@link #placeholders()}  -  register placeholder properties for object types</li>
  *   <li>{@link #emitters()}  -  register custom emit handlers (statement forms, block forms, hooks)</li>
  *   <li>{@link #binders()}  -  register custom script annotation binders</li>
  *   <li>{@link #transformers()}  -  register code transformers (experimental)</li>

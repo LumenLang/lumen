@@ -164,11 +164,11 @@ public final class ExprResolver {
                     continue;
                 }
 
-                if (subResult.refTypeId() == null) continue;
+                if (subResult.typeId() == null) continue;
 
                 String synthName = "$sub" + depth + "$" + start;
-                ObjectType refType = LumenTypeRegistry.byId(subResult.refTypeId());
-                VarRef synthRef = new VarRef(refType, subResult.java());
+                ObjectType resolvedType = LumenTypeRegistry.byId(subResult.typeId());
+                VarRef synthRef = new VarRef(resolvedType, subResult.java());
 
                 BlockContext tempBlock = new BlockContext(null, env.blockContext(), List.of(), 0);
                 env.enterBlock(tempBlock);
@@ -246,7 +246,7 @@ public final class ExprResolver {
             }
         }
         String javaType = resultType != null ? resultType.javaType() : null;
-        return new ExpressionResult(sb.toString(), null, javaType);
+        return new ExpressionResult(sb.toString(), javaType);
     }
 
     /**
@@ -286,7 +286,7 @@ public final class ExprResolver {
             List<Token> inner = tokens.subList(1, tokens.size() - 1);
             ExpressionResult innerResolved = resolveRecursive(inner, ctx, env, depth + 1);
             if (innerResolved != null) {
-                LumenType type = LumenType.resolve(innerResolved.refTypeId(), innerResolved.javaType());
+                LumenType type = innerResolved.typeId() != null ? LumenType.fromId(innerResolved.typeId()) : null;
                 return new TypedOperand("(" + innerResolved.java() + ")", type);
             }
             return null;
@@ -294,7 +294,7 @@ public final class ExprResolver {
 
         ExpressionResult result = resolveRecursive(tokens, ctx, env, depth + 1);
         if (result == null) return null;
-        LumenType type = LumenType.resolve(result.refTypeId(), result.javaType());
+        LumenType type = result.typeId() != null ? LumenType.fromId(result.typeId()) : null;
         if (type != null && !type.numeric()) {
             throw new RuntimeException("Non-numeric operand in arithmetic expression. Expression resolved to type '" + type.displayName() + "' which is not numeric.");
         }

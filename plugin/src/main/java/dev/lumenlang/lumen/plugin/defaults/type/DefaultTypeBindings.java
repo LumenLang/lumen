@@ -1204,7 +1204,7 @@ public final class DefaultTypeBindings {
                 VarHandle ref = env.lookupVar(name);
                 if (ref != null && isList(ref)) return 1;
                 EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(name);
-                if (info != null && "LIST".equals(info.exprRefTypeId())) return 1;
+                if (info != null && "LIST".equals(info.exprTypeId())) return 1;
                 throw new ParseFailureException("Expected a list variable, got '" + name + "'");
             }
 
@@ -1217,7 +1217,7 @@ public final class DefaultTypeBindings {
                     return ref;
                 }
                 EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(name);
-                if (info != null && "LIST".equals(info.exprRefTypeId())) return name;
+                if (info != null && "LIST".equals(info.exprTypeId())) return name;
                 throw new ParseFailureException("Unknown list variable: " + name);
             }
 
@@ -1260,7 +1260,7 @@ public final class DefaultTypeBindings {
                 VarHandle ref = env.lookupVar(name);
                 if (ref != null && isMap(ref)) return 1;
                 EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(name);
-                if (info != null && "MAP".equals(info.exprRefTypeId())) return 1;
+                if (info != null && "MAP".equals(info.exprTypeId())) return 1;
                 throw new ParseFailureException("Expected a map variable, got '" + name + "'");
             }
 
@@ -1273,7 +1273,7 @@ public final class DefaultTypeBindings {
                     return ref;
                 }
                 EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(name);
-                if (info != null && "MAP".equals(info.exprRefTypeId())) return name;
+                if (info != null && "MAP".equals(info.exprTypeId())) return name;
                 throw new ParseFailureException("Unknown map variable: " + name);
             }
 

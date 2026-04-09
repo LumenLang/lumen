@@ -48,12 +48,12 @@ public final class ScopedVariableConditions {
         if (scopeRef == null) {
             throw new RuntimeException("Scope variable not found: " + scopeVarName);
         }
-        LumenType refType = scopeRef.type();
-        if (refType == null) {
+        LumenType scopeType = scopeRef.type();
+        if (scopeType == null) {
             throw new RuntimeException("Scope variable '" + scopeVarName
-                    + "' has no ref type. Expected a typed variable like a player or entity.");
+                    + "' has no type. Expected a typed variable like a player or entity.");
         }
-        String scopeKeyPart = ((ObjectType) refType).keyExpression(scopeRef.java());
+        String scopeKeyPart = ((ObjectType) scopeType).keyExpression(scopeRef.java());
         String keyExpr = "\"" + info.className() + "." + varName + ".\" + " + scopeKeyPart;
         if (info.stored()) {
             ctx.addImport(PersistentVars.class.getName());

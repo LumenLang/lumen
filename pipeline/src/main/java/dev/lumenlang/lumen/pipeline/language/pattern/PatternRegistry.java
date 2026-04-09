@@ -370,11 +370,10 @@ public final class PatternRegistry {
         builderConsumer.accept(builder);
         builder.validate();
         PatternMeta meta = builder.buildMeta();
-        String returnRefTypeId = builder.getReturnRefTypeId();
-        String returnJavaType = builder.getReturnJavaType();
+        String returnTypeId = builder.getReturnType();
         ExpressionHandler handler = builder.getInjectableExpression() != null
-                ? InjectableHandlers.expression(builder.getInjectableExpression(), returnRefTypeId, returnJavaType) : builder.getInjectableClass() != null
-                ? InjectableHandlers.expression(builder.getInjectableClass(), builder.getInjectableMethodName(), returnRefTypeId, returnJavaType) : builder.getHandler();
+                ? InjectableHandlers.expression(builder.getInjectableExpression(), returnTypeId) : builder.getInjectableClass() != null
+                ? InjectableHandlers.expression(builder.getInjectableClass(), builder.getInjectableMethodName(), returnTypeId) : builder.getHandler();
         if (handler instanceof PatternHinted ph) {
             ph.patternHint(builder.getPatterns().get(0));
             for (int i = 1; i < builder.getPatterns().size(); i++) ph.validateAdditionalPattern(builder.getPatterns().get(i));
@@ -382,7 +381,7 @@ public final class PatternRegistry {
         for (String p : builder.getPatterns()) {
             Pattern compiled = PatternCompiler.compile(p);
             validateTypes(compiled);
-            expressions.add(new RegisteredExpression(compiled, handler, meta, returnRefTypeId, returnJavaType));
+            expressions.add(new RegisteredExpression(compiled, handler, meta, returnTypeId));
         }
     }
 

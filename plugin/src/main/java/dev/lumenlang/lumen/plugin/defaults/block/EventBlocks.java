@@ -84,10 +84,10 @@ public final class EventBlocks {
                             for (var entry : advDef.vars().entrySet()) {
                                 String name = entry.getKey();
                                 EventDefinition.VarEntry v = entry.getValue();
-                                LumenType refType = v.refTypeId() != null
-                                        ? LumenTypeRegistry.byId(v.refTypeId())
+                                LumenType scopeType = v.typeId() != null
+                                        ? LumenTypeRegistry.byId(v.typeId())
                                         : null;
-                                env.defineVar(name, refType, v.expr());
+                                env.defineVar(name, scopeType, v.expr());
                             }
 
                             advDef.handler().begin(ctx, out);
@@ -139,13 +139,13 @@ public final class EventBlocks {
                                 out.line(simple + " " + name + " = " + expr + ";");
                             }
 
-                            LumenType refType = v.refTypeId() != null
-                                    ? LumenTypeRegistry.byId(v.refTypeId())
+                            LumenType scopeType = v.typeId() != null
+                                    ? LumenTypeRegistry.byId(v.typeId())
                                     : null;
                             if (v.metadata().isEmpty()) {
-                                env.defineVar(name, refType, name);
+                                env.defineVar(name, scopeType, name);
                             } else {
-                                env.defineVar(name, refType, name, v.metadata());
+                                env.defineVar(name, scopeType, name, v.metadata());
                             }
                         }
                     }

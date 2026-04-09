@@ -165,23 +165,23 @@ public final class EventBuilder {
     }
 
     /**
-     * Adds a typed variable whose Java type is inferred from the ref type handle.
+     * Adds a typed variable whose Java type is inferred from the object type.
      *
-     * <p>This is the preferred overload for variables with a known ref type.
+     * <p>This is the preferred overload for variables with a known object type.
      *
-     * @param name    the variable name accessible in script child statements
-     * @param refType the logical type category for type checking
-     * @param expr    the initialiser expression (e.g. {@code "event.getPlayer()"})
+     * @param name       the variable name accessible in script child statements
+     * @param objectType the logical type category for type checking
+     * @param expr       the initialiser expression (e.g. {@code "event.getPlayer()"})
      * @return this builder
      */
-    public @NotNull EventBuilder addVar(@NotNull String name, @NotNull ObjectType refType, @NotNull String expr) {
-        vars.put(name, new EventDefinition.VarEntry(refType.id(), refType.javaType(), expr));
+    public @NotNull EventBuilder addVar(@NotNull String name, @NotNull ObjectType objectType, @NotNull String expr) {
+        vars.put(name, new EventDefinition.VarEntry(objectType.id(), objectType.javaType(), expr));
         this.lastVarName = name;
         return this;
     }
 
     /**
-     * Adds a plain variable (no ref type) to this event definition.
+     * Adds a plain variable (no object type) to this event definition.
      *
      * <p>Use this for primitives, strings.
      *
@@ -218,7 +218,7 @@ public final class EventBuilder {
         Map<String, Object> newMeta = new HashMap<>(existing.metadata());
         newMeta.put(key, value);
         vars.put(lastVarName, new EventDefinition.VarEntry(
-                existing.refTypeId(), existing.javaType(), existing.expr(),
+                existing.typeId(), existing.javaType(), existing.expr(),
                 Collections.unmodifiableMap(newMeta), existing.description()));
         return this;
     }
@@ -239,7 +239,7 @@ public final class EventBuilder {
         }
         EventDefinition.VarEntry existing = vars.get(lastVarName);
         vars.put(lastVarName, new EventDefinition.VarEntry(
-                existing.refTypeId(), existing.javaType(), existing.expr(),
+                existing.typeId(), existing.javaType(), existing.expr(),
                 existing.metadata(), description));
         return this;
     }

@@ -232,35 +232,35 @@ public final class AdvancedEventBuilder {
      * <p>Variables are emitted as local declarations at the top of the handler method
      * body, identical to how regular event variables work.
      *
-     * @param name     the variable name accessible in script child statements
-     * @param refType  the logical type category for type checking, or {@code null}
-     * @param javaType the Java type name (e.g. {@code Types.DOUBLE} or a fully qualified class name)
-     * @param expr     the initialiser expression
+     * @param name       the variable name accessible in script child statements
+     * @param objectType the logical type category for type checking, or {@code null}
+     * @param javaType   the Java type name (e.g. {@code Types.DOUBLE} or a fully qualified class name)
+     * @param expr       the initialiser expression
      * @return this builder
      */
-    public @NotNull AdvancedEventBuilder addVar(@NotNull String name, @Nullable ObjectType refType, @NotNull String javaType, @NotNull String expr) {
-        String refTypeId = refType != null ? refType.id() : null;
-        vars.put(name, new EventDefinition.VarEntry(refTypeId, javaType, expr));
+    public @NotNull AdvancedEventBuilder addVar(@NotNull String name, @Nullable ObjectType objectType, @NotNull String javaType, @NotNull String expr) {
+        String typeId = objectType != null ? objectType.id() : null;
+        vars.put(name, new EventDefinition.VarEntry(typeId, javaType, expr));
         this.lastVarName = name;
         return this;
     }
 
     /**
-     * Adds a typed variable whose Java type is inferred from the ref type handle.
+     * Adds a typed variable whose Java type is inferred from the object type.
      *
-     * @param name    the variable name
-     * @param refType the logical type category
-     * @param expr    the initialiser expression
+     * @param name       the variable name
+     * @param objectType the logical type category
+     * @param expr       the initialiser expression
      * @return this builder
      */
-    public @NotNull AdvancedEventBuilder addVar(@NotNull String name, @NotNull ObjectType refType, @NotNull String expr) {
-        vars.put(name, new EventDefinition.VarEntry(refType.id(), refType.javaType(), expr));
+    public @NotNull AdvancedEventBuilder addVar(@NotNull String name, @NotNull ObjectType objectType, @NotNull String expr) {
+        vars.put(name, new EventDefinition.VarEntry(objectType.id(), objectType.javaType(), expr));
         this.lastVarName = name;
         return this;
     }
 
     /**
-     * Adds a plain variable (no ref type).
+     * Adds a plain variable (no object type).
      *
      * @param name     the variable name
      * @param javaType the Java type name (e.g. {@code Types.BOOLEAN} or a fully qualified class name)
@@ -291,7 +291,7 @@ public final class AdvancedEventBuilder {
         Map<String, Object> newMeta = new HashMap<>(existing.metadata());
         newMeta.put(key, value);
         vars.put(lastVarName, new EventDefinition.VarEntry(
-                existing.refTypeId(), existing.javaType(), existing.expr(),
+                existing.typeId(), existing.javaType(), existing.expr(),
                 Collections.unmodifiableMap(newMeta), existing.description()));
         return this;
     }
@@ -312,7 +312,7 @@ public final class AdvancedEventBuilder {
         }
         EventDefinition.VarEntry existing = vars.get(lastVarName);
         vars.put(lastVarName, new EventDefinition.VarEntry(
-                existing.refTypeId(), existing.javaType(), existing.expr(),
+                existing.typeId(), existing.javaType(), existing.expr(),
                 existing.metadata(), description));
         return this;
     }

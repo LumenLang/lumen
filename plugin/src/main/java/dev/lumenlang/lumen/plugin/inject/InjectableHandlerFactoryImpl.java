@@ -26,13 +26,13 @@ public final class InjectableHandlerFactoryImpl implements InjectableHandlers.Fa
     }
 
     @Override
-    public @NotNull ExpressionHandler expression(@NotNull InjectableExpression expression, @Nullable String refTypeId, @Nullable String javaType) {
-        return new InjectableExpressionHandler(expression, refTypeId, javaType);
+    public @NotNull ExpressionHandler expression(@NotNull InjectableExpression expression, @Nullable String typeId) {
+        return new InjectableExpressionHandler(expression, typeId);
     }
 
     @Override
-    public @NotNull ExpressionHandler expression(@NotNull Class<?> clazz, @NotNull String methodName, @Nullable String refTypeId, @Nullable String javaType) {
-        return new InjectableExpressionHandler(clazz, methodName, refTypeId, javaType);
+    public @NotNull ExpressionHandler expression(@NotNull Class<?> clazz, @NotNull String methodName, @Nullable String typeId) {
+        return new InjectableExpressionHandler(clazz, methodName, typeId);
     }
 
     @Override

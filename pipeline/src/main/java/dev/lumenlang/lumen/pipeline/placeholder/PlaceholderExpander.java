@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
  * string literals and var expressions. The expander scans the input, and for each placeholder:
  * <ol>
  *   <li>Splits on the first {@code _} to get the variable name and property</li>
- *   <li>Looks up the variable in the scope to get its {@link RefType}</li>
+ *   <li>Looks up the variable in the scope to get its {@link ObjectType}</li>
  *   <li>Looks up the property template in the {@link PlaceholderRegistry}</li>
  *   <li>Produces a Java expression</li>
  * </ol>
@@ -111,9 +111,9 @@ public final class PlaceholderExpander {
         String property = placeholder.substring(underscore + 1);
 
         VarRef ref = env.lookupVar(varName);
-        if (ref == null || ref.refType() == null) return null;
+        if (ref == null || ref.objectType() == null) return null;
 
-        return PlaceholderRegistry.getPropertyType(ref.refType(), property);
+        return PlaceholderRegistry.getPropertyType(ref.objectType(), property);
     }
 
     /**
@@ -158,7 +158,7 @@ public final class PlaceholderExpander {
         placeholder = placeholder.replace(' ', '_');
         VarRef fullRef = env.lookupVar(placeholder);
         if (fullRef != null) {
-            ObjectType type = fullRef.refType();
+            ObjectType type = fullRef.objectType();
             if (type == null) {
                 return "String.valueOf(" + fullRef.java() + ")";
             }
@@ -189,8 +189,7 @@ public final class PlaceholderExpander {
             return null;
         }
 
-        ObjectType type = ref.refType();
-        if (type == null) {
+        ObjectType type = ref.objectType();        if (type == null) {
             return null;
         }
 

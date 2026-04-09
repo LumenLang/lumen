@@ -14,19 +14,19 @@ import java.util.Map;
  *
  * @param name        the variable name accessible in script child statements (e.g. "player")
  * @param type        a human readable type string for documentation (e.g. "Player", "World")
- * @param refType     the typed reference handle for tooling, or {@code null} if untyped
+ * @param objectType  the typed reference handle for tooling, or {@code null} if untyped
  * @param metadata    compile-time metadata entries (e.g. "nullable" to true)
  * @param description a human readable description of this variable, or {@code null}
  */
 public record BlockVarInfo(
         @NotNull String name,
         @NotNull String type,
-        @Nullable ObjectType refType,
+        @Nullable ObjectType objectType,
         @NotNull Map<String, Object> metadata,
         @Nullable String description) {
 
     /**
-     * Creates a BlockVarInfo with no ref type, no metadata, and no description.
+     * Creates a BlockVarInfo with no object type, no metadata, and no description.
      *
      * @param name the variable name
      * @param type the human readable type string
@@ -36,7 +36,7 @@ public record BlockVarInfo(
     }
 
     /**
-     * Creates a BlockVarInfo with no ref type.
+     * Creates a BlockVarInfo with no object type.
      *
      * @param name        the variable name
      * @param type        the human readable type string
@@ -49,14 +49,14 @@ public record BlockVarInfo(
     }
 
     /**
-     * Creates a BlockVarInfo from a {@link RefTypeHandle}, deriving the human readable
+     * Creates a BlockVarInfo from an {@link ObjectType}, deriving the human readable
      * type string from the Java class simple name.
      *
-     * @param name    the variable name
-     * @param refType the typed reference handle
+     * @param name       the variable name
+     * @param objectType the object type
      */
-    public BlockVarInfo(@NotNull String name, @NotNull ObjectType refType) {
-        this(name, simpleNameOf(refType.javaType()), refType, Map.of(), null);
+    public BlockVarInfo(@NotNull String name, @NotNull ObjectType objectType) {
+        this(name, simpleNameOf(objectType.javaType()), objectType, Map.of(), null);
     }
 
     private static @NotNull String simpleNameOf(@NotNull String fqcn) {

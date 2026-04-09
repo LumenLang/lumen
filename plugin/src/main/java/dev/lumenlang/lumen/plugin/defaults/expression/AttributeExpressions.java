@@ -35,7 +35,7 @@ public final class AttributeExpressions {
                 .example("set hp to mob's max_health")
                 .since("1.0.0")
                 .category(Categories.ATTRIBUTE)
-                .returnJavaType(Types.DOUBLE)
+                .returnType(Types.DOUBLE)
                 .handler(ctx -> {
                     VarHandle h = (VarHandle) ctx.value("e");
                     boolean known = EntityValidation.requireSubtype(h, LIVING, "get attribute base value");
@@ -45,10 +45,10 @@ public final class AttributeExpressions {
                     if (known) {
                         String le = "((LivingEntity) " + java + ")";
                         return new ExpressionResult(
-                                "(" + le + ".getAttribute(" + attr + ") != null ? " + le + ".getAttribute(" + attr + ").getBaseValue() : 0)", null, Types.DOUBLE);
+                                "(" + le + ".getAttribute(" + attr + ") != null ? " + le + ".getAttribute(" + attr + ").getBaseValue() : 0)", Types.DOUBLE);
                     }
                     return new ExpressionResult(
-                            "(" + java + " instanceof LivingEntity _le && _le.getAttribute(" + attr + ") != null ? _le.getAttribute(" + attr + ").getBaseValue() : 0)", null, Types.DOUBLE);
+                            "(" + java + " instanceof LivingEntity _le && _le.getAttribute(" + attr + ") != null ? _le.getAttribute(" + attr + ").getBaseValue() : 0)", Types.DOUBLE);
                 }));
 
         api.patterns().expression(b -> b
@@ -58,7 +58,7 @@ public final class AttributeExpressions {
                 .example("set totalHp to mob's max_health effective")
                 .since("1.0.0")
                 .category(Categories.ATTRIBUTE)
-                .returnJavaType(Types.DOUBLE)
+                .returnType(Types.DOUBLE)
                 .handler(ctx -> {
                     VarHandle h = (VarHandle) ctx.value("e");
                     boolean known = EntityValidation.requireSubtype(h, LIVING, "get attribute effective value");
@@ -68,10 +68,10 @@ public final class AttributeExpressions {
                     if (known) {
                         String le = "((LivingEntity) " + java + ")";
                         return new ExpressionResult(
-                                "(" + le + ".getAttribute(" + attr + ") != null ? " + le + ".getAttribute(" + attr + ").getValue() : 0)", null, Types.DOUBLE);
+                                "(" + le + ".getAttribute(" + attr + ") != null ? " + le + ".getAttribute(" + attr + ").getValue() : 0)", Types.DOUBLE);
                     }
                     return new ExpressionResult(
-                            "(" + java + " instanceof LivingEntity _le && _le.getAttribute(" + attr + ") != null ? _le.getAttribute(" + attr + ").getValue() : 0)", null, Types.DOUBLE);
+                            "(" + java + " instanceof LivingEntity _le && _le.getAttribute(" + attr + ") != null ? _le.getAttribute(" + attr + ").getValue() : 0)", Types.DOUBLE);
                 }));
 
         api.patterns().expression(b -> b
@@ -81,7 +81,7 @@ public final class AttributeExpressions {
                 .example("set defaultHp to mob's max_health default")
                 .since("1.0.0")
                 .category(Categories.ATTRIBUTE)
-                .returnJavaType(Types.DOUBLE)
+                .returnType(Types.DOUBLE)
                 .handler(ctx -> {
                     VarHandle h = (VarHandle) ctx.value("e");
                     boolean known = EntityValidation.requireSubtype(h, LIVING, "get attribute default value");
@@ -91,10 +91,10 @@ public final class AttributeExpressions {
                     if (known) {
                         String le = "((LivingEntity) " + java + ")";
                         return new ExpressionResult(
-                                "(" + le + ".getAttribute(" + attr + ") != null ? " + le + ".getAttribute(" + attr + ").getDefaultValue() : 0)", null, Types.DOUBLE);
+                                "(" + le + ".getAttribute(" + attr + ") != null ? " + le + ".getAttribute(" + attr + ").getDefaultValue() : 0)", Types.DOUBLE);
                     }
                     return new ExpressionResult(
-                            "(" + java + " instanceof LivingEntity _le && _le.getAttribute(" + attr + ") != null ? _le.getAttribute(" + attr + ").getDefaultValue() : 0)", null, Types.DOUBLE);
+                            "(" + java + " instanceof LivingEntity _le && _le.getAttribute(" + attr + ") != null ? _le.getAttribute(" + attr + ").getDefaultValue() : 0)", Types.DOUBLE);
                 }));
     }
 }

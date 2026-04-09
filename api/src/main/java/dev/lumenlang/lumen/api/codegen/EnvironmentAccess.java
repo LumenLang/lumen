@@ -29,7 +29,7 @@ public interface EnvironmentAccess {
     @Nullable VarHandle lookupVar(@NotNull String name);
 
     /**
-     * Returns the first variable in scope whose ref type matches the given type.
+     * Returns the first variable in scope whose type matches the given type.
      *
      * <p>Walks the scope stack from innermost to outermost scope, examining all variables
      * in each frame.
@@ -351,11 +351,11 @@ public interface EnvironmentAccess {
         boolean stored();
 
         /**
-         * Returns the ref type ID inferred from the default expression, or {@code null}.
+         * Returns the type ID inferred from the default expression, or {@code null}.
          *
-         * @return the expression ref type ID, or {@code null}
+         * @return the expression type ID, or {@code null}
          */
-        default @Nullable String exprRefTypeId() {
+        default @Nullable String exprTypeId() {
             return null;
         }
 

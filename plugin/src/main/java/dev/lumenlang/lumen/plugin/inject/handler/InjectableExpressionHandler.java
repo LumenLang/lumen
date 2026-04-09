@@ -24,22 +24,19 @@ import java.util.Map;
 public final class InjectableExpressionHandler implements ExpressionHandler, PatternHinted {
 
     private final InjectableHandlerSupport support;
-    private final @Nullable String refTypeId;
-    private final @Nullable String javaType;
+    private final @Nullable String typeId;
 
     /**
      * Creates a handler from the given injectable expression.
      *
      * @param expression the injectable expression whose bytecode will be extracted and injected
-     * @param refTypeId  the ref type id for the return value (e.g. "PLAYER"), or null
-     * @param javaType   the Java type for primitive returns (e.g. "int"), or null
+     * @param typeId     the type id for the return value (e.g. "PLAYER" or "int"), or null
      */
-    public InjectableExpressionHandler(@NotNull InjectableExpression expression, @Nullable String refTypeId, @Nullable String javaType) {
+    public InjectableExpressionHandler(@NotNull InjectableExpression expression, @Nullable String typeId) {
         ExtractedBody body = BytecodeExtractor.extract(expression);
-        String returnTypeJava = resolveReturnType(body, refTypeId, javaType);
+        String returnTypeJava = resolveReturnType(body, typeId);
         this.support = new InjectableHandlerSupport(body, returnTypeJava, false);
-        this.refTypeId = refTypeId;
-        this.javaType = javaType;
+        this.typeId = typeId;
     }
 
     /**
@@ -47,23 +44,21 @@ public final class InjectableExpressionHandler implements ExpressionHandler, Pat
      *
      * @param clazz      the class containing the method
      * @param methodName the name of the static method
-     * @param refTypeId  the ref type id for the return value, or null
-     * @param javaType   the Java type for primitive returns, or null
+     * @param typeId     the type id for the return value, or null
      */
-    public InjectableExpressionHandler(@NotNull Class<?> clazz, @NotNull String methodName, @Nullable String refTypeId, @Nullable String javaType) {
+    public InjectableExpressionHandler(@NotNull Class<?> clazz, @NotNull String methodName, @Nullable String typeId) {
         ExtractedBody body = BytecodeExtractor.extractMethod(clazz, methodName);
-        String returnTypeJava = resolveReturnType(body, refTypeId, javaType);
+        String returnTypeJava = resolveReturnType(body, typeId);
         this.support = new InjectableHandlerSupport(body, returnTypeJava, false);
-        this.refTypeId = refTypeId;
-        this.javaType = javaType;
+        this.typeId = typeId;
     }
 
-    private static @NotNull String resolveReturnType(@NotNull ExtractedBody body, @Nullable String refTypeId, @Nullable String javaType) {
-        if (refTypeId != null) {
-            ObjectType refType = LumenTypeRegistry.byId(refTypeId);
-            if (refType != null) return refType.javaType();
+    private static @NotNull String resolveReturnType(@NotNull ExtractedBody body, @Nullable String typeId) {
+        if (typeId != null) {
+            ObjectType resolvedType = LumenTypeRegistry.byId(typeId);
+            if (resolvedType != null) return resolvedType.javaType();
+            return typeId;
         }
-        if (javaType != null) return javaType;
         return InjectableHandlerSupport.descriptorToJavaType(body.returnDescriptor());
     }
 
@@ -87,7 +82,7 @@ public final class InjectableExpressionHandler implements ExpressionHandler, Pat
                 bindingExpressions.put(binding.bindingName(), ctx.java(binding.bindingName()));
             }
             String expression = support.replaceBindings(inlineBody.returnExpression(), bindingExpressions);
-            return new ExpressionResult(expression, refTypeId, javaType);
+            return new ExpressionResult(expression, typeId);
         }
 
         List<ExtractedBody.FakeBinding> bindings = support.emitIfNeeded(ctx.codegen());
@@ -98,6 +93,6 @@ public final class InjectableExpressionHandler implements ExpressionHandler, Pat
             call.append(ctx.java(bindings.get(i).bindingName()));
         }
         call.append(")");
-        return new ExpressionResult(call.toString(), refTypeId, javaType);
+        return new ExpressionResult(call.toString(), typeId);
     }
 }

@@ -97,14 +97,14 @@ public final class BlockContext implements BlockAccess {
     }
 
     /**
-     * Returns the first variable in this frame whose ref type matches the given type.
+     * Returns the first variable in this frame whose object type matches the given type.
      *
-     * @param type the ref type to search for
+     * @param type the object type to search for
      * @return the matching variable, or {@code null} if none found in this frame
      */
     public @Nullable VarRef findVarByType(@NotNull ObjectType type) {
         for (VarRef ref : vars.values()) {
-            if (ref.refType() != null && ref.refType().id().equals(type.id())) {
+            if (ref.objectType() != null && ref.objectType().id().equals(type.id())) {
                 return ref;
             }
         }

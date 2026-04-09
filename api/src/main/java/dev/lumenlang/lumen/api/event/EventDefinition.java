@@ -159,13 +159,13 @@ public final class EventDefinition {
     /**
      * A variable entry in an event definition.
      *
-     * @param refTypeId   the ref type id for type checking, or {@code null} for plain variables
+     * @param typeId      the type id for type checking (e.g. {@code "PLAYER"}, {@code "int"}), or {@code null} for plain variables
      * @param javaType    the Java type name (primitive name or fully qualified class name)
      * @param expr        the initialiser expression
      * @param metadata    compile-time metadata entries propagated to the resulting VarHandle
      * @param description a human readable description of this variable, or {@code null}
      */
-    public record VarEntry(@Nullable String refTypeId,
+    public record VarEntry(@Nullable String typeId,
                            @NotNull String javaType,
                            @NotNull String expr,
                            @NotNull Map<String, Object> metadata,
@@ -174,14 +174,14 @@ public final class EventDefinition {
         /**
          * Creates a VarEntry with no metadata and no description.
          *
-         * @param refTypeId the ref type id, or {@code null}
-         * @param javaType  the Java type name (primitive name or fully qualified class name)
-         * @param expr      the initialiser expression
+         * @param typeId   the type id, or {@code null}
+         * @param javaType the Java type name (primitive name or fully qualified class name)
+         * @param expr     the initialiser expression
          */
-        public VarEntry(@Nullable String refTypeId,
+        public VarEntry(@Nullable String typeId,
                         @NotNull String javaType,
                         @NotNull String expr) {
-            this(refTypeId, javaType, expr, Map.of(), null);
+            this(typeId, javaType, expr, Map.of(), null);
         }
     }
 }

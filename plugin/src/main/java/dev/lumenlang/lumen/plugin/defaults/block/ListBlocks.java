@@ -37,14 +37,14 @@ import static dev.lumenlang.lumen.api.pattern.LumaExample.top;
 public class ListBlocks {
 
     /**
-     * Resolves the element ref type from the list variable's {@code element_type} metadata.
+     * Resolves the element type from the list variable's {@code element_type} metadata.
      *
      * <p>If the list was declared with {@code new list of <type>} and that type corresponds
-     * to a registered data schema, the returned handle will be the DATA ref type. Otherwise,
+     * to a registered data schema, the returned handle will be the DATA type. Otherwise,
      * returns {@code null} so the loop variable remains untyped.
      *
      * @param ctx the binding access for the current pattern match
-     * @return the element ref type, or {@code null} if unknown
+     * @return the element type, or {@code null} if unknown
      */
     private static @Nullable LumenType resolveElementType(@NotNull BindingAccess ctx) {
         Object listValue = ctx.value("list");
@@ -182,8 +182,8 @@ public class ListBlocks {
                                     .help("make sure the variable is defined before using it")
                                     .build());
                         }
-                        LumenType refType = scopeRef.type();
-                        if (refType == null) {
+                        LumenType scopeType = scopeRef.type();
+                        if (scopeType == null) {
                             throw new DiagnosticException(LumenDiagnostic.error("E502", "Scope variable '" + scopeVarName + "' has no type")
                                     .at(ctx.block().line(), ctx.block().raw())
                                     .label("expected a typed variable")
@@ -193,7 +193,7 @@ public class ListBlocks {
 
                         ctx.codegen().addImport(List.class.getName());
                         ctx.codegen().addImport(ArrayList.class.getName());
-                        out.line("for (var " + varName + " : (List<?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") + ".get(" + "\"" + info.className() + "." + listVarName + ".\" + " + ((ObjectType) refType).keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")) {");
+                        out.line("for (var " + varName + " : (List<?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") + ".get(" + "\"" + info.className() + "." + listVarName + ".\" + " + ((ObjectType) scopeType).keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")) {");
                         env.defineVar(varName, null, varName);
                     }
 

@@ -211,28 +211,26 @@ public interface PatternRegistrar {
      * the compiled script class after compilation.
      *
      * <pre>{@code
-     * api.patterns().injectableExpression("location of %who:PLAYER%", Types.LOCATION.id(), null, () -> {
+     * api.patterns().injectableExpression("location of %who:PLAYER%", MinecraftTypes.LOCATION.id(), () -> {
      *     Player player = Fakes.fake("who");
      *     return player.getLocation();
      * });
      * }</pre>
      *
      * @param pattern the pattern string
-     * @param refTypeId the ref type id for the return value, or null
-     * @param javaType the Java type for primitive returns, or null
+     * @param typeId the type id for the return value, or null
      * @param expression the injectable expression
      */
-    void injectableExpression(@NotNull String pattern, @Nullable String refTypeId, @Nullable String javaType, @NotNull InjectableExpression expression);
+    void injectableExpression(@NotNull String pattern, @Nullable String typeId, @NotNull InjectableExpression expression);
 
     /**
      * Registers multiple pattern strings that all map to the same injectable expression.
      *
      * @param patterns the list of pattern strings
-     * @param refTypeId the ref type id for the return value, or null
-     * @param javaType the Java type for primitive returns, or null
+     * @param typeId the type id for the return value, or null
      * @param expression the injectable expression
      */
-    void injectableExpression(@NotNull List<String> patterns, @Nullable String refTypeId, @Nullable String javaType, @NotNull InjectableExpression expression);
+    void injectableExpression(@NotNull List<String> patterns, @Nullable String typeId, @NotNull InjectableExpression expression);
 
     /**
      * Registers a condition pattern with an injectable condition.

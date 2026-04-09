@@ -27,7 +27,7 @@ import java.util.function.Consumer;
  *         .example("set loc to get player location")
  *         .since("1.0.0")
  *         .category(Categories.PLAYER)
- *         .handler(ctx -> new ExpressionResult(ctx.java("who") + ".getLocation()", Types.LOCATION.id())));
+ *         .handler(ctx -> new ExpressionResult(ctx.java("who") + ".getLocation()", MinecraftTypes.LOCATION.id())));
  * }</pre>
  *
  * @see PatternRegistrar#expression(Consumer)
@@ -41,8 +41,7 @@ public final class ExpressionBuilder {
     private @Nullable String since;
     private @Nullable Category category;
     private boolean deprecated;
-    private @Nullable String returnRefTypeId;
-    private @Nullable String returnJavaType;
+    private @Nullable String returnType;
     private @Nullable ExpressionHandler handler;
     private @Nullable InjectableExpression injectableExpression;
     private @Nullable Class<?> injectableClass;
@@ -153,33 +152,17 @@ public final class ExpressionBuilder {
     }
 
     /**
-     * Declares the ref type this expression statically produces.
+     * Declares the type this expression statically produces.
      *
      * <p>When set, tooling can resolve the type of a variable assigned from
      * this expression without executing the handler. Expressions whose return
      * type depends on runtime input should leave this unset ({@code null}).
      *
-     * @param returnRefTypeId the ref type id (e.g. {@code Types.PLAYER.id()}), or {@code null}
+     * @param returnType the type id (e.g. {@code MinecraftTypes.PLAYER.id()}, {@code Types.INT}), or {@code null}
      * @return this builder
      */
-    public @NotNull ExpressionBuilder returnRefTypeId(@Nullable String returnRefTypeId) {
-        this.returnRefTypeId = returnRefTypeId;
-        return this;
-    }
-
-    /**
-     * Declares the Java type this expression statically produces for primitive
-     * or string results.
-     *
-     * <p>Use this for expressions that return values like {@code int},
-     * {@code double}, or {@code String}. For object types that have a ref type
-     * (e.g. PLAYER, LOCATION), use {@link #returnRefTypeId} instead.
-     *
-     * @param returnJavaType the Java type (e.g. {@code Types.INT}, {@code Types.STRING}), or {@code null}
-     * @return this builder
-     */
-    public @NotNull ExpressionBuilder returnJavaType(@Nullable String returnJavaType) {
-        this.returnJavaType = returnJavaType;
+    public @NotNull ExpressionBuilder returnType(@Nullable String returnType) {
+        this.returnType = returnType;
         return this;
     }
 
@@ -198,7 +181,7 @@ public final class ExpressionBuilder {
      * Sets an injectable expression whose bytecode will be extracted and injected
      * into the compiled script class. This is an alternative to {@link #handler}.
      *
-     * <p>When using this, set {@link #returnRefTypeId} or {@link #returnJavaType}
+     * <p>When using this, set {@link #returnType}
      * to declare what type the expression produces.
      *
      * @param expression the injectable expression
@@ -213,7 +196,7 @@ public final class ExpressionBuilder {
      * Sets a static method whose bytecode will be extracted and injected
      * into the compiled script class. This is an alternative to {@link #handler}.
      *
-     * <p>When using this, set {@link #returnRefTypeId} or {@link #returnJavaType}
+     * <p>When using this, set {@link #returnType}
      * to declare what type the expression produces.
      *
      * @param clazz the class containing the static method
@@ -248,12 +231,8 @@ public final class ExpressionBuilder {
         return injectableMethodName;
     }
 
-    public @Nullable String getReturnRefTypeId() {
-        return returnRefTypeId;
-    }
-
-    public @Nullable String getReturnJavaType() {
-        return returnJavaType;
+    public @Nullable String getReturnType() {
+        return returnType;
     }
 
     public @NotNull PatternMeta buildMeta() {
@@ -275,9 +254,6 @@ public final class ExpressionBuilder {
         }
         if (by == null) {
             throw new IllegalStateException("Expression builder requires a 'by' (addon name)");
-        }
-        if (returnRefTypeId != null && returnJavaType != null) {
-            throw new IllegalStateException("Only one of returnRefTypeId or returnJavaType may be set");
         }
     }
 }

@@ -149,8 +149,8 @@ public final class MapBlocks {
                                     .help("make sure the variable is defined before using it")
                                     .build());
                         }
-                        LumenType refType = scopeRef.type();
-                        if (refType == null) {
+                        LumenType scopeType = scopeRef.type();
+                        if (scopeType == null) {
                             throw new DiagnosticException(LumenDiagnostic.error("E502", "Scope variable '" + scopeVarName + "' has no type")
                                     .at(ctx.block().line(), ctx.block().raw())
                                     .label("expected a typed variable")
@@ -161,7 +161,7 @@ public final class MapBlocks {
                         ctx.codegen().addImport(Map.class.getName());
                         ctx.codegen().addImport(HashMap.class.getName());
                         String entryVar = "__entry_" + keyName + "_" + valName;
-                        out.line("for (var " + entryVar + " : ((Map<?, ?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") + ".get(" + "\"" + info.className() + "." + mapVarName + ".\" + " + ((ObjectType) refType).keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")).entrySet()) {");
+                        out.line("for (var " + entryVar + " : ((Map<?, ?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") + ".get(" + "\"" + info.className() + "." + mapVarName + ".\" + " + ((ObjectType) scopeType).keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")).entrySet()) {");
                         out.line("var " + keyName + " = " + entryVar + ".getKey();");
                         out.line("var " + valName + " = " + entryVar + ".getValue();");
                         env.defineVar(keyName, null, keyName);

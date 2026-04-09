@@ -10,7 +10,7 @@ import dev.lumenlang.lumen.api.type.MinecraftTypes;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Registers built-in placeholder properties for the WORLD ref type.
+ * Registers built-in placeholder properties for the WORLD type.
  */
 @Registration
 @SuppressWarnings("unused")

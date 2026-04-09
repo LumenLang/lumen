@@ -12,8 +12,8 @@ import java.util.List;
  * a new placeholders type.
  *
  * <p>Register instances with {@link TypeRegistrar#register(AddonTypeBinding)}.
- * If the binding works with a custom reference type, register that type first via
- * {@link RefTypeRegistrar} so it participates in type checking.
+ * If the binding works with a custom object type, register that type first via
+ * {@link LumenTypeRegistry} so it participates in type checking.
  *
  * <h2>Example</h2>
  * <pre>{@code
@@ -35,7 +35,7 @@ import java.util.List;
  * }</pre>
  *
  * @see TypeRegistrar
- * @see RefTypeRegistrar
+ * @see LumenTypeRegistry
  */
 public interface AddonTypeBinding {
 

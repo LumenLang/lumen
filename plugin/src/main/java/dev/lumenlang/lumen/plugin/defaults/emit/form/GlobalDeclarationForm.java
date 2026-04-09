@@ -119,7 +119,7 @@ public final class GlobalDeclarationForm implements StatementFormHandler {
 
         String className = ctx.codegen().className();
         String defaultJava;
-        String exprRefTypeId = null;
+        String resolvedObjectTypeId = null;
         Map<String, Object> exprMetadata = null;
 
         if (exprTokens == null) {
@@ -136,14 +136,14 @@ public final class GlobalDeclarationForm implements StatementFormHandler {
                 BindingContext bc = new BindingContext(exprMatch.match(), env, ((EmitContextImpl) ctx).codegenContext(), env.blockContext());
                 ExpressionResult result = exprMatch.reg().handler().handle(bc);
                 defaultJava = result.java();
-                exprRefTypeId = result.refTypeId();
+                resolvedObjectTypeId = result.typeId();
                 exprMetadata = result.metadata();
             } else {
                 throw new LumenScriptException(ctx.line(), ctx.raw(), "Expression not recognized: '" + ExprResolver.joinTokens(((Expr.RawExpr) expr).tokens()) + "'. Check spelling of variables and expression patterns.", ((Expr.RawExpr) expr).tokens());
             }
         }
 
-        env.registerGlobal(new TypeEnv.GlobalVarInfo(name, defaultJava, className, scoped, exprRefTypeId, stored, exprMetadata));
+        env.registerGlobal(new TypeEnv.GlobalVarInfo(name, defaultJava, className, scoped, resolvedObjectTypeId, stored, exprMetadata));
     }
 
     private @NotNull String resolveDefaultJava(@NotNull Expr expr, @NotNull TypeEnv env) {

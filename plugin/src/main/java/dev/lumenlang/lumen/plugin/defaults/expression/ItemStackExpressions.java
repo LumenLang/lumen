@@ -33,7 +33,7 @@ public final class ItemStackExpressions {
                 .description("Creates a new ItemStack from a material name with an amount of 1.")
                 .example("set sword to new item diamond_sword")
                 .since("1.0.0").category(Categories.ITEM)
-                .returnRefTypeId(MinecraftTypes.ITEMSTACK.id())
+                .returnType(MinecraftTypes.ITEMSTACK.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(ITEM_STACK);
                     return new ExpressionResult(
@@ -46,7 +46,7 @@ public final class ItemStackExpressions {
                 .description("Creates a new ItemStack from a material name with the specified amount.")
                 .example("set swords to new item diamond_sword 5")
                 .since("1.0.0").category(Categories.ITEM)
-                .returnRefTypeId(MinecraftTypes.ITEMSTACK.id())
+                .returnType(MinecraftTypes.ITEMSTACK.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(ITEM_STACK);
                     return new ExpressionResult(
@@ -63,7 +63,7 @@ public final class ItemStackExpressions {
                     String java = ctx.java("i");
                     return new ExpressionResult(
                             "(" + java + ".hasItemMeta() && " + java + ".getItemMeta().hasDisplayName() ? " + java + ".getItemMeta().getDisplayName() : " + java + ".getType().name())",
-                            null, Types.STRING);
+                            Types.STRING);
                 }));
 
         api.patterns().expression(b -> b
@@ -71,7 +71,7 @@ public final class ItemStackExpressions {
                 .description("Returns the lore of an item stack as a list of strings.")
                 .example("set lore to get item's lore")
                 .since("1.0.0").category(Categories.ITEM)
-                .returnRefTypeId(BuiltinLumenTypes.LIST.id())
+                .returnType(BuiltinLumenTypes.LIST.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(List.class.getName());
                     ctx.codegen().addImport(Collections.class.getName());
@@ -86,29 +86,29 @@ public final class ItemStackExpressions {
                 .description("Returns the stack amount of an item.")
                 .example("set amt to get item's amount")
                 .since("1.0.0").category(Categories.ITEM)
-                .returnJavaType(Types.INT)
-                .handler(ctx -> new ExpressionResult(ctx.java("i") + ".getAmount()", null, Types.INT)));
+                .returnType(Types.INT)
+                .handler(ctx -> new ExpressionResult(ctx.java("i") + ".getAmount()", Types.INT)));
 
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("get %i:ITEMSTACK_POSSESSIVE% type")
                 .description("Returns the material type name of an item stack.")
                 .example("set mat to get item's type")
                 .since("1.0.0").category(Categories.ITEM)
-                .returnJavaType(Types.STRING)
-                .handler(ctx -> new ExpressionResult(ctx.java("i") + ".getType().name()", null, Types.STRING)));
+                .returnType(Types.STRING)
+                .handler(ctx -> new ExpressionResult(ctx.java("i") + ".getType().name()", Types.STRING)));
 
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("get %i:ITEMSTACK_POSSESSIVE% durability")
                 .description("Returns the durability damage of a damageable item, or 0 if not damageable.")
                 .example("set dmg to get item's durability")
                 .since("1.0.0").category(Categories.ITEM)
-                .returnJavaType(Types.INT)
+                .returnType(Types.INT)
                 .handler(ctx -> {
                     ctx.codegen().addImport(DAMAGEABLE);
                     String java = ctx.java("i");
                     return new ExpressionResult(
                             "(" + java + ".getItemMeta() instanceof Damageable __dmg ? __dmg.getDamage() : 0)",
-                            null, Types.INT);
+                            Types.INT);
                 }));
 
         api.patterns().expression(b -> b
@@ -116,20 +116,20 @@ public final class ItemStackExpressions {
                 .description("Returns the maximum durability of the item's material.")
                 .example("set maxDmg to get item's max durability")
                 .since("1.0.0").category(Categories.ITEM)
-                .returnJavaType(Types.INT)
-                .handler(ctx -> new ExpressionResult(ctx.java("i") + ".getType().getMaxDurability()", null, Types.INT)));
+                .returnType(Types.INT)
+                .handler(ctx -> new ExpressionResult(ctx.java("i") + ".getType().getMaxDurability()", Types.INT)));
 
         api.patterns().expression(b -> b
                 .by("Lumen").pattern("get %i:ITEMSTACK_POSSESSIVE% custom model data")
                 .description("Returns the custom model data of an item, or 0 if not set.")
                 .example("set cmd to get item's custom model data")
                 .since("1.0.0").category(Categories.ITEM)
-                .returnJavaType(Types.INT)
+                .returnType(Types.INT)
                 .handler(ctx -> {
                     String java = ctx.java("i");
                     return new ExpressionResult(
                             "(" + java + ".hasItemMeta() && " + java + ".getItemMeta().hasCustomModelData() ? " + java + ".getItemMeta().getCustomModelData() : 0)",
-                            null, Types.INT);
+                            Types.INT);
                 }));
     }
 }
