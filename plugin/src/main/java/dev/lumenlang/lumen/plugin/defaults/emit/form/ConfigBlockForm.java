@@ -71,10 +71,7 @@ public final class ConfigBlockForm implements BlockFormHandler {
             } else if (valueTokens.size() == 1 && valueTokens.get(0).tokenType() == ScriptToken.TokenType.STRING) {
                 java = "\"" + valueTokens.get(0).text().replace("\"", "\\\"") + "\"";
             } else {
-                String rawLine = child.raw().trim();
-                int colonIdx = rawLine.indexOf(':');
-                String rawValue = rawLine.substring(colonIdx + 1).trim();
-                java = "\"" + rawValue.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
+                throw new LumenScriptException(child.lineNumber(), child.raw(), "Config entry '" + name + "' must be a number or a quoted string");
             }
 
             ctx.env().registerConfig(name, java);

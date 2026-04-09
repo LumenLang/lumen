@@ -10,7 +10,7 @@
 # with theirs. Both players receive a notification and particle effects.
 
 config:
-    prefix: &5[Swap]&r
+    prefix: "&5[Swap]&r"
     cooldown_ticks: 100
 
 global scoped swap_enabled with default 0
