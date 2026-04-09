@@ -1312,13 +1312,7 @@ public final class DefaultTypeBindings {
                     throw new ParseFailureException("DATA requires at least one token");
                 String name = tokens.get(0);
                 VarHandle ref = env.lookupVar(name);
-                if (ref != null) {
-                    if (isData(ref))
-                        return 1;
-                    throw new ParseFailureException(name + " is not a data instance");
-                }
-                EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(name);
-                if (info != null && "DATA".equals(info.exprRefTypeId()))
+                if (ref != null && isData(ref))
                     return 1;
                 throw new ParseFailureException("Expected a data variable, got '" + name + "'");
             }
@@ -1332,23 +1326,15 @@ public final class DefaultTypeBindings {
                         throw new ParseFailureException(name + " is not a data instance");
                     return ref;
                 }
-                EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(name);
-                if (info != null && "DATA".equals(info.exprRefTypeId()))
-                    return name;
                 throw new ParseFailureException("Unknown data variable: " + name);
             }
 
             @Override
-            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
-                if (v instanceof VarHandle ref)
-                    return ref.java();
-                if (v instanceof String name) {
-                    VarHandle ref = env.lookupVar(name);
-                    if (ref != null)
-                        return ref.java();
-                    return name;
-                }
-                throw new RuntimeException("Cannot generate Java for null data reference");
+            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx,
+                                          @NotNull EnvironmentAccess env) {
+                if (v == null)
+                    throw new RuntimeException("Cannot generate Java for null data reference");
+                return ((VarHandle) v).java();
             }
 
             private boolean isData(@NotNull VarHandle ref) {

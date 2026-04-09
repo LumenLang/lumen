@@ -27,7 +27,8 @@ import java.util.List;
  *         return env.lookupVar(tokens.get(0));
  *     }
  *
- *     public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
+ *     public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx,
+ *                                    @NotNull EnvironmentAccess env) {
  *         return ((EnvironmentAccess.VarHandle) value).java();
  *     }
  * });

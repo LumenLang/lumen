@@ -53,18 +53,24 @@ public final class LoopSourceBlock {
                         }
                         String varName = ctx.java("var");
                         if (ctx.env().lookupVar(varName) != null) {
-                            throw new RuntimeException("Loop variable '" + varName + "' is already defined in this scope.");
+                            throw new RuntimeException(
+                                    "Loop variable '" + varName + "' is already defined in this scope.");
                         }
                         BindingContext bc = (BindingContext) ctx;
                         TypeEnv env = (TypeEnv) ctx.env();
-                        RegisteredLoopMatch loopMatch = PatternRegistry.instance().matchLoop(bc.bound("source").tokens(), env);
+                        RegisteredLoopMatch loopMatch = PatternRegistry.instance()
+                                .matchLoop(bc.bound("source").tokens(), env);
                         if (loopMatch == null) {
-                            loopMatch = PatternRegistry.instance().matchLoopSlow(bc.bound("source").tokens(), env);
+                            loopMatch = PatternRegistry.instance()
+                                    .matchLoopSlow(bc.bound("source").tokens(), env);
                         }
                         if (loopMatch == null) {
-                            throw new RuntimeException("Unknown loop source: '" + ctx.java("source") + "'. Expected a list variable or a registered loop source like 'all players'.");
+                            throw new RuntimeException(
+                                    "Unknown loop source: '" + ctx.java("source")
+                                            + "'. Expected a list variable or a registered loop source like 'all players'.");
                         }
-                        BindingContext loopCtx = new BindingContext(loopMatch.match(), env, (CodegenContext) ctx.codegen(), (BlockContext) ctx.block());
+                        BindingContext loopCtx = new BindingContext(loopMatch.match(), env,
+                                (CodegenContext) ctx.codegen(), (BlockContext) ctx.block());
                         LoopHandler.LoopResult result = loopMatch.reg().handler().handle(loopCtx);
                         out.line("for (var " + varName + " : " + result.iterableJava() + ") {");
                         ctx.env().defineVar(varName, result.elementTypeId() != null
