@@ -4,7 +4,10 @@ import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.codegen.BindingAccess;
+import dev.lumenlang.lumen.api.codegen.BlockAccess;
 import dev.lumenlang.lumen.api.codegen.JavaOutput;
+import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
+import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.handler.BlockHandler;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import org.jetbrains.annotations.NotNull;
@@ -69,17 +72,7 @@ public final class ControlBlocks {
                 .handler(new BlockHandler() {
                     @Override
                     public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
-                        if (ctx.block().isRoot()) {
-                            throw new RuntimeException(
-                                    "An 'else if' block cannot be top-level (it must follow an 'if' or 'else if' block)");
-                        }
-                        if (ctx.block().isFirst()) {
-                            throw new RuntimeException(
-                                    "An 'else if' block cannot be the first block among its siblings (it must come after an 'if' or 'else if' block)");
-                        }
-                        if (ctx.block().prevHeadExact("else")) {
-                            throw new RuntimeException("An 'else if' block cannot come after an 'else' block");
-                        }
+                        validateElseBranch(ctx, "else if");
                         out.line("else if (" + ctx.parseCondition("cond") + ") {");
                     }
 
@@ -104,17 +97,7 @@ public final class ControlBlocks {
                 .handler(new BlockHandler() {
                     @Override
                     public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
-                        if (ctx.block().isRoot()) {
-                            throw new RuntimeException(
-                                    "An 'else' block cannot be top-level (it must follow an 'if' or 'else if' block)");
-                        }
-                        if (ctx.block().isFirst()) {
-                            throw new RuntimeException(
-                                    "An 'else' block cannot be the first block among its siblings (it must come after an 'if' or 'else if' block)");
-                        }
-                        if (ctx.block().prevHeadExact("else")) {
-                            throw new RuntimeException("An 'else' block cannot come after an 'else' block");
-                        }
+                        validateElseBranch(ctx, "else");
                         out.line("else {");
                     }
 
@@ -137,7 +120,11 @@ public final class ControlBlocks {
                     @Override
                     public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
                         if (ctx.block().isRoot()) {
-                            throw new RuntimeException("A 'repeat' block cannot be top-level");
+                            throw new DiagnosticException(LumenDiagnostic.error("E500", "Invalid 'repeat' placement")
+                                    .at(ctx.block().line(), ctx.block().raw())
+                                    .label("cannot be top-level")
+                                    .help("a 'repeat' block must be inside an event or command handler")
+                                    .build());
                         }
                         out.line("for (int __i = 0; __i < " + ctx.java("n") + "; __i++) {");
                     }
@@ -147,5 +134,35 @@ public final class ControlBlocks {
                         out.line("}");
                     }
                 }));
+    }
+
+    private static void validateElseBranch(@NotNull BindingAccess ctx, @NotNull String keyword) {
+        BlockAccess block = ctx.block();
+        if (block.isRoot()) {
+            throw new DiagnosticException(LumenDiagnostic.error("E500", "'" + keyword + "' without matching 'if'")
+                    .at(block.line(), block.raw())
+                    .label("cannot be top-level")
+                    .help("'" + keyword + "' must directly follow an 'if' or 'else if' block with the same indentation")
+                    .build());
+        }
+        if (block.isFirst() || (!block.prevHeadEquals("if") && !block.prevHeadEquals("else"))) {
+            LumenDiagnostic.Builder diag = LumenDiagnostic.error("E500", "'" + keyword + "' without matching 'if'")
+                    .at(block.line(), block.raw())
+                    .label("no preceding 'if' or 'else if' block at the same indentation level");
+            BlockAccess.SiblingInfo nearestIf = block.findSiblingBlock("if");
+            if (nearestIf != null) {
+                diag.note("found 'if' at line " + nearestIf.line() + ", but it is not the direct predecessor");
+            }
+            diag.help("'" + keyword + "' must directly follow an 'if' or 'else if' block with the same indentation");
+            throw new DiagnosticException(diag.build());
+        }
+        if (block.prevHeadExact("else")) {
+            LumenDiagnostic.Builder diag = LumenDiagnostic.error("E500", "'" + keyword + "' after 'else'")
+                    .at(block.line(), block.raw())
+                    .label("cannot follow an 'else' block");
+            diag.context(block.prevLine(), block.prevRaw(), 0, block.prevRaw().stripTrailing().length(), "this is already the fallback branch");
+            diag.help("'" + keyword + "' cannot come after 'else' because 'else' is the final branch");
+            throw new DiagnosticException(diag.build());
+        }
     }
 }

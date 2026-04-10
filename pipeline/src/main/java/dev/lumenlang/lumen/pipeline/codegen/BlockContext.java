@@ -170,6 +170,18 @@ public final class BlockContext implements BlockAccess {
         return n != null ? n.raw() : "";
     }
 
+    @Override
+    public int prevLine() {
+        Node n = prev();
+        return n != null ? n.line() : -1;
+    }
+
+    @Override
+    public @NotNull String prevRaw() {
+        Node n = prev();
+        return n != null ? n.raw() : "";
+    }
+
     /**
      * Returns the preceding sibling node, or {@code null} if this is the first sibling.
      *
@@ -237,6 +249,28 @@ public final class BlockContext implements BlockAccess {
             if (!b.head().get(i).text().equalsIgnoreCase(tokens[i])) return false;
         }
         return true;
+    }
+
+    @Override
+    public @Nullable SiblingInfo findPrecedingBlock(@NotNull String literal) {
+        for (int i = index - 1; i >= 0; i--) {
+            if (siblings.get(i) instanceof BlockNode b && !b.head().isEmpty() && b.head().get(0).text().equalsIgnoreCase(literal)) {
+                return new SiblingInfo(b.line(), b.raw());
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public @Nullable SiblingInfo findSiblingBlock(@NotNull String literal) {
+        SiblingInfo preceding = findPrecedingBlock(literal);
+        if (preceding != null) return preceding;
+        for (int i = index + 1; i < siblings.size(); i++) {
+            if (siblings.get(i) instanceof BlockNode b && !b.head().isEmpty() && b.head().get(0).text().equalsIgnoreCase(literal)) {
+                return new SiblingInfo(b.line(), b.raw());
+            }
+        }
+        return null;
     }
 
     /**
