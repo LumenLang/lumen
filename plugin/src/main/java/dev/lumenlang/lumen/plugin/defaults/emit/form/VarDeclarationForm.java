@@ -20,6 +20,8 @@ import dev.lumenlang.lumen.pipeline.language.emit.EmitContextImpl;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.language.pattern.registered.RegisteredExpressionMatch;
 import dev.lumenlang.lumen.pipeline.language.resolve.ExprResolver;
+import dev.lumenlang.lumen.pipeline.language.resolve.PatternSimulator;
+import dev.lumenlang.lumen.pipeline.language.resolve.SuggestionDiagnostics;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.language.tokenization.TokenKind;
 import dev.lumenlang.lumen.pipeline.language.typed.Expr;
@@ -120,12 +122,7 @@ public final class VarDeclarationForm implements StatementFormHandler {
 
         String valueJava = resolveExpressionJava(valueTokens, ctx, env);
         if (valueJava == null) {
-            throw new DiagnosticException(LumenDiagnostic.error("E502", "Cannot resolve value expression")
-                    .at(ctx.line(), ctx.raw())
-                    .highlight(valueTokens.get(0).start(), valueTokens.get(valueTokens.size() - 1).end())
-                    .label("'" + ExprResolver.joinTokens(valueTokens) + "' is not recognized")
-                    .help("check spelling or ensure the expression is valid")
-                    .build());
+            throw new DiagnosticException(buildExpressionDiagnostic(valueTokens, ctx.line(), ctx.raw(), env));
         }
 
         if (scopeTokens.size() != 1) {
@@ -277,12 +274,7 @@ public final class VarDeclarationForm implements StatementFormHandler {
                         exprLumenType = resolvedResult.type();
                         resolvedMetadata = resolvedResult.metadata();
                     } else {
-                        throw new DiagnosticException(LumenDiagnostic.error("E502", "Cannot resolve expression")
-                            .at(ctx.line(), ctx.raw())
-                            .highlight(raw.tokens().get(0).start(), raw.tokens().get(raw.tokens().size() - 1).end())
-                            .label("'" + ExprResolver.joinTokens(raw.tokens()) + "' is not recognized")
-                            .help("check spelling or ensure the expression is defined")
-                            .build());
+                        throw new DiagnosticException(buildExpressionDiagnostic(raw.tokens(), ctx.line(), ctx.raw(), env));
                     }
                 }
             } else {
@@ -353,12 +345,7 @@ public final class VarDeclarationForm implements StatementFormHandler {
             List<Token> valueTokens = exprTokens.subList(2, exprTokens.size());
             java = resolveExpressionJava(valueTokens, ctx, env);
             if (java == null) {
-                throw new DiagnosticException(LumenDiagnostic.error("E502", "Cannot resolve value expression")
-                        .at(ctx.line(), ctx.raw())
-                        .highlight(valueTokens.get(0).start(), valueTokens.get(valueTokens.size() - 1).end())
-                        .label("'" + ExprResolver.joinTokens(valueTokens) + "' is not recognized")
-                        .help("check spelling or ensure the expression is valid")
-                        .build());
+                throw new DiagnosticException(buildExpressionDiagnostic(valueTokens, ctx.line(), ctx.raw(), env));
             }
         }
         ctx.out().line(nullableType.javaTypeName() + " " + name + " = " + java + ";");
@@ -439,5 +426,13 @@ public final class VarDeclarationForm implements StatementFormHandler {
     }
 
     private record TypedExpression(@NotNull String java, @NotNull LumenType type) {
+    }
+
+    private static @NotNull LumenDiagnostic buildExpressionDiagnostic(@NotNull List<Token> tokens, int line, @NotNull String raw, @NotNull TypeEnv env) {
+        List<PatternSimulator.Suggestion> suggestions = PatternSimulator.suggestExpressions(tokens, PatternRegistry.instance(), env);
+        if (!suggestions.isEmpty()) {
+            return SuggestionDiagnostics.build("E502", "Cannot resolve expression", line, raw, tokens, suggestions.get(0));
+        }
+        return SuggestionDiagnostics.buildNoSuggestion("E502", "Cannot resolve expression", line, raw, tokens);
     }
 }

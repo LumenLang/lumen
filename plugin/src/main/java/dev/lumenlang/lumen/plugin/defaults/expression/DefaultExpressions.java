@@ -70,16 +70,6 @@ public final class DefaultExpressions {
 
         api.patterns().expression(b -> b
                 .by("Lumen")
-                .pattern("get location %who:PLAYER%")
-                .description("Returns the current location of a player.")
-                .example("set loc to get location player")
-                .since("1.0.0")
-                .category(Categories.PLAYER)
-                .handler(ctx -> new ExpressionResult(ctx.java("who") + ".getLocation()",
-                        MinecraftTypes.LOCATION)));
-
-        api.patterns().expression(b -> b
-                .by("Lumen")
                 .pattern("get %who:PLAYER_POSSESSIVE% location")
                 .description("Returns the current location of a player.")
                 .example("set loc to get player's location")

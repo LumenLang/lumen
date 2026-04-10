@@ -6,6 +6,7 @@ import dev.lumenlang.lumen.pipeline.language.nodes.StatementNode;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.language.pattern.registered.RegisteredExpressionMatch;
 import dev.lumenlang.lumen.pipeline.language.pattern.registered.RegisteredPatternMatch;
+import dev.lumenlang.lumen.pipeline.language.resolve.PatternSimulator;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,6 +56,7 @@ public final class StatementClassifier {
         return new TypedStatement.ErrorStmt(
                 st,
                 "Unknown statement on line " + st.line() + ". No matching statement or expression pattern was found",
-                t);
+                t,
+                PatternSimulator.suggestStatementsAndExpressions(t, reg, env));
     }
 }

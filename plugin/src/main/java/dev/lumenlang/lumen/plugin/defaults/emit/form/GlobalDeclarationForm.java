@@ -3,6 +3,7 @@ package dev.lumenlang.lumen.plugin.defaults.emit.form;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
+import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
 import dev.lumenlang.lumen.api.emit.EmitContext;
 import dev.lumenlang.lumen.api.emit.ScriptToken;
 import dev.lumenlang.lumen.api.emit.StatementFormHandler;
@@ -13,7 +14,8 @@ import dev.lumenlang.lumen.pipeline.language.emit.EmitContextImpl;
 import dev.lumenlang.lumen.pipeline.language.exceptions.LumenScriptException;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.language.pattern.registered.RegisteredExpressionMatch;
-import dev.lumenlang.lumen.pipeline.language.resolve.ExprResolver;
+import dev.lumenlang.lumen.pipeline.language.resolve.PatternSimulator;
+import dev.lumenlang.lumen.pipeline.language.resolve.SuggestionDiagnostics;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.language.typed.Expr;
 import dev.lumenlang.lumen.pipeline.language.typed.ExprParser;
@@ -137,7 +139,12 @@ public final class GlobalDeclarationForm implements StatementFormHandler {
                 defaultJava = result.java();
                 exprMetadata = result.metadata();
             } else {
-                throw new LumenScriptException(ctx.line(), ctx.raw(), "Expression not recognized: '" + ExprResolver.joinTokens(((Expr.RawExpr) expr).tokens()) + "'. Check spelling of variables and expression patterns.", ((Expr.RawExpr) expr).tokens());
+                List<Token> rawTokens = ((Expr.RawExpr) expr).tokens();
+                List<PatternSimulator.Suggestion> suggestions = PatternSimulator.suggestExpressions(rawTokens, PatternRegistry.instance(), env);
+                if (!suggestions.isEmpty()) {
+                    throw new DiagnosticException(SuggestionDiagnostics.build("E502", "Cannot resolve expression", ctx.line(), ctx.raw(), rawTokens, suggestions.get(0)));
+                }
+                throw new DiagnosticException(SuggestionDiagnostics.buildNoSuggestion("E502", "Cannot resolve expression", ctx.line(), ctx.raw(), rawTokens));
             }
         }
 
