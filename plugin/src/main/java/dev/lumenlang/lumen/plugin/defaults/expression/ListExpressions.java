@@ -54,7 +54,7 @@ public final class ListExpressions {
                     ctx.codegen().addImport(ArrayList.class.getName());
                     String elementTypeName = ctx.tokens("type").get(0).toLowerCase();
                     LumenType elementType = LumenType.fromName(elementTypeName);
-                    if (elementType == null) throw new DiagnosticException(LumenDiagnostic.error("E501", "Unknown list element type '" + elementTypeName + "'").build());
+                    if (elementType == null) throw new DiagnosticException(LumenDiagnostic.error("E501", "Unknown list element type '" + elementTypeName + "'").label("'" + elementTypeName + "' is not a recognized type").build());
                     return new ExpressionResult("new ArrayList<>()", BuiltinLumenTypes.listOf(elementType));
                 }));
 
@@ -130,11 +130,11 @@ public final class ListExpressions {
                     EnvironmentAccess env = ctx.env();
                     String listVarName = ctx.tokens("list").get(0);
                     EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(listVarName);
-                    if (info == null) throw new DiagnosticException(LumenDiagnostic.error("E500", "'" + listVarName + "' is not a global variable").build());
-                    if (!info.scoped()) throw new DiagnosticException(LumenDiagnostic.error("E502", "'" + listVarName + "' is not a scoped global").help("declare it with 'global scoped " + listVarName + "' to use per-entity access").build());
+                    if (info == null) throw new DiagnosticException(LumenDiagnostic.error("E500", "'" + listVarName + "' is not a global variable").label("scoped list operations require a global variable").help("declare it with 'global " + listVarName + " with default new list of <type>'").build());
+                    if (!info.scoped()) throw new DiagnosticException(LumenDiagnostic.error("E502", "'" + listVarName + "' is not a scoped global").label("the 'for' keyword requires a scoped global variable").help("declare it with 'global scoped " + listVarName + "' to use per-entity access").build());
                     String scopeVarName = ctx.java("scope");
                     EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
-                    if (scopeRef == null) throw new DiagnosticException(LumenDiagnostic.error("E500", "Scope variable '" + scopeVarName + "' not found").build());
+                    if (scopeRef == null) throw new DiagnosticException(LumenDiagnostic.error("E500", "Scope variable '" + scopeVarName + "' not found").label("'" + scopeVarName + "' is not defined in this scope").help("the scope variable must be a player or entity reference").build());
                     LumenType scopeType = scopeRef.type();
                     ctx.codegen().addImport(List.class.getName());
                     ctx.codegen().addImport(ArrayList.class.getName());
@@ -153,11 +153,11 @@ public final class ListExpressions {
                     EnvironmentAccess env = ctx.env();
                     String listVarName = ctx.tokens("list").get(0);
                     EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(listVarName);
-                    if (info == null) throw new DiagnosticException(LumenDiagnostic.error("E500", "'" + listVarName + "' is not a global variable").build());
-                    if (!info.scoped()) throw new DiagnosticException(LumenDiagnostic.error("E502", "'" + listVarName + "' is not a scoped global").help("declare it with 'global scoped " + listVarName + "' to use per-entity access").build());
+                    if (info == null) throw new DiagnosticException(LumenDiagnostic.error("E500", "'" + listVarName + "' is not a global variable").label("scoped list operations require a global variable").help("declare it with 'global " + listVarName + " with default new list of <type>'").build());
+                    if (!info.scoped()) throw new DiagnosticException(LumenDiagnostic.error("E502", "'" + listVarName + "' is not a scoped global").label("the 'for' keyword requires a scoped global variable").help("declare it with 'global scoped " + listVarName + "' to use per-entity access").build());
                     String scopeVarName = ctx.java("scope");
                     EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
-                    if (scopeRef == null) throw new DiagnosticException(LumenDiagnostic.error("E500", "Scope variable '" + scopeVarName + "' not found").build());
+                    if (scopeRef == null) throw new DiagnosticException(LumenDiagnostic.error("E500", "Scope variable '" + scopeVarName + "' not found").label("'" + scopeVarName + "' is not defined in this scope").help("the scope variable must be a player or entity reference").build());
                     LumenType scopeType = scopeRef.type();
                     ctx.codegen().addImport(List.class.getName());
                     ctx.codegen().addImport(ArrayList.class.getName());

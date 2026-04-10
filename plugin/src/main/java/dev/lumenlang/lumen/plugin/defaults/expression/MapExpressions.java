@@ -32,7 +32,7 @@ public final class MapExpressions {
                                                   @NotNull EnvironmentAccess.GlobalInfo info) {
         EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
         if (scopeRef == null) {
-            throw new DiagnosticException(LumenDiagnostic.error("E500", "Scope variable '" + scopeVarName + "' not found").build());
+            throw new DiagnosticException(LumenDiagnostic.error("E500", "Scope variable '" + scopeVarName + "' not found").label("'" + scopeVarName + "' is not defined in this scope").help("the scope variable must be a player or entity reference").build());
         }
         LumenType scopeType = scopeRef.type();
         return "\"" + info.className() + "." + varName + ".\" + " + ((ObjectType) scopeType).keyExpression(scopeRef.java());
@@ -67,9 +67,9 @@ public final class MapExpressions {
                     String keyTypeName = ctx.tokens("keyType").get(0).toLowerCase();
                     String valueTypeName = ctx.tokens("valueType").get(0).toLowerCase();
                     LumenType keyType = LumenType.fromName(keyTypeName);
-                    if (keyType == null) throw new DiagnosticException(LumenDiagnostic.error("E501", "Unknown map key type '" + keyTypeName + "'").build());
+                    if (keyType == null) throw new DiagnosticException(LumenDiagnostic.error("E501", "Unknown map key type '" + keyTypeName + "'").label("'" + keyTypeName + "' is not a recognized type").build());
                     LumenType valueType = LumenType.fromName(valueTypeName);
-                    if (valueType == null) throw new DiagnosticException(LumenDiagnostic.error("E501", "Unknown map value type '" + valueTypeName + "'").build());
+                    if (valueType == null) throw new DiagnosticException(LumenDiagnostic.error("E501", "Unknown map value type '" + valueTypeName + "'").label("'" + valueTypeName + "' is not a recognized type").build());
                     return new ExpressionResult("new HashMap<>()", BuiltinLumenTypes.mapOf(keyType, valueType));
                 }));
 
@@ -88,11 +88,13 @@ public final class MapExpressions {
                     EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(mapVarName);
                     if (info == null) {
                         throw new DiagnosticException(LumenDiagnostic.error("E500", "'" + mapVarName + "' is not a global variable")
+                                .label("scoped map operations require a global variable")
                                 .help("scoped expressions (for ...) are only supported on global vars")
                                 .build());
                     }
                     if (!info.scoped()) {
                         throw new DiagnosticException(LumenDiagnostic.error("E502", "'" + mapVarName + "' is not a scoped global")
+                                .label("the 'for' keyword requires a scoped global variable")
                                 .help("declare it with 'global scoped " + mapVarName + "' to use per-entity access")
                                 .build());
                     }

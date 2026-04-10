@@ -19,18 +19,18 @@ public class DefaultPlayerPlaceholders {
     public void register(@NotNull LumenAPI api) {
         PlaceholderRegistrar ph = api.placeholders();
 
-        ph.property(MinecraftTypes.PLAYER, "name", "$.getName()");
+        ph.property(MinecraftTypes.PLAYER, "name", "$.getName()", PlaceholderType.STRING);
         ph.property(MinecraftTypes.PLAYER, "health", "$.getHealth()", PlaceholderType.NUMBER);
         ph.property(MinecraftTypes.PLAYER, "food", "$.getFoodLevel()", PlaceholderType.NUMBER);
         ph.property(MinecraftTypes.PLAYER, "level", "$.getLevel()", PlaceholderType.NUMBER);
         ph.property(MinecraftTypes.PLAYER, "xp_level", "$.getLevel()", PlaceholderType.NUMBER);
-        ph.property(MinecraftTypes.PLAYER, "world", "$.getWorld().getName()");
+        ph.property(MinecraftTypes.PLAYER, "world", "$.getWorld().getName()", PlaceholderType.STRING);
         ph.property(MinecraftTypes.PLAYER, "x", "$.getLocation().getBlockX()", PlaceholderType.NUMBER);
         ph.property(MinecraftTypes.PLAYER, "y", "$.getLocation().getBlockY()", PlaceholderType.NUMBER);
         ph.property(MinecraftTypes.PLAYER, "z", "$.getLocation().getBlockZ()", PlaceholderType.NUMBER);
-        ph.property(MinecraftTypes.PLAYER, "gamemode", "$.getGameMode().name()");
-        ph.property(MinecraftTypes.PLAYER, "uuid", "$.getUniqueId().toString()");
-        ph.property(MinecraftTypes.PLAYER, "ip", "$.getAddress().getHostString()");
+        ph.property(MinecraftTypes.PLAYER, "gamemode", "$.getGameMode().name()", PlaceholderType.STRING);
+        ph.property(MinecraftTypes.PLAYER, "uuid", "$.getUniqueId().toString()", PlaceholderType.STRING);
+        ph.property(MinecraftTypes.PLAYER, "ip", "$.getAddress().getHostString()", PlaceholderType.STRING);
         ph.defaultProperty(MinecraftTypes.PLAYER, "name");
     }
 }

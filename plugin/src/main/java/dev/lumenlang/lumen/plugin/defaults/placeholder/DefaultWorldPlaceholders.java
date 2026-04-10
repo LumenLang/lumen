@@ -19,9 +19,9 @@ public class DefaultWorldPlaceholders {
     public void register(@NotNull LumenAPI api) {
         PlaceholderRegistrar ph = api.placeholders();
 
-        ph.property(MinecraftTypes.WORLD, "name", "$.getName()");
+        ph.property(MinecraftTypes.WORLD, "name", "$.getName()", PlaceholderType.STRING);
         ph.property(MinecraftTypes.WORLD, "time", "$.getTime()", PlaceholderType.NUMBER);
-        ph.property(MinecraftTypes.WORLD, "weather", "($.hasStorm() ? \"storm\" : \"clear\")");
+        ph.property(MinecraftTypes.WORLD, "weather", "($.hasStorm() ? \"storm\" : \"clear\")", PlaceholderType.STRING);
         ph.defaultProperty(MinecraftTypes.WORLD, "name");
     }
 }

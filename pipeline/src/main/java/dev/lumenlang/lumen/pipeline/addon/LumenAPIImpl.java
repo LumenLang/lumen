@@ -264,11 +264,6 @@ public final class LumenAPIImpl implements LumenAPI {
 
         this.placeholders = new PlaceholderRegistrar() {
             @Override
-            public void property(@NotNull ObjectType type, @NotNull String property, @NotNull String template) {
-                property(type, property, template, PlaceholderType.STRING);
-            }
-
-            @Override
             public void property(@NotNull ObjectType type, @NotNull String property, @NotNull String template, @NotNull PlaceholderType returnType) {
                 PlaceholderRegistry.registerProperty(type, property, template, returnType);
             }

@@ -21,7 +21,7 @@ public class DefaultLocationPlaceholders {
         ph.property(MinecraftTypes.LOCATION, "x", "$.getBlockX()", PlaceholderType.NUMBER);
         ph.property(MinecraftTypes.LOCATION, "y", "$.getBlockY()", PlaceholderType.NUMBER);
         ph.property(MinecraftTypes.LOCATION, "z", "$.getBlockZ()", PlaceholderType.NUMBER);
-        ph.property(MinecraftTypes.LOCATION, "world", "$.getWorld().getName()");
+        ph.property(MinecraftTypes.LOCATION, "world", "$.getWorld().getName()", PlaceholderType.STRING);
         ph.defaultProperty(MinecraftTypes.LOCATION, "world");
     }
 }

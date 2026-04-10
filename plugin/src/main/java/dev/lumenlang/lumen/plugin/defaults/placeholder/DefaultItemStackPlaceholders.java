@@ -16,17 +16,17 @@ public class DefaultItemStackPlaceholders {
     public void register(@NotNull LumenAPI api) {
         PlaceholderRegistrar ph = api.placeholders();
 
-        ph.property(MinecraftTypes.ITEMSTACK, "type", "$.getType().name()");
+        ph.property(MinecraftTypes.ITEMSTACK, "type", "$.getType().name()", PlaceholderType.STRING);
         ph.property(MinecraftTypes.ITEMSTACK, "amount", "$.getAmount()", PlaceholderType.NUMBER);
         ph.property(MinecraftTypes.ITEMSTACK, "max_stack_size", "$.getMaxStackSize()", PlaceholderType.NUMBER);
         ph.property(MinecraftTypes.ITEMSTACK, "display_name",
-                "($.hasItemMeta() && $.getItemMeta().hasDisplayName() ? $.getItemMeta().getDisplayName() : $.getType().name())");
+                "($.hasItemMeta() && $.getItemMeta().hasDisplayName() ? $.getItemMeta().getDisplayName() : $.getType().name())", PlaceholderType.STRING);
         ph.property(MinecraftTypes.ITEMSTACK, "durability",
                 "($.getItemMeta() instanceof org.bukkit.inventory.meta.Damageable ? ((org.bukkit.inventory.meta.Damageable) $.getItemMeta()).getDamage() : 0)",
                 PlaceholderType.NUMBER);
         ph.property(MinecraftTypes.ITEMSTACK, "max_durability", "$.getType().getMaxDurability()", PlaceholderType.NUMBER);
         ph.property(MinecraftTypes.ITEMSTACK, "has_meta", "$.hasItemMeta()", PlaceholderType.BOOLEAN);
-        ph.property(MinecraftTypes.ITEMSTACK, "enchantments", "$.getEnchantments().toString()");
+        ph.property(MinecraftTypes.ITEMSTACK, "enchantments", "$.getEnchantments().toString()", PlaceholderType.STRING);
         ph.defaultProperty(MinecraftTypes.ITEMSTACK, "type");
     }
 }

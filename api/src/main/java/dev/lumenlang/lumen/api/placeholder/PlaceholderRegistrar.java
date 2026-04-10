@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
  * <h2>Example</h2>
  * <pre>{@code
  * PlaceholderRegistrar ph = api.placeholders();
- * ph.property(Types.PLAYER, "name", "$.getName()");
+ * ph.property(Types.PLAYER, "name", "$.getName()", PlaceholderType.STRING);
  * ph.property(Types.PLAYER, "health", "$.getHealth()", PlaceholderType.NUMBER);
  * ph.defaultProperty(Types.PLAYER, "name");
  * }</pre>
@@ -34,16 +34,6 @@ import org.jetbrains.annotations.NotNull;
  * @see PlaceholderType
  */
 public interface PlaceholderRegistrar {
-
-    /**
-     * Registers a property placeholder for a given type with {@link PlaceholderType#STRING}
-     * return type.
-     *
-     * @param type     the type this property belongs to
-     * @param property the property name (e.g. "name", "world")
-     * @param template the Java expression template where {@code $} is replaced by the variable name
-     */
-    void property(@NotNull ObjectType type, @NotNull String property, @NotNull String template);
 
     /**
      * Registers a property placeholder for a given type with an explicit return type.
