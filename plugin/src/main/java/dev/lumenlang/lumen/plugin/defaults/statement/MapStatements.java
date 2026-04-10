@@ -9,8 +9,10 @@ import dev.lumenlang.lumen.api.codegen.JavaOutput;
 import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
 import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.pattern.Categories;
+import dev.lumenlang.lumen.api.type.CollectionType;
 import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.ObjectType;
+import dev.lumenlang.lumen.api.type.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,6 +90,46 @@ public final class MapStatements {
         return "\"" + info.className() + "." + varName + ".\" + " + scopeKeyPart;
     }
 
+    private static void validateMapEntry(@NotNull BindingAccess ctx) {
+        EnvironmentAccess.VarHandle mapRef = ctx.varHandle("map");
+        if (mapRef == null) return;
+        CollectionType ct = TypeUtils.asCollection(mapRef.type());
+        if (ct == null || ct.typeArguments().size() < 2) return;
+        LumenType expectedKey = ct.typeArguments().get(0);
+        LumenType expectedVal = ct.typeArguments().get(1);
+        LumenType actualKey = ctx.resolvedType("key");
+        if (actualKey != null && !expectedKey.assignableFrom(actualKey)) {
+            throw new DiagnosticException(LumenDiagnostic.error("E401", "Map key type mismatch")
+                    .at(ctx.block().line(), ctx.block().raw())
+                    .label("expected '" + expectedKey.displayName() + "', got '" + actualKey.displayName() + "'")
+                    .help("this map only accepts '" + expectedKey.displayName() + "' keys")
+                    .build());
+        }
+        LumenType actualVal = ctx.resolvedType("val");
+        if (actualVal != null && !expectedVal.assignableFrom(actualVal)) {
+            throw new DiagnosticException(LumenDiagnostic.error("E401", "Map value type mismatch")
+                    .at(ctx.block().line(), ctx.block().raw())
+                    .label("expected '" + expectedVal.displayName() + "', got '" + actualVal.displayName() + "'")
+                    .help("this map only accepts '" + expectedVal.displayName() + "' values")
+                    .build());
+        }
+    }
+
+    private static void validateMapKey(@NotNull BindingAccess ctx) {
+        EnvironmentAccess.VarHandle mapRef = ctx.varHandle("map");
+        if (mapRef == null) return;
+        CollectionType ct = TypeUtils.asCollection(mapRef.type());
+        if (ct == null || ct.typeArguments().isEmpty()) return;
+        LumenType expectedKey = ct.typeArguments().get(0);
+        LumenType actualKey = ctx.resolvedType("key");
+        if (actualKey == null || expectedKey.assignableFrom(actualKey)) return;
+        throw new DiagnosticException(LumenDiagnostic.error("E401", "Map key type mismatch")
+                .at(ctx.block().line(), ctx.block().raw())
+                .label("expected '" + expectedKey.displayName() + "', got '" + actualKey.displayName() + "'")
+                .help("this map only accepts '" + expectedKey.displayName() + "' keys")
+                .build());
+    }
+
     @Call
     public void register(@NotNull LumenAPI api) {
         api.patterns().statement(b -> b
@@ -97,7 +139,10 @@ public final class MapStatements {
                 .example("set balances at key \"money\" to 100 for p")
                 .since("1.0.0")
                 .category(Categories.MAP)
-                .handler((line, ctx, out) -> emitScopedMutation(ctx, out, ctx.tokens("map").get(0), ctx.java("scope"), tmp -> "((Map) " + tmp + ").put(" + ctx.java("key") + ", " + ctx.java("val") + ");")));
+                .handler((line, ctx, out) -> {
+                    validateMapEntry(ctx);
+                    emitScopedMutation(ctx, out, ctx.tokens("map").get(0), ctx.java("scope"), tmp -> "((Map) " + tmp + ").put(" + ctx.java("key") + ", " + ctx.java("val") + ");");
+                }));
 
         api.patterns().statement(b -> b
                 .by("Lumen")
@@ -108,6 +153,7 @@ public final class MapStatements {
                 .category(Categories.MAP)
                 .handler((line, ctx, out) -> {
                     String mapJava = ctx.java("map");
+                    validateMapEntry(ctx);
                     ctx.codegen().addImport(Map.class.getName());
                     out.line("((Map) " + mapJava + ").put(" + ctx.java("key") + ", " + ctx.java("val") + ");");
                     flushIfStored(ctx.env(), out, mapJava, mapVarName(ctx));
@@ -120,7 +166,10 @@ public final class MapStatements {
                 .example("remove key \"money\" from balances for p")
                 .since("1.0.0")
                 .category(Categories.MAP)
-                .handler((line, ctx, out) -> emitScopedMutation(ctx, out, ctx.tokens("map").get(0), ctx.java("scope"), tmp -> "((Map<?, ?>) " + tmp + ").remove(" + ctx.java("key") + ");")));
+                .handler((line, ctx, out) -> {
+                    validateMapKey(ctx);
+                    emitScopedMutation(ctx, out, ctx.tokens("map").get(0), ctx.java("scope"), tmp -> "((Map<?, ?>) " + tmp + ").remove(" + ctx.java("key") + ");");
+                }));
 
         api.patterns().statement(b -> b
                 .by("Lumen")
@@ -131,6 +180,7 @@ public final class MapStatements {
                 .category(Categories.MAP)
                 .handler((line, ctx, out) -> {
                     String mapJava = ctx.java("map");
+                    validateMapKey(ctx);
                     ctx.codegen().addImport(Map.class.getName());
                     out.line("((Map<?, ?>) " + mapJava + ").remove(" + ctx.java("key") + ");");
                     flushIfStored(ctx.env(), out, mapJava, mapVarName(ctx));

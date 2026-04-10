@@ -35,14 +35,6 @@ public final class ListStatements {
         return null;
     }
 
-    private static @Nullable EnvironmentAccess.VarHandle listVarHandle(@NotNull BindingAccess ctx) {
-        Object val = ctx.value("list");
-        if (val instanceof EnvironmentAccess.VarHandle ref) {
-            return ref;
-        }
-        return null;
-    }
-
     private static void validateElementType(@NotNull BindingAccess ctx, @NotNull String paramName) {
         EnvironmentAccess.VarHandle listRef = ctx.varHandle("list");
         if (listRef == null) return;
@@ -114,7 +106,10 @@ public final class ListStatements {
                 .example("add task to todos for player")
                 .since("1.0.0")
                 .category(Categories.LIST)
-                .handler((line, ctx, out) -> emitScopedMutation(ctx, out, ctx.tokens("list").get(0), ctx.java("scope"), tmp -> "((List) " + tmp + ").add(" + ctx.java("val") + ");")));
+                .handler((line, ctx, out) -> {
+                    validateElementType(ctx, "val");
+                    emitScopedMutation(ctx, out, ctx.tokens("list").get(0), ctx.java("scope"), tmp -> "((List) " + tmp + ").add(" + ctx.java("val") + ");");
+                }));
 
         api.patterns().statement(b -> b
                 .by("Lumen")
@@ -123,7 +118,10 @@ public final class ListStatements {
                 .example("remove task from todos for player")
                 .since("1.0.0")
                 .category(Categories.LIST)
-                .handler((line, ctx, out) -> emitScopedMutation(ctx, out, ctx.tokens("list").get(0), ctx.java("scope"), tmp -> "((List<?>) " + tmp + ").remove(" + ctx.java("val") + ");")));
+                .handler((line, ctx, out) -> {
+                    validateElementType(ctx, "val");
+                    emitScopedMutation(ctx, out, ctx.tokens("list").get(0), ctx.java("scope"), tmp -> "((List<?>) " + tmp + ").remove(" + ctx.java("val") + ");");
+                }));
 
         api.patterns().statement(b -> b
                 .by("Lumen")
@@ -153,12 +151,7 @@ public final class ListStatements {
                 .handler((line, ctx, out) -> {
                     EnvironmentAccess env = ctx.env();
                     String listJava = ctx.java("list");
-
-                    EnvironmentAccess.VarHandle listRef = listVarHandle(ctx);
-                    if (listRef != null && listRef.hasMeta("element_type")) {
-                        validateElementType((String) listRef.meta("element_type"), ctx, env);
-                    }
-
+                    validateElementType(ctx, "val");
                     ctx.codegen().addImport(List.class.getName());
                     out.line("((List) " + listJava + ").add(" + ctx.java("val") + ");");
                     flushIfStored(env, out, listJava, listVarName(ctx));
@@ -173,6 +166,7 @@ public final class ListStatements {
                 .category(Categories.LIST)
                 .handler((line, ctx, out) -> {
                     String listJava = ctx.java("list");
+                    validateElementType(ctx, "val");
                     ctx.codegen().addImport(List.class.getName());
                     out.line("((List<?>) " + listJava + ").remove(" + ctx.java("val") + ");");
                     flushIfStored(ctx.env(), out, listJava, listVarName(ctx));
@@ -215,6 +209,7 @@ public final class ListStatements {
                 .category(Categories.LIST)
                 .handler((line, ctx, out) -> {
                     String listJava = ctx.java("list");
+                    validateElementType(ctx, "val");
                     ctx.codegen().addImport(List.class.getName());
                     out.line("((List) " + listJava + ").set(" + ctx.java("i") + ", " + ctx.java("val") + ");");
                     flushIfStored(ctx.env(), out, listJava, listVarName(ctx));
