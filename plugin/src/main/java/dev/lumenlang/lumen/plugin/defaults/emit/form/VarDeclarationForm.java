@@ -10,6 +10,9 @@ import dev.lumenlang.lumen.api.emit.EmitContext;
 import dev.lumenlang.lumen.api.emit.ScriptToken;
 import dev.lumenlang.lumen.api.emit.StatementFormHandler;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
+import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.type.NullableType;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.pipeline.codegen.BindingContext;
 import dev.lumenlang.lumen.pipeline.codegen.BlockContext;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
@@ -23,11 +26,6 @@ import dev.lumenlang.lumen.pipeline.language.typed.Expr;
 import dev.lumenlang.lumen.pipeline.language.typed.ExprParser;
 import dev.lumenlang.lumen.pipeline.language.validator.VarNameValidator;
 import dev.lumenlang.lumen.pipeline.placeholder.PlaceholderExpander;
-import dev.lumenlang.lumen.api.type.LumenType;
-import dev.lumenlang.lumen.api.type.LumenTypeRegistry;
-import dev.lumenlang.lumen.api.type.NullableType;
-import dev.lumenlang.lumen.api.type.ObjectType;
-import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.pipeline.type.TypeChecker;
 import dev.lumenlang.lumen.pipeline.util.FuzzyMatch;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
@@ -181,7 +179,7 @@ public final class VarDeclarationForm implements StatementFormHandler {
         boolean isNone = exprTokens.size() == 1 && exprTokens.get(0).kind() == TokenKind.IDENT && isNullKeyword(exprTokens.get(0).text());
         if (isNone) {
             LumenType varType = ref.type();
-            if (varType != null && !(varType instanceof NullableType)) {
+            if (!(varType instanceof NullableType)) {
                 Token noneToken = exprTokens.get(0);
                 LumenDiagnostic diag = TypeChecker.checkNullAssignment(varType, name, ctx.line(), ctx.raw(), noneToken.start(), noneToken.end());
                 if (diag != null) throw new DiagnosticException(diag);
@@ -192,12 +190,10 @@ public final class VarDeclarationForm implements StatementFormHandler {
             return false;
         }
         LumenType varType = ref.type();
-        if (varType != null && resolved.type != null) {
-            int colStart = exprTokens.get(0).start();
-            int colEnd = exprTokens.get(exprTokens.size() - 1).end();
-            LumenDiagnostic diag = TypeChecker.checkAssignment(varType, resolved.type, name, ctx.line(), ctx.raw(), colStart, colEnd);
-            if (diag != null) throw new DiagnosticException(diag);
-        }
+        int colStart = exprTokens.get(0).start();
+        int colEnd = exprTokens.get(exprTokens.size() - 1).end();
+        LumenDiagnostic diag = TypeChecker.checkAssignment(varType, resolved.type, name, ctx.line(), ctx.raw(), colStart, colEnd);
+        if (diag != null) throw new DiagnosticException(diag);
         ctx.out().line(ref.java() + " = " + resolved.java + ";");
         if (varType instanceof NullableType) {
             env.markNullState(name, isNone ? TypeEnv.NullState.NULL : TypeEnv.NullState.NON_NULL, ctx.line(), ctx.raw());

@@ -1,12 +1,9 @@
 package dev.lumenlang.lumen.pipeline.var;
 
 import dev.lumenlang.lumen.api.type.LumenType;
-import dev.lumenlang.lumen.api.type.ObjectType;
-import dev.lumenlang.lumen.api.type.TypeUtils;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.pipeline.events.def.EventDef;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Describes a variable that will be injected as a local variable into a generated handler method.
@@ -26,13 +23,4 @@ import org.jetbrains.annotations.Nullable;
  * @see VarRef
  */
 public record VarDef(@NotNull LumenType type, @NotNull String javaType, @NotNull String expr) {
-
-    /**
-     * Narrows the compile-time type to {@link ObjectType} if possible.
-     *
-     * @return the object type, or {@code null} if this variable's type is not an ObjectType
-     */
-    public @Nullable ObjectType objectType() {
-        return TypeUtils.asObject(type);
-    }
 }

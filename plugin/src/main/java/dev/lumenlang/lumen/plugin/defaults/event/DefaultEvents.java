@@ -7,8 +7,8 @@ import dev.lumenlang.lumen.api.codegen.BindingAccess;
 import dev.lumenlang.lumen.api.codegen.JavaOutput;
 import dev.lumenlang.lumen.api.handler.BlockHandler;
 import dev.lumenlang.lumen.api.pattern.Categories;
-import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.api.type.MinecraftTypes;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.plugin.Lumen;
 import dev.lumenlang.lumen.plugin.util.LumenInventoryHolder;
 import org.bukkit.Material;
@@ -38,7 +38,6 @@ import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.player.PlayerToggleFlightEvent;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
 import org.bukkit.event.player.PlayerToggleSprintEvent;
-import org.bukkit.inventory.Inventory;
 import org.jetbrains.annotations.NotNull;
 
 import static dev.lumenlang.lumen.api.pattern.LumaExample.of;

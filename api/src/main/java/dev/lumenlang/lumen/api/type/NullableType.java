@@ -1,7 +1,6 @@
 package dev.lumenlang.lumen.api.type;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * A wrapper indicating the inner type may be {@code null} at runtime.

@@ -1,6 +1,8 @@
 package dev.lumenlang.lumen.pipeline.language.resolve;
 
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
+import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.pipeline.codegen.BindingContext;
 import dev.lumenlang.lumen.pipeline.codegen.BlockContext;
 import dev.lumenlang.lumen.pipeline.codegen.CodegenContext;
@@ -9,10 +11,6 @@ import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.language.pattern.registered.RegisteredExpressionMatch;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.language.tokenization.TokenKind;
-import dev.lumenlang.lumen.api.type.LumenType;
-import dev.lumenlang.lumen.api.type.LumenTypeRegistry;
-import dev.lumenlang.lumen.api.type.ObjectType;
-import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -237,12 +235,11 @@ public final class ExprResolver {
             sb.append(operand.java);
             if (resultType == null) {
                 resultType = operand.type;
-            } else if (operand.type != null) {
+            } else {
                 LumenType widened = LumenType.widenNumeric(resultType, operand.type);
                 if (widened != null) resultType = widened;
             }
         }
-        if (resultType == null) throw new RuntimeException("Cannot determine type of math expression");
         return new ExpressionResult(sb.toString(), resultType);
     }
 

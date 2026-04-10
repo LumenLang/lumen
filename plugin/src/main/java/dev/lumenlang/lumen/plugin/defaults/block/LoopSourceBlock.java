@@ -8,6 +8,7 @@ import dev.lumenlang.lumen.api.codegen.JavaOutput;
 import dev.lumenlang.lumen.api.handler.BlockHandler;
 import dev.lumenlang.lumen.api.handler.LoopHandler;
 import dev.lumenlang.lumen.api.pattern.Categories;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.pipeline.codegen.BindingContext;
 import dev.lumenlang.lumen.pipeline.codegen.BlockContext;
 import dev.lumenlang.lumen.pipeline.codegen.CodegenContext;
@@ -15,7 +16,6 @@ import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.loop.LoopRegistry;
 import dev.lumenlang.lumen.pipeline.loop.RegisteredLoopMatch;
-import dev.lumenlang.lumen.api.type.PrimitiveType;
 import org.jetbrains.annotations.NotNull;
 
 import static dev.lumenlang.lumen.api.pattern.LumaExample.of;

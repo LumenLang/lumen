@@ -1,6 +1,5 @@
 package dev.lumenlang.lumen.api.pattern;
 
-import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.handler.BlockHandler;
 import dev.lumenlang.lumen.api.handler.ConditionHandler;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler;
@@ -47,8 +46,6 @@ import java.util.function.Consumer;
  *         (line, ctx, out) -> out.line(ctx.java("who") + ".getWorld().createExplosion(" +
  *                 ctx.java("who") + ".getLocation(), 4F);"));
  * }</pre>
- *
- * @see LumenAPI#patterns()
  */
 public interface PatternRegistrar {
 

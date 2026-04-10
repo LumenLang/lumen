@@ -28,7 +28,7 @@ import static dev.lumenlang.lumen.api.pattern.LumaExample.top;
  */
 
 @Registration
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "DataFlowIssue"})
 public final class MapBlocks {
 
     @Call

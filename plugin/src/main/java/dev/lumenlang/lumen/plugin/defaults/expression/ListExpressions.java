@@ -6,16 +6,15 @@ import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.pattern.Categories;
+import dev.lumenlang.lumen.api.type.BuiltinLumenTypes;
 import dev.lumenlang.lumen.api.type.CollectionType;
 import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.api.type.PrimitiveType;
-import dev.lumenlang.lumen.api.type.BuiltinLumenTypes;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Registers built-in expression patterns for list operations.
@@ -132,10 +131,10 @@ public final class ListExpressions {
                     EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
                     if (scopeRef == null) throw new RuntimeException("Scope variable not found: " + scopeVarName);
                     LumenType scopeType = scopeRef.type();
-                    if (scopeType == null) throw new RuntimeException("Scope variable '" + scopeVarName + "' has no type.");
                     ctx.codegen().addImport(List.class.getName());
                     ctx.codegen().addImport(ArrayList.class.getName());
-                    return new ExpressionResult("((List<?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") + ".get(" + "\"" + info.className() + "." + listVarName + ".\" + " + ((ObjectType) scopeType).keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")).size()", PrimitiveType.INT);
+                    return new ExpressionResult("((List<?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") +
+                            ".get(" + "\"" + info.className() + "." + listVarName + ".\" + " + ((ObjectType) scopeType).keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")).size()", PrimitiveType.INT);
                 }));
 
         api.patterns().expression(b -> b
@@ -155,10 +154,10 @@ public final class ListExpressions {
                     EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
                     if (scopeRef == null) throw new RuntimeException("Scope variable not found: " + scopeVarName);
                     LumenType scopeType = scopeRef.type();
-                    if (scopeType == null) throw new RuntimeException("Scope variable '" + scopeVarName + "' has no type.");
                     ctx.codegen().addImport(List.class.getName());
                     ctx.codegen().addImport(ArrayList.class.getName());
-                    return new ExpressionResult("((List<?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") + ".get(" + "\"" + info.className() + "." + listVarName + ".\" + " + ((ObjectType) scopeType).keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")).size()", PrimitiveType.INT);
+                    return new ExpressionResult("((List<?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") +
+                            ".get(" + "\"" + info.className() + "." + listVarName + ".\" + " + ((ObjectType) scopeType).keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")).size()", PrimitiveType.INT);
                 }));
     }
 }

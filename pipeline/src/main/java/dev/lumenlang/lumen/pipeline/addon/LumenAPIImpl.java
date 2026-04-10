@@ -31,7 +31,6 @@ import dev.lumenlang.lumen.api.pattern.builder.StatementBuilder;
 import dev.lumenlang.lumen.api.placeholder.PlaceholderRegistrar;
 import dev.lumenlang.lumen.api.placeholder.PlaceholderType;
 import dev.lumenlang.lumen.api.type.AddonTypeBinding;
-import dev.lumenlang.lumen.api.type.LumenTypeRegistry;
 import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.api.type.TypeRegistrar;
 import dev.lumenlang.lumen.pipeline.addon.bridge.TypeBindingBridge;

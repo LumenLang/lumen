@@ -63,10 +63,6 @@ public final class VariableStatements {
             throw new RuntimeException("Scope variable not found: " + scopeVarName);
         }
         LumenType scopeType = scopeRef.type();
-        if (scopeType == null) {
-            throw new RuntimeException("Scope variable '" + scopeVarName
-                    + "' has no type. Expected a typed variable like a player or entity.");
-        }
         String scopeKeyPart = ((ObjectType) scopeType).keyExpression(scopeRef.java());
         return "\"" + info.className() + "." + varName + ".\" + " + scopeKeyPart;
     }

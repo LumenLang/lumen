@@ -6,11 +6,11 @@ import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.pattern.Categories;
+import dev.lumenlang.lumen.api.type.BuiltinLumenTypes;
 import dev.lumenlang.lumen.api.type.CollectionType;
 import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.api.type.PrimitiveType;
-import dev.lumenlang.lumen.api.type.BuiltinLumenTypes;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -33,10 +33,6 @@ public final class MapExpressions {
             throw new RuntimeException("Scope variable not found: " + scopeVarName);
         }
         LumenType scopeType = scopeRef.type();
-        if (scopeType == null) {
-            throw new RuntimeException("Scope variable '" + scopeVarName
-                    + "' has no type. Expected a typed variable like a player or entity.");
-        }
         return "\"" + info.className() + "." + varName + ".\" + " + ((ObjectType) scopeType).keyExpression(scopeRef.java());
     }
 

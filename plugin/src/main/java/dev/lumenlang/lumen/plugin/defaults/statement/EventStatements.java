@@ -4,10 +4,9 @@ import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.pattern.Categories;
+import dev.lumenlang.lumen.plugin.defaults.block.EventBlocks.EventMeta;
 import org.bukkit.event.Cancellable;
 import org.jetbrains.annotations.NotNull;
-
-import dev.lumenlang.lumen.plugin.defaults.block.EventBlocks.EventMeta;
 
 import static dev.lumenlang.lumen.api.pattern.LumaExample.of;
 import static dev.lumenlang.lumen.api.pattern.LumaExample.secondly;

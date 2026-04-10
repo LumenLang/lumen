@@ -31,10 +31,6 @@ import org.bukkit.Bukkit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static dev.lumenlang.lumen.plugin.scripts.ScriptManagerEvents.postScriptLoaded;
-import static dev.lumenlang.lumen.plugin.scripts.ScriptManagerEvents.postAllScriptsLoaded;
-import static dev.lumenlang.lumen.plugin.scripts.ScriptManagerEvents.postScriptUnloaded;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -48,6 +44,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import static dev.lumenlang.lumen.plugin.scripts.ScriptManagerEvents.postAllScriptsLoaded;
+import static dev.lumenlang.lumen.plugin.scripts.ScriptManagerEvents.postScriptLoaded;
+import static dev.lumenlang.lumen.plugin.scripts.ScriptManagerEvents.postScriptUnloaded;
 
 /**
  * Manages the lifecycle of Lumen scripts: parsing, compiling, loading, and

@@ -3,7 +3,6 @@ package dev.lumenlang.lumen.api.handler;
 import dev.lumenlang.lumen.api.codegen.BindingAccess;
 import dev.lumenlang.lumen.api.pattern.PatternRegistrar;
 import dev.lumenlang.lumen.api.type.LumenType;
-import dev.lumenlang.lumen.api.type.MinecraftTypes;
 import dev.lumenlang.lumen.api.type.PrimitiveType;
 import org.jetbrains.annotations.NotNull;
 

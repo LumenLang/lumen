@@ -92,10 +92,10 @@ public final class ListConditions {
                     EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
                     if (scopeRef == null) throw new RuntimeException("Scope variable not found: " + scopeVarName);
                     LumenType scopeType = scopeRef.type();
-                    if (scopeType == null) throw new RuntimeException("Scope variable '" + scopeVarName + "' has no type.");
                     ctx.addImport(List.class.getName());
                     ctx.addImport(ArrayList.class.getName());
-                    return "((List<?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") + ".get(" + "\"" + info.className() + "." + listVarName + ".\" + " + ((ObjectType) scopeType).keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")).isEmpty()";
+                    return "((List<?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") +
+                            ".get(" + "\"" + info.className() + "." + listVarName + ".\" + " + ((ObjectType) scopeType).keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")).isEmpty()";
                 }));
 
         api.patterns().condition(b -> b
@@ -118,10 +118,10 @@ public final class ListConditions {
                     EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
                     if (scopeRef == null) throw new RuntimeException("Scope variable not found: " + scopeVarName);
                     LumenType scopeType = scopeRef.type();
-                    if (scopeType == null) throw new RuntimeException("Scope variable '" + scopeVarName + "' has no type.");
                     ctx.addImport(List.class.getName());
                     ctx.addImport(ArrayList.class.getName());
-                    return "!((List<?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") + ".get(" + "\"" + info.className() + "." + listVarName + ".\" + " + ((ObjectType) scopeType).keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")).isEmpty()";
+                    return "!((List<?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") +
+                            ".get(" + "\"" + info.className() + "." + listVarName + ".\" + " + ((ObjectType) scopeType).keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")).isEmpty()";
                 }));
     }
 }

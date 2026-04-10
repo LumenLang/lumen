@@ -3,15 +3,14 @@ package dev.lumenlang.lumen.pipeline.math;
 import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
 import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.placeholder.PlaceholderType;
+import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.language.tokenization.TokenKind;
 import dev.lumenlang.lumen.pipeline.placeholder.PlaceholderExpander;
-import dev.lumenlang.lumen.api.type.LumenType;
-import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -222,7 +221,7 @@ public final class MathEngine {
                 throw new RuntimeException("Variable not found in math expression: " + t.text());
             }
             LumenType type = ref.type();
-            if (type != null && !type.numeric()) {
+            if (!type.numeric()) {
                 LumenDiagnostic.Builder b = LumenDiagnostic.error("E203", "Non-numeric operand in arithmetic expression").at(line, rawLine).highlight(t.start(), t.end()).label("'" + t.text() + "' is '" + type.displayName() + "', not numeric");
                 if (type.unwrap() == PrimitiveType.STRING) {
                     b.help("use 'combined string of x and y' to concatenate strings");
@@ -324,7 +323,7 @@ public final class MathEngine {
                 throw new RuntimeException("Variable not found in math expression: " + t.text());
             }
             LumenType type = ref.type();
-            if (type != null && !type.numeric()) {
+            if (!type.numeric()) {
                 LumenDiagnostic.Builder b = LumenDiagnostic.error("E203", "Non-numeric operand in arithmetic expression").at(line, rawLine).highlight(t.start(), t.end()).label("'" + t.text() + "' is '" + type.displayName() + "', not numeric");
                 if (type.unwrap() == PrimitiveType.STRING) {
                     b.help("use 'combined string of x and y' to concatenate strings");

@@ -14,7 +14,6 @@ import dev.lumenlang.lumen.api.type.CollectionType;
 import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.api.type.PrimitiveType;
-import dev.lumenlang.lumen.api.type.BuiltinLumenTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +33,7 @@ import static dev.lumenlang.lumen.api.pattern.LumaExample.top;
  * (such as field access) can resolve it without requiring explicit type annotations.
  */
 @Registration
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "DataFlowIssue"})
 public class ListBlocks {
 
     /**
@@ -173,14 +172,6 @@ public class ListBlocks {
                                     .build());
                         }
                         LumenType scopeType = scopeRef.type();
-                        if (scopeType == null) {
-                            throw new DiagnosticException(LumenDiagnostic.error("E502", "Scope variable '" + scopeVarName + "' has no type")
-                                    .at(ctx.block().line(), ctx.block().raw())
-                                    .label("expected a typed variable")
-                                    .help("use a typed variable like a player or entity as scope")
-                                    .build());
-                        }
-
                         EnvironmentAccess.VarHandle listRef = env.lookupVar(listVarName);
                         CollectionType listType = (CollectionType) listRef.type();
                         LumenType elementType = listType.typeArguments().get(0);

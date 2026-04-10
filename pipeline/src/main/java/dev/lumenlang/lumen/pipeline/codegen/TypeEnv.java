@@ -2,7 +2,6 @@ package dev.lumenlang.lumen.pipeline.codegen;
 
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.type.LumenType;
-import dev.lumenlang.lumen.api.type.LumenTypeRegistry;
 import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.pipeline.data.DataSchema;
 import dev.lumenlang.lumen.pipeline.persist.GlobalVars;

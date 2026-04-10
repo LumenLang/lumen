@@ -1,7 +1,7 @@
 package dev.lumenlang.lumen.pipeline.language.typed;
 
-import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

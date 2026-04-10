@@ -5,7 +5,6 @@ import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess.VarHandle;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
-import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.api.type.MinecraftTypes;
 import dev.lumenlang.lumen.plugin.util.EntityHelper;
 import dev.lumenlang.lumen.plugin.util.EntityValidation;

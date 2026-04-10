@@ -302,7 +302,7 @@ public final class DocumentationDumper {
                     Map<String, Object> varObj = new LinkedHashMap<>();
                     varObj.put("name", v.name());
                     varObj.put("type", v.type());
-                    varObj.put("lumenType", v.lumenType() != null ? v.lumenType().id() : null);
+                    varObj.put("lumenType", v.lumenType().id());
                     varObj.put("nullable", v.metadata().getOrDefault("nullable", false));
                     varObj.put("description", v.description());
                     if (!v.metadata().isEmpty()) {

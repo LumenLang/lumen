@@ -5,8 +5,8 @@ import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.pattern.Categories;
-import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.api.type.BuiltinLumenTypes;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;

@@ -84,13 +84,6 @@ public final class MapStatements {
                     .build());
         }
         LumenType scopeType = scopeRef.type();
-        if (scopeType == null) {
-            throw new DiagnosticException(LumenDiagnostic.error("E502", "Scope variable '" + scopeVarName + "' has no type")
-                    .at(ctx.block().line(), ctx.block().raw())
-                    .label("expected a typed variable")
-                    .help("use a typed variable like a player or entity as scope")
-                    .build());
-        }
         String scopeKeyPart = ((ObjectType) scopeType).keyExpression(scopeRef.java());
         return "\"" + info.className() + "." + varName + ".\" + " + scopeKeyPart;
     }
