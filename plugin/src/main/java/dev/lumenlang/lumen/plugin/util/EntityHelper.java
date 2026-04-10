@@ -28,27 +28,17 @@ import java.util.Objects;
  * EntityHelper.forType("org.bukkit.entity.Wolf")
  *     .alias("_wf")
  *     .conditionPair(
- *         "%e:ENTITY% is angry", "%e:ENTITY% is not angry",
+ *         "%e:ENTITY% (is|is not) angry",
+ *         0, "is",
  *         "isAngry()",
- *         "Checks if a wolf is angry.", "Checks if a wolf is not angry.",
- *         "if mob is angry:", "if mob is not angry:"
+ *         "Checks if a wolf is or is not angry.",
+ *         "if mob is angry:"
  *     )
- *     .boolSetter(
- *         "set %e:ENTITY% angry [to] %val:EXPR%",
- *         "setAngry",
- *         "Sets whether a wolf is angry.",
- *         "set mob angry to true"
- *     )
- *     .stringGetter(
- *         "[get] %e:ENTITY% collar color",
- *         "getCollarColor().name()",
- *         "Returns the wolf's collar color name.",
- *         "set c to mob collar color"
- *     );
  * }</pre>
  *
  * @see EntityValidation
  */
+// TODO: Completely rewrite
 @SuppressWarnings("DataFlowIssue")
 public final class EntityHelper {
 
@@ -114,52 +104,37 @@ public final class EntityHelper {
     }
 
     /**
-     * Registers a positive/negative condition pair for a boolean entity check.
+     * Registers a condition with both positive and negative forms using a single
+     * required group pattern like {@code (is|is not)}.
      *
-     * @param positivePattern     the pattern for the positive condition
-     * @param negativePattern     the pattern for the negative condition
-     * @param methodCall          the boolean getter method call (e.g. {@code "isPowered()"})
-     * @param positiveDescription the description for the positive condition
-     * @param negativeDescription the description for the negative condition
-     * @param positiveExample     the example for the positive condition
-     * @param negativeExample     the example for the negative condition
+     * @param pattern        the pattern containing a required choice group for negation
+     * @param choiceIndex    the zero-based index of the required group that determines negation
+     * @param positiveChoice the text of the group choice representing the positive form (e.g. {@code "is"})
+     * @param methodCall     the boolean getter method call (e.g. {@code "isPowered()"})
+     * @param description    the description for the condition
+     * @param example        the example usage
      * @return this builder
      */
-    public @NotNull EntityHelper conditionPair(@NotNull String positivePattern,
-                                               @NotNull String negativePattern,
+    public @NotNull EntityHelper conditionPair(@NotNull String pattern,
+                                               int choiceIndex,
+                                               @NotNull String positiveChoice,
                                                @NotNull String methodCall,
-                                               @NotNull String positiveDescription,
-                                               @NotNull String negativeDescription,
-                                               @NotNull String positiveExample,
-                                               @NotNull String negativeExample) {
+                                               @NotNull String description,
+                                               @NotNull String example) {
         api.patterns().condition(b -> b
                 .by("Lumen")
-                .pattern(positivePattern)
-                .description(positiveDescription)
-                .example(positiveExample)
+                .pattern(pattern)
+                .description(description)
+                .example(example)
                 .since("1.0.0")
                 .category(Categories.ENTITY)
                 .handler((match, env, ctx) -> {
                     VarHandle h = match.ref("e");
-                    EntityValidation.requireSubtype(h, fqcn, positivePattern);
+                    EntityValidation.requireSubtype(h, fqcn, pattern);
                     ctx.addImport(fqcn);
+                    boolean negated = !positiveChoice.equals(match.choice(choiceIndex));
                     return "(" + h.java() + " instanceof " + simpleName + " " + alias
-                            + " && " + alias + "." + methodCall + ")";
-                }));
-
-        api.patterns().condition(b -> b
-                .by("Lumen")
-                .pattern(negativePattern)
-                .description(negativeDescription)
-                .example(negativeExample)
-                .since("1.0.0")
-                .category(Categories.ENTITY)
-                .handler((match, env, ctx) -> {
-                    VarHandle h = match.ref("e");
-                    EntityValidation.requireSubtype(h, fqcn, negativePattern);
-                    ctx.addImport(fqcn);
-                    return "(" + h.java() + " instanceof " + simpleName + " " + alias
-                            + " && !" + alias + "." + methodCall + ")";
+                            + " && " + (negated ? "!" : "") + alias + "." + methodCall + ")";
                 }));
 
         return this;

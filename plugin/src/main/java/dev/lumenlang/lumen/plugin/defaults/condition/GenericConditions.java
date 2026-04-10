@@ -44,35 +44,23 @@ public final class GenericConditions {
 
         api.patterns().condition(b -> b
                 .by("Lumen")
-                .pattern("%v:EXPR% is set")
-                .description("Checks if a value is not null.")
-                .example("if myVar is set:")
+                .pattern("%v:EXPR% (is|is not) set")
+                .description("Checks if a value is null or not null.")
+                .examples("if myVar is set:", "if myVar is not set:")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
                 .handler((match, env, ctx) -> {
                     String java = match.java("v", ctx, env);
                     validateExprIdentifier(java, env);
-                    return java + " != null";
+                    boolean negated = match.choice(0).equals("is not");
+                    return java + (negated ? " == null" : " != null");
                 }));
 
         api.patterns().condition(b -> b
                 .by("Lumen")
-                .pattern("%v:EXPR% is not set")
-                .description("Checks if a value is null.")
-                .example("if myVar is not set:")
-                .since("1.0.0")
-                .category(Categories.VARIABLE)
-                .handler((match, env, ctx) -> {
-                    String java = match.java("v", ctx, env);
-                    validateExprIdentifier(java, env);
-                    return java + " == null";
-                }));
-
-        api.patterns().condition(b -> b
-                .by("Lumen")
-                .pattern("%val:EXPR% is between %min:EXPR% and %max:EXPR%")
-                .description("Checks if a value is between a minimum and maximum (inclusive).")
-                .examples("if player's x is between 100 and 200:", "if score is between 0 and 100:")
+                .pattern("%val:EXPR% (is|is not) between %min:EXPR% and %max:EXPR%")
+                .description("Checks if a value is between or outside a minimum and maximum range (inclusive).")
+                .examples("if player's x is between 100 and 200:", "if player's y is not between 60 and 120:")
                 .since("1.0.0")
                 .category(Categories.MATH)
                 .handler((match, env, ctx) -> {
@@ -82,24 +70,9 @@ public final class GenericConditions {
                     validateExprIdentifier(val, env);
                     validateExprIdentifier(min, env);
                     validateExprIdentifier(max, env);
+                    boolean negated = match.choice(0).equals("is not");
+                    if (negated) return "(" + val + " < " + min + " || " + val + " > " + max + ")";
                     return "(" + val + " >= " + min + " && " + val + " <= " + max + ")";
-                }));
-
-        api.patterns().condition(b -> b
-                .by("Lumen")
-                .pattern("%val:EXPR% is not between %min:EXPR% and %max:EXPR%")
-                .description("Checks if a value is outside a minimum and maximum range.")
-                .examples("if player's y is not between 60 and 120:")
-                .since("1.0.0")
-                .category(Categories.MATH)
-                .handler((match, env, ctx) -> {
-                    String val = match.java("val", ctx, env);
-                    String min = match.java("min", ctx, env);
-                    String max = match.java("max", ctx, env);
-                    validateExprIdentifier(val, env);
-                    validateExprIdentifier(min, env);
-                    validateExprIdentifier(max, env);
-                    return "(" + val + " < " + min + " || " + val + " > " + max + ")";
                 }));
     }
 }

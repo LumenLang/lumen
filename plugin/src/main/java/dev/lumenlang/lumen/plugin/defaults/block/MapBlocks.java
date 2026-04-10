@@ -14,6 +14,7 @@ import dev.lumenlang.lumen.api.type.CollectionType;
 import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.api.type.PrimitiveType;
+import dev.lumenlang.lumen.api.type.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -74,7 +75,7 @@ public final class MapBlocks {
                                     .build());
                         }
                         EnvironmentAccess.VarHandle mapRef = (EnvironmentAccess.VarHandle) ctx.value("map");
-                        CollectionType mapType = (CollectionType) mapRef.type();
+                        CollectionType mapType = TypeUtils.asCollection(mapRef.type());
                         LumenType keyType = mapType.typeArguments().get(0);
                         LumenType valType = mapType.typeArguments().get(1);
                         String mapJava = ctx.java("map");
@@ -161,7 +162,7 @@ public final class MapBlocks {
                         ctx.codegen().addImport(Map.class.getName());
                         ctx.codegen().addImport(HashMap.class.getName());
                         EnvironmentAccess.VarHandle mapRef = env.lookupVar(mapVarName);
-                        CollectionType mapType = (CollectionType) mapRef.type();
+                        CollectionType mapType = TypeUtils.asCollection(mapRef.type());
                         LumenType keyType = mapType.typeArguments().get(0);
                         LumenType valType = mapType.typeArguments().get(1);
                         String entryVar = "__entry_" + keyName + "_" + valName;

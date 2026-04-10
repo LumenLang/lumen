@@ -18,20 +18,16 @@ public final class BeeConditions {
         EntityHelper.forType(FQCN)
                 .alias("_be")
                 .conditionPair(
-                        "%e:ENTITY% has nectar",
-                        "%e:ENTITY% (does not have|has no) nectar",
+                        "%e:ENTITY% (has|does not have|has no) nectar",
+                        0, "has",
                         "hasNectar()",
-                        "Checks if a bee has nectar.",
-                        "Checks if a bee does not have nectar.",
-                        "if mob has nectar:",
-                        "if mob has no nectar:")
+                        "Checks if a bee has or does not have nectar.",
+                        "if mob has nectar:")
                 .conditionPair(
-                        "%e:ENTITY% has stung",
-                        "%e:ENTITY% has not stung",
+                        "%e:ENTITY% (has|has not) stung",
+                        0, "has",
                         "hasStung()",
-                        "Checks if a bee has stung something.",
-                        "Checks if a bee has not stung anything.",
-                        "if mob has stung:",
-                        "if mob has not stung:");
+                        "Checks if a bee has or has not stung something.",
+                        "if mob has stung:");
     }
 }

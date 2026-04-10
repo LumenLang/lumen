@@ -32,4 +32,25 @@ public final class TypeUtils {
         LumenType unwrapped = type instanceof NullableType n ? n.inner() : type;
         return unwrapped instanceof PrimitiveType p ? p : null;
     }
+
+    /**
+     * Extracts the {@link CollectionType} from a LumenType, unwrapping {@link NullableType} if needed.
+     *
+     * @param type the type to inspect
+     * @return the collection type, or {@code null} if the underlying type is not a CollectionType
+     */
+    public static @Nullable CollectionType asCollection(@NotNull LumenType type) {
+        LumenType unwrapped = type instanceof NullableType n ? n.inner() : type;
+        return unwrapped instanceof CollectionType ct ? ct : null;
+    }
+
+    /**
+     * Narrows a LumenType to {@link NullableType}.
+     *
+     * @param type the type to inspect
+     * @return the nullable type, or {@code null} if the type is not a NullableType
+     */
+    public static @Nullable NullableType asNullable(@NotNull LumenType type) {
+        return type instanceof NullableType n ? n : null;
+    }
 }

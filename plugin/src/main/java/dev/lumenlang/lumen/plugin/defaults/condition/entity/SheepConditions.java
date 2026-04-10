@@ -18,12 +18,10 @@ public final class SheepConditions {
         EntityHelper.forType(FQCN)
                 .alias("_sh")
                 .conditionPair(
-                        "%e:ENTITY% is sheared",
-                        "%e:ENTITY% is not sheared",
+                        "%e:ENTITY% (is|is not) sheared",
+                        0, "is",
                         "isSheared()",
-                        "Checks if a sheep is sheared.",
-                        "Checks if a sheep is not sheared.",
-                        "if mob is sheared:",
-                        "if mob is not sheared:");
+                        "Checks if a sheep is or is not sheared.",
+                        "if mob is sheared:");
     }
 }

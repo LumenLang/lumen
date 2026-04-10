@@ -18,20 +18,16 @@ public final class CreeperConditions {
         EntityHelper.forType(FQCN)
                 .alias("_cr")
                 .conditionPair(
-                        "%e:ENTITY% is (powered|charged)",
-                        "%e:ENTITY% is not (powered|charged)",
+                        "%e:ENTITY% (is|is not) (powered|charged)",
+                        0, "is",
                         "isPowered()",
-                        "Checks if a creeper is powered (charged).",
-                        "Checks if a creeper is not powered (charged).",
-                        "if mob is powered:",
-                        "if mob is not powered:")
+                        "Checks if a creeper is or is not powered (charged).",
+                        "if mob is powered:")
                 .conditionPair(
-                        "%e:ENTITY% is ignited",
-                        "%e:ENTITY% is not ignited",
+                        "%e:ENTITY% (is|is not) ignited",
+                        0, "is",
                         "isIgnited()",
-                        "Checks if a creeper has been ignited.",
-                        "Checks if a creeper has not been ignited.",
-                        "if mob is ignited:",
-                        "if mob is not ignited:");
+                        "Checks if a creeper is or is not ignited.",
+                        "if mob is ignited:");
     }
 }

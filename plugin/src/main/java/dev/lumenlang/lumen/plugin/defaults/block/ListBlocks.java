@@ -14,6 +14,7 @@ import dev.lumenlang.lumen.api.type.CollectionType;
 import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.api.type.PrimitiveType;
+import dev.lumenlang.lumen.api.type.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +45,7 @@ public class ListBlocks {
      */
     private static @NotNull LumenType resolveElementType(@NotNull BindingAccess ctx) {
         EnvironmentAccess.VarHandle listRef = (EnvironmentAccess.VarHandle) ctx.value("list");
-        CollectionType listType = (CollectionType) listRef.type();
+        CollectionType listType = TypeUtils.asCollection(listRef.type());
         return listType.typeArguments().get(0);
     }
 
@@ -173,7 +174,7 @@ public class ListBlocks {
                         }
                         LumenType scopeType = scopeRef.type();
                         EnvironmentAccess.VarHandle listRef = env.lookupVar(listVarName);
-                        CollectionType listType = (CollectionType) listRef.type();
+                        CollectionType listType = TypeUtils.asCollection(listRef.type());
                         LumenType elementType = listType.typeArguments().get(0);
                         ctx.codegen().addImport(List.class.getName());
                         ctx.codegen().addImport(ArrayList.class.getName());

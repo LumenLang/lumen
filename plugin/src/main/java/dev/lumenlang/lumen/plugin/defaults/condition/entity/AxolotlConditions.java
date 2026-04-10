@@ -18,12 +18,10 @@ public final class AxolotlConditions {
         EntityHelper.forType(FQCN)
                 .alias("_ax")
                 .conditionPair(
-                        "%e:ENTITY% is playing dead",
-                        "%e:ENTITY% is not playing dead",
+                        "%e:ENTITY% (is|is not) playing dead",
+                        0, "is",
                         "isPlayingDead()",
-                        "Checks if an axolotl is playing dead.",
-                        "Checks if an axolotl is not playing dead.",
-                        "if mob is playing dead:",
-                        "if mob is not playing dead:");
+                        "Checks if an axolotl is or is not playing dead.",
+                        "if mob is playing dead:");
     }
 }

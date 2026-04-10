@@ -18,9 +18,9 @@ public final class LocationConditions {
     public void register(@NotNull LumenAPI api) {
         api.patterns().condition(b -> b
                 .by("Lumen")
-                .pattern("%loc:LOCATION% is inside %min:LOCATION% to %max:LOCATION%")
-                .description("Checks if a location is inside a bounding box defined by two corner locations.")
-                .example("if player location is inside corner1 to corner2:")
+                .pattern("%loc:LOCATION% (is|is not) inside %min:LOCATION% to %max:LOCATION%")
+                .description("Checks if a location is or is not inside a bounding box defined by two corner locations.")
+                .examples("if player location is inside corner1 to corner2:", "if player location is not inside corner1 to corner2:")
                 .since("1.0.0")
                 .category(Categories.LOCATION)
                 .handler((match, env, ctx) -> {
@@ -28,54 +28,24 @@ public final class LocationConditions {
                     String loc = match.java("loc", ctx, env);
                     String min = match.java("min", ctx, env);
                     String max = match.java("max", ctx, env);
-                    return "LocationUtils.inside(" + loc + ", " + min + ", " + max + ")";
+                    boolean negated = match.choice(0).equals("is not");
+                    return (negated ? "LocationUtils.notInside" : "LocationUtils.inside") + "(" + loc + ", " + min + ", " + max + ")";
                 }));
 
         api.patterns().condition(b -> b
                 .by("Lumen")
-                .pattern("%loc:LOCATION% is not inside %min:LOCATION% to %max:LOCATION%")
-                .description("Checks if a location is not inside a bounding box defined by two corner locations.")
-                .example("if player location is not inside corner1 to corner2:")
+                .pattern("%who:PLAYER% (is|is not) inside %min:LOCATION% to %max:LOCATION%")
+                .description("Checks if a player is or is not inside a bounding box defined by two corner locations.")
+                .examples("if player is inside corner1 to corner2:", "if player is not inside corner1 to corner2:")
                 .since("1.0.0")
                 .category(Categories.LOCATION)
                 .handler((match, env, ctx) -> {
                     ctx.addImport(LocationUtils.class.getName());
-                    String loc = match.java("loc", ctx, env);
+                    String loc = match.java("who", ctx, env) + ".getLocation()";
                     String min = match.java("min", ctx, env);
                     String max = match.java("max", ctx, env);
-                    return "LocationUtils.notInside(" + loc + ", " + min + ", " + max + ")";
-                }));
-
-        api.patterns().condition(b -> b
-                .by("Lumen")
-                .pattern("%who:PLAYER% is inside %min:LOCATION% to %max:LOCATION%")
-                .description("Checks if a player is inside a bounding box defined by two corner locations.")
-                .example("if player is inside corner1 to corner2:")
-                .since("1.0.0")
-                .category(Categories.LOCATION)
-                .handler((match, env, ctx) -> {
-                    ctx.addImport(LocationUtils.class.getName());
-                    String who = match.java("who", ctx, env);
-                    String loc = who + ".getLocation()";
-                    String min = match.java("min", ctx, env);
-                    String max = match.java("max", ctx, env);
-                    return "LocationUtils.inside(" + loc + ", " + min + ", " + max + ")";
-                }));
-
-        api.patterns().condition(b -> b
-                .by("Lumen")
-                .pattern("%who:PLAYER% is not inside %min:LOCATION% to %max:LOCATION%")
-                .description("Checks if a player is not inside a bounding box defined by two corner locations.")
-                .example("if player is not inside corner1 to corner2:")
-                .since("1.0.0")
-                .category(Categories.LOCATION)
-                .handler((match, env, ctx) -> {
-                    ctx.addImport(LocationUtils.class.getName());
-                    String who = match.java("who", ctx, env);
-                    String loc = who + ".getLocation()";
-                    String min = match.java("min", ctx, env);
-                    String max = match.java("max", ctx, env);
-                    return "LocationUtils.notInside(" + loc + ", " + min + ", " + max + ")";
+                    boolean negated = match.choice(0).equals("is not");
+                    return (negated ? "LocationUtils.notInside" : "LocationUtils.inside") + "(" + loc + ", " + min + ", " + max + ")";
                 }));
 
         api.patterns().condition(b -> b

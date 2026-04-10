@@ -4,6 +4,7 @@ import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.plugin.util.EntityHelper;
+import dev.lumenlang.lumen.plugin.util.EntityValidation;
 import org.bukkit.entity.Ageable;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,13 +18,16 @@ public final class AgeableConditions {
     public void register(@NotNull LumenAPI api) {
         EntityHelper.forType(FQCN)
                 .alias("_ag")
-                .conditionPair(
-                        "%e:ENTITY% is (adult|grown)",
-                        "%e:ENTITY% is (baby|young)",
-                        "isAdult()",
-                        "Checks if an ageable entity is an adult.",
-                        "Checks if an ageable entity is a baby.",
+                .condition(
+                        "%e:ENTITY% is (adult|grown|baby|young)",
+                        "Checks if an ageable entity is an adult or a baby.",
                         "if mob is adult:",
-                        "if mob is baby:");
+                        (match, env, ctx) -> {
+                            EntityValidation.requireSubtype(match.ref("e"), FQCN, "is (adult|grown|baby|young)");
+                            ctx.addImport(FQCN);
+                            String choice = match.choice(0);
+                            boolean adult = choice.equals("adult") || choice.equals("grown");
+                            return "(" + match.ref("e").java() + " instanceof Ageable _ag && " + (adult ? "" : "!") + "_ag.isAdult())";
+                        });
     }
 }

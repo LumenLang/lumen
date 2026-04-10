@@ -166,7 +166,7 @@ public final class StringExpressions {
                 .pattern("combined string [of] %s1:STRING% and %s2:STRING%")
                 .description("Combines two strings into a single string.")
                 .example("set combined to combined string of \"hello\" and \"world\"")
-                .since("1.0.0")
+                .since("1.1.0")
                 .category(Categories.TEXT)
                 .handler(ctx -> new ExpressionResult("String.valueOf(" + ctx.java("s1") + ") + String.valueOf(" + ctx.java("s2") + ")", PrimitiveType.STRING)));
     }

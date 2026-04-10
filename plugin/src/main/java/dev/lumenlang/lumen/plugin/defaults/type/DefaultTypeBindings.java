@@ -43,7 +43,7 @@ import java.util.Set;
  * Registers all built-in type bindings for the default Lumen language.
  */
 @Registration(order = -1000)
-@SuppressWarnings({"unused", "DataFlowIssue"})
+@SuppressWarnings("unused")
 public final class DefaultTypeBindings {
 
     private static <E extends Enum<E>> void tryRegisterEnum(

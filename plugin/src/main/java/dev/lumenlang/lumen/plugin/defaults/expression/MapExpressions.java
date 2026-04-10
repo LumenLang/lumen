@@ -4,6 +4,8 @@ import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
+import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
+import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.api.type.BuiltinLumenTypes;
@@ -30,7 +32,7 @@ public final class MapExpressions {
                                                   @NotNull EnvironmentAccess.GlobalInfo info) {
         EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
         if (scopeRef == null) {
-            throw new RuntimeException("Scope variable not found: " + scopeVarName);
+            throw new DiagnosticException(LumenDiagnostic.error("E500", "Scope variable '" + scopeVarName + "' not found").build());
         }
         LumenType scopeType = scopeRef.type();
         return "\"" + info.className() + "." + varName + ".\" + " + ((ObjectType) scopeType).keyExpression(scopeRef.java());
@@ -47,7 +49,10 @@ public final class MapExpressions {
                 .category(Categories.MAP)
                 .deprecated(true)
                 .handler(ctx -> {
-                    throw new RuntimeException("Untyped maps are no longer supported. Use 'new map of <key-type> to <value-type>' instead, for example: 'set myMap to new map of string to int'"); // TODO: Remove in 1.4.0
+                    throw new DiagnosticException(LumenDiagnostic.error("E502", "Untyped maps are no longer supported")
+                            .label("use 'new map of <key-type> to <value-type>' instead")
+                            .help("example: 'set myMap to new map of string to int'")
+                            .build());
                 }));
 
         api.patterns().expression(b -> b
@@ -62,9 +67,9 @@ public final class MapExpressions {
                     String keyTypeName = ctx.tokens("keyType").get(0).toLowerCase();
                     String valueTypeName = ctx.tokens("valueType").get(0).toLowerCase();
                     LumenType keyType = LumenType.fromName(keyTypeName);
-                    if (keyType == null) throw new RuntimeException("Unknown map key type: " + keyTypeName);
+                    if (keyType == null) throw new DiagnosticException(LumenDiagnostic.error("E501", "Unknown map key type '" + keyTypeName + "'").build());
                     LumenType valueType = LumenType.fromName(valueTypeName);
-                    if (valueType == null) throw new RuntimeException("Unknown map value type: " + valueTypeName);
+                    if (valueType == null) throw new DiagnosticException(LumenDiagnostic.error("E501", "Unknown map value type '" + valueTypeName + "'").build());
                     return new ExpressionResult("new HashMap<>()", BuiltinLumenTypes.mapOf(keyType, valueType));
                 }));
 
@@ -82,12 +87,14 @@ public final class MapExpressions {
                     EnvironmentAccess env = ctx.env();
                     EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(mapVarName);
                     if (info == null) {
-                        throw new RuntimeException("Variable '" + mapVarName
-                                + "' is not a global variable. Scoped expressions (for ...) are only supported on global vars.");
+                        throw new DiagnosticException(LumenDiagnostic.error("E500", "'" + mapVarName + "' is not a global variable")
+                                .help("scoped expressions (for ...) are only supported on global vars")
+                                .build());
                     }
                     if (!info.scoped()) {
-                        throw new RuntimeException("'" + mapVarName
-                                + "' is not a scoped global. Declare it with 'global scoped " + mapVarName + "' to use per-entity access.");
+                        throw new DiagnosticException(LumenDiagnostic.error("E502", "'" + mapVarName + "' is not a scoped global")
+                                .help("declare it with 'global scoped " + mapVarName + "' to use per-entity access")
+                                .build());
                     }
                     String storageClass = info.stored() ? "PersistentVars" : "GlobalVars";
                     String storageKey = buildScopedKey(env, mapVarName, scopeVarName, info);
