@@ -73,7 +73,7 @@ public final class PatternSimulator {
 
     private static final int MAX_SUGGESTIONS = 2;
     private static final int MAX_REAL_CANDIDATES = 5;
-    private static final double MIN_SCORE = 10.0;
+    private static final double MIN_SCORE = 5.0;
     private static final int SHAPE_MATCH_TOKEN_LIMIT = 14;
 
     private PatternSimulator() {

@@ -5,6 +5,7 @@ import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.handler.BlockHandler;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.handler.StatementHandler;
+import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.pipeline.conditions.ConditionExpr;
 import dev.lumenlang.lumen.pipeline.conditions.parser.ConditionParser;
 import dev.lumenlang.lumen.pipeline.language.TypeBinding;
@@ -299,6 +300,16 @@ public final class BindingContext implements BindingAccess {
         return bv.tokens().stream()
                 .map(Token::text)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public @Nullable LumenType resolvedType(@NotNull String name) {
+        Object val = value(name);
+        if (val instanceof EnvironmentAccess.VarHandle vh) return vh.type();
+        BoundValue bv = bound(name);
+        if (bv == null) return null;
+        ExpressionResult result = ExprResolver.resolveWithType(bv.tokens(), ctx, env);
+        return result != null ? result.type() : null;
     }
 
     @Override

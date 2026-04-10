@@ -10,6 +10,7 @@ import dev.lumenlang.lumen.api.emit.EmitContext;
 import dev.lumenlang.lumen.api.emit.ScriptToken;
 import dev.lumenlang.lumen.api.emit.StatementFormHandler;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
+import dev.lumenlang.lumen.api.type.BuiltinLumenTypes;
 import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.NullableType;
 import dev.lumenlang.lumen.api.type.PrimitiveType;
@@ -325,6 +326,9 @@ public final class VarDeclarationForm implements StatementFormHandler {
     private static void emitNullableDeclaration(@NotNull String name, @NotNull List<Token> exprTokens, @NotNull List<Token> pipelineTokens, @NotNull EmitContextImpl ctx, @NotNull TypeEnv env) {
         String typeName = exprTokens.get(1).text();
         LumenType innerType = LumenType.fromName(typeName);
+        if (innerType == null && env.lookupDataSchema(typeName) != null) {
+            innerType = BuiltinLumenTypes.DATA;
+        }
         if (innerType == null) {
             Token typeToken = exprTokens.get(1);
             String suggestion = FuzzyMatch.closest(typeName, LumenType.allKnownTypeNames());

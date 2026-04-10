@@ -141,7 +141,7 @@ public final class ControlBlocks {
         if (block.isRoot()) {
             throw new DiagnosticException(LumenDiagnostic.error("E500", "'" + keyword + "' without matching 'if'")
                     .at(block.line(), block.raw())
-                    .label("cannot be top-level")
+                    .label("cannot be top-level without a preceding 'if'")
                     .help("'" + keyword + "' must directly follow an 'if' or 'else if' block with the same indentation")
                     .build());
         }

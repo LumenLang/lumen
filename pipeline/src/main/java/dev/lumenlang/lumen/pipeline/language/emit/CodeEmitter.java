@@ -1,6 +1,7 @@
 package dev.lumenlang.lumen.pipeline.language.emit;
 
 import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
+import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.emit.BlockEnterHook;
 import dev.lumenlang.lumen.api.emit.BlockFormHandler;
 import dev.lumenlang.lumen.api.emit.ScriptLine;
@@ -245,7 +246,7 @@ public final class CodeEmitter {
             if (!suggestions.isEmpty()) {
                 throw new LumenScriptException(new DiagnosticException(SuggestionDiagnostics.build("E500", "Unknown block", b.line(), b.raw(), head, suggestions.get(0))));
             }
-            throw new LumenScriptException(b.line(), b.raw(), "Unknown block", head);
+            throw new LumenScriptException(new DiagnosticException(SuggestionDiagnostics.buildNoSuggestion("E500", "Unknown block", b.line(), b.raw(), head)));
         }
 
         BindingContext bc = new BindingContext(bm.match(), env, ctx, blockCtx);
@@ -336,7 +337,7 @@ public final class CodeEmitter {
             BindingContext bc = new BindingContext(es.match().match(), env, ctx, blockCtx);
             try {
                 ExpressionResult result = es.match().reg().handler().handle(bc);
-                out.line(result.java() + ";");
+                out.line(asStatement(result.java()));
             } catch (LumenScriptException e) {
                 throw e;
             } catch (RuntimeException e) {
@@ -357,6 +358,16 @@ public final class CodeEmitter {
                 "Unhandled statement type: " + ts.getClass().getSimpleName());
     }
 
+    private static @NotNull String asStatement(@NotNull String java) {
+        if (java.length() > 3 && java.charAt(0) == '(') {
+            int close = java.indexOf(')');
+            if (close > 0 && close < java.length() - 1 && java.substring(1, close).trim().matches("[A-Za-z]\\w*")) {
+                return java.substring(close + 1).trim() + ";";
+            }
+        }
+        return java + ";";
+    }
+
     private static @NotNull LumenScriptException wrapRuntimeException(int line, @NotNull String raw, @NotNull RuntimeException e) {
         if (e instanceof DiagnosticException de) {
             return new LumenScriptException(de);
@@ -367,6 +378,6 @@ public final class CodeEmitter {
             }
             return new LumenScriptException(new DiagnosticException(SuggestionDiagnostics.buildNoSuggestion("E500", "Unknown condition", line, raw, tce.tokens())));
         }
-        return new LumenScriptException(line, raw, e.getMessage(), e);
+        return new LumenScriptException(new DiagnosticException(LumenDiagnostic.error("E500", e.getMessage() != null ? e.getMessage() : "Unexpected error").at(line, raw).build()));
     }
 }

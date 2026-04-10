@@ -97,7 +97,7 @@ public final class MapStatements {
                 .example("set balances at key \"money\" to 100 for p")
                 .since("1.0.0")
                 .category(Categories.MAP)
-                .handler((line, ctx, out) -> emitScopedMutation(ctx, out, ctx.tokens("map").get(0), ctx.java("scope"), tmp -> "((Map<Object, Object>) " + tmp + ").put(" + ctx.java("key") + ", " + ctx.java("val") + ");")));
+                .handler((line, ctx, out) -> emitScopedMutation(ctx, out, ctx.tokens("map").get(0), ctx.java("scope"), tmp -> "((Map) " + tmp + ").put(" + ctx.java("key") + ", " + ctx.java("val") + ");")));
 
         api.patterns().statement(b -> b
                 .by("Lumen")
@@ -109,7 +109,7 @@ public final class MapStatements {
                 .handler((line, ctx, out) -> {
                     String mapJava = ctx.java("map");
                     ctx.codegen().addImport(Map.class.getName());
-                    out.line("((Map<Object, Object>) " + mapJava + ").put(" + ctx.java("key") + ", " + ctx.java("val") + ");");
+                    out.line("((Map) " + mapJava + ").put(" + ctx.java("key") + ", " + ctx.java("val") + ");");
                     flushIfStored(ctx.env(), out, mapJava, mapVarName(ctx));
                 }));
 

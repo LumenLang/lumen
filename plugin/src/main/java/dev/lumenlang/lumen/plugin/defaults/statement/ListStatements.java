@@ -9,8 +9,10 @@ import dev.lumenlang.lumen.api.codegen.JavaOutput;
 import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
 import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.pattern.Categories;
+import dev.lumenlang.lumen.api.type.CollectionType;
 import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.ObjectType;
+import dev.lumenlang.lumen.api.type.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,31 +43,19 @@ public final class ListStatements {
         return null;
     }
 
-    private static void validateElementType(@NotNull String elementType,
-                                            @NotNull BindingAccess ctx,
-                                            @NotNull EnvironmentAccess env) {
-        List<String> valTokens = ctx.tokens("val");
-        if (valTokens.size() == 1) {
-            EnvironmentAccess.VarHandle valRef = env.lookupVar(valTokens.get(0));
-            if (valRef != null && valRef.hasMeta("data_type")) {
-                String valDataType = (String) valRef.meta("data_type");
-                if (valDataType == null) {
-                    throw new DiagnosticException(LumenDiagnostic.error("E401", "Cannot determine data type of value")
-                            .at(ctx.block().line(), ctx.block().raw())
-                            .label("type unknown")
-                            .note("list expects '" + elementType + "' elements")
-                            .help("ensure the value has a known data type")
-                            .build());
-                }
-                if (!valDataType.equalsIgnoreCase(elementType)) {
-                    throw new DiagnosticException(LumenDiagnostic.error("E401", "List element type mismatch")
-                            .at(ctx.block().line(), ctx.block().raw())
-                            .label("expected '" + elementType + "', got '" + valDataType + "'")
-                            .help("this list only accepts '" + elementType + "' elements")
-                            .build());
-                }
-            }
-        }
+    private static void validateElementType(@NotNull BindingAccess ctx, @NotNull String paramName) {
+        EnvironmentAccess.VarHandle listRef = ctx.varHandle("list");
+        if (listRef == null) return;
+        CollectionType ct = TypeUtils.asCollection(listRef.type());
+        if (ct == null || ct.typeArguments().isEmpty()) return;
+        LumenType expected = ct.typeArguments().get(0);
+        LumenType actual = ctx.resolvedType(paramName);
+        if (actual == null || expected.assignableFrom(actual)) return;
+        throw new DiagnosticException(LumenDiagnostic.error("E401", "List element type mismatch")
+                .at(ctx.block().line(), ctx.block().raw())
+                .label("expected '" + expected.displayName() + "', got '" + actual.displayName() + "'")
+                .help("this list only accepts '" + expected.displayName() + "' elements")
+                .build());
     }
 
     private static void flushIfStored(
@@ -124,7 +114,7 @@ public final class ListStatements {
                 .example("add task to todos for player")
                 .since("1.0.0")
                 .category(Categories.LIST)
-                .handler((line, ctx, out) -> emitScopedMutation(ctx, out, ctx.tokens("list").get(0), ctx.java("scope"), tmp -> "((List<Object>) " + tmp + ").add(" + ctx.java("val") + ");")));
+                .handler((line, ctx, out) -> emitScopedMutation(ctx, out, ctx.tokens("list").get(0), ctx.java("scope"), tmp -> "((List) " + tmp + ").add(" + ctx.java("val") + ");")));
 
         api.patterns().statement(b -> b
                 .by("Lumen")
@@ -170,7 +160,7 @@ public final class ListStatements {
                     }
 
                     ctx.codegen().addImport(List.class.getName());
-                    out.line("((List<Object>) " + listJava + ").add(" + ctx.java("val") + ");");
+                    out.line("((List) " + listJava + ").add(" + ctx.java("val") + ");");
                     flushIfStored(env, out, listJava, listVarName(ctx));
                 }));
 
@@ -226,7 +216,7 @@ public final class ListStatements {
                 .handler((line, ctx, out) -> {
                     String listJava = ctx.java("list");
                     ctx.codegen().addImport(List.class.getName());
-                    out.line("((List<Object>) " + listJava + ").set(" + ctx.java("i") + ", " + ctx.java("val") + ");");
+                    out.line("((List) " + listJava + ").set(" + ctx.java("i") + ", " + ctx.java("val") + ");");
                     flushIfStored(ctx.env(), out, listJava, listVarName(ctx));
                 }));
     }
