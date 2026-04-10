@@ -27,6 +27,7 @@ import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.LumenTypeRegistry;
 import dev.lumenlang.lumen.api.type.NullableType;
 import dev.lumenlang.lumen.api.type.ObjectType;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.pipeline.type.TypeChecker;
 import dev.lumenlang.lumen.pipeline.util.FuzzyMatch;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
@@ -235,9 +236,8 @@ public final class VarDeclarationForm implements StatementFormHandler {
 
         String java;
         VarRef inheritedRef = null;
-        @Nullable ObjectType resolvedObjectType = null;
-        @Nullable LumenType exprLumenType = null;
-        @NotNull Map<String, Object> resolvedMetadata = Map.of();
+        LumenType exprLumenType = e.resolvedType();
+        Map<String, Object> resolvedMetadata = Map.of();
 
         if (e instanceof Expr.Literal l) {
             if (l.value() instanceof String s) {
@@ -272,14 +272,12 @@ public final class VarDeclarationForm implements StatementFormHandler {
                 ExpressionResult exprResult = tryExpressionPattern(raw.tokens(), ctx, env);
                 if (exprResult != null) {
                     java = exprResult.java();
-                    resolvedObjectType = exprResult.type() instanceof ObjectType ot ? ot : null;
                     exprLumenType = exprResult.type();
                     resolvedMetadata = exprResult.metadata();
                 } else {
                     ExpressionResult resolvedResult = ExprResolver.resolveWithType(raw.tokens(), ctx.codegenContext(), env);
                     if (resolvedResult != null) {
                         java = resolvedResult.java();
-                        resolvedObjectType = resolvedResult.type() instanceof ObjectType ot ? ot : null;
                         exprLumenType = resolvedResult.type();
                         resolvedMetadata = resolvedResult.metadata();
                     } else {
@@ -324,15 +322,10 @@ public final class VarDeclarationForm implements StatementFormHandler {
         LumenType resolvedLumenType;
         if (inheritedRef != null) {
             resolvedLumenType = inheritedRef.type();
-        } else if (exprLumenType != null) {
-            resolvedLumenType = exprLumenType;
         } else {
-            resolvedLumenType = e.resolvedType();
+            resolvedLumenType = exprLumenType;
         }
-        if (resolvedLumenType == null && resolvedObjectType != null) {
-            resolvedLumenType = resolvedObjectType;
-        }
-        String typeDecl = resolvedLumenType != null ? resolvedLumenType.javaTypeName() : "var";
+        String typeDecl = resolvedLumenType.javaTypeName();
         ctx.out().line(typeDecl + " " + name + " = " + java + ";");
         VarRef varRef = new VarRef(resolvedLumenType, name, resolvedMetadata);
         env.defineVar(name, varRef);
@@ -442,13 +435,13 @@ public final class VarDeclarationForm implements StatementFormHandler {
         }
         Token single = raw.tokens().get(0);
         if (single.kind() == TokenKind.IDENT) {
-            if (isNullKeyword(single.text())) return new TypedExpression("null", null);
+            if (isNullKeyword(single.text())) return new TypedExpression("null", PrimitiveType.STRING);
             VarRef varRef = env.lookupVar(single.text());
             return varRef != null ? new TypedExpression(varRef.java(), varRef.type()) : null;
         }
-        return new TypedExpression(ExprResolver.joinTokens(raw.tokens()), null);
+        return new TypedExpression(ExprResolver.joinTokens(raw.tokens()), PrimitiveType.STRING);
     }
 
-    private record TypedExpression(@NotNull String java, @Nullable LumenType type) {
+    private record TypedExpression(@NotNull String java, @NotNull LumenType type) {
     }
 }

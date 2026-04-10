@@ -10,6 +10,7 @@ import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
 import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.handler.BlockHandler;
 import dev.lumenlang.lumen.api.pattern.Categories;
+import dev.lumenlang.lumen.api.type.CollectionType;
 import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.api.type.PrimitiveType;
@@ -72,12 +73,17 @@ public final class MapBlocks {
                                     .help("use a different variable name")
                                     .build());
                         }
+                        EnvironmentAccess.VarHandle mapRef = (EnvironmentAccess.VarHandle) ctx.value("map");
+                        CollectionType mapType = (CollectionType) mapRef.type();
+                        LumenType keyType = mapType.typeArguments().get(0);
+                        LumenType valType = mapType.typeArguments().get(1);
+                        String mapJava = ctx.java("map");
                         String entryVar = "__entry_" + keyName + "_" + valName;
-                        out.line("for (var " + entryVar + " : ((Map<?, ?>) " + ctx.java("map") + ").entrySet()) {");
-                        out.line("var " + keyName + " = " + entryVar + ".getKey();");
-                        out.line("var " + valName + " = " + entryVar + ".getValue();");
-                        ctx.env().defineVar(keyName, null, keyName);
-                        ctx.env().defineVar(valName, null, valName);
+                        out.line("for (var " + entryVar + " : ((Map<?, ?>) " + mapJava + ").entrySet()) {");
+                        out.line(keyType.javaTypeName() + " " + keyName + " = (" + keyType.javaTypeName() + ") " + entryVar + ".getKey();");
+                        out.line(valType.javaTypeName() + " " + valName + " = (" + valType.javaTypeName() + ") " + entryVar + ".getValue();");
+                        ctx.env().defineVar(keyName, keyType, keyName);
+                        ctx.env().defineVar(valName, valType, valName);
                     }
 
                     @Override
@@ -151,22 +157,20 @@ public final class MapBlocks {
                                     .build());
                         }
                         LumenType scopeType = scopeRef.type();
-                        if (scopeType == null) {
-                            throw new DiagnosticException(LumenDiagnostic.error("E502", "Scope variable '" + scopeVarName + "' has no type")
-                                    .at(ctx.block().line(), ctx.block().raw())
-                                    .label("expected a typed variable")
-                                    .help("use a typed variable like a player or entity as scope")
-                                    .build());
-                        }
 
                         ctx.codegen().addImport(Map.class.getName());
                         ctx.codegen().addImport(HashMap.class.getName());
+                        EnvironmentAccess.VarHandle mapRef = env.lookupVar(mapVarName);
+                        CollectionType mapType = (CollectionType) mapRef.type();
+                        LumenType keyType = mapType.typeArguments().get(0);
+                        LumenType valType = mapType.typeArguments().get(1);
                         String entryVar = "__entry_" + keyName + "_" + valName;
-                        out.line("for (var " + entryVar + " : ((Map<?, ?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") + ".get(" + "\"" + info.className() + "." + mapVarName + ".\" + " + ((ObjectType) scopeType).keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")).entrySet()) {");
-                        out.line("var " + keyName + " = " + entryVar + ".getKey();");
-                        out.line("var " + valName + " = " + entryVar + ".getValue();");
-                        env.defineVar(keyName, null, keyName);
-                        env.defineVar(valName, null, valName);
+                        out.line("for (Map.Entry<?, ?> " + entryVar + " : ((Map<?, ?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") +
+                                ".get(" + "\"" + info.className() + "." + mapVarName + ".\" + " + ((ObjectType) scopeType).keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")).entrySet()) {");
+                        out.line(keyType.javaTypeName() + " " + keyName + " = (" + keyType.javaTypeName() + ") " + entryVar + ".getKey();");
+                        out.line(valType.javaTypeName() + " " + valName + " = (" + valType.javaTypeName() + ") " + entryVar + ".getValue();");
+                        ctx.env().defineVar(keyName, keyType, keyName);
+                        ctx.env().defineVar(valName, valType, valName);
                     }
 
                     @Override

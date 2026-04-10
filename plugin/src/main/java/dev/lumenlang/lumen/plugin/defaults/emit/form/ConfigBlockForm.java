@@ -7,6 +7,8 @@ import dev.lumenlang.lumen.api.emit.BlockFormHandler;
 import dev.lumenlang.lumen.api.emit.EmitContext;
 import dev.lumenlang.lumen.api.emit.ScriptLine;
 import dev.lumenlang.lumen.api.emit.ScriptToken;
+import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.pipeline.language.exceptions.LumenScriptException;
 import org.jetbrains.annotations.NotNull;
 
@@ -77,20 +79,25 @@ public final class ConfigBlockForm implements BlockFormHandler {
             ctx.env().registerConfig(name, java);
 
             String fieldType;
+            LumenType configType;
             if (java.startsWith("\"")) {
                 fieldType = "String";
+                configType = PrimitiveType.STRING;
             } else if (java.contains(".")) {
                 fieldType = "double";
+                configType = PrimitiveType.DOUBLE;
             } else {
                 try {
                     Long.parseLong(java);
                     fieldType = "long";
+                    configType = PrimitiveType.LONG;
                 } catch (NumberFormatException e) {
                     fieldType = "String";
+                    configType = PrimitiveType.STRING;
                 }
             }
             ctx.codegen().addField("private " + fieldType + " " + name + " = " + java + ";");
-            ctx.env().defineRootVar(name, null, name);
+            ctx.env().defineRootVar(name, configType, name);
         }
     }
 }

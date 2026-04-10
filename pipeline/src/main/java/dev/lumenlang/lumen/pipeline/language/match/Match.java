@@ -217,13 +217,13 @@ public record Match(
      * expression together with type and metadata from the original expression result.
      *
      * @param javaExpr  the resolved Java expression
-     * @param type      the type of the expression, or {@code null}
+     * @param type      the type of the expression
      * @param metadata  compile-time metadata from the expression result
      * @return a VarHandle backed by the expression with full type info
      */
     public static EnvironmentAccess.@NotNull VarHandle syntheticHandle(
             @NotNull String javaExpr,
-            @Nullable LumenType type,
+            @NotNull LumenType type,
             @NotNull Map<String, Object> metadata) {
         return new InlineVarRef(javaExpr, type, metadata);
     }
@@ -236,12 +236,12 @@ public record Match(
      */
     private record InlineVarRef(
             @NotNull String javaExpr,
-            @Nullable LumenType lumenType,
+            @NotNull LumenType lumenType,
             @NotNull Map<String, Object> meta
     ) implements EnvironmentAccess.VarHandle {
 
         @Override
-        public @Nullable LumenType type() {
+        public @NotNull LumenType type() {
             return lumenType;
         }
 

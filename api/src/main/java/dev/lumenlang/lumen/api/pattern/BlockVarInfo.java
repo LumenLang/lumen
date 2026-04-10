@@ -14,39 +14,16 @@ import java.util.Map;
  *
  * @param name        the variable name accessible in script child statements (e.g. "player")
  * @param type        a human readable type string for documentation (e.g. "Player", "World")
- * @param lumenType   the compile-time type for tooling, or {@code null} if untyped
+ * @param lumenType   the compile-time type
  * @param metadata    compile-time metadata entries (e.g. "nullable" to true)
  * @param description a human readable description of this variable, or {@code null}
  */
 public record BlockVarInfo(
         @NotNull String name,
         @NotNull String type,
-        @Nullable LumenType lumenType,
+        @NotNull LumenType lumenType,
         @NotNull Map<String, Object> metadata,
         @Nullable String description) {
-
-    /**
-     * Creates a BlockVarInfo with no type, no metadata, and no description.
-     *
-     * @param name the variable name
-     * @param type the human readable type string
-     */
-    public BlockVarInfo(@NotNull String name, @NotNull String type) {
-        this(name, type, null, Map.of(), null);
-    }
-
-    /**
-     * Creates a BlockVarInfo with no type.
-     *
-     * @param name        the variable name
-     * @param type        the human readable type string
-     * @param metadata    compile-time metadata entries
-     * @param description a human readable description, or {@code null}
-     */
-    public BlockVarInfo(@NotNull String name, @NotNull String type,
-                        @NotNull Map<String, Object> metadata, @Nullable String description) {
-        this(name, type, null, metadata, description);
-    }
 
     /**
      * Creates a BlockVarInfo from a {@link LumenType}, deriving the human readable
@@ -57,10 +34,5 @@ public record BlockVarInfo(
      */
     public BlockVarInfo(@NotNull String name, @NotNull LumenType lumenType) {
         this(name, lumenType.displayName(), lumenType, Map.of(), null);
-    }
-
-    private static @NotNull String simpleNameOf(@NotNull String fqcn) {
-        int dot = fqcn.lastIndexOf('.');
-        return dot >= 0 ? fqcn.substring(dot + 1) : fqcn;
     }
 }

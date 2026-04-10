@@ -515,7 +515,7 @@ public final class TypeEnv implements EnvironmentAccess {
     }
 
     @Override
-    public VarHandle defineRootVar(@NotNull String name, @Nullable LumenType type, @NotNull String java) {
+    public VarHandle defineRootVar(@NotNull String name, @NotNull LumenType type, @NotNull String java) {
         VarRef ref = new VarRef(type, java);
         rootVars.put(name, ref);
         return ref;
@@ -540,14 +540,14 @@ public final class TypeEnv implements EnvironmentAccess {
     }
 
     @Override
-    public VarHandle defineVar(@NotNull String name, @Nullable LumenType type, @NotNull String java) {
+    public VarHandle defineVar(@NotNull String name, @NotNull LumenType type, @NotNull String java) {
         VarRef ref = new VarRef(type, java);
         defineVar(name, ref);
         return ref;
     }
 
     @Override
-    public VarHandle defineVar(@NotNull String name, @Nullable LumenType type, @NotNull String java, @NotNull Map<String, Object> metadata) {
+    public VarHandle defineVar(@NotNull String name, @NotNull LumenType type, @NotNull String java, @NotNull Map<String, Object> metadata) {
         VarRef ref = new VarRef(type, java, metadata);
         defineVar(name, ref);
         return ref;

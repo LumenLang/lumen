@@ -26,23 +26,23 @@ import java.util.Map;
  * immutable once attached; use {@link #withMeta(String, Object)} to produce a copy with
  * additional entries.
  *
- * @param type     the compile-time type, or {@code null} if unknown
+ * @param type     the compile-time type
  * @param java     the Java variable name that will appear in generated source
  * @param metadata an unmodifiable map of compile-time metadata entries
  * @see LumenType
  * @see TypeEnv
  */
 @SuppressWarnings("unused")
-public record VarRef(@Nullable LumenType type, @NotNull String java, @NotNull Map<String, Object> metadata)
+public record VarRef(@NotNull LumenType type, @NotNull String java, @NotNull Map<String, Object> metadata)
         implements EnvironmentAccess.VarHandle {
 
     /**
      * Creates a {@code VarRef} with no metadata.
      *
-     * @param type the compile-time type, or {@code null}
+     * @param type the compile-time type
      * @param java the Java variable name
      */
-    public VarRef(@Nullable LumenType type, @NotNull String java) {
+    public VarRef(@NotNull LumenType type, @NotNull String java) {
         this(type, java, Map.of());
     }
 

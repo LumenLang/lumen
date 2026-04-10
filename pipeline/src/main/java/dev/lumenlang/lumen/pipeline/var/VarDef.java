@@ -20,12 +20,12 @@ import org.jetbrains.annotations.Nullable;
  *       type bindings can resolve it by name during pattern matching.</li>
  * </ol>
  *
- * @param type     the compile-time type, or {@code null} for plain variables
+ * @param type     the compile-time type
  * @param javaType the fully-qualified Java class name used in the generated declaration
  * @param expr     the Java initialiser expression (e.g. {@code "event.getPlayer()"})
  * @see VarRef
  */
-public record VarDef(@Nullable LumenType type, @NotNull String javaType, @NotNull String expr) {
+public record VarDef(@NotNull LumenType type, @NotNull String javaType, @NotNull String expr) {
 
     /**
      * Narrows the compile-time type to {@link ObjectType} if possible.

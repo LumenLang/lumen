@@ -10,6 +10,7 @@ import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
 import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.handler.BlockHandler;
 import dev.lumenlang.lumen.api.pattern.Categories;
+import dev.lumenlang.lumen.api.type.CollectionType;
 import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.api.type.PrimitiveType;
@@ -37,26 +38,15 @@ import static dev.lumenlang.lumen.api.pattern.LumaExample.top;
 public class ListBlocks {
 
     /**
-     * Resolves the element type from the list variable's {@code element_type} metadata.
-     *
-     * <p>If the list was declared with {@code new list of <type>} and that type corresponds
-     * to a registered data schema, the returned handle will be the DATA type. Otherwise,
-     * returns {@code null} so the loop variable remains untyped.
+     * Resolves the element type from the list variable's {@link CollectionType}.
      *
      * @param ctx the binding access for the current pattern match
-     * @return the element type, or {@code null} if unknown
+     * @return the element type from the list's type arguments
      */
-    private static @Nullable LumenType resolveElementType(@NotNull BindingAccess ctx) {
-        Object listValue = ctx.value("list");
-        if (!(listValue instanceof EnvironmentAccess.VarHandle listRef)) return null;
-        if (!listRef.hasMeta("element_type")) return null;
-
-        String elementType = String.valueOf(listRef.meta("element_type"));
-        Object schema = ctx.env().get("data_schema_" + elementType);
-        if (schema != null) {
-            return BuiltinLumenTypes.DATA;
-        }
-        return null;
+    private static @NotNull LumenType resolveElementType(@NotNull BindingAccess ctx) {
+        EnvironmentAccess.VarHandle listRef = (EnvironmentAccess.VarHandle) ctx.value("list");
+        CollectionType listType = (CollectionType) listRef.type();
+        return listType.typeArguments().get(0);
     }
 
     /**
@@ -111,9 +101,9 @@ public class ListBlocks {
                                     .build());
                         }
                         String listJava = ctx.java("list");
-                        out.line("for (var " + varName + " : (List<?>) " + listJava + ") {");
-
                         LumenType elementType = resolveElementType(ctx);
+                        out.line("for (" + elementType.javaTypeName() + " " + varName + " : (List<" + elementType.javaTypeName() + ">) " + listJava + ") {");
+
                         Map<String, Object> metadata = resolveElementMetadata(ctx);
                         if (metadata != null) {
                             ctx.env().defineVar(varName, elementType, varName, metadata);
@@ -191,10 +181,13 @@ public class ListBlocks {
                                     .build());
                         }
 
+                        EnvironmentAccess.VarHandle listRef = env.lookupVar(listVarName);
+                        CollectionType listType = (CollectionType) listRef.type();
+                        LumenType elementType = listType.typeArguments().get(0);
                         ctx.codegen().addImport(List.class.getName());
                         ctx.codegen().addImport(ArrayList.class.getName());
-                        out.line("for (var " + varName + " : (List<?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") + ".get(" + "\"" + info.className() + "." + listVarName + ".\" + " + ((ObjectType) scopeType).keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")) {");
-                        env.defineVar(varName, null, varName);
+                        out.line("for (var " + varName + " : (List<" + elementType.javaTypeName() + ">) " + (info.stored() ? "PersistentVars" : "GlobalVars") + ".get(" + "\"" + info.className() + "." + listVarName + ".\" + " + ((ObjectType) scopeType).keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")) {");
+                        env.defineVar(varName, elementType, varName);
                     }
 
                     @Override

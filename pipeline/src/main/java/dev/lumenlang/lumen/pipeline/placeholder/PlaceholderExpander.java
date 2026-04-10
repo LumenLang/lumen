@@ -117,16 +117,17 @@ public final class PlaceholderExpander {
     }
 
     /**
-     * Returns the {@link LumenType} of a placeholder expression, or {@code null} if
-     * the placeholder cannot be resolved.
+     * Returns the {@link LumenType} of a placeholder expression.
+     *
+     * <p>Defaults to {@link PrimitiveType#STRING} when the placeholder type cannot be determined.
      *
      * @param placeholder the placeholder text without braces (e.g. "player_y")
      * @param env         the type environment for variable lookups
-     * @return the lumen type, or {@code null} if unresolvable
+     * @return the lumen type
      */
-    public static @Nullable LumenType resolveExpressionType(@NotNull String placeholder, @NotNull TypeEnv env) {
+    public static @NotNull LumenType resolveExpressionType(@NotNull String placeholder, @NotNull TypeEnv env) {
         PlaceholderType phType = resolveType(placeholder, env);
-        if (phType == null) return null;
+        if (phType == null) return PrimitiveType.STRING;
         return switch (phType) {
             case STRING -> PrimitiveType.STRING;
             case NUMBER -> PrimitiveType.DOUBLE;

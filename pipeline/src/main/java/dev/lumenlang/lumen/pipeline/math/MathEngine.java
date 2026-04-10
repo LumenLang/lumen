@@ -157,8 +157,7 @@ public final class MathEngine {
         return hasOperator;
     }
 
-    private static @NotNull LumenType widenTypes(@Nullable LumenType a, @Nullable LumenType b) {
-        if (a == null || b == null) return PrimitiveType.INT;
+    private static @NotNull LumenType widenTypes(@NotNull LumenType a, @NotNull LumenType b) {
         PrimitiveType widened = LumenType.widenNumeric(a, b);
         return widened != null ? widened : PrimitiveType.INT;
     }
@@ -332,7 +331,7 @@ public final class MathEngine {
                 }
                 throw new DiagnosticException(b.build());
             }
-            return new TypedFragment(ref.java(), type != null ? type : PrimitiveType.INT);
+            return new TypedFragment(ref.java(), type);
         }
 
         if (t.kind() == TokenKind.SYMBOL && t.text().equals("{")) {
@@ -347,7 +346,7 @@ public final class MathEngine {
                     throw new RuntimeException("Cannot resolve placeholder in math expression: {" + placeholder + "}");
                 }
                 LumenType phType = PlaceholderExpander.resolveExpressionType(placeholder, env);
-                return new TypedFragment(java, phType != null ? phType : PrimitiveType.DOUBLE);
+                return new TypedFragment(java, phType);
             }
         }
 
@@ -373,11 +372,11 @@ public final class MathEngine {
      * resolved numeric type.
      *
      * @param java the Java expression source string
-     * @param type the resolved numeric type, or {@code null} if unknown
+     * @param type the resolved numeric type
      */
-    public record TypedResult(@NotNull String java, @Nullable LumenType type) {
+    public record TypedResult(@NotNull String java, @NotNull LumenType type) {
     }
 
-    private record TypedFragment(@NotNull String java, @Nullable LumenType type) {
+    private record TypedFragment(@NotNull String java, @NotNull LumenType type) {
     }
 }

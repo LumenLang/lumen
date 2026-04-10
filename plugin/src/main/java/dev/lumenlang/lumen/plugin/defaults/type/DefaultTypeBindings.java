@@ -492,7 +492,7 @@ public final class DefaultTypeBindings {
             }
 
             private boolean isPlayer(@NotNull VarHandle ref) {
-                return ref.type() != null && ref.type().id().equals(MinecraftTypes.PLAYER);
+                return MinecraftTypes.PLAYER.equals(ref.type());
             }
         });
 
@@ -536,7 +536,7 @@ public final class DefaultTypeBindings {
             }
 
             private boolean isPlayer(@NotNull VarHandle ref) {
-                return ref.type() != null && ref.type().id().equals(MinecraftTypes.PLAYER);
+                return MinecraftTypes.PLAYER.equals(ref.type());
             }
         });
     }
@@ -581,7 +581,7 @@ public final class DefaultTypeBindings {
             }
 
             private boolean isOfflinePlayer(@NotNull VarHandle ref) {
-                return ref.type() != null && ref.type().id().equals(MinecraftTypes.OFFLINE_PLAYER);
+                return MinecraftTypes.OFFLINE_PLAYER.equals(ref.type());
             }
         });
 
@@ -625,7 +625,7 @@ public final class DefaultTypeBindings {
             }
 
             private boolean isOfflinePlayer(@NotNull VarHandle ref) {
-                return ref.type() != null && ref.type().id().equals(MinecraftTypes.OFFLINE_PLAYER);
+                return MinecraftTypes.OFFLINE_PLAYER.equals(ref.type());
             }
         });
     }
@@ -816,10 +816,7 @@ public final class DefaultTypeBindings {
             }
 
             private boolean isEntity(@NotNull VarHandle ref) {
-                if (ref.type() == null)
-                    return false;
-                String id = ref.type().id();
-                return id.equals(MinecraftTypes.ENTITY) || id.equals(MinecraftTypes.PLAYER);
+                return MinecraftTypes.ENTITY.equals(ref.type()) || MinecraftTypes.PLAYER.equals(ref.type());
             }
         });
 
@@ -863,10 +860,7 @@ public final class DefaultTypeBindings {
             }
 
             private boolean isEntity(@NotNull VarHandle ref) {
-                if (ref.type() == null)
-                    return false;
-                String id = ref.type().id();
-                return id.equals(MinecraftTypes.ENTITY) || id.equals(MinecraftTypes.PLAYER);
+                return MinecraftTypes.ENTITY.equals(ref.type()) || MinecraftTypes.PLAYER.equals(ref.type());
             }
         });
 
@@ -976,7 +970,7 @@ public final class DefaultTypeBindings {
                     return 1;
                 VarHandle ref = env.lookupVar(tokens.get(0));
                 if (ref != null) {
-                    if (ref.type() != null && ref.type().id().equals(MinecraftTypes.ITEMSTACK))
+                    if (MinecraftTypes.ITEMSTACK.equals(ref.type()))
                         throw new ParseFailureException("ITEM does not accept ITEMSTACK variable: " + tokens.get(0));
                     return 1;
                 }
@@ -992,7 +986,7 @@ public final class DefaultTypeBindings {
                     return normalized;
                 VarHandle ref = env.lookupVar(raw);
                 if (ref != null) {
-                    if (ref.type() != null && ref.type().id().equals(MinecraftTypes.ITEMSTACK))
+                    if (MinecraftTypes.ITEMSTACK.equals(ref.type()))
                         throw new ParseFailureException("ITEM does not accept ITEMSTACK variable: " + raw);
                     return ref;
                 }
@@ -1052,7 +1046,7 @@ public final class DefaultTypeBindings {
             }
 
             private boolean isItemStack(@NotNull VarHandle ref) {
-                return ref.type() != null && ref.type().id().equals(MinecraftTypes.ITEMSTACK);
+                return MinecraftTypes.ITEMSTACK.equals(ref.type());
             }
         });
 
@@ -1095,7 +1089,7 @@ public final class DefaultTypeBindings {
             }
 
             private boolean isItemStack(@NotNull VarHandle ref) {
-                return ref.type() != null && ref.type().id().equals(MinecraftTypes.ITEMSTACK);
+                return MinecraftTypes.ITEMSTACK.equals(ref.type());
             }
         });
     }
@@ -1135,7 +1129,7 @@ public final class DefaultTypeBindings {
             }
 
             private boolean isWorld(@NotNull VarHandle ref) {
-                return ref.type() != null && ref.type().id().equals(MinecraftTypes.WORLD);
+                return MinecraftTypes.WORLD.equals(ref.type());
             }
         });
     }
@@ -1175,7 +1169,7 @@ public final class DefaultTypeBindings {
             }
 
             private boolean isLocation(@NotNull VarHandle ref) {
-                return ref.type() != null && ref.type().id().equals(MinecraftTypes.LOCATION);
+                return MinecraftTypes.LOCATION.equals(ref.type());
             }
         });
     }
@@ -1375,7 +1369,7 @@ public final class DefaultTypeBindings {
             }
 
             private boolean isBlock(@NotNull VarHandle ref) {
-                return ref.type() != null && ref.type().id().equals(MinecraftTypes.BLOCK);
+                return MinecraftTypes.BLOCK.equals(ref.type());
             }
         });
     }

@@ -93,10 +93,10 @@ public final class InventoryEventBlocks {
         env.defineVar("player", MinecraftTypes.PLAYER, "player");
         env.defineVar("world", MinecraftTypes.WORLD, "world");
         env.defineVar("inventory", MinecraftTypes.INVENTORY, "inventory");
-        env.defineVar("slot", null, "slot");
-        env.defineVar("clickType", null, "clickType");
-        env.defineVar("action", null, "action");
-        env.defineVar("title", null, "title");
+        env.defineVar("slot", PrimitiveType.INT, "slot");
+        env.defineVar("clickType", PrimitiveType.STRING, "clickType");
+        env.defineVar("action", PrimitiveType.STRING, "action");
+        env.defineVar("title", PrimitiveType.STRING, "title");
         env.defineVar("item", MinecraftTypes.ITEMSTACK, "item");
         env.defineVar("cursor", MinecraftTypes.ITEMSTACK, "cursor");
     }
@@ -116,7 +116,7 @@ public final class InventoryEventBlocks {
         env.defineVar("player", MinecraftTypes.PLAYER, "player");
         env.defineVar("world", MinecraftTypes.WORLD, "world");
         env.defineVar("inventory", MinecraftTypes.INVENTORY, "inventory");
-        env.defineVar("title", null, "title");
+        env.defineVar("title", PrimitiveType.STRING, "title");
     }
 
     @Call

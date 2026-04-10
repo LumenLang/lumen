@@ -17,8 +17,7 @@ public final class TypeUtils {
      * @param type the type to inspect
      * @return the object type, or {@code null} if the underlying type is not an ObjectType
      */
-    public static @Nullable ObjectType asObject(@Nullable LumenType type) {
-        if (type == null) return null;
+    public static @Nullable ObjectType asObject(@NotNull LumenType type) {
         LumenType unwrapped = type instanceof NullableType n ? n.inner() : type;
         return unwrapped instanceof ObjectType obj ? obj : null;
     }
@@ -29,8 +28,7 @@ public final class TypeUtils {
      * @param type the type to inspect
      * @return the primitive type, or {@code null} if the underlying type is not a PrimitiveType
      */
-    public static @Nullable PrimitiveType asPrimitive(@Nullable LumenType type) {
-        if (type == null) return null;
+    public static @Nullable PrimitiveType asPrimitive(@NotNull LumenType type) {
         LumenType unwrapped = type instanceof NullableType n ? n.inner() : type;
         return unwrapped instanceof PrimitiveType p ? p : null;
     }

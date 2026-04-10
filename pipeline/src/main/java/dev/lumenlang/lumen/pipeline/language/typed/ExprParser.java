@@ -91,7 +91,7 @@ public final class ExprParser {
             return new Expr.MathExpr(result.java(), result.type());
         }
 
-        return new Expr.RawExpr(tokens);
+        return new Expr.RawExpr(tokens, PrimitiveType.STRING);
     }
 
     /**

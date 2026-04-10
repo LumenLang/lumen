@@ -301,6 +301,6 @@ public final class ExprResolver {
         return s.equals("+") || s.equals("-") || s.equals("*") || s.equals("/");
     }
 
-    private record TypedOperand(@NotNull String java, @Nullable LumenType type) {
+    private record TypedOperand(@NotNull String java, @NotNull LumenType type) {
     }
 }

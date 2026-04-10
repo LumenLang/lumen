@@ -43,11 +43,11 @@ public interface EnvironmentAccess {
      * Defines a named variable in the current block scope.
      *
      * @param name the variable name to bind
-     * @param type the type for type checking, or {@code null} for plain variables
+     * @param type the compile-time type for type checking
      * @param java the Java variable name in generated code
      * @return a reference to the defined variable
      */
-    VarHandle defineVar(@NotNull String name, @Nullable LumenType type, @NotNull String java);
+    VarHandle defineVar(@NotNull String name, @NotNull LumenType type, @NotNull String java);
 
     /**
      * Defines a named variable in the current block scope with compile-time metadata.
@@ -56,12 +56,12 @@ public interface EnvironmentAccess {
      * patterns can inspect it for parse-time validation.
      *
      * @param name     the variable name to bind
-     * @param type     the type for type checking, or {@code null} for plain variables
+     * @param type     the compile-time type for type checking
      * @param java     the Java variable name in generated code
      * @param metadata compile-time metadata entries
      * @return a reference to the defined variable
      */
-    VarHandle defineVar(@NotNull String name, @Nullable LumenType type, @NotNull String java, @NotNull Map<String, Object> metadata);
+    VarHandle defineVar(@NotNull String name, @NotNull LumenType type, @NotNull String java, @NotNull Map<String, Object> metadata);
 
     /**
      * Stores an arbitrary key-value pair in the global map.
@@ -252,11 +252,11 @@ public interface EnvironmentAccess {
      * Defines a variable at the root (class) scope, making it visible from all block contexts.
      *
      * @param name the variable name
-     * @param type the type for type checking, or {@code null} for plain variables
+     * @param type the compile-time type for type checking
      * @param java the Java variable name in generated code
      * @return a reference to the defined variable
      */
-    VarHandle defineRootVar(@NotNull String name, @Nullable LumenType type, @NotNull String java);
+    VarHandle defineRootVar(@NotNull String name, @NotNull LumenType type, @NotNull String java);
 
     /**
      * Returns the current block context, or {@code null} if not inside any block.
@@ -273,11 +273,11 @@ public interface EnvironmentAccess {
     interface VarHandle {
 
         /**
-         * Returns the compile-time type of this variable, or {@code null} if unknown.
+         * Returns the compile-time type of this variable.
          *
-         * @return the type, or {@code null}
+         * @return the compile-time type
          */
-        @Nullable LumenType type();
+        @NotNull LumenType type();
 
         /**
          * Returns the Java variable name that this variable maps to in generated code.
