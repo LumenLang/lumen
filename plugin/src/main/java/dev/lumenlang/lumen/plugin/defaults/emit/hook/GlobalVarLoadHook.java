@@ -28,7 +28,7 @@ import java.util.Map;
  * via {@code get name for scope}.
  */
 @Registration(order = -2000)
-@SuppressWarnings({"unused", "DataFlowIssue"})
+@SuppressWarnings("unused")
 public final class GlobalVarLoadHook implements BlockEnterHook {
     public static final String TAG = "global-var-load";
 

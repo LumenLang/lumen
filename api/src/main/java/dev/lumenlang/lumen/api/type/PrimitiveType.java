@@ -12,10 +12,10 @@ import java.util.Locale;
 public enum PrimitiveType implements LumenType {
     INT("int", "int", "Integer", 1, List.of("int", "integer")),
     LONG("long", "long", "Long", 2, List.of("long")),
-    DOUBLE("double", "double", "Double", 4, List.of("double")),
+    DOUBLE("double", "double", "Double", 4, List.of("double", "number", "num", "decimal")),
     FLOAT("float", "float", "Float", 3, List.of("float")),
     BOOLEAN("boolean", "boolean", "Boolean", 0, List.of("boolean", "bool")),
-    STRING("String", "java.lang.String", "String", 0, List.of("string", "text"));
+    STRING("String", "java.lang.String", "String", 0, List.of("string", "text", "str"));
 
     private final @NotNull String id;
     private final @NotNull String javaType;

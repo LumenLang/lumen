@@ -235,6 +235,18 @@ public final class GlobalBlock implements BlockFormHandler {
         String className = ctx.codegen().className();
         Map<String, Object> exprMetadata = resolveExprMetadata(exprTokens, env, ctx);
 
+        String schemaName = typeResult.dataSchemaName();
+        if (schemaName != null) {
+            String metaKey = (declaredType instanceof CollectionType) ? "element_type" : "data_type";
+            if (exprMetadata == null) {
+                exprMetadata = Map.of(metaKey, schemaName);
+            } else if (!exprMetadata.containsKey(metaKey)) {
+                Map<String, Object> merged = new java.util.HashMap<>(exprMetadata);
+                merged.put(metaKey, schemaName);
+                exprMetadata = Map.copyOf(merged);
+            }
+        }
+
         env.registerGlobal(new TypeEnv.GlobalVarInfo(name, defaultJava, className, scoped, stored, exprMetadata, declaredType, scopeType));
     }
 

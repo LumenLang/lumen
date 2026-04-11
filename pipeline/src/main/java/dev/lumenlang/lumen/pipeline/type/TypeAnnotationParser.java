@@ -28,10 +28,15 @@ import java.util.function.Function;
  * <p>Types are resolved through {@link LumenType#fromName(String)} and the provided data schema
  * lookup. This class does not hardcode any specific types.
  *
- * @param type          the resolved type
- * @param tokensConsumed the number of tokens consumed from the input
+ * @param type            the resolved type
+ * @param tokensConsumed  the number of tokens consumed from the input
+ * @param dataSchemaName  the data schema name if this type was resolved from a data class declaration, or {@code null}
  */
-public record TypeAnnotationParser(@NotNull LumenType type, int tokensConsumed) {
+public record TypeAnnotationParser(@NotNull LumenType type, int tokensConsumed, @Nullable String dataSchemaName) {
+
+    public TypeAnnotationParser(@NotNull LumenType type, int tokensConsumed) {
+        this(type, tokensConsumed, null);
+    }
 
     /**
      * A positioned parse error with an optional fuzzy match suggestion.
@@ -93,26 +98,45 @@ public record TypeAnnotationParser(@NotNull LumenType type, int tokensConsumed) 
 
         switch (word) {
             case "nullable" -> {
+                if (offset + 1 >= tokens.size()) return new ParseResult.Failure(new ParseError(offset + 1, "expected a type after 'nullable'", null));
                 ParseResult inner = parseDetailed(tokens, offset + 1, schemaLookup);
                 if (inner instanceof ParseResult.Failure) return inner;
                 ParseResult.Success s = (ParseResult.Success) inner;
-                return new ParseResult.Success(new TypeAnnotationParser(s.parser().type().wrapAsNullable(), 1 + s.parser().tokensConsumed()));
+                return new ParseResult.Success(new TypeAnnotationParser(s.parser().type().wrapAsNullable(), 1 + s.parser().tokensConsumed(), s.parser().dataSchemaName()));
             }
             case "list" -> {
-                if (!hasIdentAt(tokens, offset + 1, "of")) return new ParseResult.Failure(new ParseError(offset + 1, "expected 'of' after 'list'", null));
+                if (offset + 1 >= tokens.size()) return new ParseResult.Failure(new ParseError(offset + 1, "expected 'of' after 'list'", null));
+                if (!hasIdentAt(tokens, offset + 1, "of")) {
+                    String got = tokens.get(offset + 1).text();
+                    String suggestion = FuzzyMatch.closest(got, List.of("of"));
+                    return new ParseResult.Failure(new ParseError(offset + 1, "expected 'of' after 'list', got '" + got + "'", suggestion != null ? "list of" : null));
+                }
+                if (offset + 2 >= tokens.size()) return new ParseResult.Failure(new ParseError(offset + 2, "expected element type after 'list of'", null));
                 ParseResult element = parseDetailed(tokens, offset + 2, schemaLookup);
                 if (element instanceof ParseResult.Failure) return element;
                 ParseResult.Success s = (ParseResult.Success) element;
                 CollectionType listType = BuiltinLumenTypes.listOf(s.parser().type());
-                return new ParseResult.Success(new TypeAnnotationParser(listType, 2 + s.parser().tokensConsumed()));
+                return new ParseResult.Success(new TypeAnnotationParser(listType, 2 + s.parser().tokensConsumed(), s.parser().dataSchemaName()));
             }
             case "map" -> {
-                if (!hasIdentAt(tokens, offset + 1, "of")) return new ParseResult.Failure(new ParseError(offset + 1, "expected 'of' after 'map'", null));
+                if (offset + 1 >= tokens.size()) return new ParseResult.Failure(new ParseError(offset + 1, "expected 'of' after 'map'", null));
+                if (!hasIdentAt(tokens, offset + 1, "of")) {
+                    String got = tokens.get(offset + 1).text();
+                    String suggestion = FuzzyMatch.closest(got, List.of("of"));
+                    return new ParseResult.Failure(new ParseError(offset + 1, "expected 'of' after 'map', got '" + got + "'", suggestion != null ? "map of" : null));
+                }
+                if (offset + 2 >= tokens.size()) return new ParseResult.Failure(new ParseError(offset + 2, "expected key type after 'map of'", null));
                 ParseResult keyResult = parseDetailed(tokens, offset + 2, schemaLookup);
                 if (keyResult instanceof ParseResult.Failure) return keyResult;
                 ParseResult.Success keySuccess = (ParseResult.Success) keyResult;
                 int afterKey = offset + 2 + keySuccess.parser().tokensConsumed();
-                if (!hasIdentAt(tokens, afterKey, "to")) return new ParseResult.Failure(new ParseError(afterKey, "expected 'to' after key type", null));
+                if (afterKey >= tokens.size()) return new ParseResult.Failure(new ParseError(afterKey, "expected 'to' after key type in 'map of <key> to <value>'", null));
+                if (!hasIdentAt(tokens, afterKey, "to")) {
+                    String got = tokens.get(afterKey).text();
+                    String suggestion = FuzzyMatch.closest(got, List.of("to"));
+                    return new ParseResult.Failure(new ParseError(afterKey, "expected 'to' after key type, got '" + got + "'", suggestion != null ? "to" : null));
+                }
+                if (afterKey + 1 >= tokens.size()) return new ParseResult.Failure(new ParseError(afterKey + 1, "expected value type after 'to' in 'map of <key> to <value>'", null));
                 ParseResult valueResult = parseDetailed(tokens, afterKey + 1, schemaLookup);
                 if (valueResult instanceof ParseResult.Failure) return valueResult;
                 ParseResult.Success valueSuccess = (ParseResult.Success) valueResult;
@@ -125,13 +149,18 @@ public record TypeAnnotationParser(@NotNull LumenType type, int tokensConsumed) 
         if (resolved != null) return new ParseResult.Success(new TypeAnnotationParser(resolved, 1));
 
         DataSchema schema = schemaLookup.apply(word);
-        if (schema != null) return new ParseResult.Success(new TypeAnnotationParser(BuiltinLumenTypes.DATA, 1));
+        if (schema != null) return new ParseResult.Success(new TypeAnnotationParser(BuiltinLumenTypes.DATA, 1, word));
 
-        List<String> knownTypes = new ArrayList<>(LumenType.allKnownTypeNames());
-        knownTypes.add("nullable");
-        knownTypes.add("list");
-        knownTypes.add("map");
-        return new ParseResult.Failure(new ParseError(offset, "unknown type '" + word + "'", FuzzyMatch.closest(word, knownTypes)));
+        List<String> allKnown = allKnownNames();
+        return new ParseResult.Failure(new ParseError(offset, "unknown type '" + word + "'", FuzzyMatch.closest(word, allKnown)));
+    }
+
+    private static @NotNull List<String> allKnownNames() {
+        List<String> names = new ArrayList<>(LumenType.allKnownTypeNames());
+        names.add("nullable");
+        names.add("list");
+        names.add("map");
+        return names;
     }
 
     private static boolean hasIdentAt(@NotNull List<? extends ScriptToken> tokens, int index, @NotNull String expected) {

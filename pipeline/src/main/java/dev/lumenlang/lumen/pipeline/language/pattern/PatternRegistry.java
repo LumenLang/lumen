@@ -82,7 +82,7 @@ public final class PatternRegistry {
      */
     public static PatternRegistry instance() {
         if (INSTANCE == null) {
-            throw new RuntimeException("Called PatternRegistry#instance before plugin enables or in type bindings.");
+            throw new RuntimeException("Called PatternRegistry#instance before plugin enables.");
         }
         return PatternRegistry.INSTANCE;
     }

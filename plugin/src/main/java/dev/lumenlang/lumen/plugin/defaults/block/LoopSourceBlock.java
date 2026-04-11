@@ -5,6 +5,8 @@ import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.codegen.BindingAccess;
 import dev.lumenlang.lumen.api.codegen.JavaOutput;
+import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
+import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.handler.BlockHandler;
 import dev.lumenlang.lumen.api.handler.LoopHandler;
 import dev.lumenlang.lumen.api.pattern.Categories;
@@ -14,9 +16,12 @@ import dev.lumenlang.lumen.pipeline.codegen.BlockContext;
 import dev.lumenlang.lumen.pipeline.codegen.CodegenContext;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
+import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.loop.LoopRegistry;
 import dev.lumenlang.lumen.pipeline.loop.RegisteredLoopMatch;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 import static dev.lumenlang.lumen.api.pattern.LumaExample.of;
 import static dev.lumenlang.lumen.api.pattern.LumaExample.secondly;
@@ -49,23 +54,37 @@ public final class LoopSourceBlock {
                     @Override
                     public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
                         if (ctx.block().isRoot()) {
-                            throw new RuntimeException("A 'loop' block cannot be top-level");
+                            throw new DiagnosticException(LumenDiagnostic.error("E502", "A 'loop' block cannot be top level")
+                                    .at(ctx.block().line(), ctx.block().raw())
+                                    .label("top level loop not allowed")
+                                    .help("place 'loop' inside an event, command, or other block")
+                                    .build());
                         }
                         String varName = ctx.java("var");
                         if (ctx.env().lookupVar(varName) != null) {
-                            throw new RuntimeException("Loop variable '" + varName + "' is already defined in this scope.");
+                            throw new DiagnosticException(LumenDiagnostic.error("E502", "Loop variable '" + varName + "' is already defined")
+                                    .at(ctx.block().line(), ctx.block().raw())
+                                    .label("'" + varName + "' already exists in this scope")
+                                    .help("use a different variable name")
+                                    .build());
                         }
                         BindingContext bc = (BindingContext) ctx;
                         TypeEnv env = (TypeEnv) ctx.env();
-                        RegisteredLoopMatch loopMatch = PatternRegistry.instance()
-                                .matchLoop(bc.bound("source").tokens(), env);
+                        RegisteredLoopMatch loopMatch = PatternRegistry.instance().matchLoop(bc.bound("source").tokens(), env);
                         if (loopMatch == null) {
-                            loopMatch = PatternRegistry.instance()
-                                    .matchLoopSlow(bc.bound("source").tokens(), env);
+                            loopMatch = PatternRegistry.instance().matchLoopSlow(bc.bound("source").tokens(), env);
                         }
                         if (loopMatch == null) {
-                            throw new RuntimeException(
-                                    "Unknown loop source: '" + ctx.java("source") + "'. Expected a list variable or a registered loop source like 'all players'.");
+                            List<Token> sourceTokens = bc.bound("source").tokens();
+                            String sourceText = ctx.java("source");
+                            int hlStart = sourceTokens.get(0).start();
+                            int hlEnd = sourceTokens.get(sourceTokens.size() - 1).end();
+                            throw new DiagnosticException(LumenDiagnostic.error("E500", "Unknown loop source '" + sourceText + "'")
+                                    .at(ctx.block().line(), ctx.block().raw())
+                                    .highlight(hlStart, hlEnd)
+                                    .label("not a list variable or registered loop source")
+                                    .help("see https://lumenlang.dev/loops for available loop sources, or use a list variable, e.g. 'loop x in myList'")
+                                    .build());
                         }
                         BindingContext loopCtx = new BindingContext(loopMatch.match(), env, (CodegenContext) ctx.codegen(), (BlockContext) ctx.block());
                         LoopHandler.LoopResult result = loopMatch.reg().handler().handle(loopCtx);
