@@ -47,30 +47,6 @@ command listplayers:
         message player "&e- {p}"
 ```
 
-`all online players` works the same way.
-
-### All Entities in a World
-
-Iterate over every entity in a specific world:
-
-```luma
-command countentities:
-    loop e in all entities in world:
-        message player "&7- Entity found"
-```
-
-The `world` at the end is the world expression. You could also use a variable that holds a world.
-
-### All Worlds
-
-Iterate over every loaded world on the server:
-
-```luma
-command worlds:
-    loop w in all worlds:
-        message player "&a- {w}"
-```
-
 :::alert info
-Addons can register their own loop sources, so more may be available depending on what is installed. Check the [reference documentation](https://lumenlang.dev/loops) for a full list.
+Check the [reference documentation](https://lumenlang.dev/loops) for a full list.
 :::

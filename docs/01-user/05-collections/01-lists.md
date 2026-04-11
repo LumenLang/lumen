@@ -1,164 +1,99 @@
 ---
-description: "Working with lists: creating typed lists, adding, removing, looping, and scoped operations."
+description: "Lists hold ordered collections of values that can be added to, removed from, and iterated."
 ---
 
 # Lists
 
-Lists are ordered, typed collections. Every list is declared with a type so the compiler knows what kind of elements it holds.
-
-## Creating a Typed List
-
-Use `new list of <type>` to create a list with a known element type:
+A list holds an ordered sequence of values. You declare typed lists in a `global:` block:
 
 ```luma
-set names to new list of string
-set scores to new list of int
+global:
+    fruits: list of string
+    scores: list of int
 ```
 
-For a global or stored list:
+Lists start empty by default.
+
+## Adding and Removing
 
 ```luma
-global stored warps with default new list of warp
-```
-
-This creates a list that is saved across restarts, starting empty, and only accepts `warp` entries.
-
-## Adding Items
-
-Use `add ... to` to append an item:
-
-```luma
-set fruits to new list of string
 add "apple" to fruits
 add "banana" to fruits
-add "cherry" to fruits
+remove "apple" from fruits
 ```
 
-Adding the wrong type to a typed list will produce a parse time error. For example, adding something that is not a `warp` to a list declared as `new list of warp` will be rejected.
-
-## Getting Items by Index
-
-Retrieve an item at a specific position (indices start at 0):
-
-```luma
-set first to get fruits at index 0
-set second to get fruits at index 1
-```
-
-## Size
-
-```luma
-set count to fruits size
-message player "&eYou have {count} items."
-```
-
-## Checking if Empty
-
-```luma
-if notes is empty:
-    message player "&7No notes yet."
-```
-
-## Checking if a List Contains a Value
-
-```luma
-if currencies contains "gold":
-    message player "&eGold exists!"
-
-if currencies does not contain "silver":
-    message player "&7No silver."
-```
-
-## Removing Items
-
-Remove by value (removes the first occurrence):
-
-```luma
-remove "banana" from fruits
-```
-
-Remove by index:
+You can also remove by index (zero based):
 
 ```luma
 remove index 0 from fruits
 ```
 
-Practical example where a player provides a 1 based number that needs converting to a 0 based index:
+To replace a value at a specific position:
 
 ```luma
-set num to get args at index 1
-set idx to num as integer
-subtract 1 from idx
-remove index idx from notes
-message player "&aRemoved note #{num}."
+set fruits at index 0 to "cherry"
 ```
 
-## Clearing
-
-Remove all items at once:
+To remove everything:
 
 ```luma
-clear notes
+clear fruits
+```
+
+## Reading Values
+
+Get an item by index:
+
+```luma
+set first to get fruits at index 0
+```
+
+Get the number of items:
+
+```luma
+set count to fruits size
+set count to size of fruits
+```
+
+Find where a value appears:
+
+```luma
+set pos to fruits index of "banana"
+```
+
+## Conditions
+
+```luma
+if fruits contains "apple":
+    message player "Has apple"
+
+if fruits is empty:
+    message player "No fruits"
 ```
 
 ## Looping
 
-You can loop over a list and remove items during iteration:
-
 ```luma
-loop entry in warps:
-    set name to get field "name" of entry
-    if name is target:
-        remove entry from warps
+loop fruit in fruits:
+    message player "&e- {fruit}"
 ```
 
-For more on looping syntax, including loop sources and maps, see the [Loops](../01-basics/05-loops.md) page.
+See [Loops](../01-basics/05-loops.md) for more on loop syntax.
 
-## Using Typed Lists with Data Classes
+## Scoped Lists
 
-When combining typed lists with data classes, the loop variable automatically inherits the element type. This means field access works without any extra annotations:
-
-```luma
-data warp:
-    name text
-    x number
-    y number
-    z number
-
-global stored warps with default new list of warp
-```
+When a list is `scoped to player` (or another entity), every operation needs `for <entity>`:
 
 ```luma
-set entry to new warp with name "Spawn" x 0 y 64 z 0
-add entry to warps
+global:
+    scoped to player inventory_log: list of string
 
-loop entry in warps:
-    set warpname to get field "name" of entry
-    message player "&e{warpname}"
+on interact:
+    add "used item" to inventory_log for player
+
+command mylog:
+    loop entry in inventory_log for player:
+        message player "&7- {entry}"
 ```
 
-## Scoped List Operations
-
-When a list is declared as a scoped global (with `scoped`), you can operate on it directly using `for <scope>` without loading it into a local variable first.
-
-```luma
-global stored scoped todos with default new list of string
-```
-
-```luma
-add "Buy milk" to todos for player
-
-set count to todos size for player
-
-if todos is empty for player:
-    message player "&7You have nothing to do."
-
-loop item in todos for player:
-    message player "&e- {item}"
-
-remove "Buy milk" from todos for player
-
-remove index 0 from todos for player
-
-clear todos for player
-```
+All list operations support the `for <entity>` suffix when working with scoped lists.
