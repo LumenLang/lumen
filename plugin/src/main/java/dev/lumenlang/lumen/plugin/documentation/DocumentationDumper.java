@@ -7,6 +7,10 @@ import dev.lumenlang.lumen.api.event.AdvancedEventDefinition;
 import dev.lumenlang.lumen.api.event.EventDefinition;
 import dev.lumenlang.lumen.api.pattern.BlockVarInfo;
 import dev.lumenlang.lumen.api.pattern.PatternMeta;
+import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.type.LumenTypeRegistry;
+import dev.lumenlang.lumen.api.type.ObjectType;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.api.type.TypeBindingMeta;
 import dev.lumenlang.lumen.pipeline.addon.AddonManager;
 import dev.lumenlang.lumen.pipeline.conditions.registry.RegisteredCondition;
@@ -56,6 +60,7 @@ import java.util.concurrent.CompletableFuture;
  *   <li>{@code events} - registered event definitions.</li>
  *   <li>{@code empty} - {@code true} if this addon registered nothing; tooling should mark it as unused and treat the version as potentially outdated.</li>
  *   <li>{@code typeBindings} - registered type bindings; only present on the Lumen file (subject to change in the future).</li>
+ *   <li>{@code types} - all registered Lumen types (primitives and object types); only present on the Lumen file.</li>
  * </ul>
  *
  * <h2>Pattern entry fields (statements, expressions, conditions, blocks, loopSources)</h2>
@@ -102,6 +107,17 @@ import java.util.concurrent.CompletableFuture;
  *   <li>{@code examples} - list of example usage strings.</li>
  *   <li>{@code since} - version string, or {@code null}.</li>
  *   <li>{@code deprecated} - {@code true} if the type is deprecated.</li>
+ * </ul>
+ *
+ * <h2>Type entry fields</h2>
+ * <ul>
+ *   <li>{@code id} - the unique type identifier (e.g. {@code "PLAYER"}, {@code "int"}).</li>
+ *   <li>{@code kind} - the type kind: {@code "primitive"} or {@code "object"}.</li>
+ *   <li>{@code javaType} - the fully qualified Java type name.</li>
+ *   <li>{@code displayName} - the human readable name shown in errors and documentation.</li>
+ *   <li>{@code names} - list of accepted user facing names (primitives only).</li>
+ *   <li>{@code numeric} - {@code true} if the type supports arithmetic (primitives only).</li>
+ *   <li>{@code superTypes} - list of parent type IDs in the hierarchy (object types only).</li>
  * </ul>
  *
  * @see PatternRegistry
@@ -171,8 +187,9 @@ public final class DocumentationDumper {
                 List<Map<String, Object>> lps = loops.getOrDefault(name, List.of());
                 List<Map<String, Object>> evts = events.getOrDefault(name, List.of());
                 List<Map<String, Object>> types = LUMEN.equals(name) ? collectTypeBindings(typeRegistry) : List.of();
+                List<Map<String, Object>> lumenTypes = LUMEN.equals(name) ? collectTypes() : List.of();
 
-                boolean empty = stmts.isEmpty() && exprs.isEmpty() && conds.isEmpty() && blks.isEmpty() && lps.isEmpty() && evts.isEmpty() && types.isEmpty();
+                boolean empty = stmts.isEmpty() && exprs.isEmpty() && conds.isEmpty() && blks.isEmpty() && lps.isEmpty() && evts.isEmpty() && types.isEmpty() && lumenTypes.isEmpty();
 
                 root.put("empty", empty);
                 root.put("generatedAt", Instant.now().toString());
@@ -183,6 +200,7 @@ public final class DocumentationDumper {
                 root.put("loopSources", lps);
                 root.put("events", evts);
                 root.put("typeBindings", types);
+                root.put("types", lumenTypes);
 
                 try {
                     LumenDoc.write(outputPath.resolve(LumenDoc.resourceName(name)), gson.toJson(root));
@@ -445,6 +463,30 @@ public final class DocumentationDumper {
             }
         }
 
+        return result;
+    }
+
+    private static @NotNull List<Map<String, Object>> collectTypes() {
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (PrimitiveType p : PrimitiveType.values()) {
+            Map<String, Object> obj = new LinkedHashMap<>();
+            obj.put("id", p.id());
+            obj.put("kind", "primitive");
+            obj.put("javaType", p.javaType());
+            obj.put("displayName", p.displayName());
+            obj.put("names", p.names());
+            obj.put("numeric", p.numeric());
+            result.add(obj);
+        }
+        for (ObjectType o : LumenTypeRegistry.values()) {
+            Map<String, Object> obj = new LinkedHashMap<>();
+            obj.put("id", o.id());
+            obj.put("kind", "object");
+            obj.put("javaType", o.javaType());
+            obj.put("displayName", o.displayName());
+            obj.put("superTypes", o.superTypes().stream().map(LumenType::id).toList());
+            result.add(obj);
+        }
         return result;
     }
 }
