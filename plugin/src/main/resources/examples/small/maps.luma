@@ -6,23 +6,28 @@
 #   /stats          View your kill and death counts
 #   /stats reset    Reset all your stats
 
-global stored scoped stats with default new map of string to string
+global:
+    stored scoped to player stats: map of string to int
 
 on entity_death:
     if killer is set:
-        set kills to get stats at key "kills" for killer
-        if kills is not set:
-            set kills to 0
+        set killer_stats to get stats for killer
+        set kills to 0
+        if killer_stats contains key "kills":
+            set kills to get killer_stats at key "kills"
         add 1 to kills
-        set stats at key "kills" to kills for killer
+        set killer_stats at key "kills" to kills
+        set stats to killer_stats for killer
         message killer "&a+1 Kill &7(Total: {kills})"
 
 on player_death:
-    set deaths to get stats at key "deaths" for player
-    if deaths is not set:
-        set deaths to 0
+    set player_stats to get stats for player
+    set deaths to 0
+    if player_stats contains key "deaths":
+        set deaths to get player_stats at key "deaths"
     add 1 to deaths
-    set stats at key "deaths" to deaths for player
+    set player_stats at key "deaths" to deaths
+    set stats to player_stats for player
 
 command stats:
     description "View your kill and death stats"
@@ -30,12 +35,13 @@ command stats:
     if args size >= 1:
         set sub to get args at index 0
         if sub is "reset":
-            clear stats for player
+            delete stored stats for player
             message player "&eStats reset!"
     else:
+        set player_stats to get stats for player
         message player "&6&lYour Stats:"
-        if stats is empty for player:
+        if player_stats is empty:
             message player "  &7No stats yet. Go get some kills!"
         else:
-            loop key val in stats for player:
+            loop key val in player_stats:
                 message player "  &f{key}: &e{val}"

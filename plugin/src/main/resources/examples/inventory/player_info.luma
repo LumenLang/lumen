@@ -7,7 +7,8 @@
 #   /playerinfo            Opens a player info GUI about yourself
 #   /playerinfo <name>     Opens a player info GUI about another player
 
-global scoped info_target with default no player
+global:
+    scoped to player info_target: nullable player
 
 register inventory "player_info":
     set target to get info_target for player
