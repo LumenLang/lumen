@@ -408,8 +408,16 @@ public final class PatternMatcher {
                 return lit.text();
             if (p instanceof PatternPart.FlexLiteral flex)
                 return flex.forms().get(0);
-            if (p instanceof PatternPart.Group g && !g.required())
-                continue;
+            if (p instanceof PatternPart.Group g) {
+                if (!g.required()) continue;
+                for (List<PatternPart> alt : g.alternatives()) {
+                    if (!alt.isEmpty() && alt.get(0) instanceof PatternPart.Literal lit)
+                        return lit.text();
+                    if (!alt.isEmpty() && alt.get(0) instanceof PatternPart.FlexLiteral flex)
+                        return flex.forms().get(0);
+                }
+                return null;
+            }
             if (p instanceof PatternPart.PlaceholderPart)
                 continue;
             return null;
