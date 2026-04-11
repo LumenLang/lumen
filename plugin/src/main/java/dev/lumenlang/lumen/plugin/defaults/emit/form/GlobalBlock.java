@@ -32,7 +32,6 @@ import dev.lumenlang.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -186,25 +185,23 @@ public final class GlobalBlock implements BlockFormHandler {
                     .build());
         }
 
-        TypeAnnotationParser typeResult = TypeAnnotationParser.parse(tokens, idx, n -> env.lookupDataSchema(n));
-        if (typeResult == null) {
-            String typeText = tokens.get(idx).text();
-            List<String> knownTypes = new ArrayList<>(LumenType.allKnownTypeNames());
-            knownTypes.add("nullable");
-            knownTypes.add("list");
-            knownTypes.add("map");
-            String closest = FuzzyMatch.closest(typeText, knownTypes);
-            LumenDiagnostic.Builder diag = LumenDiagnostic.error("E608", "Unknown type '" + typeText + "'")
+        TypeAnnotationParser.ParseResult typeParseResult = TypeAnnotationParser.parseDetailed(tokens, idx, env::lookupDataSchema);
+        if (typeParseResult instanceof TypeAnnotationParser.ParseResult.Failure f) {
+            TypeAnnotationParser.ParseError error = f.error();
+            int errorIdx = Math.min(error.tokenOffset(), tokens.size() - 1);
+            Token errorToken = tokens.get(errorIdx);
+            LumenDiagnostic.Builder diag = LumenDiagnostic.error("E608", "Invalid type annotation")
                     .at(line, raw)
-                    .highlight(tokens.get(idx).start(), tokens.get(idx).end());
-            if (closest != null) {
-                diag.label("did you mean '" + closest + "'?");
+                    .highlight(errorToken.start(), errorToken.end());
+            if (error.suggestion() != null) {
+                diag.label(error.message() + ", did you mean '" + error.suggestion() + "'?");
             } else {
-                diag.label("not a recognized type");
+                diag.label(error.message());
             }
             diag.help("known types: int, string, boolean, player, list of <type>, map of <type> to <type>, nullable <type>, etc.");
             throw new DiagnosticException(diag.build());
         }
+        TypeAnnotationParser typeResult = ((TypeAnnotationParser.ParseResult.Success) typeParseResult).parser();
 
         LumenType declaredType = typeResult.type();
         idx += typeResult.tokensConsumed();
