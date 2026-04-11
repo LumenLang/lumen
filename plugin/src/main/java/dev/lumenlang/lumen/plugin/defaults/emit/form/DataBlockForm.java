@@ -13,6 +13,7 @@ import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.pipeline.data.DataSchema;
 import dev.lumenlang.lumen.pipeline.java.compiled.DataInstance;
+import dev.lumenlang.lumen.pipeline.language.resolve.SuggestionDiagnostics;
 import dev.lumenlang.lumen.pipeline.type.TypeAnnotationParser;
 import org.jetbrains.annotations.NotNull;
 
@@ -74,19 +75,7 @@ public final class DataBlockForm implements BlockFormHandler {
 
             TypeAnnotationParser.ParseResult result = TypeAnnotationParser.parseDetailed(tokens, 1, env::lookupDataSchema);
             if (result instanceof TypeAnnotationParser.ParseResult.Failure f) {
-                TypeAnnotationParser.ParseError error = f.error();
-                int errorIdx = Math.min(error.tokenOffset(), tokens.size() - 1);
-                ScriptToken errorToken = tokens.get(errorIdx);
-                LumenDiagnostic.Builder diag = LumenDiagnostic.error("E702", "Invalid field type in data class '" + typeName + "'")
-                        .at(child.lineNumber(), child.raw())
-                        .highlight(errorToken.start(), errorToken.end());
-                if (error.suggestion() != null) {
-                    diag.label(error.message() + ", did you mean '" + error.suggestion() + "'?");
-                } else {
-                    diag.label(error.message());
-                }
-                diag.help("supported types: int, integer, double, number, nullable <type>, list of <type>, map of <type> to <type>, etc.");
-                throw new DiagnosticException(diag.build());
+                throw new DiagnosticException(SuggestionDiagnostics.buildTypeFailure("E702", "Invalid field type in data class '" + typeName + "'", child.lineNumber(), child.raw(), tokens, f));
             }
 
             TypeAnnotationParser parsed = ((TypeAnnotationParser.ParseResult.Success) result).parser();

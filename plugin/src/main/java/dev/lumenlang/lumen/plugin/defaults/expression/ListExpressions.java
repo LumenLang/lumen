@@ -13,11 +13,16 @@ import dev.lumenlang.lumen.api.type.CollectionType;
 import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.api.type.PrimitiveType;
-import dev.lumenlang.lumen.pipeline.util.FuzzyMatch;
+import dev.lumenlang.lumen.pipeline.codegen.BindingContext;
+import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
+import dev.lumenlang.lumen.pipeline.language.resolve.SuggestionDiagnostics;
+import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
+import dev.lumenlang.lumen.pipeline.type.TypeAnnotationParser;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Registers built-in expression patterns for list operations.
@@ -55,16 +60,16 @@ public final class ListExpressions {
                 .category(Categories.LIST)
                 .handler(ctx -> {
                     ctx.codegen().addImport(ArrayList.class.getName());
-                    String elementTypeName = ctx.tokens("type").get(0).toLowerCase();
-                    LumenType elementType = LumenType.fromName(elementTypeName);
-                    if (elementType == null) {
-                        String suggestion = FuzzyMatch.closest(elementTypeName, LumenType.allKnownTypeNames());
-                        throw new DiagnosticException(LumenDiagnostic.error("E501", "Unknown list element type '" + elementTypeName + "'")
-                                .at(ctx.block().line(), ctx.block().raw())
-                                .label("'" + elementTypeName + "' is not a recognized type")
-                                .help(suggestion != null ? "did you mean '" + suggestion + "'?" : "recognized types: " + String.join(", ", LumenType.allKnownTypeNames()))
-                                .build());
+                    BindingContext bc = (BindingContext) ctx;
+                    TypeEnv env = (TypeEnv) ctx.env();
+                    List<Token> typeTokens = bc.bound("type").tokens();
+                    TypeAnnotationParser.ParseResult result = TypeAnnotationParser.parseDetailed(typeTokens, 0, env::lookupDataSchema);
+                    if (result instanceof TypeAnnotationParser.ParseResult.Failure f) {
+                        throw new DiagnosticException(SuggestionDiagnostics.buildTypeFailure("E501", "Invalid list element type", ctx.block().line(), ctx.block().raw(), typeTokens, f));
                     }
+                    TypeAnnotationParser parsed = ((TypeAnnotationParser.ParseResult.Success) result).parser();
+                    LumenType elementType = parsed.type();
+                    if (parsed.dataSchemaName() != null) return new ExpressionResult("new ArrayList<>()", BuiltinLumenTypes.listOf(elementType), Map.of("element_type", parsed.dataSchemaName()));
                     return new ExpressionResult("new ArrayList<>()", BuiltinLumenTypes.listOf(elementType));
                 }));
 

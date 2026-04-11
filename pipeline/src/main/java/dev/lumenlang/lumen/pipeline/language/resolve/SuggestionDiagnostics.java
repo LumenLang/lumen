@@ -1,8 +1,10 @@
 package dev.lumenlang.lumen.pipeline.language.resolve;
 
 import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
+import dev.lumenlang.lumen.api.emit.ScriptToken;
 import dev.lumenlang.lumen.pipeline.language.match.MatchProgress;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
+import dev.lumenlang.lumen.pipeline.type.TypeAnnotationParser;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -106,6 +108,30 @@ public final class SuggestionDiagnostics {
         }
         builder.help("check spelling or ensure the pattern is defined");
         return builder.build();
+    }
+
+    /**
+     * Builds a diagnostic from a {@link TypeAnnotationParser.ParseResult.Failure}.
+     *
+     * @param errorCode the diagnostic error code
+     * @param title     the diagnostic title
+     * @param line      the source line number
+     * @param raw       the raw source text
+     * @param tokens    the tokens that were being parsed
+     * @param failure   the parse failure result
+     * @return a fully constructed diagnostic
+     */
+    public static @NotNull LumenDiagnostic buildTypeFailure(@NotNull String errorCode, @NotNull String title, int line, @NotNull String raw, @NotNull List<? extends ScriptToken> tokens, @NotNull TypeAnnotationParser.ParseResult.Failure failure) {
+        TypeAnnotationParser.ParseError error = failure.error();
+        int errorIdx = Math.min(error.tokenOffset(), tokens.size() - 1);
+        ScriptToken errorToken = tokens.get(errorIdx);
+        LumenDiagnostic.Builder diag = LumenDiagnostic.error(errorCode, title)
+                .at(line, raw)
+                .highlight(errorToken.start(), errorToken.end());
+        if (error.suggestion() != null) diag.label(error.message() + ", did you mean '" + error.suggestion() + "'?");
+        else diag.label(error.message());
+        diag.help("see https://lumenlang.dev/types for available types");
+        return diag.build();
     }
 
     /**

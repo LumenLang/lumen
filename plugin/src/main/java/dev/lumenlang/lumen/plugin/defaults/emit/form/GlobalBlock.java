@@ -32,6 +32,7 @@ import dev.lumenlang.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -131,7 +132,7 @@ public final class GlobalBlock implements BlockFormHandler {
                 } else {
                     diag.label("not a recognized type");
                 }
-                diag.help("known types: player, entity, etc.");
+                diag.help("see https://lumenlang.dev/types for available types");
                 throw new DiagnosticException(diag.build());
             }
             scoped = true;
@@ -187,19 +188,7 @@ public final class GlobalBlock implements BlockFormHandler {
 
         TypeAnnotationParser.ParseResult typeParseResult = TypeAnnotationParser.parseDetailed(tokens, idx, env::lookupDataSchema);
         if (typeParseResult instanceof TypeAnnotationParser.ParseResult.Failure f) {
-            TypeAnnotationParser.ParseError error = f.error();
-            int errorIdx = Math.min(error.tokenOffset(), tokens.size() - 1);
-            Token errorToken = tokens.get(errorIdx);
-            LumenDiagnostic.Builder diag = LumenDiagnostic.error("E608", "Invalid type annotation")
-                    .at(line, raw)
-                    .highlight(errorToken.start(), errorToken.end());
-            if (error.suggestion() != null) {
-                diag.label(error.message() + ", did you mean '" + error.suggestion() + "'?");
-            } else {
-                diag.label(error.message());
-            }
-            diag.help("known types: int, string, boolean, player, list of <type>, map of <type> to <type>, nullable <type>, etc.");
-            throw new DiagnosticException(diag.build());
+            throw new DiagnosticException(SuggestionDiagnostics.buildTypeFailure("E608", "Invalid type annotation", line, raw, tokens, f));
         }
         TypeAnnotationParser typeResult = ((TypeAnnotationParser.ParseResult.Success) typeParseResult).parser();
 
@@ -237,11 +226,11 @@ public final class GlobalBlock implements BlockFormHandler {
 
         String schemaName = typeResult.dataSchemaName();
         if (schemaName != null) {
-            String metaKey = (declaredType instanceof CollectionType) ? "element_type" : "data_type";
+            String metaKey = (declaredType.unwrap() instanceof CollectionType) ? "element_type" : "data_type";
             if (exprMetadata == null) {
                 exprMetadata = Map.of(metaKey, schemaName);
             } else if (!exprMetadata.containsKey(metaKey)) {
-                Map<String, Object> merged = new java.util.HashMap<>(exprMetadata);
+                Map<String, Object> merged = new HashMap<>(exprMetadata);
                 merged.put(metaKey, schemaName);
                 exprMetadata = Map.copyOf(merged);
             }

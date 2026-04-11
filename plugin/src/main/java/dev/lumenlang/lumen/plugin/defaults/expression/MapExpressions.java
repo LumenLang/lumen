@@ -13,11 +13,16 @@ import dev.lumenlang.lumen.api.type.CollectionType;
 import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.api.type.PrimitiveType;
-import dev.lumenlang.lumen.pipeline.util.FuzzyMatch;
+import dev.lumenlang.lumen.pipeline.codegen.BindingContext;
+import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
+import dev.lumenlang.lumen.pipeline.language.resolve.SuggestionDiagnostics;
+import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
+import dev.lumenlang.lumen.pipeline.type.TypeAnnotationParser;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -59,26 +64,20 @@ public final class MapExpressions {
                 .category(Categories.MAP)
                 .handler(ctx -> {
                     ctx.codegen().addImport(HashMap.class.getName());
-                    String keyTypeName = ctx.tokens("keyType").get(0).toLowerCase();
-                    String valueTypeName = ctx.tokens("valueType").get(0).toLowerCase();
-                    LumenType keyType = LumenType.fromName(keyTypeName);
-                    if (keyType == null) {
-                        String suggestion = FuzzyMatch.closest(keyTypeName, LumenType.allKnownTypeNames());
-                        throw new DiagnosticException(LumenDiagnostic.error("E501", "Unknown map key type '" + keyTypeName + "'")
-                                .at(ctx.block().line(), ctx.block().raw())
-                                .label("'" + keyTypeName + "' is not a recognized type")
-                                .help(suggestion != null ? "did you mean '" + suggestion + "'?" : "recognized types: " + String.join(", ", LumenType.allKnownTypeNames()))
-                                .build());
+                    BindingContext bc = (BindingContext) ctx;
+                    TypeEnv env = (TypeEnv) ctx.env();
+                    List<Token> keyTokens = bc.bound("keyType").tokens();
+                    TypeAnnotationParser.ParseResult keyResult = TypeAnnotationParser.parseDetailed(keyTokens, 0, env::lookupDataSchema);
+                    if (keyResult instanceof TypeAnnotationParser.ParseResult.Failure f) {
+                        throw new DiagnosticException(SuggestionDiagnostics.buildTypeFailure("E501", "Invalid map key type", ctx.block().line(), ctx.block().raw(), keyTokens, f));
                     }
-                    LumenType valueType = LumenType.fromName(valueTypeName);
-                    if (valueType == null) {
-                        String suggestion = FuzzyMatch.closest(valueTypeName, LumenType.allKnownTypeNames());
-                        throw new DiagnosticException(LumenDiagnostic.error("E501", "Unknown map value type '" + valueTypeName + "'")
-                                .at(ctx.block().line(), ctx.block().raw())
-                                .label("'" + valueTypeName + "' is not a recognized type")
-                                .help(suggestion != null ? "did you mean '" + suggestion + "'?" : "recognized types: " + String.join(", ", LumenType.allKnownTypeNames()))
-                                .build());
+                    List<Token> valueTokens = bc.bound("valueType").tokens();
+                    TypeAnnotationParser.ParseResult valueResult = TypeAnnotationParser.parseDetailed(valueTokens, 0, env::lookupDataSchema);
+                    if (valueResult instanceof TypeAnnotationParser.ParseResult.Failure f) {
+                        throw new DiagnosticException(SuggestionDiagnostics.buildTypeFailure("E501", "Invalid map value type", ctx.block().line(), ctx.block().raw(), valueTokens, f));
                     }
+                    LumenType keyType = ((TypeAnnotationParser.ParseResult.Success) keyResult).parser().type();
+                    LumenType valueType = ((TypeAnnotationParser.ParseResult.Success) valueResult).parser().type();
                     return new ExpressionResult("new HashMap<>()", BuiltinLumenTypes.mapOf(keyType, valueType));
                 }));
 

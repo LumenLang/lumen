@@ -10,7 +10,7 @@ import dev.lumenlang.lumen.api.emit.EmitContext;
 import dev.lumenlang.lumen.api.emit.ScriptToken;
 import dev.lumenlang.lumen.api.emit.StatementFormHandler;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
-import dev.lumenlang.lumen.api.type.BuiltinLumenTypes;
+import dev.lumenlang.lumen.api.type.CollectionType;
 import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.NullableType;
 import dev.lumenlang.lumen.api.type.PrimitiveType;
@@ -29,6 +29,7 @@ import dev.lumenlang.lumen.pipeline.language.typed.Expr;
 import dev.lumenlang.lumen.pipeline.language.typed.ExprParser;
 import dev.lumenlang.lumen.pipeline.language.validator.VarNameValidator;
 import dev.lumenlang.lumen.pipeline.placeholder.PlaceholderExpander;
+import dev.lumenlang.lumen.pipeline.type.TypeAnnotationParser;
 import dev.lumenlang.lumen.pipeline.type.TypeChecker;
 import dev.lumenlang.lumen.pipeline.util.FuzzyMatch;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
@@ -330,42 +331,55 @@ public final class VarDeclarationForm implements StatementFormHandler {
     }
 
     private static void emitNullableDeclaration(@NotNull String name, @NotNull List<Token> exprTokens, @NotNull List<Token> pipelineTokens, @NotNull EmitContextImpl ctx, @NotNull TypeEnv env) {
-        String typeName = exprTokens.get(1).text();
-        LumenType innerType = LumenType.fromName(typeName);
-        if (innerType == null && env.lookupDataSchema(typeName) != null) {
-            innerType = BuiltinLumenTypes.DATA;
+        TypeAnnotationParser.ParseResult result = TypeAnnotationParser.parseDetailed(exprTokens, 0, env::lookupDataSchema);
+        if (result instanceof TypeAnnotationParser.ParseResult.Failure f) {
+            throw new DiagnosticException(SuggestionDiagnostics.buildTypeFailure("E501", "Invalid nullable type", ctx.line(), ctx.raw(), exprTokens, f));
         }
-        if (innerType == null) {
-            Token typeToken = exprTokens.get(1);
-            String suggestion = FuzzyMatch.closest(typeName, LumenType.allKnownTypeNames());
-            LumenDiagnostic.Builder diagBuilder = LumenDiagnostic.error("E501", "Unknown type '" + typeName + "'")
-                    .at(ctx.line(), ctx.raw())
-                    .highlight(typeToken.start(), typeToken.end())
-                    .label("not a recognized type");
-            if (suggestion != null) diagBuilder.help("did you mean '" + suggestion + "'?");
-            else diagBuilder.help("expected a type name like 'string', 'int', 'player', etc.");
-            LumenDiagnostic diag = diagBuilder.build();
-            throw new DiagnosticException(diag);
-        }
-        NullableType nullableType = innerType.wrapAsNullable();
+        TypeAnnotationParser parsed = ((TypeAnnotationParser.ParseResult.Success) result).parser();
+        NullableType nullableType = (NullableType) parsed.type();
+        int consumed = parsed.tokensConsumed();
+        List<Token> valueTokens = consumed < exprTokens.size() ? exprTokens.subList(consumed, exprTokens.size()) : null;
+        boolean isNone = valueTokens != null && valueTokens.size() == 1 && isNullKeyword(valueTokens.get(0).text());
         String java;
-        if (exprTokens.size() == 2) {
-            java = "null";
+        TypeEnv.NullState nullState;
+        if (valueTokens == null || isNone) {
+            java = resolveNullableDefault(nullableType, isNone, ctx);
+            nullState = isNone || java.equals("null") ? TypeEnv.NullState.NULL : TypeEnv.NullState.NON_NULL;
         } else {
-            List<Token> valueTokens = exprTokens.subList(2, exprTokens.size());
             java = resolveExpressionJava(valueTokens, ctx, env);
-            if (java == null) {
-                throw new DiagnosticException(buildExpressionDiagnostic(valueTokens, ctx.line(), ctx.raw(), env));
-            }
+            if (java == null) throw new DiagnosticException(buildExpressionDiagnostic(valueTokens, ctx.line(), ctx.raw(), env));
+            nullState = TypeEnv.NullState.NON_NULL;
         }
         ctx.out().line(nullableType.javaTypeName() + " " + name + " = " + java + ";");
-        VarRef varRef = new VarRef(nullableType, name);
+        Map<String, Object> metadata = parsed.dataSchemaName() != null ? Map.of("data_type", parsed.dataSchemaName()) : Map.of();
+        VarRef varRef = new VarRef(nullableType, name, metadata);
         env.defineVar(name, varRef);
         env.recordNullableVarInfo(name, new TypeEnv.NullableVarInfo(ctx.line(), ctx.raw()));
-        env.markNullState(name, exprTokens.size() == 2 ? TypeEnv.NullState.NULL : TypeEnv.NullState.NON_NULL, ctx.line(), ctx.raw());
+        env.markNullState(name, nullState, ctx.line(), ctx.raw());
         if (env.blockContext().parent() != null) {
             env.blockContext().parent().defineVar(name, varRef);
         }
+    }
+
+    private static @NotNull String resolveNullableDefault(@NotNull NullableType type, boolean explicitNone, @NotNull EmitContextImpl ctx) {
+        if (explicitNone) return "null";
+        LumenType inner = type.inner();
+        if (inner instanceof CollectionType ct) {
+            if (ct.id().equals("LIST") && !ct.typeArguments().isEmpty()) {
+                ctx.codegen().addImport("java.util.ArrayList");
+                return "new ArrayList<" + boxedJavaType(ct.typeArguments().get(0)) + ">()";
+            }
+            if (ct.id().equals("MAP") && ct.typeArguments().size() == 2) {
+                ctx.codegen().addImport("java.util.LinkedHashMap");
+                return "new LinkedHashMap<" + boxedJavaType(ct.typeArguments().get(0)) + ", " + boxedJavaType(ct.typeArguments().get(1)) + ">()";
+            }
+        }
+        return "null";
+    }
+
+    private static @NotNull String boxedJavaType(@NotNull LumenType type) {
+        if (type instanceof PrimitiveType p) return p.boxedName();
+        return type.javaTypeName();
     }
 
     private static boolean isNullKeyword(@NotNull String text) {
@@ -390,6 +404,8 @@ public final class VarDeclarationForm implements StatementFormHandler {
             BlockContext block = env.blockContext();
             BindingContext bc = new BindingContext(match.match(), env, ctx.codegenContext(), block);
             return match.reg().handler().handle(bc);
+        } catch (DiagnosticException e) {
+            throw e;
         } catch (RuntimeException e) {
             return null;
         }
