@@ -9,6 +9,7 @@ import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.api.type.BuiltinLumenTypes;
 import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.pipeline.data.DataSchema;
 import dev.lumenlang.lumen.pipeline.java.compiled.DataInstance;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +53,7 @@ public final class DataExpressions {
             if (resolvedType == null) throw new RuntimeException("Cannot determine type of data field: " + fieldType.javaType());
             return new ExpressionResult(fieldType.coerce(rawGet), resolvedType);
         }
-        throw new RuntimeException("Cannot determine type of data field. Ensure the data class schema defines a type for this field.");
+        return new ExpressionResult("String.valueOf(" + rawGet + ")", PrimitiveType.STRING);
     }
 
     /**

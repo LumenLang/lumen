@@ -33,6 +33,7 @@ public final class MapExpressions {
 
     @Call
     public void register(@NotNull LumenAPI api) {
+        // TODO: Remove in 1.4.0
         api.patterns().expression(b -> b
                 .by("Lumen")
                 .pattern("new map")

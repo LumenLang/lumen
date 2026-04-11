@@ -40,8 +40,7 @@ public final class SuggestionDiagnostics {
                     boolean validated = top.progress() != null && top.progress().succeeded();
                     builder.highlight(top.errorToken().start(), top.errorToken().end()).label(validated ? "replace with '" + top.expectedText() + "'" : "did you mean '" + top.expectedText() + "'?");
                     if (top.kind() == PatternSimulator.SuggestionKind.TYPO_AND_REORDER && !top.reorderedTokens().isEmpty()) {
-                        String reorderVerb = validated ? "are" : "appear to be";
-                        builder.note("tokens '" + reorderNote(top.reorderedTokens()) + "' " + reorderVerb + " in the wrong order");
+                        builder.note("tokens '" + reorderNote(top.reorderedTokens()) + "' may be in the wrong order");
                     }
                 }
             }
@@ -50,9 +49,7 @@ public final class SuggestionDiagnostics {
                     List<Token> reordered = top.reorderedTokens();
                     int start = reordered.stream().mapToInt(Token::start).min().orElse(0);
                     int end = reordered.stream().mapToInt(Token::end).max().orElse(0);
-                    boolean validated = top.progress() != null && top.progress().succeeded();
-                    String verb = validated ? "are" : "appear to be";
-                    builder.highlight(start, end).label("tokens '" + reorderNote(reordered) + "' " + verb + " in the wrong order");
+                    builder.highlight(start, end).label("tokens '" + reorderNote(reordered) + "' may be in the wrong order");
                 }
             }
             case TYPE_MISMATCH -> {

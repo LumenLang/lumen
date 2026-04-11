@@ -283,6 +283,8 @@ public final class GlobalBlock implements BlockFormHandler {
 
     private @Nullable Map<String, Object> resolveExprMetadata(@Nullable List<Token> exprTokens, @NotNull TypeEnv env, @NotNull EmitContext ctx) {
         if (exprTokens == null) return null;
+        Expr expr = ExprParser.parse(exprTokens, env);
+        if (!(expr instanceof Expr.RawExpr)) return null;
         RegisteredExpressionMatch exprMatch = PatternRegistry.instance().matchExpression(exprTokens, env);
         if (exprMatch == null) return null;
         BindingContext bc = new BindingContext(exprMatch.match(), env, ((EmitContextImpl) ctx).codegenContext(), env.blockContext());

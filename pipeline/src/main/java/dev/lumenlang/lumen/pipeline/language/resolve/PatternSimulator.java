@@ -176,7 +176,7 @@ public final class PatternSimulator {
                     SuggestionKind kind = hasReorder ? SuggestionKind.TYPO_AND_REORDER : SuggestionKind.TYPO;
                     String detail = "did you mean '" + cs.expectedText + "'?";
                     if (hasReorder)
-                        detail += " tokens '" + reorderDescription(cs.reorderedTokens) + "' appear to be in the wrong order";
+                        detail += " tokens '" + reorderDescription(cs.reorderedTokens) + "' may be in the wrong order";
                     results.add(new Suggestion(cs.pattern, kind, cs.score + 40, detail, cs.typoToken, cs.expectedText, cs.reorderedTokens, corrected));
                 }
                 continue;
@@ -209,9 +209,9 @@ public final class PatternSimulator {
                 kind = SuggestionKind.REORDER;
                 List<Token> reordered = findReorderedFromAnchors(tokens, cs.matchDetails);
                 if (!reordered.isEmpty()) {
-                    detail = "tokens '" + reorderDescription(reordered) + "' appear to be in the wrong order";
+                    detail = "tokens '" + reorderDescription(reordered) + "' may be in the wrong order";
                 } else {
-                    detail = "tokens appear to be in the wrong order";
+                    detail = "tokens may be in the wrong order";
                 }
                 results.add(new Suggestion(cs.pattern, kind, cs.score + 30, detail, cs.typoToken, cs.expectedText, reordered.isEmpty() ? cs.reorderedTokens : reordered, progress));
                 continue;
@@ -231,13 +231,13 @@ public final class PatternSimulator {
                 }
             } else if (hasTypo && hasReorder) {
                 kind = SuggestionKind.TYPO_AND_REORDER;
-                detail = "did you mean '" + cs.expectedText + "'? tokens '" + reorderDescription(cs.reorderedTokens) + "' appear to be in the wrong order";
+                detail = "did you mean '" + cs.expectedText + "'? tokens '" + reorderDescription(cs.reorderedTokens) + "' may be in the wrong order";
             } else if (hasTypo) {
                 kind = SuggestionKind.TYPO;
                 detail = "did you mean '" + cs.expectedText + "'?";
             } else if (hasReorder) {
                 kind = SuggestionKind.REORDER;
-                detail = "tokens '" + reorderDescription(cs.reorderedTokens) + "' appear to be in the wrong order";
+                detail = "tokens '" + reorderDescription(cs.reorderedTokens) + "' may be in the wrong order";
             } else if (cs.kind == SuggestionKind.TYPE_MISMATCH) {
                 kind = SuggestionKind.TYPE_MISMATCH;
                 detail = "pattern matches structurally but a type binding failed";
