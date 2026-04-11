@@ -182,6 +182,12 @@ public final class VarDeclarationForm implements StatementFormHandler {
                 LumenDiagnostic diag = TypeChecker.checkNullAssignment(varType, name, ctx.line(), ctx.raw(), noneToken.start(), noneToken.end());
                 if (diag != null) throw new DiagnosticException(diag);
             }
+            ctx.out().line(ref.java() + " = null;");
+            env.markNullState(name, TypeEnv.NullState.NULL, ctx.line(), ctx.raw());
+            if (env.isStored(name)) {
+                ctx.out().line(env.storedClassName(name) + ".set(" + env.getStoredKey(name) + ", " + ref.java() + ");");
+            }
+            return true;
         }
         TypedExpression resolved = resolveExpressionTyped(exprTokens, ctx, env);
         if (resolved == null) {
@@ -194,7 +200,7 @@ public final class VarDeclarationForm implements StatementFormHandler {
         if (diag != null) throw new DiagnosticException(diag);
         ctx.out().line(ref.java() + " = " + resolved.java + ";");
         if (varType instanceof NullableType) {
-            env.markNullState(name, isNone ? TypeEnv.NullState.NULL : TypeEnv.NullState.NON_NULL, ctx.line(), ctx.raw());
+            env.markNullState(name, TypeEnv.NullState.NON_NULL, ctx.line(), ctx.raw());
         }
         if (env.isStored(name)) {
             ctx.out().line(env.storedClassName(name) + ".set(" + env.getStoredKey(name) + ", " + ref.java() + ");");

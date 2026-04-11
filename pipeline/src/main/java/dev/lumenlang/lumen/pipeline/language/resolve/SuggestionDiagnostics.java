@@ -59,8 +59,12 @@ public final class SuggestionDiagnostics {
                 MatchProgress progress = top.progress();
                 if (progress != null && progress.failedBindingId() != null && !progress.failedTokens().isEmpty()) {
                     Token failedAt = progress.failedTokens().get(0);
-                    String label = "type '" + progress.failedBindingId() + "' cannot parse this";
-                    if (progress.failedReason() != null) label += ": " + progress.failedReason();
+                    String label;
+                    if (progress.failedReason() != null) {
+                        label = "type '" + progress.failedBindingId() + "' failed: " + progress.failedReason();
+                    } else {
+                        label = "type '" + progress.failedBindingId() + "' cannot parse '" + failedAt.text() + "'";
+                    }
                     builder.highlight(failedAt.start(), failedAt.end()).label(label);
                 } else if (progress != null && progress.failedBindingId() != null) {
                     Token last = tokens.isEmpty() ? null : tokens.get(tokens.size() - 1);

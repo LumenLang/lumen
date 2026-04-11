@@ -278,7 +278,7 @@ public final class PatternMatcher {
 
             if (consumeCount == CONSUME_REJECTED) {
                 if (validator == null) {
-                    if (progress != null) progress.recordFailure(ti, pp, binding.id(), remaining);
+                    if (progress != null) progress.recordFailure(ti, pp, binding.id(), ti < tokens.size() ? List.of(tokens.get(ti)) : List.of());
                     return -1;
                 }
                 LumenLogger.debug("PatternMatcher.match", "  consumeCount rejected but validator present, falling through to inline backtracking");
@@ -331,7 +331,7 @@ public final class PatternMatcher {
                 while (choices.size() > choicesSnapshot)
                     choices.remove(choices.size() - 1);
             }
-            if (progress != null) progress.recordFailure(ti, pp, binding.id(), remaining);
+            if (progress != null) progress.recordFailure(ti, pp, binding.id(), ti < tokens.size() ? List.of(tokens.get(ti)) : List.of());
             return -1;
         }
 

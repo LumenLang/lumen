@@ -358,5 +358,21 @@ public interface EnvironmentAccess {
         default @Nullable Map<String, Object> exprMetadata() {
             return null;
         }
+
+        /**
+         * Returns the declared compile-time type of this global variable.
+         *
+         * @return the declared type
+         */
+        @NotNull LumenType type();
+
+        /**
+         * Returns the scope type for scoped globals (e.g. {@code player}, {@code entity}).
+         *
+         * @return the scope type, or {@code null} if the global is not scoped
+         */
+        default @Nullable LumenType scopeType() {
+            return null;
+        }
     }
 }

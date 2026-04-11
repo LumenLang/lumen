@@ -459,7 +459,7 @@ public final class TypeEnv implements EnvironmentAccess {
             globalVars.add(new GlobalVarInfo(
                     info.name(), info.defaultJava(), info.className(),
                     info.scoped(), info.stored(),
-                    info.exprMetadata()));
+                    info.exprMetadata(), info.type(), info.scopeType()));
         }
     }
 
@@ -571,11 +571,15 @@ public final class TypeEnv implements EnvironmentAccess {
      * @param scoped       whether the global is scoped per entity rather than server-wide
      * @param stored       whether the variable is persisted to disk ({@code true}) or in-memory only ({@code false})
      * @param exprMetadata compile-time metadata from the default expression, or {@code null}
+     * @param type         the declared compile-time type
+     * @param scopeType    the scope type for scoped globals, or {@code null} if not scoped
      */
     public record GlobalVarInfo(@NotNull String name, @NotNull String defaultJava,
                                 @NotNull String className, boolean scoped,
                                 boolean stored,
-                                @Nullable Map<String, Object> exprMetadata)
+                                @Nullable Map<String, Object> exprMetadata,
+                                @NotNull LumenType type,
+                                @Nullable LumenType scopeType)
             implements EnvironmentAccess.GlobalInfo {
     }
 

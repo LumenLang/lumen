@@ -215,12 +215,17 @@ public final class PatternSimulator {
                 }
                 results.add(new Suggestion(cs.pattern, kind, cs.score + 30, detail, cs.typoToken, cs.expectedText, reordered.isEmpty() ? cs.reorderedTokens : reordered, progress));
                 continue;
+            } else if (progress != null && progress.failedBindingId() != null) {
+                kind = SuggestionKind.TYPE_MISMATCH;
+                if (progress.failedReason() != null) {
+                    detail = "type binding '" + progress.failedBindingId() + "' failed: " + progress.failedReason();
+                } else {
+                    detail = "type binding '" + progress.failedBindingId() + "' rejected the input";
+                }
             } else if (progress != null && progress.furthestTokenIndex() > tokens.size() / 2) {
                 kind = SuggestionKind.TYPE_MISMATCH;
-                if (progress.failedBindingId() != null) {
+                if (!progress.failedTokens().isEmpty()) {
                     detail = "type binding '" + progress.failedBindingId() + "' rejected the input";
-                } else if (!progress.failedTokens().isEmpty()) {
-                    detail = "unexpected token '" + progress.failedTokens().get(0).text() + "'";
                 } else {
                     detail = "pattern almost matched";
                 }
