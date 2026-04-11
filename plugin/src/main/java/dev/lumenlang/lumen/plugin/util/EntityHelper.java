@@ -38,7 +38,7 @@ import java.util.Objects;
  *
  * @see EntityValidation
  */
-// TODO: Completely rewrite
+// TODO: Completely rewrite this
 @SuppressWarnings("DataFlowIssue")
 public final class EntityHelper {
 
@@ -74,7 +74,6 @@ public final class EntityHelper {
      * @param pattern the original pattern string
      * @return the pattern with {@code [get]} replaced by {@code get}
      */
-    // TODO: Replace all [get] occurrences in the plugin instead of relying on this method
     private static @NotNull String requireGet(@NotNull String pattern) {
         return pattern.replace("[get] ", "get ");
     }
