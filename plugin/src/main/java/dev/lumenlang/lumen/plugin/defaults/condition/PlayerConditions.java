@@ -48,45 +48,57 @@ public final class PlayerConditions {
 
         api.patterns().condition(b -> b
                 .by("Lumen")
-                .pattern("%p:PLAYER% is sneaking")
-                .description("Checks if a player is currently sneaking.")
-                .example("if player is sneaking:")
+                .pattern("%p:PLAYER% (is|is not) sneaking")
+                .description("Checks if a player is or is not currently sneaking.")
+                .examples("if player is sneaking:", "if player is not sneaking:")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((match, env, ctx) -> match.ref("p").java() + ".isSneaking()"));
+                .handler((match, env, ctx) -> {
+                    boolean negated = match.choice(0).equals("is not");
+                    return (negated ? "!" : "") + match.ref("p").java() + ".isSneaking()";
+                }));
 
         api.patterns().condition(b -> b
                 .by("Lumen")
-                .pattern("%p:PLAYER% is sprinting")
-                .description("Checks if a player is currently sprinting.")
-                .example("if player is sprinting:")
+                .pattern("%p:PLAYER% (is|is not) sprinting")
+                .description("Checks if a player is or is not currently sprinting.")
+                .examples("if player is sprinting:", "if player is not sprinting:")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((match, env, ctx) -> match.ref("p").java() + ".isSprinting()"));
+                .handler((match, env, ctx) -> {
+                    boolean negated = match.choice(0).equals("is not");
+                    return (negated ? "!" : "") + match.ref("p").java() + ".isSprinting()";
+                }));
 
         api.patterns().condition(b -> b
                 .by("Lumen")
-                .pattern("%p:PLAYER% is [a] op")
-                .description("Checks if a player has operator status.")
-                .example("if player is a op:")
+                .pattern("%p:PLAYER% (is|is not) [a] op")
+                .description("Checks if a player has or does not have operator status.")
+                .examples("if player is a op:", "if player is not op:")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((match, env, ctx) -> match.ref("p").java() + ".isOp()"));
+                .handler((match, env, ctx) -> {
+                    boolean negated = match.choice(0).equals("is not");
+                    return (negated ? "!" : "") + match.ref("p").java() + ".isOp()";
+                }));
 
         api.patterns().condition(b -> b
                 .by("Lumen")
-                .pattern("%p:PLAYER% is flying")
-                .description("Checks if a player is currently flying.")
-                .example("if player is flying:")
+                .pattern("%p:PLAYER% (is|is not) flying")
+                .description("Checks if a player is or is not currently flying.")
+                .examples("if player is flying:", "if player is not flying:")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((match, env, ctx) -> match.ref("p").java() + ".isFlying()"));
+                .handler((match, env, ctx) -> {
+                    boolean negated = match.choice(0).equals("is not");
+                    return (negated ? "!" : "") + match.ref("p").java() + ".isFlying()";
+                }));
 
         api.patterns().condition(b -> b
                 .by("Lumen")
-                .pattern("%p:PLAYER_POSSESSIVE% gamemode is %mode:EXPR%")
-                .description("Checks if a player's gamemode matches the given mode.")
-                .example("if player's gamemode is \"creative\":")
+                .pattern("%p:PLAYER_POSSESSIVE% gamemode (is|is not) %mode:EXPR%")
+                .description("Checks if a player's gamemode matches or does not match the given mode.")
+                .examples("if player's gamemode is \"creative\":", "if player's gamemode is not \"creative\":")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .handler((match, env, ctx) -> {
@@ -103,7 +115,8 @@ public final class PlayerConditions {
                     };
 
                     ctx.addImport(GameMode.class.getName());
-                    return match.ref("p").java() + ".getGameMode() == GameMode." + gm;
+                    boolean negated = match.choice(0).equals("is not");
+                    return match.ref("p").java() + ".getGameMode() " + (negated ? "!= " : "== ") + "GameMode." + gm;
                 }));
 
         api.patterns().condition(b -> b
@@ -119,24 +132,27 @@ public final class PlayerConditions {
 
         api.patterns().condition(b -> b
                 .by("Lumen")
-                .pattern("%p:PLAYER% is in world %w:STRING%")
-                .description("Checks if a player is in a specific world by name.")
-                .example("if player is in world \"world_nether\":")
+                .pattern("%p:PLAYER% (is|is not) in world %w:STRING%")
+                .description("Checks if a player is or is not in a specific world by name.")
+                .examples("if player is in world \"world_nether\":", "if player is not in world \"world_nether\":")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((match, env, ctx) -> match.ref("p").java()
-                        + ".getWorld().getName().equals(" + match.java("w", ctx, env) + ")"));
+                .handler((match, env, ctx) -> {
+                    boolean negated = match.choice(0).equals("is not");
+                    return (negated ? "!" : "") + match.ref("p").java() + ".getWorld().getName().equals(" + match.java("w", ctx, env) + ")";
+                }));
 
         api.patterns().condition(b -> b
                 .by("Lumen")
-                .pattern("block under %p:PLAYER% is %mat:MATERIAL%")
-                .description("Checks if the block directly below a player is a specific material.")
-                .example("if block under player is diamond_block:")
+                .pattern("block under %p:PLAYER% (is|is not) %mat:MATERIAL%")
+                .description("Checks if the block directly below a player is or is not a specific material.")
+                .examples("if block under player is diamond_block:", "if block under player is not diamond_block:")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((match, env, ctx) -> match.ref("p").java()
-                        + ".getLocation().subtract(0,1,0).getBlock().getType() == "
-                        + match.java("mat", ctx, env)));
+                .handler((match, env, ctx) -> {
+                    boolean negated = match.choice(0).equals("is not");
+                    return match.ref("p").java() + ".getLocation().subtract(0,1,0).getBlock().getType() " + (negated ? "!= " : "== ") + match.java("mat", ctx, env);
+                }));
 
         api.patterns().condition(b -> b
                 .by("Lumen")

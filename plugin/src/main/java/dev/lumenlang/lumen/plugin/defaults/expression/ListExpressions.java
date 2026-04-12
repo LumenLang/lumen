@@ -4,10 +4,20 @@ import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
+import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
+import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.pattern.Categories;
-import dev.lumenlang.lumen.api.type.RefTypeHandle;
-import dev.lumenlang.lumen.api.type.Types;
+import dev.lumenlang.lumen.api.type.BuiltinLumenTypes;
+import dev.lumenlang.lumen.api.type.CollectionType;
+import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.type.ObjectType;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
+import dev.lumenlang.lumen.pipeline.codegen.BindingContext;
+import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
+import dev.lumenlang.lumen.pipeline.language.resolve.SuggestionDiagnostics;
+import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
+import dev.lumenlang.lumen.pipeline.type.TypeAnnotationParser;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -23,37 +33,44 @@ public final class ListExpressions {
 
     @Call
     public void register(@NotNull LumenAPI api) {
+        // TODO: Remove in 1.4.0
         api.patterns().expression(b -> b
                 .by("Lumen")
                 .pattern("new list")
-                .description("Creates a new empty list.")
+                .description("Creates a new empty list. WILL ALWAYS THROW AN ERROR, use 'new list of <type>'")
                 .example("set myList to new list")
+                .deprecated(true)
                 .since("1.0.0")
                 .category(Categories.LIST)
-                .returnRefTypeId(Types.LIST.id())
                 .handler(ctx -> {
-                    ctx.codegen().addImport(ArrayList.class.getName());
-                    return new ExpressionResult(
-                            "new ArrayList<>()",
-                            Types.LIST.id(),
-                            Map.of());
+                    throw new DiagnosticException(LumenDiagnostic.error("E502", "Untyped lists are no longer supported")
+                            .at(ctx.block().line(), ctx.block().raw())
+                            .label("use 'new list of <type>' instead")
+                            .help("example: 'set myList to new list of string'")
+                            .build());
                 }));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
-                .pattern("new list of %type:EXPR%")
+                .pattern("new list [of] %type:EXPR%")
                 .description("Creates a new empty typed list. Elements added to this list will be validated against the declared type.")
-                .examples("set arenas to new list of arena", "set scores to new list of number")
+                .examples("set arenas to new list of arena", "set scores to new list of number", "set names to new list string")
                 .since("1.0.0")
+                .deprecated(true)
                 .category(Categories.LIST)
-                .returnRefTypeId(Types.LIST.id())
                 .handler(ctx -> {
                     ctx.codegen().addImport(ArrayList.class.getName());
-                    String elementType = ctx.tokens("type").get(0).toLowerCase();
-                    return new ExpressionResult(
-                            "new ArrayList<>()",
-                            Types.LIST.id(),
-                            Map.of("element_type", elementType));
+                    BindingContext bc = (BindingContext) ctx;
+                    TypeEnv env = (TypeEnv) ctx.env();
+                    List<Token> typeTokens = bc.bound("type").tokens();
+                    TypeAnnotationParser.ParseResult result = TypeAnnotationParser.parseDetailed(typeTokens, 0, env::lookupDataSchema);
+                    if (result instanceof TypeAnnotationParser.ParseResult.Failure f) {
+                        throw new DiagnosticException(SuggestionDiagnostics.buildTypeFailure("E501", "Invalid list element type", ctx.block().line(), ctx.block().raw(), typeTokens, f));
+                    }
+                    TypeAnnotationParser parsed = ((TypeAnnotationParser.ParseResult.Success) result).parser();
+                    LumenType elementType = parsed.type();
+                    if (parsed.dataSchemaName() != null) return new ExpressionResult("new ArrayList<>()", BuiltinLumenTypes.listOf(elementType), Map.of("element_type", parsed.dataSchemaName()));
+                    return new ExpressionResult("new ArrayList<>()", BuiltinLumenTypes.listOf(elementType));
                 }));
 
         api.patterns().expression(b -> b
@@ -63,12 +80,11 @@ public final class ListExpressions {
                 .example("set count to size of myList")
                 .since("1.0.0")
                 .category(Categories.LIST)
-                .returnJavaType(Types.INT)
                 .handler(ctx -> {
                     ctx.codegen().addImport(List.class.getName());
                     return new ExpressionResult(
                             "((List<?>) " + ctx.java("list") + ").size()",
-                            null, Types.INT);
+                            PrimitiveType.INT);
                 }));
 
         api.patterns().expression(b -> b
@@ -78,12 +94,11 @@ public final class ListExpressions {
                 .example("set count to myList size")
                 .since("1.0.0")
                 .category(Categories.LIST)
-                .returnJavaType(Types.INT)
                 .handler(ctx -> {
                     ctx.codegen().addImport(List.class.getName());
                     return new ExpressionResult(
                             "((List<?>) " + ctx.java("list") + ").size()",
-                            null, Types.INT);
+                            PrimitiveType.INT);
                 }));
 
         api.patterns().expression(b -> b
@@ -95,9 +110,15 @@ public final class ListExpressions {
                 .category(Categories.LIST)
                 .handler(ctx -> {
                     ctx.codegen().addImport(List.class.getName());
+                    Object listVal = ctx.value("list");
+                    LumenType elementType = PrimitiveType.STRING;
+                    if (listVal instanceof EnvironmentAccess.VarHandle ref && ref.type() instanceof CollectionType ct && !ct.typeArguments().isEmpty()) {
+                        elementType = ct.typeArguments().get(0);
+                    }
+                    String castType = (elementType instanceof PrimitiveType pt) ? pt.boxedName() : elementType.javaTypeName();
                     return new ExpressionResult(
-                            "((List<?>) " + ctx.java("list") + ").get(" + ctx.java("i") + ")",
-                            null);
+                            "(" + castType + ") ((List<?>) " + ctx.java("list") + ").get(" + ctx.java("i") + ")",
+                            elementType);
                 }));
 
         api.patterns().expression(b -> b
@@ -107,12 +128,11 @@ public final class ListExpressions {
                 .example("set idx to myList index of \"hello\"")
                 .since("1.0.0")
                 .category(Categories.LIST)
-                .returnJavaType(Types.INT)
                 .handler(ctx -> {
                     ctx.codegen().addImport(List.class.getName());
                     return new ExpressionResult(
                             "((List<?>) " + ctx.java("list") + ").indexOf(" + ctx.java("val") + ")",
-                            null, Types.INT);
+                            PrimitiveType.INT);
                 }));
 
         api.patterns().expression(b -> b
@@ -122,21 +142,38 @@ public final class ListExpressions {
                 .example("set count to size of todos for player")
                 .since("1.0.0")
                 .category(Categories.LIST)
-                .returnJavaType(Types.INT)
                 .handler(ctx -> {
                     EnvironmentAccess env = ctx.env();
                     String listVarName = ctx.tokens("list").get(0);
                     EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(listVarName);
-                    if (info == null) throw new RuntimeException("'" + listVarName + "' is not a global variable.");
-                    if (!info.scoped()) throw new RuntimeException("'" + listVarName + "' is not a scoped global. Declare it with 'global scoped " + listVarName + "' to use per-entity access.");
+                    if (info == null) {
+                        throw new DiagnosticException(LumenDiagnostic.error("E500", "'" + listVarName + "' is not a global variable")
+                                .at(ctx.block().line(), ctx.block().raw())
+                                .label("scoped list operations require a global variable")
+                                .help("declare it with 'global " + listVarName + " with default new list of <type>'")
+                                .build());
+                    }
+                    if (!info.scoped()) {
+                        throw new DiagnosticException(LumenDiagnostic.error("E502", "'" + listVarName + "' is not a scoped global")
+                                .at(ctx.block().line(), ctx.block().raw())
+                                .label("the 'for' keyword requires a scoped global variable")
+                                .help("declare it with 'global scoped " + listVarName + "' to use per-entity access")
+                                .build());
+                    }
                     String scopeVarName = ctx.java("scope");
                     EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
-                    if (scopeRef == null) throw new RuntimeException("Scope variable not found: " + scopeVarName);
-                    RefTypeHandle refType = scopeRef.type();
-                    if (refType == null) throw new RuntimeException("Scope variable '" + scopeVarName + "' has no ref type.");
+                    if (scopeRef == null) {
+                        throw new DiagnosticException(LumenDiagnostic.error("E500", "Scope variable '" + scopeVarName + "' not found")
+                                .at(ctx.block().line(), ctx.block().raw())
+                                .label("'" + scopeVarName + "' is not defined in this scope")
+                                .help("the scope variable must be a player or entity reference")
+                                .build());
+                    }
+                    LumenType scopeType = scopeRef.type();
                     ctx.codegen().addImport(List.class.getName());
                     ctx.codegen().addImport(ArrayList.class.getName());
-                    return new ExpressionResult("((List<?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") + ".get(" + "\"" + info.className() + "." + listVarName + ".\" + " + refType.keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")).size()", null, Types.INT);
+                    return new ExpressionResult("((List<?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") +
+                            ".get(" + "\"" + info.className() + "." + listVarName + ".\" + " + ((ObjectType) scopeType).keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")).size()", PrimitiveType.INT);
                 }));
 
         api.patterns().expression(b -> b
@@ -146,21 +183,38 @@ public final class ListExpressions {
                 .example("set count to todos size for player")
                 .since("1.0.0")
                 .category(Categories.LIST)
-                .returnJavaType(Types.INT)
                 .handler(ctx -> {
                     EnvironmentAccess env = ctx.env();
                     String listVarName = ctx.tokens("list").get(0);
                     EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(listVarName);
-                    if (info == null) throw new RuntimeException("'" + listVarName + "' is not a global variable.");
-                    if (!info.scoped()) throw new RuntimeException("'" + listVarName + "' is not a scoped global. Declare it with 'global scoped " + listVarName + "' to use per-entity access.");
+                    if (info == null) {
+                        throw new DiagnosticException(LumenDiagnostic.error("E500", "'" + listVarName + "' is not a global variable")
+                                .at(ctx.block().line(), ctx.block().raw())
+                                .label("scoped list operations require a global variable")
+                                .help("declare it with 'global " + listVarName + " with default new list of <type>'")
+                                .build());
+                    }
+                    if (!info.scoped()) {
+                        throw new DiagnosticException(LumenDiagnostic.error("E502", "'" + listVarName + "' is not a scoped global")
+                                .at(ctx.block().line(), ctx.block().raw())
+                                .label("the 'for' keyword requires a scoped global variable")
+                                .help("declare it with 'global scoped " + listVarName + "' to use per-entity access")
+                                .build());
+                    }
                     String scopeVarName = ctx.java("scope");
                     EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
-                    if (scopeRef == null) throw new RuntimeException("Scope variable not found: " + scopeVarName);
-                    RefTypeHandle refType = scopeRef.type();
-                    if (refType == null) throw new RuntimeException("Scope variable '" + scopeVarName + "' has no ref type.");
+                    if (scopeRef == null) {
+                        throw new DiagnosticException(LumenDiagnostic.error("E500", "Scope variable '" + scopeVarName + "' not found")
+                                .at(ctx.block().line(), ctx.block().raw())
+                                .label("'" + scopeVarName + "' is not defined in this scope")
+                                .help("the scope variable must be a player or entity reference")
+                                .build());
+                    }
+                    LumenType scopeType = scopeRef.type();
                     ctx.codegen().addImport(List.class.getName());
                     ctx.codegen().addImport(ArrayList.class.getName());
-                    return new ExpressionResult("((List<?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") + ".get(" + "\"" + info.className() + "." + listVarName + ".\" + " + refType.keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")).size()", null, Types.INT);
+                    return new ExpressionResult("((List<?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") +
+                            ".get(" + "\"" + info.className() + "." + listVarName + ".\" + " + ((ObjectType) scopeType).keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")).size()", PrimitiveType.INT);
                 }));
     }
 }

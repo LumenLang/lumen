@@ -1,5 +1,7 @@
 package dev.lumenlang.lumen.pipeline.data;
 
+import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashMap;
@@ -8,14 +10,14 @@ import java.util.Map;
 /**
  * Compile-time schema for a Lumen data class.
  *
- * <p>Holds the type name and an ordered map of field names to their declared types.
+ * <p>Holds the type name and an ordered map of field names to their declared {@link LumenType}.
  * This is used during code generation to validate field references and produce
  * correctly typed accessor code.
  *
  * @param name   the data type name (e.g. "arena")
- * @param fields ordered map of field name to field type (e.g. "name" to "text", "x1" to "number")
+ * @param fields ordered map of field name to {@link LumenType}
  */
-public record DataSchema(@NotNull String name, @NotNull Map<String, FieldType> fields) {
+public record DataSchema(@NotNull String name, @NotNull Map<String, LumenType> fields) {
 
     /**
      * Creates a new DataSchema builder for the given type name.
@@ -28,60 +30,25 @@ public record DataSchema(@NotNull String name, @NotNull Map<String, FieldType> f
     }
 
     /**
-     * Represents a declared field type in a data class.
+     * Returns a Java expression that casts a raw {@code Object} to the given {@link LumenType}.
+     *
+     * @param type the target type
+     * @param expr the Java expression producing an {@code Object}
+     * @return a Java expression with the appropriate cast
      */
-    public enum FieldType {
-        TEXT("String", "String.valueOf($)"),
-        NUMBER("double", "Coerce.toDouble($)"),
-        INTEGER("int", "Coerce.toInt($)"),
-        BOOLEAN("boolean", "Boolean.parseBoolean(String.valueOf($))"),
-        ANY("Object", "$");
-
-        private final @NotNull String javaType;
-        private final @NotNull String coercionTemplate;
-
-        FieldType(@NotNull String javaType, @NotNull String coercionTemplate) {
-            this.javaType = javaType;
-            this.coercionTemplate = coercionTemplate;
-        }
-
-        /**
-         * Parses a field type name from script source.
-         *
-         * @param name the type name as written in the data block
-         * @return the matching FieldType
-         * @throws IllegalArgumentException if the type name is not recognized
-         */
-        public static @NotNull FieldType fromName(@NotNull String name) {
-            return switch (name.toLowerCase()) {
-                case "text", "string", "str" -> TEXT;
-                case "number", "num", "double", "float", "decimal" -> NUMBER;
-                case "integer", "int" -> INTEGER;
-                case "boolean", "bool" -> BOOLEAN;
-                case "any", "object" -> ANY;
-                default -> throw new IllegalArgumentException("Unknown data field type: " + name);
+    public static @NotNull String castFromObject(@NotNull LumenType type, @NotNull String expr) {
+        LumenType unwrapped = type.unwrap();
+        if (unwrapped instanceof PrimitiveType p) {
+            return switch (p) {
+                case INT -> "((Number) " + expr + ").intValue()";
+                case LONG -> "((Number) " + expr + ").longValue()";
+                case DOUBLE -> "((Number) " + expr + ").doubleValue()";
+                case FLOAT -> "((Number) " + expr + ").floatValue()";
+                case BOOLEAN -> "(boolean) " + expr;
+                case STRING -> "(String) " + expr;
             };
         }
-
-        /**
-         * Returns the Java type name for this field type.
-         *
-         * @return the Java type (e.g. "double", "String")
-         */
-        public @NotNull String javaType() {
-            return javaType;
-        }
-
-        /**
-         * Returns a Java expression that coerces a raw Object to this type.
-         * The {@code $} placeholder is replaced with the actual expression.
-         *
-         * @param expr the Java expression to coerce
-         * @return the coerced Java expression
-         */
-        public @NotNull String coerce(@NotNull String expr) {
-            return coercionTemplate.replace("$", expr);
-        }
+        return "(" + unwrapped.javaTypeName() + ") " + expr;
     }
 
     /**
@@ -89,7 +56,7 @@ public record DataSchema(@NotNull String name, @NotNull Map<String, FieldType> f
      */
     public static final class Builder {
         private final @NotNull String name;
-        private final @NotNull Map<String, FieldType> fields = new LinkedHashMap<>();
+        private final @NotNull Map<String, LumenType> fields = new LinkedHashMap<>();
 
         private Builder(@NotNull String name) {
             this.name = name;
@@ -99,10 +66,10 @@ public record DataSchema(@NotNull String name, @NotNull Map<String, FieldType> f
          * Adds a field to the schema.
          *
          * @param fieldName the field name
-         * @param type      the field type
+         * @param type      the field's {@link LumenType}
          * @return this builder
          */
-        public @NotNull Builder field(@NotNull String fieldName, @NotNull FieldType type) {
+        public @NotNull Builder field(@NotNull String fieldName, @NotNull LumenType type) {
             fields.put(fieldName, type);
             return this;
         }

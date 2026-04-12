@@ -7,6 +7,10 @@ import dev.lumenlang.lumen.api.event.AdvancedEventDefinition;
 import dev.lumenlang.lumen.api.event.EventDefinition;
 import dev.lumenlang.lumen.api.pattern.BlockVarInfo;
 import dev.lumenlang.lumen.api.pattern.PatternMeta;
+import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.type.LumenTypeRegistry;
+import dev.lumenlang.lumen.api.type.ObjectType;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.api.type.TypeBindingMeta;
 import dev.lumenlang.lumen.pipeline.addon.AddonManager;
 import dev.lumenlang.lumen.pipeline.conditions.registry.RegisteredCondition;
@@ -56,6 +60,7 @@ import java.util.concurrent.CompletableFuture;
  *   <li>{@code events} - registered event definitions.</li>
  *   <li>{@code empty} - {@code true} if this addon registered nothing; tooling should mark it as unused and treat the version as potentially outdated.</li>
  *   <li>{@code typeBindings} - registered type bindings; only present on the Lumen file (subject to change in the future).</li>
+ *   <li>{@code types} - all registered Lumen types (primitives and object types); only present on the Lumen file.</li>
  * </ul>
  *
  * <h2>Pattern entry fields (statements, expressions, conditions, blocks, loopSources)</h2>
@@ -68,18 +73,12 @@ import java.util.concurrent.CompletableFuture;
  *   <li>{@code deprecated} - {@code true} if the pattern is deprecated.</li>
  * </ul>
  *
- * <h2>Extra fields for expressions</h2>
- * <ul>
- *   <li>{@code returnRefTypeId} - the ref-type ID of the return value (e.g. {@code "PLAYER"}), or {@code null} if Java-typed.</li>
- *   <li>{@code returnJavaType} - the fully qualified Java return type, or {@code null} if ref-typed.</li>
- * </ul>
- *
  * <h2>Extra fields for blocks</h2>
  * <ul>
  *   <li>{@code supportsRootLevel} - {@code true} if the block is allowed at script root level.</li>
  *   <li>{@code supportsBlock} - {@code true} if the block is allowed inside another block.</li>
  *   <li>{@code variables} - list of variables injected into the block scope, each with:
- *     {@code name}, {@code type}, {@code refType} (ref-type ID or {@code null}),
+ *     {@code name}, {@code type}, {@code lumenType} (type ID),
  *     {@code nullable}, {@code description}, and optionally {@code metadata}.</li>
  * </ul>
  *
@@ -96,18 +95,32 @@ import java.util.concurrent.CompletableFuture;
  *   <li>{@code interfaces} - list of implemented interface names (advanced events only).</li>
  *   <li>{@code fields} - map of field name to value (advanced events only).</li>
  *   <li>{@code variables} - list of event variables, each with:
- *     {@code name}, {@code javaType}, {@code refTypeId}, {@code description},
+ *     {@code name}, {@code javaType}, {@code typeId}, {@code description},
  *     {@code nullable}, and optionally {@code metadata}.</li>
  * </ul>
  *
  * <h2>Type binding entry fields</h2>
  * <ul>
- *   <li>{@code id} - the unique ref-type identifier (e.g. {@code "PLAYER"}).</li>
+ *   <li>{@code id} - the unique type identifier (e.g. {@code "PLAYER"}).</li>
  *   <li>{@code description} - human-readable explanation, or {@code null}.</li>
  *   <li>{@code javaType} - the fully qualified Java type this ID maps to, or {@code null}.</li>
  *   <li>{@code examples} - list of example usage strings.</li>
  *   <li>{@code since} - version string, or {@code null}.</li>
  *   <li>{@code deprecated} - {@code true} if the type is deprecated.</li>
+ * </ul>
+ *
+ * <h2>Type entry fields</h2>
+ * <ul>
+ *   <li>{@code id} - the unique type identifier (e.g. {@code "PLAYER"}, {@code "int"}).</li>
+ *   <li>{@code kind} - the type kind: {@code "primitive"} or {@code "object"}.</li>
+ *   <li>{@code javaType} - the fully qualified Java type name.</li>
+ *   <li>{@code displayName} - the human readable name shown in errors and documentation.</li>
+ *   <li>{@code names} - list of accepted user facing names (primitives only).</li>
+ *   <li>{@code numeric} - {@code true} if the type supports arithmetic (primitives only).</li>
+ *   <li>{@code superTypes} - list of parent type IDs in the hierarchy (object types only).</li>
+ *   <li>{@code description} - human-readable description of the type, or {@code null}.</li>
+ *   <li>{@code usageAsType} - example showing how a value of this type looks in Lumen source, or {@code null} if not applicable. Present for primitives and collection types.</li>
+ *   <li>{@code examples} - list of Lumen script examples demonstrating usage.</li>
  * </ul>
  *
  * @see PatternRegistry
@@ -177,8 +190,9 @@ public final class DocumentationDumper {
                 List<Map<String, Object>> lps = loops.getOrDefault(name, List.of());
                 List<Map<String, Object>> evts = events.getOrDefault(name, List.of());
                 List<Map<String, Object>> types = LUMEN.equals(name) ? collectTypeBindings(typeRegistry) : List.of();
+                List<Map<String, Object>> lumenTypes = LUMEN.equals(name) ? collectTypes() : List.of();
 
-                boolean empty = stmts.isEmpty() && exprs.isEmpty() && conds.isEmpty() && blks.isEmpty() && lps.isEmpty() && evts.isEmpty() && types.isEmpty();
+                boolean empty = stmts.isEmpty() && exprs.isEmpty() && conds.isEmpty() && blks.isEmpty() && lps.isEmpty() && evts.isEmpty() && types.isEmpty() && lumenTypes.isEmpty();
 
                 root.put("empty", empty);
                 root.put("generatedAt", Instant.now().toString());
@@ -189,6 +203,7 @@ public final class DocumentationDumper {
                 root.put("loopSources", lps);
                 root.put("events", evts);
                 root.put("typeBindings", types);
+                root.put("types", lumenTypes);
 
                 try {
                     LumenDoc.write(outputPath.resolve(LumenDoc.resourceName(name)), gson.toJson(root));
@@ -232,8 +247,6 @@ public final class DocumentationDumper {
     private static @NotNull Map<String, List<Map<String, Object>>> groupExpressions(@NotNull List<RegisteredExpression> expressions) {
         IdentityHashMap<Object, List<String>> handlerToPatterns = new IdentityHashMap<>();
         IdentityHashMap<Object, PatternMeta> handlerToMeta = new IdentityHashMap<>();
-        IdentityHashMap<Object, String> handlerToReturnRefType = new IdentityHashMap<>();
-        IdentityHashMap<Object, String> handlerToReturnJavaType = new IdentityHashMap<>();
         List<Object> handlerOrder = new ArrayList<>();
 
         for (RegisteredExpression re : expressions) {
@@ -243,20 +256,12 @@ public final class DocumentationDumper {
                 return new ArrayList<>();
             }).add(re.pattern().raw());
             handlerToMeta.putIfAbsent(handler, re.meta());
-            if (re.returnRefTypeId() != null) {
-                handlerToReturnRefType.putIfAbsent(handler, re.returnRefTypeId());
-            }
-            if (re.returnJavaType() != null) {
-                handlerToReturnJavaType.putIfAbsent(handler, re.returnJavaType());
-            }
         }
 
         Map<String, List<Map<String, Object>>> result = new LinkedHashMap<>();
         for (Object handler : handlerOrder) {
             PatternMeta meta = handlerToMeta.get(handler);
             Map<String, Object> entry = buildPatternEntry(handlerToPatterns.get(handler), meta);
-            entry.put("returnRefTypeId", handlerToReturnRefType.get(handler));
-            entry.put("returnJavaType", handlerToReturnJavaType.get(handler));
             result.computeIfAbsent(ownerOf(meta.by()), k -> new ArrayList<>()).add(entry);
         }
         return result;
@@ -318,7 +323,7 @@ public final class DocumentationDumper {
                     Map<String, Object> varObj = new LinkedHashMap<>();
                     varObj.put("name", v.name());
                     varObj.put("type", v.type());
-                    varObj.put("refType", v.refType() != null ? v.refType().id() : null);
+                    varObj.put("lumenType", v.lumenType().id());
                     varObj.put("nullable", v.metadata().getOrDefault("nullable", false));
                     varObj.put("description", v.description());
                     if (!v.metadata().isEmpty()) {
@@ -386,8 +391,8 @@ public final class DocumentationDumper {
                 Map<String, Object> varObj = new LinkedHashMap<>();
                 EventDefinition.VarEntry var = varEntry.getValue();
                 varObj.put("name", varEntry.getKey());
-                varObj.put("javaType", var.javaType());
-                varObj.put("refTypeId", var.refTypeId());
+                varObj.put("javaType", var.type().javaType());
+                varObj.put("typeId", var.type().id());
                 varObj.put("description", var.description());
                 varObj.put("nullable", var.metadata().getOrDefault("nullable", false));
                 if (!var.metadata().isEmpty()) {
@@ -417,8 +422,8 @@ public final class DocumentationDumper {
                 Map<String, Object> varObj = new LinkedHashMap<>();
                 EventDefinition.VarEntry ve = varEntry.getValue();
                 varObj.put("name", varEntry.getKey());
-                varObj.put("javaType", ve.javaType());
-                varObj.put("refTypeId", ve.refTypeId());
+                varObj.put("javaType", ve.type().javaType());
+                varObj.put("typeId", ve.type().id());
                 varObj.put("description", ve.description());
                 varObj.put("nullable", ve.metadata().getOrDefault("nullable", false));
                 if (!ve.metadata().isEmpty()) {
@@ -461,6 +466,36 @@ public final class DocumentationDumper {
             }
         }
 
+        return result;
+    }
+
+    private static @NotNull List<Map<String, Object>> collectTypes() {
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (PrimitiveType p : PrimitiveType.values()) {
+            Map<String, Object> obj = new LinkedHashMap<>();
+            obj.put("id", p.id());
+            obj.put("kind", "primitive");
+            obj.put("javaType", p.javaType());
+            obj.put("displayName", p.displayName());
+            obj.put("names", p.names());
+            obj.put("numeric", p.numeric());
+            obj.put("description", p.meta().description());
+            obj.put("usageAsType", p.meta().usageAsType());
+            obj.put("examples", p.meta().examples());
+            result.add(obj);
+        }
+        for (ObjectType o : LumenTypeRegistry.values()) {
+            Map<String, Object> obj = new LinkedHashMap<>();
+            obj.put("id", o.id());
+            obj.put("kind", "object");
+            obj.put("javaType", o.javaType());
+            obj.put("displayName", o.displayName());
+            obj.put("superTypes", o.superTypes().stream().map(LumenType::id).toList());
+            obj.put("description", o.meta().description());
+            obj.put("usageAsType", o.meta().usageAsType());
+            obj.put("examples", o.meta().examples());
+            result.add(obj);
+        }
         return result;
     }
 }

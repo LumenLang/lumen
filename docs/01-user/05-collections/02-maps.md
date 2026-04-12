@@ -1,97 +1,90 @@
 ---
-description: "Working with maps: creating, setting, getting, removing, looping, and scoped maps."
+description: "Maps store key value pairs, allowing lookup, iteration, and modification by key."
 ---
 
 # Maps
 
-A map stores entries by name. Each entry is a key (always text) pointing to a value. This is useful for things like per-player stats, where each stat has a name and a number.
-
-## Creating a Map
+A map stores key value pairs. You declare typed maps in a `global:` block:
 
 ```luma
-set stats to new map
+global:
+    nicknames: map of string to string
+    player_scores: map of string to int
 ```
 
-For a global or stored map:
+Maps start empty by default.
+
+## Setting and Removing
 
 ```luma
-global stored scoped stats with default new map
+set nicknames at key "Steve" to "Builder"
+set nicknames at key "Alex" to "Explorer"
+remove key "Steve" from nicknames
 ```
 
-This creates a per-player map that is saved across restarts, starting empty for each new player.
-
-## Setting Values
+To remove everything:
 
 ```luma
-set stats at key "kills" to 0
-set stats at key "deaths" to 0
+clear nicknames
 ```
 
-## Getting Values
+## Reading Values
+
+Get a value by its key:
 
 ```luma
-set kills to get stats at key "kills"
-message player "&eKills: {kills}"
+set nick to get nicknames at key "Alex"
 ```
 
-## Checking if a Key Exists
+Get the number of entries:
 
 ```luma
-if stats contains key "kills":
-    message player "&aKills tracked."
-
-if stats does not contain key "kills":
-    message player "&cNo kills tracked."
+set count to nicknames size
+set count to size of nicknames
 ```
 
-## Checking if Empty
+Get all keys or all values as lists:
 
 ```luma
-if stats is empty:
-    message player "&7No stats yet."
+set all_keys to keys of nicknames
+set all_values to values of nicknames
 ```
 
-## Removing an Entry
+## Conditions
 
 ```luma
-remove key "deaths" from stats
-```
+if nicknames contains key "Alex":
+    message player "Alex has a nickname"
 
-## Clearing
-
-```luma
-clear stats
+if nicknames is empty:
+    message player "No nicknames set"
 ```
 
 ## Looping
 
-Loop over every key-value pair in the map:
+Loop over a map to get each key and value:
 
 ```luma
-loop key val in stats:
-    message player "&e{key}: {val}"
+loop name nick in nicknames:
+    message player "&e{name} &7-> &f{nick}"
 ```
 
-## Scoped Map Operations
+See [Loops](../01-basics/05-loops.md) for more on loop syntax.
 
-When a map is declared as a scoped global (with `scoped`), you can operate on it directly using `for <scope>` without loading it into a local variable first.
+## Scoped Maps
+
+When a map is `scoped to player` (or another entity), every operation needs `for <entity>`:
 
 ```luma
-global stored scoped stats with default new map
+global:
+    scoped to player settings: map of string to string
+
+command setpref:
+    set settings at key "color" to "red" for player
+
+command showpref:
+    set color to get settings at key "color" for player
+    message player "&7Your color: {color}"
 ```
 
-```luma
-set stats at key "kills" to 0 for player
-
-set kills to get stats at key "kills" for player
-
-if stats is empty for player:
-    message player "&7No stats yet."
-
-loop key val in stats for player:
-    message player "&e{key}: {val}"
-
-remove key "kills" from stats for player
-
-clear stats for player
-```
+All map operations support the `for <entity>` suffix when working with scoped maps.

@@ -1,13 +1,12 @@
 package dev.lumenlang.lumen.pipeline.codegen;
 
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
-import dev.lumenlang.lumen.api.type.RefTypeHandle;
+import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.pipeline.data.DataSchema;
 import dev.lumenlang.lumen.pipeline.persist.GlobalVars;
 import dev.lumenlang.lumen.pipeline.persist.PersistentVars;
 import dev.lumenlang.lumen.pipeline.placeholder.PlaceholderExpander;
-import dev.lumenlang.lumen.pipeline.type.LumenType;
-import dev.lumenlang.lumen.pipeline.var.RefType;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +52,122 @@ public final class TypeEnv implements EnvironmentAccess {
     private final List<ConfigEntry> configEntries = new ArrayList<>();
     private final Map<String, VarRef> rootVars = new HashMap<>();
     private final Map<String, DataSchema> dataSchemas = new HashMap<>();
+    private final Map<String, NullState> nullStates = new HashMap<>();
+    private final Map<String, NullableVarInfo> nullableVarInfos = new HashMap<>();
+    private final Map<String, NullAssignmentInfo> nullAssignments = new HashMap<>();
     private BlockContext currentBlock;
+
+    /**
+     * Tracks whether a nullable variable is currently known to be null or non-null.
+     *
+     * <p>This is a definite state, not a probability. {@code NULL} means the variable
+     * is certainly null at this point in the code (declared without default, or last reassigned to none).
+     * {@code NON_NULL} means a concrete value was provided (default value or reassignment to a value).
+     */
+    public enum NullState {
+        NULL,
+        NON_NULL
+    }
+
+    /**
+     * Records the declaration site of a nullable variable for use in multi-line diagnostics.
+     *
+     * @param declarationLine the line where the variable was declared
+     * @param declarationRaw  the raw source text of the declaration line
+     */
+    public record NullableVarInfo(int declarationLine, @NotNull String declarationRaw) {
+    }
+
+    /**
+     * Records where a variable was last set to none, for use in value flow diagnostics.
+     *
+     * @param line the line number where the variable became null
+     * @param raw  the raw source text of that line
+     */
+    public record NullAssignmentInfo(int line, @NotNull String raw) {
+    }
+
+    /**
+     * Sets the current null state for a nullable variable.
+     *
+     * @param name  the variable name
+     * @param state the null state
+     */
+    public void markNullState(@NotNull String name, @NotNull NullState state) {
+        nullStates.put(name, state);
+    }
+
+    /**
+     * Sets the current null state for a nullable variable and records where the null assignment happened.
+     *
+     * @param name  the variable name
+     * @param state the null state
+     * @param line  the line number where the state changed
+     * @param raw   the raw source text of that line
+     */
+    public void markNullState(@NotNull String name, @NotNull NullState state, int line, @NotNull String raw) {
+        nullStates.put(name, state);
+        if (state == NullState.NULL) {
+            nullAssignments.put(name, new NullAssignmentInfo(line, raw));
+        } else {
+            nullAssignments.remove(name);
+        }
+    }
+
+    /**
+     * Returns the current null state of a variable, or {@code null} if not tracked.
+     *
+     * @param name the variable name
+     * @return the null state, or {@code null}
+     */
+    public @Nullable NullState nullState(@NotNull String name) {
+        return nullStates.get(name);
+    }
+
+    /**
+     * Records the declaration site of a nullable variable.
+     *
+     * @param name the variable name
+     * @param info the declaration info
+     */
+    public void recordNullableVarInfo(@NotNull String name, @NotNull NullableVarInfo info) {
+        nullableVarInfos.put(name, info);
+    }
+
+    /**
+     * Returns the declaration site info for a nullable variable, or {@code null} if not recorded.
+     *
+     * @param name the variable name
+     * @return the declaration info, or {@code null}
+     */
+    public @Nullable NullableVarInfo nullableVarInfo(@NotNull String name) {
+        return nullableVarInfos.get(name);
+    }
+
+    /**
+     * Returns info about where a variable was last set to none, or {@code null} if not tracked.
+     *
+     * @param name the variable name
+     * @return the null assignment info, or {@code null}
+     */
+    public @Nullable NullAssignmentInfo nullAssignmentInfo(@NotNull String name) {
+        return nullAssignments.get(name);
+    }
+
+    /**
+     * Returns all variable names visible from the current scope.
+     *
+     * <p>Walks the scope stack from innermost to outermost, then includes root variables.
+     *
+     * @return a set of all visible variable names
+     */
+    public @NotNull Set<String> allVisibleVarNames() {
+        Set<String> names = new HashSet<>(rootVars.keySet());
+        for (BlockContext c = currentBlock; c != null; c = c.parent()) {
+            names.addAll(c.varNames());
+        }
+        return names;
+    }
 
     /**
      * Pushes a new {@link BlockContext} onto the scope stack, making it the active scope.
@@ -148,15 +262,15 @@ public final class TypeEnv implements EnvironmentAccess {
     }
 
     /**
-     * Returns the first {@link VarRef} in scope whose {@link RefType} matches the given type.
+     * Returns the first {@link VarRef} in scope whose type matches the given object type.
      *
      * <p>Walks the scope stack from innermost to outermost scope, examining all variables
      * in each frame.
      *
-     * @param type the ref type to match against
+     * @param type the object type to match against
      * @return the first matching variable, or {@code null} if none found
      */
-    public @Nullable VarRef lookupVarByType(@NotNull RefType type) {
+    public @Nullable VarRef lookupVarByType(@NotNull ObjectType type) {
         for (BlockContext c = currentBlock; c != null; c = c.parent()) {
             VarRef found = c.findVarByType(type);
             if (found != null) return found;
@@ -165,10 +279,9 @@ public final class TypeEnv implements EnvironmentAccess {
     }
 
     @Override
-    public @Nullable VarRef lookupVarByType(@NotNull RefTypeHandle type) {
-        RefType internal = type instanceof RefType rt ? rt : RefType.byId(type.id());
-        if (internal == null) return null;
-        return lookupVarByType(internal);
+    public @Nullable VarRef lookupVarByType(@NotNull LumenType type) {
+        if (type instanceof ObjectType obj) return lookupVarByType(obj);
+        return null;
     }
 
     /**
@@ -345,8 +458,8 @@ public final class TypeEnv implements EnvironmentAccess {
         } else {
             globalVars.add(new GlobalVarInfo(
                     info.name(), info.defaultJava(), info.className(),
-                    info.scoped(), info.exprRefTypeId(), info.stored(),
-                    info.exprMetadata()));
+                    info.scoped(), info.stored(),
+                    info.exprMetadata(), info.type(), info.scopeType()));
         }
     }
 
@@ -401,9 +514,8 @@ public final class TypeEnv implements EnvironmentAccess {
     }
 
     @Override
-    public VarHandle defineRootVar(@NotNull String name, @Nullable RefTypeHandle refType, @NotNull String java) {
-        RefType internal = refType instanceof RefType rt ? rt : (refType != null ? RefType.byId(refType.id()) : null);
-        VarRef ref = new VarRef(internal, java);
+    public VarHandle defineRootVar(@NotNull String name, @NotNull LumenType type, @NotNull String java) {
+        VarRef ref = new VarRef(type, java);
         rootVars.put(name, ref);
         return ref;
     }
@@ -427,36 +539,17 @@ public final class TypeEnv implements EnvironmentAccess {
     }
 
     @Override
-    public VarHandle defineVar(@NotNull String name, @Nullable RefTypeHandle refType, @NotNull String java) {
-        RefType internal = refType instanceof RefType rt ? rt : (refType != null ? RefType.byId(refType.id()) : null);
-        VarRef ref = new VarRef(internal, java);
+    public VarHandle defineVar(@NotNull String name, @NotNull LumenType type, @NotNull String java) {
+        VarRef ref = new VarRef(type, java);
         defineVar(name, ref);
         return ref;
     }
 
     @Override
-    public VarHandle defineVar(@NotNull String name, @Nullable RefTypeHandle refType,
-                               @NotNull String java, @NotNull Map<String, Object> metadata) {
-        RefType internal = refType instanceof RefType rt ? rt : (refType != null ? RefType.byId(refType.id()) : null);
-        VarRef ref = new VarRef(internal, java, metadata);
+    public VarHandle defineVar(@NotNull String name, @NotNull LumenType type, @NotNull String java, @NotNull Map<String, Object> metadata) {
+        VarRef ref = new VarRef(type, java, metadata);
         defineVar(name, ref);
         return ref;
-    }
-
-    /**
-     * Defines a named variable in the current block scope with a full compile-time type.
-     *
-     * @param name      the variable name
-     * @param refType   the ref type for type checking, or {@code null}
-     * @param java      the Java variable name
-     * @param lumenType the full compile-time type, or {@code null}
-     * @param metadata  compile-time metadata entries
-     */
-    public void defineVar(@NotNull String name, @Nullable RefType refType,
-                          @NotNull String java, @Nullable LumenType lumenType,
-                          @NotNull Map<String, Object> metadata) {
-        VarRef ref = new VarRef(refType, java, lumenType, metadata);
-        defineVar(name, ref);
     }
 
     @Override
@@ -472,18 +565,21 @@ public final class TypeEnv implements EnvironmentAccess {
     /**
      * Information about a script-wide variable declared with {@code global}.
      *
-     * @param name          the variable name
-     * @param defaultJava   the Java expression for the default value
-     * @param className     the script class name at the time of declaration
-     * @param scoped        whether the global is scoped per entity rather than server-wide
-     * @param exprRefTypeId the optional expression ref type id
-     * @param stored        whether the variable is persisted to disk ({@code true}) or in-memory only ({@code false})
-     * @param exprMetadata  compile-time metadata from the default expression, or {@code null}
+     * @param name         the variable name
+     * @param defaultJava  the Java expression for the default value
+     * @param className    the script class name at the time of declaration
+     * @param scoped       whether the global is scoped per entity rather than server-wide
+     * @param stored       whether the variable is persisted to disk ({@code true}) or in-memory only ({@code false})
+     * @param exprMetadata compile-time metadata from the default expression, or {@code null}
+     * @param type         the declared compile-time type
+     * @param scopeType    the scope type for scoped globals, or {@code null} if not scoped
      */
     public record GlobalVarInfo(@NotNull String name, @NotNull String defaultJava,
                                 @NotNull String className, boolean scoped,
-                                @Nullable String exprRefTypeId, boolean stored,
-                                @Nullable Map<String, Object> exprMetadata)
+                                boolean stored,
+                                @Nullable Map<String, Object> exprMetadata,
+                                @NotNull LumenType type,
+                                @Nullable LumenType scopeType)
             implements EnvironmentAccess.GlobalInfo {
     }
 

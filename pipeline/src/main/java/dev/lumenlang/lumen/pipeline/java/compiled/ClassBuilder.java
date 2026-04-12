@@ -35,7 +35,6 @@ public final class ClassBuilder {
         ctx.addImport(PersistentVars.class.getName());
         ctx.addImport(GlobalVars.class.getName());
         ctx.addImport("dev.lumenlang.lumen.plugin.text.LumenText");
-        ctx.addImport("dev.lumenlang.lumen.pipeline.java.compiled.Coerce");
         ctx.addImport("dev.lumenlang.lumen.plugin.annotations.LumenEvent");
         ctx.addImport("dev.lumenlang.lumen.plugin.annotations.LumenCmd");
         ctx.addImport("dev.lumenlang.lumen.plugin.annotations.LumenInventory");

@@ -4,6 +4,7 @@ import dev.lumenlang.lumen.api.codegen.CodegenAccess;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess.VarHandle;
 import dev.lumenlang.lumen.api.exceptions.ParseFailureException;
+import dev.lumenlang.lumen.api.util.FuzzyMatch;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -83,31 +84,16 @@ public final class EnumTypeBinding {
             }
 
             @Override
-            public int consumeCount(@NotNull List<String> tokens,
-                                    @NotNull EnvironmentAccess env) {
-                if (tokens.isEmpty()) return 0;
-                String normalized = normalize(tokens.get(0));
-                if (frozen.contains(normalized)) return 1;
-                if (env.lookupVar(tokens.get(0)) != null) return 1;
-                throw new ParseFailureException(
-                        "Unknown " + typeId + " value: " + tokens.get(0));
-            }
-
-            @Override
-            public @NotNull Object parse(@NotNull List<String> tokens,
-                                         @NotNull EnvironmentAccess env) {
+            public @NotNull Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 String normalized = normalize(tokens.get(0));
                 if (frozen.contains(normalized)) return normalized;
                 VarHandle ref = env.lookupVar(tokens.get(0));
                 if (ref != null) return ref;
-                throw new ParseFailureException(
-                        "Unknown " + typeId + " value: " + tokens.get(0));
+                throw new ParseFailureException(rejectMessage(typeId, tokens.get(0), frozen));
             }
 
             @Override
-            public @NotNull String toJava(@NotNull Object value,
-                                          @NotNull CodegenAccess ctx,
-                                          @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(@NotNull Object value, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
                 if (value instanceof VarHandle ref) {
                     ctx.addImport(fqcn);
                     return fqcn + ".valueOf(String.valueOf(" + ref.java()
@@ -123,5 +109,11 @@ public final class EnumTypeBinding {
         return token.toUpperCase(Locale.ROOT)
                 .replace(' ', '_')
                 .replace('-', '_');
+    }
+
+    private static @NotNull String rejectMessage(@NotNull String typeId, @NotNull String token, @NotNull Set<String> known) {
+        String closest = FuzzyMatch.closest(token.toUpperCase(Locale.ROOT).replace(' ', '_').replace('-', '_'), known);
+        if (closest != null) return "Unknown " + typeId + " value: " + token + ", did you mean '" + closest.toLowerCase(Locale.ROOT) + "'?";
+        return "Unknown " + typeId + " value: " + token;
     }
 }

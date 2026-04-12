@@ -8,10 +8,11 @@
 
 data bounty:
     target text
-    reward number
+    reward integer
     placed_by text
 
-global stored current_bounty with default none
+global:
+    stored current_bounty: nullable bounty
 
 command bounty:
     description "Manage bounties"

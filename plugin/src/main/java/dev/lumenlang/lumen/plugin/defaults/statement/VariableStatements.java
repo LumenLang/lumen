@@ -9,7 +9,8 @@ import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.codegen.JavaOutput;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.pattern.Categories;
-import dev.lumenlang.lumen.api.type.RefTypeHandle;
+import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.pipeline.persist.GlobalVars;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,12 +61,8 @@ public final class VariableStatements {
         if (scopeRef == null) {
             throw new RuntimeException("Scope variable not found: " + scopeVarName);
         }
-        RefTypeHandle refType = scopeRef.type();
-        if (refType == null) {
-            throw new RuntimeException("Scope variable '" + scopeVarName
-                    + "' has no ref type. Expected a typed variable like a player or entity.");
-        }
-        String scopeKeyPart = refType.keyExpression(scopeRef.java());
+        LumenType scopeType = scopeRef.type();
+        String scopeKeyPart = ((ObjectType) scopeType).keyExpression(scopeRef.java());
         return "\"" + info.className() + "." + varName + ".\" + " + scopeKeyPart;
     }
 
@@ -89,8 +86,8 @@ public final class VariableStatements {
         String storageClass = resolveStorageClass(info);
         String keyExpr = buildScopedKey(env, varName, scopeVarName, info);
         out.line("{");
-        out.line("    var __sv = " + storageClass + ".get(" + keyExpr + ", " + info.defaultJava() + ");");
-        out.line("    __sv = Coerce.toInt(__sv) " + op.replace("=", "") + " " + operand + ";");
+        out.line("    int __sv = ((Number) " + storageClass + ".get(" + keyExpr + ", " + info.defaultJava() + ")).intValue();");
+        out.line("    __sv " + op + " " + operand + ";");
         out.line("    " + storageClass + ".set(" + keyExpr + ", __sv);");
         out.line("}");
     }
@@ -143,7 +140,7 @@ public final class VariableStatements {
                     EnvironmentAccess.VarHandle ref = env.lookupVar(varName);
                     if (ref == null)
                         throw new RuntimeException("Variable not found: " + varName);
-                    out.line(ref.java() + " = Coerce.toInt(" + ref.java() + ") + " + ctx.java("n") + ";");
+                    out.line(ref.java() + " += " + ctx.java("n") + ";");
                     emitAutoSave(env, varName, ref, out);
                 }));
 
@@ -171,7 +168,7 @@ public final class VariableStatements {
                     EnvironmentAccess.VarHandle ref = env.lookupVar(varName);
                     if (ref == null)
                         throw new RuntimeException("Variable not found: " + varName);
-                    out.line(ref.java() + " = Coerce.toInt(" + ref.java() + ") - " + ctx.java("n") + ";");
+                    out.line(ref.java() + " -= " + ctx.java("n") + ";");
                     emitAutoSave(env, varName, ref, out);
                 }));
 
@@ -199,7 +196,7 @@ public final class VariableStatements {
                     EnvironmentAccess.VarHandle ref = env.lookupVar(varName);
                     if (ref == null)
                         throw new RuntimeException("Variable not found: " + varName);
-                    out.line(ref.java() + " = Coerce.toInt(" + ref.java() + ") * " + ctx.java("n") + ";");
+                    out.line(ref.java() + " *= " + ctx.java("n") + ";");
                     emitAutoSave(env, varName, ref, out);
                 }));
 
@@ -227,7 +224,7 @@ public final class VariableStatements {
                     EnvironmentAccess.VarHandle ref = env.lookupVar(varName);
                     if (ref == null)
                         throw new RuntimeException("Variable not found: " + varName);
-                    out.line(ref.java() + " = Coerce.toInt(" + ref.java() + ") / " + ctx.java("n") + ";");
+                    out.line(ref.java() + " /= " + ctx.java("n") + ";");
                     emitAutoSave(env, varName, ref, out);
                 }));
 
@@ -295,7 +292,7 @@ public final class VariableStatements {
                     }
                     String storageClass = resolveStorageClass(info);
                     String keyExpr = buildScopedKey(env, varName, ctx.java("scope"), info);
-                    return new ExpressionResult(storageClass + ".get(" + keyExpr + ", " + info.defaultJava() + ")", info.exprRefTypeId());
+                    return new ExpressionResult(storageClass + ".get(" + keyExpr + ", " + info.defaultJava() + ")", info.type());
                 }));
     }
 }

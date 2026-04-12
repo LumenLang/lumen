@@ -1,80 +1,52 @@
 ---
-description: "Stored variables that persist across server restarts and script reloads."
+description: "Stored variables survive server restarts and script reloads by persisting to disk."
 ---
 
 # Stored Variables
 
-Stored variables persist across server restarts. Their values are saved to disk automatically, so data is never lost when the server shuts down or the script reloads.
+Regular globals are lost when the server stops or the script reloads. Adding `stored` makes a variable persistent.
 
-## Global Stored Variables
+## Declaring Stored Globals
 
-Use `global stored` to create a variable that is both shared across all blocks and saved permanently:
+Add `stored` before the rest of the declaration:
 
 ```luma
-global stored total_joins with default 0
+global:
+    stored total_joins: int with default 0
 
 on join:
     add 1 to total_joins
-    broadcast "&7[Server] Total joins: {total_joins}"
+    message player "You are join #{total_joins}!"
 ```
 
-Even after a server restart, `total_joins` retains its value.
+`total_joins` keeps its value across restarts.
 
-## Per-Player Stored Variables
+## Combining Stored and Scoped
 
-Combine `global stored` with `scoped` so each player has their own persistent value:
+`stored` and `scoped to` work together:
 
 ```luma
-global stored scoped coins with default 0
+global:
+    stored scoped to player deaths: int with default 0
+    stored scoped to player streak: int with default 0
 
-command earn:
-    add 10 to coins
-    message player "&a+10 coins! Total: {coins}"
+on entity_death:
+    if killer is set:
+        add 1 to streak for killer
 
-command balance:
-    message player "&6Your coins: {coins}"
+on player_death:
+    add 1 to deaths for player
+    set streak to 0 for player
 ```
 
-Every player's coins are saved independently and survive restarts.
+Each player gets their own values, and those values survive restarts.
 
-## Inline Load
+## Stored Collections
 
-For event-scoped persistent data, use `load` directly inside an event or command. This creates a stored variable reference on the spot:
+Lists and maps can be stored too:
 
 ```luma
-on block_break:
-    if block type is stone:
-        load mined for player with default 0
-        add 1 to mined
-        send actionbar "&7Blocks mined: {mined}" to player
+global:
+    stored notes: list of string
+    stored scoped to player achievements: list of string
 ```
-
-The value of `mined` is saved per player and persists across restarts.
-
-## Deleting Stored Data
-
-When you need to reset stored data, use `delete stored`:
-
-```luma
-every 24000 ticks as "quest_reset":
-    broadcast "&eDaily quests have been reset!"
-    delete stored mined
-```
-
-This removes the stored values for all players, giving everyone a fresh start.
-
-:::alert info
-Deleting stored data is permanent. Once deleted, the values cannot be recovered.
-:::
-
-## Stored Lists and Maps
-
-Stored variables can hold complex types too, including lists and maps:
-
-```luma
-global stored scoped notes with default new list
-global stored scoped balances with default new map
-global stored warps with default new list of warp
-```
-
-All entries in these collections are saved to disk along with the variable itself.

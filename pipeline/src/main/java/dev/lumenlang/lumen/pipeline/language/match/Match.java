@@ -4,13 +4,12 @@ import dev.lumenlang.lumen.api.codegen.CodegenAccess;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.handler.ConditionHandler;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
-import dev.lumenlang.lumen.api.type.RefTypeHandle;
+import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.pipeline.codegen.CodegenContext;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.pipeline.language.exceptions.TokenCarryingException;
 import dev.lumenlang.lumen.pipeline.language.pattern.Pattern;
 import dev.lumenlang.lumen.pipeline.language.resolve.ExprResolver;
-import dev.lumenlang.lumen.pipeline.var.RefType;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,9 +55,8 @@ public record Match(
             ExpressionResult result = ExprResolver.resolveWithType(ie.tokens(), ctx, env);
             if (result != null) {
                 if (!bv.binding().id().equals("EXPR")) {
-                    RefType ref = result.refTypeId() != null ? RefType.byId(result.refTypeId()) : null;
                     return bv.binding().toJava(
-                            new InlineVarRef(result.java(), ref, result.metadata()), ctx, env);
+                            new InlineVarRef(result.java(), result.type(), result.metadata()), ctx, env);
                 }
                 return result.java();
             }
@@ -78,6 +76,22 @@ public record Match(
             }
         }
         return bv.binding().toJava(bv.value(), ctx, env);
+    }
+
+    /**
+     * Creates a synthetic {@link EnvironmentAccess.VarHandle} wrapping a resolved Java
+     * expression together with type and metadata from the original expression result.
+     *
+     * @param javaExpr the resolved Java expression
+     * @param type     the type of the expression
+     * @param metadata compile-time metadata from the expression result
+     * @return a VarHandle backed by the expression with full type info
+     */
+    public static EnvironmentAccess.@NotNull VarHandle syntheticHandle(
+            @NotNull String javaExpr,
+            @NotNull LumenType type,
+            @NotNull Map<String, Object> metadata) {
+        return new InlineVarRef(javaExpr, type, metadata);
     }
 
     /**
@@ -213,22 +227,6 @@ public record Match(
     }
 
     /**
-     * Creates a synthetic {@link EnvironmentAccess.VarHandle} wrapping a resolved Java
-     * expression together with type and metadata from the original expression result.
-     *
-     * @param javaExpr  the resolved Java expression
-     * @param refType   the ref type of the expression, or {@code null}
-     * @param metadata  compile-time metadata from the expression result
-     * @return a VarHandle backed by the expression with full type info
-     */
-    public static EnvironmentAccess.@NotNull VarHandle syntheticHandle(
-            @NotNull String javaExpr,
-            @Nullable RefTypeHandle refType,
-            @NotNull Map<String, Object> metadata) {
-        return new InlineVarRef(javaExpr, refType, metadata);
-    }
-
-    /**
      * Synthetic {@link EnvironmentAccess.VarHandle} wrapping a resolved inline expression's
      * Java code. This allows typed bindings (e.g. MATERIAL, ENTITY_TYPE) to apply their
      * coercion logic (such as {@code Material.valueOf(...)}) when the slot was filled by
@@ -236,13 +234,13 @@ public record Match(
      */
     private record InlineVarRef(
             @NotNull String javaExpr,
-            @Nullable RefTypeHandle refType,
+            @NotNull LumenType lumenType,
             @NotNull Map<String, Object> meta
     ) implements EnvironmentAccess.VarHandle {
 
         @Override
-        public @Nullable RefTypeHandle type() {
-            return refType;
+        public @NotNull LumenType type() {
+            return lumenType;
         }
 
         @Override

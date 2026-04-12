@@ -5,18 +5,20 @@ import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.handler.BlockHandler;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.handler.StatementHandler;
+import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.pipeline.conditions.ConditionExpr;
 import dev.lumenlang.lumen.pipeline.conditions.parser.ConditionParser;
 import dev.lumenlang.lumen.pipeline.language.TypeBinding;
+import dev.lumenlang.lumen.pipeline.language.exceptions.TokenCarryingException;
 import dev.lumenlang.lumen.pipeline.language.match.BoundValue;
 import dev.lumenlang.lumen.pipeline.language.match.BraceExpr;
 import dev.lumenlang.lumen.pipeline.language.match.InlineExpr;
 import dev.lumenlang.lumen.pipeline.language.match.Match;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.language.resolve.ExprResolver;
+import dev.lumenlang.lumen.pipeline.language.resolve.PatternSimulator;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
-import dev.lumenlang.lumen.pipeline.var.RefType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -303,10 +305,35 @@ public final class BindingContext implements BindingAccess {
     }
 
     @Override
+    public @Nullable LumenType resolvedType(@NotNull String name) {
+        Object val = value(name);
+        if (val instanceof EnvironmentAccess.VarHandle vh) return vh.type();
+        BoundValue bv = bound(name);
+        if (bv == null) return null;
+        ExpressionResult result = ExprResolver.resolveWithType(bv.tokens(), ctx, env);
+        return result != null ? result.type() : null;
+    }
+
+    @Override
     public @NotNull String parseCondition(@NotNull String paramName) {
+        List<Token> tokens = bound(paramName).tokens();
         ConditionParser cp = new ConditionParser(PatternRegistry.instance().conditionRegistry());
-        ConditionExpr expr = cp.parse(bound(paramName).tokens(), env);
-        return expr.toJava(env, ctx);
+        ConditionExpr expr = cp.parse(tokens, env);
+        try {
+            return expr.toJava(env, ctx);
+        } catch (TokenCarryingException e) {
+            List<PatternSimulator.Suggestion> suggestions = PatternSimulator.suggestConditions(tokens, PatternRegistry.instance(), env);
+            if (!suggestions.isEmpty()) {
+                throw new TokenCarryingException("Unknown condition: " + ExprResolver.joinTokens(tokens), tokens, suggestions);
+            }
+            throw new TokenCarryingException(e.getMessage(), tokens);
+        } catch (RuntimeException e) {
+            List<PatternSimulator.Suggestion> suggestions = PatternSimulator.suggestConditions(tokens, PatternRegistry.instance(), env);
+            if (!suggestions.isEmpty()) {
+                throw new TokenCarryingException("Unknown condition: " + ExprResolver.joinTokens(tokens), tokens, suggestions);
+            }
+            throw new TokenCarryingException(e.getMessage() != null ? e.getMessage() : "Condition failed", tokens);
+        }
     }
 
     private @NotNull Object resolveDeferred(@NotNull Object value) {
@@ -322,7 +349,6 @@ public final class BindingContext implements BindingAccess {
     }
 
     private static EnvironmentAccess.@NotNull VarHandle toSyntheticHandle(@NotNull ExpressionResult result) {
-        RefType refType = result.refTypeId() != null ? RefType.byId(result.refTypeId()) : null;
-        return Match.syntheticHandle(result.java(), refType, result.metadata());
+        return Match.syntheticHandle(result.java(), result.type(), result.metadata());
     }
 }

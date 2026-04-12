@@ -6,8 +6,13 @@ import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.codegen.BindingAccess;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.codegen.JavaOutput;
+import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
+import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.pattern.Categories;
-import dev.lumenlang.lumen.api.type.RefTypeHandle;
+import dev.lumenlang.lumen.api.type.CollectionType;
+import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.type.ObjectType;
+import dev.lumenlang.lumen.api.type.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,33 +35,19 @@ public final class ListStatements {
         return null;
     }
 
-    private static @Nullable EnvironmentAccess.VarHandle listVarHandle(@NotNull BindingAccess ctx) {
-        Object val = ctx.value("list");
-        if (val instanceof EnvironmentAccess.VarHandle ref) {
-            return ref;
-        }
-        return null;
-    }
-
-    private static void validateElementType(@NotNull String elementType,
-                                            @NotNull BindingAccess ctx,
-                                            @NotNull EnvironmentAccess env) {
-        List<String> valTokens = ctx.tokens("val");
-        if (valTokens.size() == 1) {
-            EnvironmentAccess.VarHandle valRef = env.lookupVar(valTokens.get(0));
-            if (valRef != null && valRef.hasMeta("data_type")) {
-                String valDataType = (String) valRef.meta("data_type");
-                if (valDataType == null) {
-                    throw new RuntimeException(
-                            "Cannot determine data type of value for list element type validation, expected '" + elementType + "'");
-                }
-                if (!valDataType.equalsIgnoreCase(elementType)) {
-                    throw new RuntimeException(
-                            "Type mismatch: list expects '" + elementType
-                                    + "' elements, but got '" + valDataType + "'");
-                }
-            }
-        }
+    private static void validateElementType(@NotNull BindingAccess ctx, @NotNull String paramName) {
+        EnvironmentAccess.VarHandle listRef = ctx.varHandle("list");
+        if (listRef == null) return;
+        CollectionType ct = TypeUtils.asCollection(listRef.type());
+        if (ct == null || ct.typeArguments().isEmpty()) return;
+        LumenType expected = ct.typeArguments().get(0);
+        LumenType actual = ctx.resolvedType(paramName);
+        if (actual == null || expected.assignableFrom(actual)) return;
+        throw new DiagnosticException(LumenDiagnostic.error("E401", "List element type mismatch")
+                .at(ctx.block().line(), ctx.block().raw())
+                .label("expected '" + expected.displayName() + "', got '" + actual.displayName() + "'")
+                .help("this list only accepts '" + expected.displayName() + "' elements")
+                .build());
     }
 
     private static void flushIfStored(
@@ -70,22 +61,34 @@ public final class ListStatements {
         }
     }
 
-    private static @NotNull String buildScopedKey(@NotNull EnvironmentAccess env,
+    private static @NotNull String buildScopedKey(@NotNull BindingAccess ctx,
                                                   @NotNull String varName,
                                                   @NotNull String scopeVarName,
                                                   @NotNull EnvironmentAccess.GlobalInfo info) {
+        EnvironmentAccess env = ctx.env();
         EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
-        if (scopeRef == null) throw new RuntimeException("Scope variable not found: " + scopeVarName);
-        RefTypeHandle refType = scopeRef.type();
-        if (refType == null) throw new RuntimeException("Scope variable '" + scopeVarName + "' has no ref type.");
-        return "\"" + info.className() + "." + varName + ".\" + " + refType.keyExpression(scopeRef.java());
+        if (scopeRef == null) {
+            throw new DiagnosticException(LumenDiagnostic.error("E500", "Scope variable '" + scopeVarName + "' not found")
+                    .at(ctx.block().line(), ctx.block().raw())
+                    .label("undefined variable")
+                    .help("make sure the variable is defined before using it")
+                    .build());
+        }
+        LumenType scopeType = scopeRef.type();
+        return "\"" + info.className() + "." + varName + ".\" + " + ((ObjectType) scopeType).keyExpression(scopeRef.java());
     }
 
     private static void emitScopedMutation(@NotNull BindingAccess ctx, @NotNull JavaOutput out, @NotNull String listVarName, @NotNull String scopeVarName, @NotNull Function<String, String> mutation) {
         EnvironmentAccess.GlobalInfo info = ctx.env().getGlobalInfo(listVarName);
-        if (info == null) throw new RuntimeException("'" + listVarName + "' is not a global variable.");
+        if (info == null) {
+            throw new DiagnosticException(LumenDiagnostic.error("E500", "'" + listVarName + "' is not a global variable")
+                    .at(ctx.block().line(), ctx.block().raw())
+                    .label("not a global")
+                    .help("declare with 'global " + listVarName + " with default new list'")
+                    .build());
+        }
         String storageClass = info.stored() ? "PersistentVars" : "GlobalVars";
-        String scopeKey = buildScopedKey(ctx.env(), listVarName, scopeVarName, info);
+        String scopeKey = buildScopedKey(ctx, listVarName, scopeVarName, info);
         String tmp = "__scoped_" + listVarName + "_" + out.lineNum();
         ctx.codegen().addImport(List.class.getName());
         ctx.codegen().addImport(ArrayList.class.getName());
@@ -103,7 +106,10 @@ public final class ListStatements {
                 .example("add task to todos for player")
                 .since("1.0.0")
                 .category(Categories.LIST)
-                .handler((line, ctx, out) -> emitScopedMutation(ctx, out, ctx.tokens("list").get(0), ctx.java("scope"), tmp -> "((List<Object>) " + tmp + ").add(" + ctx.java("val") + ");")));
+                .handler((line, ctx, out) -> {
+                    validateElementType(ctx, "val");
+                    emitScopedMutation(ctx, out, ctx.tokens("list").get(0), ctx.java("scope"), tmp -> "((List) " + tmp + ").add(" + ctx.java("val") + ");");
+                }));
 
         api.patterns().statement(b -> b
                 .by("Lumen")
@@ -112,7 +118,10 @@ public final class ListStatements {
                 .example("remove task from todos for player")
                 .since("1.0.0")
                 .category(Categories.LIST)
-                .handler((line, ctx, out) -> emitScopedMutation(ctx, out, ctx.tokens("list").get(0), ctx.java("scope"), tmp -> "((List<?>) " + tmp + ").remove(" + ctx.java("val") + ");")));
+                .handler((line, ctx, out) -> {
+                    validateElementType(ctx, "val");
+                    emitScopedMutation(ctx, out, ctx.tokens("list").get(0), ctx.java("scope"), tmp -> "((List<?>) " + tmp + ").remove(" + ctx.java("val") + ");");
+                }));
 
         api.patterns().statement(b -> b
                 .by("Lumen")
@@ -142,14 +151,9 @@ public final class ListStatements {
                 .handler((line, ctx, out) -> {
                     EnvironmentAccess env = ctx.env();
                     String listJava = ctx.java("list");
-
-                    EnvironmentAccess.VarHandle listRef = listVarHandle(ctx);
-                    if (listRef != null && listRef.hasMeta("element_type")) {
-                        validateElementType((String) listRef.meta("element_type"), ctx, env);
-                    }
-
+                    validateElementType(ctx, "val");
                     ctx.codegen().addImport(List.class.getName());
-                    out.line("((List<Object>) " + listJava + ").add(" + ctx.java("val") + ");");
+                    out.line("((List) " + listJava + ").add(" + ctx.java("val") + ");");
                     flushIfStored(env, out, listJava, listVarName(ctx));
                 }));
 
@@ -162,6 +166,7 @@ public final class ListStatements {
                 .category(Categories.LIST)
                 .handler((line, ctx, out) -> {
                     String listJava = ctx.java("list");
+                    validateElementType(ctx, "val");
                     ctx.codegen().addImport(List.class.getName());
                     out.line("((List<?>) " + listJava + ").remove(" + ctx.java("val") + ");");
                     flushIfStored(ctx.env(), out, listJava, listVarName(ctx));
@@ -204,8 +209,9 @@ public final class ListStatements {
                 .category(Categories.LIST)
                 .handler((line, ctx, out) -> {
                     String listJava = ctx.java("list");
+                    validateElementType(ctx, "val");
                     ctx.codegen().addImport(List.class.getName());
-                    out.line("((List<Object>) " + listJava + ").set(" + ctx.java("i") + ", " + ctx.java("val") + ");");
+                    out.line("((List) " + listJava + ").set(" + ctx.java("i") + ", " + ctx.java("val") + ");");
                     flushIfStored(ctx.env(), out, listJava, listVarName(ctx));
                 }));
     }

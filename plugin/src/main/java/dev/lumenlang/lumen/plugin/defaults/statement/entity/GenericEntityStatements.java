@@ -159,7 +159,7 @@ public final class GenericEntityStatements {
                 .handler((line, ctx, out) -> {
                     ctx.codegen().addImport(LaunchHelper.class.getName());
                     out.line("LaunchHelper.launch(" + ctx.java("e") + ", "
-                            + ctx.java("loc") + ", Coerce.toDouble(" + ctx.java("spd") + "));");
+                            + ctx.java("loc") + ", ((double) " + ctx.java("spd") + "));");
                 }));
 
         api.patterns().statement(b -> b
@@ -171,9 +171,9 @@ public final class GenericEntityStatements {
                 .category(Categories.ENTITY)
                 .handler((line, ctx, out) -> {
                     ctx.codegen().addImport("org.bukkit.util.Vector");
-                    out.line(ctx.java("e") + ".setVelocity(new Vector(Coerce.toDouble("
-                            + ctx.java("x") + "), Coerce.toDouble(" + ctx.java("y")
-                            + "), Coerce.toDouble(" + ctx.java("z") + ")));");
+                    out.line(ctx.java("e") + ".setVelocity(new Vector(((double) "
+                            + ctx.java("x") + "), ((double) " + ctx.java("y")
+                            + "), ((double) " + ctx.java("z") + ")));");
                 }));
     }
 }

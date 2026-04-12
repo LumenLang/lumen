@@ -20,23 +20,19 @@ public final class TameableConditions {
         EntityHelper.forType(TAMEABLE)
                 .alias("_tm")
                 .conditionPair(
-                        "%e:ENTITY% is tamed",
-                        "%e:ENTITY% is not tamed",
+                        "%e:ENTITY% (is|is not) tamed",
+                        0, "is",
                         "isTamed()",
-                        "Checks if a tameable entity is tamed.",
-                        "Checks if a tameable entity is not tamed.",
-                        "if mob is tamed:",
-                        "if mob is not tamed:");
+                        "Checks if a tameable entity is or is not tamed.",
+                        "if mob is tamed:");
 
         EntityHelper.forType(SITTABLE)
                 .alias("_st")
                 .conditionPair(
-                        "%e:ENTITY% is sitting",
-                        "%e:ENTITY% is not sitting",
+                        "%e:ENTITY% (is|is not) sitting",
+                        0, "is",
                         "isSitting()",
-                        "Checks if a sittable entity (wolf, cat, etc.) is sitting.",
-                        "Checks if a sittable entity (wolf, cat, etc.) is not sitting.",
-                        "if mob is sitting:",
-                        "if mob is not sitting:");
+                        "Checks if a sittable entity (wolf, cat, etc.) is or is not sitting.",
+                        "if mob is sitting:");
     }
 }

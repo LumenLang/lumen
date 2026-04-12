@@ -1,9 +1,10 @@
 package dev.lumenlang.lumen.pipeline.placeholder;
 
 import dev.lumenlang.lumen.api.placeholder.PlaceholderType;
+import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.type.ObjectType;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
-import dev.lumenlang.lumen.pipeline.type.LumenType;
-import dev.lumenlang.lumen.pipeline.var.RefType;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
  * string literals and var expressions. The expander scans the input, and for each placeholder:
  * <ol>
  *   <li>Splits on the first {@code _} to get the variable name and property</li>
- *   <li>Looks up the variable in the scope to get its {@link RefType}</li>
+ *   <li>Looks up the variable in the scope to get its {@link ObjectType}</li>
  *   <li>Looks up the property template in the {@link PlaceholderRegistry}</li>
  *   <li>Produces a Java expression</li>
  * </ol>
@@ -110,26 +111,27 @@ public final class PlaceholderExpander {
         String property = placeholder.substring(underscore + 1);
 
         VarRef ref = env.lookupVar(varName);
-        if (ref == null || ref.refType() == null) return null;
+        if (ref == null || ref.objectType() == null) return null;
 
-        return PlaceholderRegistry.getPropertyType(ref.refType(), property);
+        return PlaceholderRegistry.getPropertyType(ref.objectType(), property);
     }
 
     /**
-     * Returns the {@link LumenType} of a placeholder expression, or {@code null} if
-     * the placeholder cannot be resolved.
+     * Returns the {@link LumenType} of a placeholder expression.
+     *
+     * <p>Defaults to {@link PrimitiveType#STRING} when the placeholder type cannot be determined.
      *
      * @param placeholder the placeholder text without braces (e.g. "player_y")
      * @param env         the type environment for variable lookups
-     * @return the lumen type, or {@code null} if unresolvable
+     * @return the lumen type
      */
-    public static @Nullable LumenType resolveExpressionType(@NotNull String placeholder, @NotNull TypeEnv env) {
+    public static @NotNull LumenType resolveExpressionType(@NotNull String placeholder, @NotNull TypeEnv env) {
         PlaceholderType phType = resolveType(placeholder, env);
-        if (phType == null) return null;
+        if (phType == null) return PrimitiveType.STRING;
         return switch (phType) {
-            case STRING -> LumenType.Primitive.STRING;
-            case NUMBER -> LumenType.Primitive.DOUBLE;
-            case BOOLEAN -> LumenType.Primitive.BOOLEAN;
+            case STRING -> PrimitiveType.STRING;
+            case NUMBER -> PrimitiveType.DOUBLE;
+            case BOOLEAN -> PrimitiveType.BOOLEAN;
         };
     }
 
@@ -157,7 +159,7 @@ public final class PlaceholderExpander {
         placeholder = placeholder.replace(' ', '_');
         VarRef fullRef = env.lookupVar(placeholder);
         if (fullRef != null) {
-            RefType type = fullRef.refType();
+            ObjectType type = fullRef.objectType();
             if (type == null) {
                 return "String.valueOf(" + fullRef.java() + ")";
             }
@@ -188,8 +190,7 @@ public final class PlaceholderExpander {
             return null;
         }
 
-        RefType type = ref.refType();
-        if (type == null) {
+        ObjectType type = ref.objectType();        if (type == null) {
             return null;
         }
 

@@ -5,11 +5,11 @@ import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.placeholder.PlaceholderRegistrar;
 import dev.lumenlang.lumen.api.placeholder.PlaceholderType;
-import dev.lumenlang.lumen.api.type.Types;
+import dev.lumenlang.lumen.api.type.MinecraftTypes;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Registers built-in placeholder properties for the PLAYER ref type.
+ * Registers built-in placeholder properties for the PLAYER type.
  */
 @Registration
 @SuppressWarnings("unused")
@@ -19,18 +19,18 @@ public class DefaultPlayerPlaceholders {
     public void register(@NotNull LumenAPI api) {
         PlaceholderRegistrar ph = api.placeholders();
 
-        ph.property(Types.PLAYER, "name", "$.getName()");
-        ph.property(Types.PLAYER, "health", "$.getHealth()", PlaceholderType.NUMBER);
-        ph.property(Types.PLAYER, "food", "$.getFoodLevel()", PlaceholderType.NUMBER);
-        ph.property(Types.PLAYER, "level", "$.getLevel()", PlaceholderType.NUMBER);
-        ph.property(Types.PLAYER, "xp_level", "$.getLevel()", PlaceholderType.NUMBER);
-        ph.property(Types.PLAYER, "world", "$.getWorld().getName()");
-        ph.property(Types.PLAYER, "x", "$.getLocation().getBlockX()", PlaceholderType.NUMBER);
-        ph.property(Types.PLAYER, "y", "$.getLocation().getBlockY()", PlaceholderType.NUMBER);
-        ph.property(Types.PLAYER, "z", "$.getLocation().getBlockZ()", PlaceholderType.NUMBER);
-        ph.property(Types.PLAYER, "gamemode", "$.getGameMode().name()");
-        ph.property(Types.PLAYER, "uuid", "$.getUniqueId().toString()");
-        ph.property(Types.PLAYER, "ip", "$.getAddress().getHostString()");
-        ph.defaultProperty(Types.PLAYER, "name");
+        ph.property(MinecraftTypes.PLAYER, "name", "$.getName()", PlaceholderType.STRING);
+        ph.property(MinecraftTypes.PLAYER, "health", "$.getHealth()", PlaceholderType.NUMBER);
+        ph.property(MinecraftTypes.PLAYER, "food", "$.getFoodLevel()", PlaceholderType.NUMBER);
+        ph.property(MinecraftTypes.PLAYER, "level", "$.getLevel()", PlaceholderType.NUMBER);
+        ph.property(MinecraftTypes.PLAYER, "xp_level", "$.getLevel()", PlaceholderType.NUMBER);
+        ph.property(MinecraftTypes.PLAYER, "world", "$.getWorld().getName()", PlaceholderType.STRING);
+        ph.property(MinecraftTypes.PLAYER, "x", "$.getLocation().getBlockX()", PlaceholderType.NUMBER);
+        ph.property(MinecraftTypes.PLAYER, "y", "$.getLocation().getBlockY()", PlaceholderType.NUMBER);
+        ph.property(MinecraftTypes.PLAYER, "z", "$.getLocation().getBlockZ()", PlaceholderType.NUMBER);
+        ph.property(MinecraftTypes.PLAYER, "gamemode", "$.getGameMode().name()", PlaceholderType.STRING);
+        ph.property(MinecraftTypes.PLAYER, "uuid", "$.getUniqueId().toString()", PlaceholderType.STRING);
+        ph.property(MinecraftTypes.PLAYER, "ip", "$.getAddress().getHostString()", PlaceholderType.STRING);
+        ph.defaultProperty(MinecraftTypes.PLAYER, "name");
     }
 }

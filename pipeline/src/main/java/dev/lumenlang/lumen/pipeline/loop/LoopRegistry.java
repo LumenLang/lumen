@@ -8,6 +8,7 @@ import dev.lumenlang.lumen.pipeline.language.match.InlineExprValidator;
 import dev.lumenlang.lumen.pipeline.language.match.Match;
 import dev.lumenlang.lumen.pipeline.language.match.PatternMatcher;
 import dev.lumenlang.lumen.pipeline.language.pattern.Pattern;
+import dev.lumenlang.lumen.pipeline.language.pattern.PatternIndex;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternPart;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
@@ -35,7 +36,7 @@ public class LoopRegistry {
 
     private final List<RegisteredLoop> loops = new ArrayList<>();
     private final TypeRegistry types;
-    private volatile boolean sorted;
+    private volatile PatternIndex<RegisteredLoop> loopIndex;
     private @Nullable InlineExprValidator validator;
 
     /**
@@ -122,8 +123,7 @@ public class LoopRegistry {
      * @return a {@link RegisteredLoopMatch} on success, or {@code null} if no pattern matched
      */
     public @Nullable RegisteredLoopMatch match(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
-        ensureSorted();
-        for (RegisteredLoop rl : loops) {
+        for (RegisteredLoop rl : ensureIndex().candidates(tokens)) {
             Match m = PatternMatcher.match(tokens, rl.pattern(), types, env);
             if (m != null) return new RegisteredLoopMatch(rl, m);
         }
@@ -140,18 +140,23 @@ public class LoopRegistry {
      */
     public @Nullable RegisteredLoopMatch matchSlow(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
         if (validator == null) return null;
-        ensureSorted();
-        for (RegisteredLoop rl : loops) {
+        for (RegisteredLoop rl : ensureIndex().candidates(tokens)) {
             Match m = PatternMatcher.match(tokens, rl.pattern(), types, env, validator);
             if (m != null) return new RegisteredLoopMatch(rl, m);
         }
         return null;
     }
 
-    private void ensureSorted() {
-        if (!sorted) {
-            loops.sort(Comparator.comparingInt(rl -> -PatternRegistry.specificity(rl.pattern())));
-            sorted = true;
+    private @NotNull PatternIndex<RegisteredLoop> ensureIndex() {
+        if (loopIndex == null) {
+            synchronized (loops) {
+                if (loopIndex == null) {
+                    List<RegisteredLoop> copy = new ArrayList<>(loops);
+                    copy.sort(Comparator.comparingInt((RegisteredLoop rl) -> PatternRegistry.specificity(rl.pattern())).reversed());
+                    loopIndex = new PatternIndex<>(copy, RegisteredLoop::pattern);
+                }
+            }
         }
+        return loopIndex;
     }
 }

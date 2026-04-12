@@ -2,7 +2,7 @@ package dev.lumenlang.lumen.api.event;
 
 import dev.lumenlang.lumen.api.handler.BlockHandler;
 import dev.lumenlang.lumen.api.pattern.Category;
-import dev.lumenlang.lumen.api.type.RefTypeHandle;
+import dev.lumenlang.lumen.api.type.LumenType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -227,55 +227,19 @@ public final class AdvancedEventBuilder {
     }
 
     /**
-     * Adds a variable that will be available inside the event block.
+     * Adds a typed variable that will be available inside the event block.
      *
      * <p>Variables are emitted as local declarations at the top of the handler method
-     * body, identical to how regular event variables work.
+     * body, identical to how regular event variables work. The type controls both
+     * type checking and the Java type used in the declaration.
      *
-     * @param name     the variable name accessible in script child statements
-     * @param refType  the logical type category for type checking, or {@code null}
-     * @param javaType the Java type name (e.g. {@code Types.DOUBLE} or a fully qualified class name)
-     * @param expr     the initialiser expression
+     * @param name the variable name accessible in script child statements
+     * @param type the compile-time type for type checking and code generation
+     * @param expr the initialiser expression
      * @return this builder
      */
-    public @NotNull AdvancedEventBuilder addVar(@NotNull String name,
-                                                @Nullable RefTypeHandle refType,
-                                                @NotNull String javaType,
-                                                @NotNull String expr) {
-        String refTypeId = refType != null ? refType.id() : null;
-        vars.put(name, new EventDefinition.VarEntry(refTypeId, javaType, expr));
-        this.lastVarName = name;
-        return this;
-    }
-
-    /**
-     * Adds a typed variable whose Java type is inferred from the ref type handle.
-     *
-     * @param name    the variable name
-     * @param refType the logical type category
-     * @param expr    the initialiser expression
-     * @return this builder
-     */
-    public @NotNull AdvancedEventBuilder addVar(@NotNull String name,
-                                                @NotNull RefTypeHandle refType,
-                                                @NotNull String expr) {
-        vars.put(name, new EventDefinition.VarEntry(refType.id(), refType.javaType(), expr));
-        this.lastVarName = name;
-        return this;
-    }
-
-    /**
-     * Adds a plain variable (no ref type).
-     *
-     * @param name     the variable name
-     * @param javaType the Java type name (e.g. {@code Types.BOOLEAN} or a fully qualified class name)
-     * @param expr     the initialiser expression
-     * @return this builder
-     */
-    public @NotNull AdvancedEventBuilder addVar(@NotNull String name,
-                                                @NotNull String javaType,
-                                                @NotNull String expr) {
-        vars.put(name, new EventDefinition.VarEntry(null, javaType, expr));
+    public @NotNull AdvancedEventBuilder addVar(@NotNull String name, @NotNull LumenType type, @NotNull String expr) {
+        vars.put(name, new EventDefinition.VarEntry(type, expr));
         this.lastVarName = name;
         return this;
     }
@@ -296,7 +260,7 @@ public final class AdvancedEventBuilder {
         Map<String, Object> newMeta = new HashMap<>(existing.metadata());
         newMeta.put(key, value);
         vars.put(lastVarName, new EventDefinition.VarEntry(
-                existing.refTypeId(), existing.javaType(), existing.expr(),
+                existing.type(), existing.expr(),
                 Collections.unmodifiableMap(newMeta), existing.description()));
         return this;
     }
@@ -317,7 +281,7 @@ public final class AdvancedEventBuilder {
         }
         EventDefinition.VarEntry existing = vars.get(lastVarName);
         vars.put(lastVarName, new EventDefinition.VarEntry(
-                existing.refTypeId(), existing.javaType(), existing.expr(),
+                existing.type(), existing.expr(),
                 existing.metadata(), description));
         return this;
     }

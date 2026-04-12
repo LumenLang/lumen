@@ -2,7 +2,7 @@ package dev.lumenlang.lumen.plugin.util;
 
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess.VarHandle;
 import dev.lumenlang.lumen.api.exceptions.ParseFailureException;
-import dev.lumenlang.lumen.api.type.RefTypeHandle;
+import dev.lumenlang.lumen.api.type.LumenType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
  * <p>The Java class of an entity variable is determined by:
  * <ol>
  *   <li>The {@code "javaClass"} metadata entry, if present (e.g. from mob spawn expressions)</li>
- *   <li>The variable's {@link RefTypeHandle#javaType()}, which every ref type carries
+ *   <li>The variable's {@link LumenType#javaType()}, which every type carries
  *       (e.g. PLAYER maps to {@code org.bukkit.entity.Player})</li>
  * </ol>
  *
@@ -28,7 +28,7 @@ public final class EntityValidation {
      * Returns the Java class name for a VarHandle.
      *
      * <p>Checks the {@code "javaClass"} metadata first, then falls back to the
-     * variable's {@link RefTypeHandle#javaType()} if available.
+     * variable's {@link LumenType#javaType()} if available.
      *
      * @param handle the variable handle
      * @return the fully-qualified java class name, or {@code null} if unknown
@@ -36,8 +36,8 @@ public final class EntityValidation {
     public static @Nullable String javaClass(@NotNull VarHandle handle) {
         Object val = handle.meta("javaClass");
         if (val instanceof String s) return s;
-        RefTypeHandle refType = handle.type();
-        if (refType != null) return refType.javaType();
+        LumenType type = handle.type();
+        if (type != null) return type.javaType();
         return null;
     }
 

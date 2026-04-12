@@ -28,7 +28,7 @@ public final class LifecycleBlocks {
                 .description("Declares a block that runs when the script is loaded (plugin enable).")
                 .example(of(
                         top("load:"),
-                        secondly("broadcast \"Plugin loaded!\"")))
+                        secondly("broadcast \"Script fully loaded!\"")))
                 .since("1.0.0")
                 .category(Categories.LIFECYCLE)
                 .supportsRootLevel(true)
@@ -56,7 +56,7 @@ public final class LifecycleBlocks {
                 .description("Declares a block that runs before other load blocks during startup.")
                 .example(of(
                         top("preload:"),
-                        secondly("log \"Pre-loading...\"")))
+                        secondly("broadcast \"Loading...\"")))
                 .since("1.0.0")
                 .category(Categories.LIFECYCLE)
                 .supportsRootLevel(true)

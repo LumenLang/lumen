@@ -18,12 +18,10 @@ public final class WolfConditions {
         EntityHelper.forType(FQCN)
                 .alias("_wf")
                 .conditionPair(
-                        "%e:ENTITY% is angry",
-                        "%e:ENTITY% is not angry",
+                        "%e:ENTITY% (is|is not) angry",
+                        0, "is",
                         "isAngry()",
-                        "Checks if a wolf is angry.",
-                        "Checks if a wolf is not angry.",
-                        "if mob is angry:",
-                        "if mob is not angry:");
+                        "Checks if a wolf is or is not angry.",
+                        "if mob is angry:");
     }
 }

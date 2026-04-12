@@ -1,9 +1,9 @@
 package dev.lumenlang.lumen.plugin.defaults.util;
 
 import dev.lumenlang.lumen.api.annotations.Registration;
+import dev.lumenlang.lumen.api.bus.Subscribe;
 import dev.lumenlang.lumen.api.bus.events.AllScriptsLoadedEvent;
 import dev.lumenlang.lumen.api.bus.events.ScriptLoadEvent;
-import dev.lumenlang.lumen.api.bus.Subscribe;
 import dev.lumenlang.lumen.plugin.Lumen;
 import dev.lumenlang.lumen.plugin.util.InventoryHotReload;
 import org.bukkit.Bukkit;

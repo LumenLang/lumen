@@ -7,6 +7,7 @@ import dev.lumenlang.lumen.api.emit.EmitContext;
 import dev.lumenlang.lumen.api.emit.ScriptToken;
 import dev.lumenlang.lumen.api.emit.StatementFormHandler;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
+import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.pipeline.codegen.BindingContext;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.pipeline.language.emit.EmitContextImpl;
@@ -20,7 +21,6 @@ import dev.lumenlang.lumen.pipeline.language.typed.ExprParser;
 import dev.lumenlang.lumen.pipeline.language.validator.VarNameValidator;
 import dev.lumenlang.lumen.pipeline.persist.PersistentVars;
 import dev.lumenlang.lumen.pipeline.placeholder.PlaceholderExpander;
-import dev.lumenlang.lumen.pipeline.var.RefType;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +30,7 @@ import java.util.List;
 /**
  * Statement form handler for inline stored variable loading.
  *
- * <p>Accepts the syntax {@code load name [for [ref type] scope] with default expr}.
+ * <p>Accepts the syntax {@code load name [for [type] scope] with default expr}.
  * This loads a persistent variable into the current scope, creating it with the given
  * default value if it does not yet exist. The variable is backed by {@link PersistentVars}
  * and survives server restarts.
@@ -67,9 +67,6 @@ public final class LoadStatementForm implements StatementFormHandler {
 
         if (idx < t.size() && t.get(idx).text().equalsIgnoreCase("for")) {
             idx++;
-            if (idx + 1 < t.size() && t.get(idx).text().equalsIgnoreCase("ref") && t.get(idx + 1).text().equalsIgnoreCase("type")) {
-                idx += 2;
-            }
             if (idx >= t.size()) {
                 throw new LumenScriptException(ctx.line(), ctx.raw(), "Expected scope variable after 'for'. Correct syntax: load " + name + " for <scope> with default ...");
             }
@@ -105,15 +102,13 @@ public final class LoadStatementForm implements StatementFormHandler {
         RegisteredExpressionMatch exprMatch = PatternRegistry.instance().matchExpression(exprTokens, env);
 
         String defaultJava;
-        RefType exprRefType = null;
+        ObjectType resolvedObjectType = null;
 
         if (exprMatch != null) {
             BindingContext bc = new BindingContext(exprMatch.match(), env, ((EmitContextImpl) ctx).codegenContext(), env.blockContext());
             ExpressionResult result = exprMatch.reg().handler().handle(bc);
             defaultJava = result.java();
-            if (result.refTypeId() != null) {
-                exprRefType = RefType.byId(result.refTypeId());
-            }
+            resolvedObjectType = result.type() instanceof ObjectType ot ? ot : null;
         } else {
             Expr e = ExprParser.parse(exprTokens, env);
             if (e instanceof Expr.Literal l) {
@@ -140,8 +135,8 @@ public final class LoadStatementForm implements StatementFormHandler {
                 throw new RuntimeException("Scope variable not found: " + scopeVar);
             }
             String scopeKeyPart;
-            if (scopeRef.refType() != null) {
-                scopeKeyPart = scopeRef.refType().keyExpression(scopeRef.java());
+            if (scopeRef.objectType() != null) {
+                scopeKeyPart = scopeRef.objectType().keyExpression(scopeRef.java());
             } else {
                 scopeKeyPart = "String.valueOf(" + scopeRef.java() + ")";
             }
@@ -152,7 +147,7 @@ public final class LoadStatementForm implements StatementFormHandler {
 
         ctx.codegen().addImport(PersistentVars.class.getName());
         ctx.out().line("var " + name + " = PersistentVars.get(" + keyExpr + ", " + defaultJava + ");");
-        VarRef varRef = new VarRef(exprRefType, name);
+        VarRef varRef = new VarRef(resolvedObjectType, name);
         env.defineVar(name, varRef);
         if (env.blockContext().parent() != null) {
             env.blockContext().parent().defineVar(name, varRef);

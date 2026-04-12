@@ -1,6 +1,5 @@
 package dev.lumenlang.lumen.pipeline.persist;
 
-import dev.lumenlang.lumen.pipeline.java.compiled.Coerce;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +36,18 @@ public final class GlobalVars {
             return defaultValue;
         }
         if (defaultValue != null && !defaultValue.getClass().isInstance(val)) {
-            val = Coerce.coerce(val, defaultValue);
+            val = matchType(val, defaultValue);
+        }
+        return (T) val;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> @NotNull T matchType(@NotNull Object val, @NotNull T defaultValue) {
+        if (defaultValue instanceof Number && val instanceof Number num) {
+            if (defaultValue instanceof Integer) return (T) Integer.valueOf(num.intValue());
+            if (defaultValue instanceof Long) return (T) Long.valueOf(num.longValue());
+            if (defaultValue instanceof Double) return (T) Double.valueOf(num.doubleValue());
+            if (defaultValue instanceof Float) return (T) Float.valueOf(num.floatValue());
         }
         return (T) val;
     }

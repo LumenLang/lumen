@@ -11,14 +11,15 @@
 
 data arena:
     name text
-    x1 number
-    y1 number
-    z1 number
-    x2 number
-    y2 number
-    z2 number
+    x1 integer
+    y1 integer
+    z1 integer
+    x2 integer
+    y2 integer
+    z2 integer
 
-global stored arenas with default new list of arena
+global:
+    stored arenas: list of arena
 
 command arena:
     permission "lumen.arena"

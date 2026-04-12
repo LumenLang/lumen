@@ -6,10 +6,13 @@ import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.emit.BlockEnterHook;
 import dev.lumenlang.lumen.api.emit.EmitContext;
+import dev.lumenlang.lumen.api.type.CollectionType;
+import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.type.NullableType;
+import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.pipeline.persist.GlobalVars;
 import dev.lumenlang.lumen.pipeline.persist.PersistentVars;
-import dev.lumenlang.lumen.pipeline.var.RefType;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,50 +28,13 @@ import java.util.Map;
  * via {@code get name for scope}.
  */
 @Registration(order = -2000)
-@SuppressWarnings({"unused", "DataFlowIssue"})
+@SuppressWarnings("unused")
 public final class GlobalVarLoadHook implements BlockEnterHook {
     public static final String TAG = "global-var-load";
 
     @Call
     public void register(@NotNull LumenAPI api) {
         api.emitters().blockEnterHook(this);
-    }
-
-    /**
-     * Infers the Java field type from the default value expression.
-     *
-     * <p>Recognizes integer, long, double, boolean, and string literals.
-     * Falls back to {@code Object} for any expression that cannot be trivially classified.
-     *
-     * @param defaultJava the Java default value expression
-     * @return a Java type name suitable for a field declaration
-     */
-    private static @NotNull String inferFieldType(@NotNull String defaultJava) {
-        if (defaultJava.equals("true") || defaultJava.equals("false")) return "boolean";
-        if (defaultJava.startsWith("\"")) return "String";
-        if (defaultJava.endsWith("L") || defaultJava.endsWith("l")) {
-            String num = defaultJava.substring(0, defaultJava.length() - 1);
-            if (isDigits(num)) return "long";
-        }
-        if (defaultJava.contains(".")) {
-            try {
-                Double.parseDouble(defaultJava);
-                return "double";
-            } catch (NumberFormatException ignored) {
-            }
-        }
-        if (isDigits(defaultJava)) return "int";
-        return "Object";
-    }
-
-    private static boolean isDigits(@NotNull String s) {
-        if (s.isEmpty()) return false;
-        int start = s.charAt(0) == '-' ? 1 : 0;
-        if (start >= s.length()) return false;
-        for (int i = start; i < s.length(); i++) {
-            if (!Character.isDigit(s.charAt(i))) return false;
-        }
-        return true;
     }
 
     @Override
@@ -83,24 +49,23 @@ public final class GlobalVarLoadHook implements BlockEnterHook {
 
             String defaultJava = g.defaultJava();
             String className = g.className();
-            String exprRefTypeId = g.exprRefTypeId();
             Map<String, Object> exprMetadata = g.exprMetadata();
-            RefType exprRefType = exprRefTypeId != null ? RefType.byId(exprRefTypeId) : null;
             String keyExpr = "\"" + className + "." + name + "\"";
 
-            String fieldType;
-            if (exprRefType != null) {
-                String fqn = exprRefType.javaType();
-                ctx.codegen().addImport(fqn);
-                fieldType = fqn.substring(fqn.lastIndexOf('.') + 1);
-            } else {
-                fieldType = inferFieldType(defaultJava);
-            }
+            LumenType lumenType = g.type();
+            String fieldType = lumenType.javaTypeName();
             String storageClass = g.stored() ? "PersistentVars" : "GlobalVars";
+            addTypeImports(lumenType, ctx);
             ctx.codegen().addField(fieldType + " " + name + ";");
-            ctx.out().taggedLine(TAG, name + " = " + storageClass + ".get(" + keyExpr + ", " + defaultJava + ");");
+            boolean needsCast = lumenType instanceof CollectionType || lumenType instanceof NullableType;
+            String getExpr = storageClass + ".get(" + keyExpr + ", " + defaultJava + ")";
+            if (needsCast) {
+                ctx.out().taggedLine(TAG, name + " = (" + fieldType + ") " + getExpr + ";");
+            } else {
+                ctx.out().taggedLine(TAG, name + " = " + getExpr + ";");
+            }
 
-            VarRef varRef = new VarRef(exprRefType, name, exprMetadata);
+            VarRef varRef = new VarRef(lumenType, name, exprMetadata != null ? exprMetadata : Map.of());
             env.defineVar(name, varRef);
             env.markGlobalField(name);
             if (g.stored()) {
@@ -108,6 +73,19 @@ public final class GlobalVarLoadHook implements BlockEnterHook {
             } else {
                 env.markRuntimeGlobal(name);
             }
+        }
+    }
+
+    private static void addTypeImports(@NotNull LumenType type, @NotNull EmitContext ctx) {
+        if (type instanceof CollectionType ct) {
+            String rawFqn = ct.rawType().javaType();
+            if (rawFqn.contains(".") && !rawFqn.startsWith("java.lang.")) ctx.codegen().addImport(rawFqn);
+            for (LumenType arg : ct.typeArguments()) addTypeImports(arg, ctx);
+        } else if (type instanceof NullableType nt) {
+            addTypeImports(nt.inner(), ctx);
+        } else if (type instanceof ObjectType ot) {
+            String fqn = ot.javaType();
+            if (fqn.contains(".") && !fqn.startsWith("java.lang.")) ctx.codegen().addImport(fqn);
         }
     }
 }

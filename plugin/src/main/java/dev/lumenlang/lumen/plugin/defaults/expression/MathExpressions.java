@@ -5,7 +5,7 @@ import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.pattern.Categories;
-import dev.lumenlang.lumen.api.type.Types;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.ThreadLocalRandom;
@@ -30,7 +30,6 @@ public final class MathExpressions {
                         "set n to random from low to high")
                 .since("1.0.0")
                 .category(Categories.MATH)
-                .returnJavaType(Types.INT)
                 .handler(ctx -> {
                     ctx.codegen().addImport(ThreadLocalRandom.class.getName());
                     String min = ctx.java("min");
@@ -38,7 +37,7 @@ public final class MathExpressions {
                     return new ExpressionResult(
                             "ThreadLocalRandom.current().nextInt("
                                     + min + ", " + max + " + 1)",
-                            null, Types.INT);
+                            PrimitiveType.INT);
                 }));
 
         api.patterns().expression(b -> b
@@ -50,7 +49,6 @@ public final class MathExpressions {
                         "set dmg to random decimal 1.5 to 10.0")
                 .since("1.0.0")
                 .category(Categories.MATH)
-                .returnJavaType(Types.DOUBLE)
                 .handler(ctx -> {
                     ctx.codegen().addImport(ThreadLocalRandom.class.getName());
                     String min = ctx.java("min");
@@ -58,7 +56,7 @@ public final class MathExpressions {
                     return new ExpressionResult(
                             "ThreadLocalRandom.current().nextDouble("
                                     + min + ", " + max + ")",
-                            null, Types.DOUBLE);
+                            PrimitiveType.DOUBLE);
                 }));
 
         api.patterns().expression(b -> b
@@ -69,14 +67,13 @@ public final class MathExpressions {
                         "if chance 50: message player \"Heads!\"")
                 .since("1.0.0")
                 .category(Categories.MATH)
-                .returnJavaType(Types.BOOLEAN)
                 .handler(ctx -> {
                     ctx.codegen().addImport(ThreadLocalRandom.class.getName());
                     String pct = ctx.java("pct");
                     return new ExpressionResult(
                             "(ThreadLocalRandom.current().nextDouble(100.0) < ((Number)((Object) "
                                     + pct + ")).doubleValue())",
-                            null, Types.BOOLEAN);
+                            PrimitiveType.BOOLEAN);
                 }));
 
         api.patterns().expression(b -> b
@@ -88,10 +85,9 @@ public final class MathExpressions {
                         "set lowest to minimum between 10 and 20")
                 .since("1.0.0")
                 .category(Categories.MATH)
-                .returnJavaType(Types.DOUBLE)
                 .handler(ctx -> new ExpressionResult(
                         "Math.min(" + ctx.java("x") + ", " + ctx.java("y") + ")",
-                        null, Types.DOUBLE)));
+                        PrimitiveType.DOUBLE)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -102,10 +98,9 @@ public final class MathExpressions {
                         "set highest to maximum between 10 and 20")
                 .since("1.0.0")
                 .category(Categories.MATH)
-                .returnJavaType(Types.DOUBLE)
                 .handler(ctx -> new ExpressionResult(
                         "Math.max(" + ctx.java("x") + ", " + ctx.java("y") + ")",
-                        null, Types.DOUBLE)));
+                        PrimitiveType.DOUBLE)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -114,10 +109,9 @@ public final class MathExpressions {
                 .example("set positive to abs of difference")
                 .since("1.0.0")
                 .category(Categories.MATH)
-                .returnJavaType(Types.DOUBLE)
                 .handler(ctx -> new ExpressionResult(
                         "Math.abs(" + ctx.java("x") + ")",
-                        null, Types.DOUBLE)));
+                        PrimitiveType.DOUBLE)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -126,10 +120,9 @@ public final class MathExpressions {
                 .example("set rounded to round 3.7")
                 .since("1.0.0")
                 .category(Categories.MATH)
-                .returnJavaType(Types.LONG)
                 .handler(ctx -> new ExpressionResult(
                         "Math.round(((Number) ((Object) " + ctx.java("x") + ")).doubleValue())",
-                        null, Types.LONG)));
+                        PrimitiveType.LONG)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -138,10 +131,9 @@ public final class MathExpressions {
                 .example("set floored to floor 3.7")
                 .since("1.0.0")
                 .category(Categories.MATH)
-                .returnJavaType(Types.INT)
                 .handler(ctx -> new ExpressionResult(
                         "(int) Math.floor(((Number) ((Object) " + ctx.java("x") + ")).doubleValue())",
-                        null, Types.INT)));
+                        PrimitiveType.INT)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -150,10 +142,9 @@ public final class MathExpressions {
                 .example("set ceiled to ceil 3.2")
                 .since("1.0.0")
                 .category(Categories.MATH)
-                .returnJavaType(Types.INT)
                 .handler(ctx -> new ExpressionResult(
                         "(int) Math.ceil(((Number) ((Object) " + ctx.java("x") + ")).doubleValue())",
-                        null, Types.INT)));
+                        PrimitiveType.INT)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -162,10 +153,9 @@ public final class MathExpressions {
                 .example("set clamped to clamp health between 0 and 20")
                 .since("1.0.0")
                 .category(Categories.MATH)
-                .returnJavaType(Types.DOUBLE)
                 .handler(ctx -> new ExpressionResult(
                         "Math.max(" + ctx.java("min") + ", Math.min(" + ctx.java("x")
                                 + ", " + ctx.java("max") + "))",
-                        null, Types.DOUBLE)));
+                        PrimitiveType.DOUBLE)));
     }
 }

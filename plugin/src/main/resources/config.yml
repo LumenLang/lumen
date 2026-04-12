@@ -57,6 +57,11 @@ debug:
   # Only enable this when debugging issues with pattern matching or compilation.
   full-debug: false
 
+  # When enabled, diagnostic output highlights the entire source line
+  # and renders all individual labels as notes instead of inline underlines.
+  # Useful when diagnostics on long or complex lines are hard to read.
+  verbose-diagnostics: false
+
 # Compilation strategy and performance
 performance:
   # Cache compiled classes between reloads and restarts.

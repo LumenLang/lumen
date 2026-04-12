@@ -6,8 +6,8 @@ import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.codegen.CodegenAccess;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.pattern.Categories;
-import dev.lumenlang.lumen.api.type.RefTypeHandle;
-import dev.lumenlang.lumen.pipeline.java.compiled.Coerce;
+import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.pipeline.persist.GlobalVars;
 import dev.lumenlang.lumen.pipeline.persist.PersistentVars;
 import org.jetbrains.annotations.NotNull;
@@ -48,12 +48,8 @@ public final class ScopedVariableConditions {
         if (scopeRef == null) {
             throw new RuntimeException("Scope variable not found: " + scopeVarName);
         }
-        RefTypeHandle refType = scopeRef.type();
-        if (refType == null) {
-            throw new RuntimeException("Scope variable '" + scopeVarName
-                    + "' has no ref type. Expected a typed variable like a player or entity.");
-        }
-        String scopeKeyPart = refType.keyExpression(scopeRef.java());
+        LumenType scopeType = scopeRef.type();
+        String scopeKeyPart = ((ObjectType) scopeType).keyExpression(scopeRef.java());
         String keyExpr = "\"" + info.className() + "." + varName + ".\" + " + scopeKeyPart;
         if (info.stored()) {
             ctx.addImport(PersistentVars.class.getName());
@@ -81,8 +77,7 @@ public final class ScopedVariableConditions {
                     String op = match.java("op", ctx, env);
                     String readExpr = buildScopedRead(env, ctx, varName, scopeVarName);
                     if (op.equals("<") || op.equals(">") || op.equals("<=") || op.equals(">=")) {
-                        ctx.addImport(Coerce.class.getName());
-                        return "Coerce.toDouble(" + readExpr + ") " + op + " Coerce.toDouble(" + bVal + ")";
+                        return "((double) " + readExpr + ") " + op + " ((double) " + bVal + ")";
                     }
                     return readExpr + " " + op + " " + bVal;
                 }));

@@ -1,11 +1,12 @@
 package dev.lumenlang.lumen.pipeline.language.typed;
 
+import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.language.tokenization.TokenKind;
 import dev.lumenlang.lumen.pipeline.math.MathEngine;
 import dev.lumenlang.lumen.pipeline.placeholder.PlaceholderExpander;
-import dev.lumenlang.lumen.pipeline.type.LumenType;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,6 +36,20 @@ public final class ExprParser {
      * @throws RuntimeException if the token list is empty
      */
     public static @NotNull Expr parse(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
+        return parse(tokens, env, 0, "");
+    }
+
+    /**
+     * Parses the given tokens into the most specific {@link Expr} variant possible.
+     *
+     * @param tokens  the tokens forming the expression (must not be empty)
+     * @param env     the type environment for variable lookups
+     * @param line    the script line number for diagnostic messages
+     * @param rawLine the raw source text of the script line
+     * @return the parsed expression
+     * @throws RuntimeException if the token list is empty
+     */
+    public static @NotNull Expr parse(@NotNull List<Token> tokens, @NotNull TypeEnv env, int line, @NotNull String rawLine) {
         if (tokens.isEmpty())
             throw new RuntimeException("Empty expression");
 
@@ -42,19 +57,23 @@ public final class ExprParser {
             Token t = tokens.get(0);
 
             if (t.kind() == TokenKind.STRING)
-                return new Expr.Literal(t.text(), LumenType.Primitive.STRING);
+                return new Expr.Literal(t.text(), PrimitiveType.STRING);
 
-            if (t.kind() == TokenKind.NUMBER)
-                return new Expr.Literal(Integer.parseInt(t.text()), LumenType.Primitive.INT);
+            if (t.kind() == TokenKind.NUMBER) {
+                if (t.text().contains(".")) {
+                    return new Expr.Literal(Double.parseDouble(t.text()), PrimitiveType.DOUBLE);
+                }
+                return new Expr.Literal(Integer.parseInt(t.text()), PrimitiveType.INT);
+            }
 
             if (t.kind() == TokenKind.IDENT) {
                 String text = t.text();
                 if (text.equalsIgnoreCase("true") || text.equalsIgnoreCase("false"))
-                    return new Expr.Literal(Boolean.parseBoolean(text.toLowerCase()), LumenType.Primitive.BOOLEAN);
+                    return new Expr.Literal(Boolean.parseBoolean(text.toLowerCase()), PrimitiveType.BOOLEAN);
 
                 VarRef ref = env.lookupVar(text);
                 if (ref != null)
-                    return new Expr.RefExpr(text, ref.resolvedType());
+                    return new Expr.RefExpr(text, ref.type());
             }
         }
 
@@ -68,11 +87,11 @@ public final class ExprParser {
         }
 
         if (MathEngine.isMathExpression(tokens, env)) {
-            MathEngine.TypedResult result = MathEngine.compileTyped(tokens, env);
+            MathEngine.TypedResult result = MathEngine.compileTyped(tokens, env, line, rawLine);
             return new Expr.MathExpr(result.java(), result.type());
         }
 
-        return new Expr.RawExpr(tokens);
+        return new Expr.RawExpr(tokens, PrimitiveType.STRING);
     }
 
     /**

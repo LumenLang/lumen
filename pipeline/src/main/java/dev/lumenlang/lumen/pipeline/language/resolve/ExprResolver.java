@@ -1,6 +1,8 @@
 package dev.lumenlang.lumen.pipeline.language.resolve;
 
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
+import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.pipeline.codegen.BindingContext;
 import dev.lumenlang.lumen.pipeline.codegen.BlockContext;
 import dev.lumenlang.lumen.pipeline.codegen.CodegenContext;
@@ -9,8 +11,6 @@ import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.language.pattern.registered.RegisteredExpressionMatch;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.language.tokenization.TokenKind;
-import dev.lumenlang.lumen.pipeline.type.LumenType;
-import dev.lumenlang.lumen.pipeline.var.RefType;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -162,11 +162,8 @@ public final class ExprResolver {
                     continue;
                 }
 
-                if (subResult.refTypeId() == null) continue;
-
                 String synthName = "$sub" + depth + "$" + start;
-                RefType refType = RefType.byId(subResult.refTypeId());
-                VarRef synthRef = new VarRef(refType, subResult.java());
+                VarRef synthRef = new VarRef(subResult.type(), subResult.java());
 
                 BlockContext tempBlock = new BlockContext(null, env.blockContext(), List.of(), 0);
                 env.enterBlock(tempBlock);
@@ -238,13 +235,12 @@ public final class ExprResolver {
             sb.append(operand.java);
             if (resultType == null) {
                 resultType = operand.type;
-            } else if (operand.type != null) {
-                LumenType.Primitive widened = LumenType.widenNumeric(resultType, operand.type);
+            } else {
+                LumenType widened = LumenType.widenNumeric(resultType, operand.type);
                 if (widened != null) resultType = widened;
             }
         }
-        String javaType = resultType != null ? resultType.javaType() : null;
-        return new ExpressionResult(sb.toString(), null, javaType);
+        return new ExpressionResult(sb.toString(), resultType);
     }
 
     /**
@@ -267,12 +263,12 @@ public final class ExprResolver {
             Token t = tokens.get(0);
             if (t.kind() == TokenKind.NUMBER) {
                 LumenType type = t.text().contains(".")
-                        ? LumenType.Primitive.DOUBLE : LumenType.Primitive.INT;
+                        ? PrimitiveType.DOUBLE : PrimitiveType.INT;
                 return new TypedOperand(t.text(), type);
             }
             if (t.kind() == TokenKind.IDENT) {
                 VarRef ref = env.lookupVar(t.text());
-                if (ref != null) return new TypedOperand(ref.java(), ref.resolvedType());
+                if (ref != null) return new TypedOperand(ref.java(), ref.type());
             }
             return null;
         }
@@ -284,17 +280,16 @@ public final class ExprResolver {
             List<Token> inner = tokens.subList(1, tokens.size() - 1);
             ExpressionResult innerResolved = resolveRecursive(inner, ctx, env, depth + 1);
             if (innerResolved != null) {
-                LumenType type = LumenType.resolve(innerResolved.refTypeId(), innerResolved.javaType());
-                return new TypedOperand("(" + innerResolved.java() + ")", type);
+                return new TypedOperand("(" + innerResolved.java() + ")", innerResolved.type());
             }
             return null;
         }
 
         ExpressionResult result = resolveRecursive(tokens, ctx, env, depth + 1);
         if (result == null) return null;
-        LumenType type = LumenType.resolve(result.refTypeId(), result.javaType());
-        if (type == null || !type.numeric()) {
-            return new TypedOperand("Coerce.toInt(" + result.java() + ")", LumenType.Primitive.INT);
+        LumenType type = result.type();
+        if (!type.numeric()) {
+            throw new RuntimeException("Non-numeric operand in arithmetic expression. Expression resolved to type '" + type.displayName() + "' which is not numeric.");
         }
         return new TypedOperand(result.java(), type);
     }
@@ -303,6 +298,6 @@ public final class ExprResolver {
         return s.equals("+") || s.equals("-") || s.equals("*") || s.equals("/");
     }
 
-    private record TypedOperand(@NotNull String java, @Nullable LumenType type) {
+    private record TypedOperand(@NotNull String java, @NotNull LumenType type) {
     }
 }

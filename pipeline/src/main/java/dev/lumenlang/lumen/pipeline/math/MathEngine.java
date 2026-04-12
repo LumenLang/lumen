@@ -1,14 +1,16 @@
 package dev.lumenlang.lumen.pipeline.math;
 
+import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
+import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.placeholder.PlaceholderType;
+import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.language.tokenization.TokenKind;
 import dev.lumenlang.lumen.pipeline.placeholder.PlaceholderExpander;
-import dev.lumenlang.lumen.pipeline.type.LumenType;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -32,11 +34,15 @@ public final class MathEngine {
 
     private final List<Token> tokens;
     private final TypeEnv env;
+    private final int line;
+    private final @NotNull String rawLine;
     private int pos;
 
-    private MathEngine(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
+    private MathEngine(@NotNull List<Token> tokens, @NotNull TypeEnv env, int line, @NotNull String rawLine) {
         this.tokens = tokens;
         this.env = env;
+        this.line = line;
+        this.rawLine = rawLine;
         this.pos = 0;
     }
 
@@ -46,13 +52,32 @@ public final class MathEngine {
      * @param tokens the token list representing the math expression
      * @param env    the compile-time symbol table for variable resolution
      * @return a Java source expression string
-     * @throws RuntimeException if the expression is malformed or references an unknown variable
+     * @throws DiagnosticException if the expression is malformed or references an unknown variable
      */
     public static @NotNull String compile(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
-        MathEngine engine = new MathEngine(tokens, env);
+        return compile(tokens, env, 0, "");
+    }
+
+    /**
+     * Compiles a list of tokens into a Java expression string.
+     *
+     * @param tokens  the token list representing the math expression
+     * @param env     the compile-time symbol table for variable resolution
+     * @param line    the script line number for diagnostic messages
+     * @param rawLine the raw source text of the script line
+     * @return a Java source expression string
+     * @throws DiagnosticException if the expression is malformed or references non-numeric operands
+     */
+    public static @NotNull String compile(@NotNull List<Token> tokens, @NotNull TypeEnv env, int line, @NotNull String rawLine) {
+        MathEngine engine = new MathEngine(tokens, env, line, rawLine);
         String result = engine.parseExpr();
         if (engine.pos < engine.tokens.size()) {
-            throw new RuntimeException("Unexpected token after expression: " + engine.peek().text());
+            Token trailing = engine.peek();
+            throw new DiagnosticException(LumenDiagnostic.error("E206", "Unexpected token after expression")
+                    .at(line, rawLine)
+                    .highlight(trailing.start(), trailing.end())
+                    .label("'" + trailing.text() + "' is not expected here")
+                    .build());
         }
         return result;
     }
@@ -61,16 +86,23 @@ public final class MathEngine {
      * Compiles a list of tokens into a Java expression string and resolves the numeric
      * result type by tracking type widening through operations.
      *
-     * @param tokens the token list representing the math expression
-     * @param env    the compile-time symbol table for variable resolution
+     * @param tokens  the token list representing the math expression
+     * @param env     the compile-time symbol table for variable resolution
+     * @param line    the script line number for diagnostic messages
+     * @param rawLine the raw source text of the script line
      * @return a typed result containing the Java expression and its resolved type
-     * @throws RuntimeException if the expression is malformed or references an unknown variable
+     * @throws DiagnosticException if the expression is malformed or references non-numeric operands
      */
-    public static @NotNull TypedResult compileTyped(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
-        MathEngine engine = new MathEngine(tokens, env);
+    public static @NotNull TypedResult compileTyped(@NotNull List<Token> tokens, @NotNull TypeEnv env, int line, @NotNull String rawLine) {
+        MathEngine engine = new MathEngine(tokens, env, line, rawLine);
         TypedFragment fragment = engine.parseExprTyped();
         if (engine.pos < engine.tokens.size()) {
-            throw new RuntimeException("Unexpected token after expression: " + engine.peek().text());
+            Token trailing = engine.peek();
+            throw new DiagnosticException(LumenDiagnostic.error("E206", "Unexpected token after expression")
+                    .at(line, rawLine)
+                    .highlight(trailing.start(), trailing.end())
+                    .label("'" + trailing.text() + "' is not expected here")
+                    .build());
         }
         return new TypedResult(fragment.java, fragment.type);
     }
@@ -121,6 +153,8 @@ public final class MathEngine {
                 }
             } else if (t.kind() == TokenKind.NUMBER) {
                 // numbers are fine
+            } else if (t.kind() == TokenKind.STRING) {
+                // strings are accepted so MathEngine can produce a proper type error
             } else if (t.kind() == TokenKind.IDENT) {
                 if (env.lookupVar(t.text()) == null) return false;
             } else {
@@ -130,10 +164,9 @@ public final class MathEngine {
         return hasOperator;
     }
 
-    private static @NotNull LumenType widenTypes(@Nullable LumenType a, @Nullable LumenType b) {
-        if (a == null || b == null) return LumenType.Primitive.INT;
-        LumenType.Primitive widened = LumenType.widenNumeric(a, b);
-        return widened != null ? widened : LumenType.Primitive.INT;
+    private static @NotNull LumenType widenTypes(@NotNull LumenType a, @NotNull LumenType b) {
+        PrimitiveType widened = LumenType.widenNumeric(a, b);
+        return widened != null ? widened : PrimitiveType.INT;
     }
 
     private @NotNull String parseExpr() {
@@ -174,7 +207,10 @@ public final class MathEngine {
 
     private @NotNull String parseFactor() {
         if (pos >= tokens.size()) {
-            throw new RuntimeException("Unexpected end of math expression");
+            throw new DiagnosticException(LumenDiagnostic.error("E200", "Unexpected end of math expression")
+                    .at(line, rawLine)
+                    .label("expression is incomplete")
+                    .build());
         }
 
         Token t = peek();
@@ -184,14 +220,37 @@ public final class MathEngine {
             return t.text();
         }
 
+        if (t.kind() == TokenKind.STRING) {
+            pos++;
+            throw new DiagnosticException(LumenDiagnostic.error("E203", "Non-numeric operand in arithmetic expression")
+                    .at(line, rawLine)
+                    .highlight(t.start(), t.end())
+                    .label("string literal is not numeric")
+                    .help("use 'combined string of x and y' to concatenate strings")
+                    .build());
+        }
+
         if (t.kind() == TokenKind.IDENT) {
             pos++;
             VarRef ref = env.lookupVar(t.text());
             if (ref == null) {
-                throw new RuntimeException("Variable not found in math expression: " + t.text());
+                throw new DiagnosticException(LumenDiagnostic.error("E201", "Variable not found in math expression")
+                        .at(line, rawLine)
+                        .highlight(t.start(), t.end())
+                        .label("'" + t.text() + "' is not defined")
+                        .build());
             }
-            LumenType type = ref.resolvedType();
-            if (type == null || !type.numeric()) return "Coerce.toInt(" + ref.java() + ")";
+            LumenType type = ref.type();
+            if (!type.numeric()) {
+                LumenDiagnostic.Builder b = LumenDiagnostic.error("E203", "Non-numeric operand in arithmetic expression")
+                        .at(line, rawLine)
+                        .highlight(t.start(), t.end())
+                        .label("'" + t.text() + "' is '" + type.displayName() + "', not numeric");
+                if (type.unwrap() == PrimitiveType.STRING) {
+                    b.help("use 'combined string of x and y' to concatenate strings");
+                }
+                throw new DiagnosticException(b.build());
+            }
             return ref.java();
         }
 
@@ -204,7 +263,11 @@ public final class MathEngine {
                 pos += 3;
                 String java = PlaceholderExpander.resolveForExpression(placeholder, env);
                 if (java == null) {
-                    throw new RuntimeException("Cannot resolve placeholder in math expression: {" + placeholder + "}");
+                    throw new DiagnosticException(LumenDiagnostic.error("E202", "Cannot resolve placeholder in math expression")
+                            .at(line, rawLine)
+                            .highlight(tokens.get(pos - 3).start(), tokens.get(pos - 1).end())
+                            .label("'{" + placeholder + "}' could not be resolved")
+                            .build());
                 }
                 return java;
             }
@@ -214,13 +277,21 @@ public final class MathEngine {
             pos++;
             String inner = parseExpr();
             if (pos >= tokens.size() || !peek().text().equals(")")) {
-                throw new RuntimeException("Missing closing parenthesis in math expression");
+                throw new DiagnosticException(LumenDiagnostic.error("E204", "Missing closing parenthesis in math expression")
+                        .at(line, rawLine)
+                        .highlight(t.start(), t.end())
+                        .label("this '(' has no matching ')'")
+                        .build());
             }
             pos++;
             return "(" + inner + ")";
         }
 
-        throw new RuntimeException("Unexpected token in math expression: " + t.text());
+        throw new DiagnosticException(LumenDiagnostic.error("E205", "Unexpected token in math expression")
+                .at(line, rawLine)
+                .highlight(t.start(), t.end())
+                .label("'" + t.text() + "' is not valid in a math expression")
+                .build());
     }
 
     private @NotNull TypedFragment parseExprTyped() {
@@ -250,8 +321,8 @@ public final class MathEngine {
                 pos++;
                 TypedFragment right = parseFactorTyped();
                 LumenType widened = widenTypes(left.type, right.type);
-                if (t.text().equals("/") && widened == LumenType.Primitive.INT) {
-                    widened = LumenType.Primitive.DOUBLE;
+                if (t.text().equals("/") && widened == PrimitiveType.INT) {
+                    widened = PrimitiveType.DOUBLE;
                 }
                 left = new TypedFragment(left.java + " " + t.text() + " " + right.java, widened);
             } else {
@@ -264,25 +335,51 @@ public final class MathEngine {
 
     private @NotNull TypedFragment parseFactorTyped() {
         if (pos >= tokens.size()) {
-            throw new RuntimeException("Unexpected end of math expression");
+            throw new DiagnosticException(LumenDiagnostic.error("E200", "Unexpected end of math expression")
+                    .at(line, rawLine)
+                    .label("expression is incomplete")
+                    .build());
         }
 
         Token t = peek();
 
         if (t.kind() == TokenKind.NUMBER) {
             pos++;
-            LumenType type = t.text().contains(".") ? LumenType.Primitive.DOUBLE : LumenType.Primitive.INT;
+            LumenType type = t.text().contains(".") ? PrimitiveType.DOUBLE : PrimitiveType.INT;
             return new TypedFragment(t.text(), type);
+        }
+
+        if (t.kind() == TokenKind.STRING) {
+            pos++;
+            throw new DiagnosticException(LumenDiagnostic.error("E203", "Non-numeric operand in arithmetic expression")
+                    .at(line, rawLine)
+                    .highlight(t.start(), t.end())
+                    .label("string literal is not numeric")
+                    .help("use 'combined string of x and y' to concatenate strings")
+                    .build());
         }
 
         if (t.kind() == TokenKind.IDENT) {
             pos++;
             VarRef ref = env.lookupVar(t.text());
             if (ref == null) {
-                throw new RuntimeException("Variable not found in math expression: " + t.text());
+                throw new DiagnosticException(LumenDiagnostic.error("E201", "Variable not found in math expression")
+                        .at(line, rawLine)
+                        .highlight(t.start(), t.end())
+                        .label("'" + t.text() + "' is not defined")
+                        .build());
             }
-            LumenType type = ref.resolvedType();
-            if (type == null || !type.numeric()) return new TypedFragment("Coerce.toInt(" + ref.java() + ")", LumenType.Primitive.INT);
+            LumenType type = ref.type();
+            if (!type.numeric()) {
+                LumenDiagnostic.Builder b = LumenDiagnostic.error("E203", "Non-numeric operand in arithmetic expression")
+                        .at(line, rawLine)
+                        .highlight(t.start(), t.end())
+                        .label("'" + t.text() + "' is '" + type.displayName() + "', not numeric");
+                if (type.unwrap() == PrimitiveType.STRING) {
+                    b.help("use 'combined string of x and y' to concatenate strings");
+                }
+                throw new DiagnosticException(b.build());
+            }
             return new TypedFragment(ref.java(), type);
         }
 
@@ -295,10 +392,14 @@ public final class MathEngine {
                 pos += 3;
                 String java = PlaceholderExpander.resolveForExpression(placeholder, env);
                 if (java == null) {
-                    throw new RuntimeException("Cannot resolve placeholder in math expression: {" + placeholder + "}");
+                    throw new DiagnosticException(LumenDiagnostic.error("E202", "Cannot resolve placeholder in math expression")
+                            .at(line, rawLine)
+                            .highlight(tokens.get(pos - 3).start(), tokens.get(pos - 1).end())
+                            .label("'{" + placeholder + "}' could not be resolved")
+                            .build());
                 }
                 LumenType phType = PlaceholderExpander.resolveExpressionType(placeholder, env);
-                return new TypedFragment(java, phType != null ? phType : LumenType.Primitive.DOUBLE);
+                return new TypedFragment(java, phType);
             }
         }
 
@@ -306,13 +407,21 @@ public final class MathEngine {
             pos++;
             TypedFragment inner = parseExprTyped();
             if (pos >= tokens.size() || !peek().text().equals(")")) {
-                throw new RuntimeException("Missing closing parenthesis in math expression");
+                throw new DiagnosticException(LumenDiagnostic.error("E204", "Missing closing parenthesis in math expression")
+                        .at(line, rawLine)
+                        .highlight(t.start(), t.end())
+                        .label("this '(' has no matching ')'")
+                        .build());
             }
             pos++;
             return new TypedFragment("(" + inner.java + ")", inner.type);
         }
 
-        throw new RuntimeException("Unexpected token in math expression: " + t.text());
+        throw new DiagnosticException(LumenDiagnostic.error("E205", "Unexpected token in math expression")
+                .at(line, rawLine)
+                .highlight(t.start(), t.end())
+                .label("'" + t.text() + "' is not valid in a math expression")
+                .build());
     }
 
     private @NotNull Token peek() {
@@ -324,11 +433,11 @@ public final class MathEngine {
      * resolved numeric type.
      *
      * @param java the Java expression source string
-     * @param type the resolved numeric type, or {@code null} if unknown
+     * @param type the resolved numeric type
      */
-    public record TypedResult(@NotNull String java, @Nullable LumenType type) {
+    public record TypedResult(@NotNull String java, @NotNull LumenType type) {
     }
 
-    private record TypedFragment(@NotNull String java, @Nullable LumenType type) {
+    private record TypedFragment(@NotNull String java, @NotNull LumenType type) {
     }
 }

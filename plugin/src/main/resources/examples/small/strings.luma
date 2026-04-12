@@ -6,7 +6,8 @@
 #   /textinfo <text>   Show string length, case conversions
 #   /tag <name|off>    Set or remove your join tag
 
-global stored scoped tag with default "none"
+global:
+    stored scoped to player tag: string with default "none"
 
 command shout:
     description "Shout in uppercase"

@@ -1,9 +1,12 @@
 package dev.lumenlang.lumen.pipeline.language.emit;
 
+import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
+import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.emit.BlockEnterHook;
 import dev.lumenlang.lumen.api.emit.BlockFormHandler;
 import dev.lumenlang.lumen.api.emit.ScriptLine;
 import dev.lumenlang.lumen.api.emit.StatementFormHandler;
+import dev.lumenlang.lumen.api.emit.StatementValidator;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.pipeline.codegen.BindingContext;
 import dev.lumenlang.lumen.pipeline.codegen.BlockContext;
@@ -20,6 +23,8 @@ import dev.lumenlang.lumen.pipeline.language.parse.LumenParser;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.language.pattern.registered.RegisteredBlockMatch;
 import dev.lumenlang.lumen.pipeline.language.pattern.registered.RegisteredPatternMatch;
+import dev.lumenlang.lumen.pipeline.language.resolve.PatternSimulator;
+import dev.lumenlang.lumen.pipeline.language.resolve.SuggestionDiagnostics;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Line;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Tokenizer;
@@ -126,6 +131,8 @@ public final class CodeEmitter {
                     emit(children.get(i), null, children, i, reg, env, ctx, out, errors);
                 } catch (LumenScriptException e) {
                     errors.add(e);
+                } catch (DiagnosticException e) {
+                    errors.add(new LumenScriptException(e));
                 } catch (RuntimeException e) {
                     Node node = children.get(i);
                     errors.add(new LumenScriptException(node.line(), node.raw(), e.getMessage(), e));
@@ -235,7 +242,11 @@ public final class CodeEmitter {
 
         RegisteredBlockMatch bm = reg.matchBlock(head, env);
         if (bm == null) {
-            throw new LumenScriptException(b.line(), b.raw(), "Unknown block", head);
+            List<PatternSimulator.Suggestion> suggestions = PatternSimulator.suggestBlocks(head, reg, env);
+            if (!suggestions.isEmpty()) {
+                throw new LumenScriptException(new DiagnosticException(SuggestionDiagnostics.build("E500", "Unknown block", b.line(), b.raw(), head, suggestions.get(0))));
+            }
+            throw new LumenScriptException(new DiagnosticException(SuggestionDiagnostics.buildNoSuggestion("E500", "Unknown block", b.line(), b.raw(), head)));
         }
 
         BindingContext bc = new BindingContext(bm.match(), env, ctx, blockCtx);
@@ -297,6 +308,16 @@ public final class CodeEmitter {
             }
         }
 
+        for (StatementValidator validator : emitReg.statementValidators()) {
+            try {
+                validator.validate(tokens, emitCtx);
+            } catch (LumenScriptException e) {
+                throw e;
+            } catch (RuntimeException e) {
+                throw wrapRuntimeException(st.line(), st.raw(), e);
+            }
+        }
+
         TypedStatement ts = StatementClassifier.classify(st, reg, env);
 
         if (ts instanceof TypedStatement.PatternStmt ps) {
@@ -316,7 +337,7 @@ public final class CodeEmitter {
             BindingContext bc = new BindingContext(es.match().match(), env, ctx, blockCtx);
             try {
                 ExpressionResult result = es.match().reg().handler().handle(bc);
-                out.line(result.java() + ";");
+                out.line(asStatement(result.java()));
             } catch (LumenScriptException e) {
                 throw e;
             } catch (RuntimeException e) {
@@ -326,21 +347,37 @@ public final class CodeEmitter {
         }
 
         if (ts instanceof TypedStatement.ErrorStmt err) {
-            if (err.errorTokens() != null && !err.errorTokens().isEmpty()) {
-                throw new LumenScriptException(st.line(), st.raw(), err.message(), err.errorTokens());
+            List<Token> errTokens = err.errorTokens() != null ? err.errorTokens() : List.of();
+            if (!err.suggestions().isEmpty()) {
+                throw new LumenScriptException(new DiagnosticException(SuggestionDiagnostics.build("E500", "Unknown statement", st.line(), st.raw(), errTokens, err.suggestions().get(0))));
             }
-            throw new LumenScriptException(st.line(), st.raw(), err.message());
+            throw new LumenScriptException(new DiagnosticException(SuggestionDiagnostics.buildNoSuggestion("E500", "Unknown statement", st.line(), st.raw(), errTokens)));
         }
 
         throw new LumenScriptException(st.line(), st.raw(),
                 "Unhandled statement type: " + ts.getClass().getSimpleName());
     }
 
-    private static @NotNull LumenScriptException wrapRuntimeException(int line, @NotNull String raw,
-                                                                      @NotNull RuntimeException e) {
-        if (e instanceof TokenCarryingException tce) {
-            return new LumenScriptException(line, raw, tce.getMessage(), tce.tokens());
+    private static @NotNull String asStatement(@NotNull String java) {
+        if (java.length() > 3 && java.charAt(0) == '(') {
+            int close = java.indexOf(')');
+            if (close > 0 && close < java.length() - 1 && java.substring(1, close).trim().matches("[A-Za-z]\\w*")) {
+                return java.substring(close + 1).trim() + ";";
+            }
         }
-        return new LumenScriptException(line, raw, e.getMessage(), e);
+        return java + ";";
+    }
+
+    private static @NotNull LumenScriptException wrapRuntimeException(int line, @NotNull String raw, @NotNull RuntimeException e) {
+        if (e instanceof DiagnosticException de) {
+            return new LumenScriptException(de);
+        }
+        if (e instanceof TokenCarryingException tce) {
+            if (!tce.suggestions().isEmpty()) {
+                return new LumenScriptException(new DiagnosticException(SuggestionDiagnostics.build("E500", "Unknown condition", line, raw, tce.tokens(), tce.suggestions().get(0))));
+            }
+            return new LumenScriptException(new DiagnosticException(SuggestionDiagnostics.buildNoSuggestion("E500", "Unknown condition", line, raw, tce.tokens())));
+        }
+        return new LumenScriptException(new DiagnosticException(LumenDiagnostic.error("E500", e.getMessage() != null ? e.getMessage() : "Unexpected error").at(line, raw).build()));
     }
 }

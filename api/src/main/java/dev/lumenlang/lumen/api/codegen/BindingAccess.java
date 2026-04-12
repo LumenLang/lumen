@@ -3,6 +3,7 @@ package dev.lumenlang.lumen.api.codegen;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess.VarHandle;
 import dev.lumenlang.lumen.api.handler.BlockHandler;
 import dev.lumenlang.lumen.api.handler.StatementHandler;
+import dev.lumenlang.lumen.api.type.LumenType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -145,6 +146,19 @@ public interface BindingAccess {
      * @return the parameter count
      */
     int size();
+
+    /**
+     * Resolves the {@link LumenType} for the specified parameter by inspecting
+     * the parsed value and, if necessary, resolving expression tokens.
+     *
+     * <p>If the parameter value is already a {@link VarHandle} (e.g. from LIST, MAP,
+     * or PLAYER bindings), its type is returned directly. Otherwise, the original
+     * tokens are resolved as an expression to determine the resulting type.
+     *
+     * @param name the parameter name from the pattern
+     * @return the resolved type, or {@code null} if the type cannot be determined
+     */
+    @Nullable LumenType resolvedType(@NotNull String name);
 
     /**
      * Returns the parsed value for the named parameter as a {@link VarHandle}.

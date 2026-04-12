@@ -31,10 +31,6 @@ import org.bukkit.Bukkit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static dev.lumenlang.lumen.plugin.scripts.ScriptManagerEvents.postScriptLoaded;
-import static dev.lumenlang.lumen.plugin.scripts.ScriptManagerEvents.postAllScriptsLoaded;
-import static dev.lumenlang.lumen.plugin.scripts.ScriptManagerEvents.postScriptUnloaded;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -48,6 +44,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import static dev.lumenlang.lumen.plugin.scripts.ScriptManagerEvents.postAllScriptsLoaded;
+import static dev.lumenlang.lumen.plugin.scripts.ScriptManagerEvents.postScriptLoaded;
+import static dev.lumenlang.lumen.plugin.scripts.ScriptManagerEvents.postScriptUnloaded;
 
 /**
  * Manages the lifecycle of Lumen scripts: parsing, compiling, loading, and
@@ -486,7 +486,11 @@ public final class ScriptManager {
             try {
                 generated.add(parse(ss.name(), ss.source()));
             } catch (LumenScriptException e) {
-                LumenLogger.severe("Script error in " + ss.name() + ": " + e.getMessage());
+                if (e.diagnostic() != null) {
+                    LumenLogger.severe("Script error in " + ss.name() + ":\n" + e.getMessage());
+                } else {
+                    LumenLogger.severe("Script error in " + ss.name() + ": " + e.getMessage());
+                }
             } catch (Throwable t) {
                 LumenLogger.severe("Failed to generate script: " + ss.name(), t);
             }

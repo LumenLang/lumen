@@ -5,7 +5,6 @@ import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.pattern.Categories;
-import dev.lumenlang.lumen.pipeline.java.compiled.Coerce;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -44,8 +43,7 @@ public final class GenericComparisonCondition {
                     validateExprIdentifier(bVal, env);
                     String op = match.java("op", ctx, env);
                     if (op.equals("<") || op.equals(">") || op.equals("<=") || op.equals(">=")) {
-                        ctx.addImport(Coerce.class.getName());
-                        return "Coerce.toDouble(" + aVal + ") " + op + " Coerce.toDouble(" + bVal + ")";
+                        return "((double) " + aVal + ") " + op + " ((double) " + bVal + ")";
                     }
                     return aVal + " " + op + " " + bVal;
                 }));

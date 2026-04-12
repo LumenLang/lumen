@@ -2,6 +2,7 @@ package dev.lumenlang.lumen.plugin.configuration;
 
 import dev.lumenlang.lumen.api.ConfigOption;
 import dev.lumenlang.lumen.api.ConfigOverride;
+import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
 import dev.lumenlang.lumen.plugin.Lumen;
 import net.vansencool.lsyaml.LSYAML;
@@ -51,6 +52,7 @@ public final class LumenConfiguration {
                 LumenConfiguration.DEBUG.LOG_INFO,
                 LumenConfiguration.DEBUG.LOG_WARNINGS
         );
+        LumenDiagnostic.configureVerbose(LumenConfiguration.DEBUG.VERBOSE_DIAGNOSTICS);
         if (LumenConfiguration.EXTRA.ENABLE_CONFIG_FILE_WATCHER)
             ConfigWatcher.watch(LumenConfiguration.class, WatcherOptions.builder().listener(((file, action) -> {
                 if (action == WatchAction.DELETED)
@@ -165,6 +167,9 @@ public final class LumenConfiguration {
 
         @Key("full-debug")
         public boolean FULL_DEBUG = false;
+
+        @Key("verbose-diagnostics")
+        public boolean VERBOSE_DIAGNOSTICS = false;
     }
 
     public static final class Performance {
