@@ -21,7 +21,7 @@ public final class ParseFailureException extends RuntimeException {
     /**
      * Creates a new {@code ParseFailureException} with the supplied message.
      *
-     * @param message a human-readable description of why parsing failed, used in debug output
+     * @param message a human-readable description of why parsing failed
      */
     public ParseFailureException(@NotNull String message) {
         super(message, null, true, false);

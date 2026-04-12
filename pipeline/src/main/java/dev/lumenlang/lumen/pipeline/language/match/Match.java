@@ -79,6 +79,22 @@ public record Match(
     }
 
     /**
+     * Creates a synthetic {@link EnvironmentAccess.VarHandle} wrapping a resolved Java
+     * expression together with type and metadata from the original expression result.
+     *
+     * @param javaExpr the resolved Java expression
+     * @param type     the type of the expression
+     * @param metadata compile-time metadata from the expression result
+     * @return a VarHandle backed by the expression with full type info
+     */
+    public static EnvironmentAccess.@NotNull VarHandle syntheticHandle(
+            @NotNull String javaExpr,
+            @NotNull LumenType type,
+            @NotNull Map<String, Object> metadata) {
+        return new InlineVarRef(javaExpr, type, metadata);
+    }
+
+    /**
      * Returns the matched alternative text for the Nth required choice group in the
      * pattern.
      *
@@ -208,22 +224,6 @@ public record Match(
                                 @NotNull CodegenAccess ctx,
                                 @NotNull EnvironmentAccess env) {
         return javaAt(index, (CodegenContext) ctx, (TypeEnv) env);
-    }
-
-    /**
-     * Creates a synthetic {@link EnvironmentAccess.VarHandle} wrapping a resolved Java
-     * expression together with type and metadata from the original expression result.
-     *
-     * @param javaExpr  the resolved Java expression
-     * @param type      the type of the expression
-     * @param metadata  compile-time metadata from the expression result
-     * @return a VarHandle backed by the expression with full type info
-     */
-    public static EnvironmentAccess.@NotNull VarHandle syntheticHandle(
-            @NotNull String javaExpr,
-            @NotNull LumenType type,
-            @NotNull Map<String, Object> metadata) {
-        return new InlineVarRef(javaExpr, type, metadata);
     }
 
     /**

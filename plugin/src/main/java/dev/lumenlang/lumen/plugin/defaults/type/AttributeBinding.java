@@ -8,6 +8,7 @@ import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.exceptions.ParseFailureException;
 import dev.lumenlang.lumen.api.type.AddonTypeBinding;
 import dev.lumenlang.lumen.api.type.TypeBindingMeta;
+import dev.lumenlang.lumen.api.util.FuzzyMatch;
 import dev.lumenlang.lumen.plugin.defaults.util.AttributeNames;
 import org.bukkit.attribute.Attribute;
 import org.jetbrains.annotations.NotNull;
@@ -63,8 +64,7 @@ public final class AttributeBinding {
                         return 3;
                 }
 
-                throw new ParseFailureException("Unknown attribute: " + candidate
-                        + ". Known attributes: " + String.join(", ", AttributeNames.knownNames()));
+                throw new ParseFailureException(fuzzyAttribute(candidate));
             }
 
             @Override
@@ -89,15 +89,20 @@ public final class AttributeBinding {
                 if (resolved != null)
                     return resolved;
 
-                throw new ParseFailureException("Unknown attribute: " + tokens.get(0));
+                throw new ParseFailureException(fuzzyAttribute(tokens.get(0)));
             }
 
             @Override
-            public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx,
-                                          @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
                 ctx.addImport(Attribute.class.getName());
                 return "Attribute." + value;
             }
         });
+    }
+
+    private static @NotNull String fuzzyAttribute(@NotNull String token) {
+        String closest = FuzzyMatch.closest(token.toLowerCase().replace(' ', '_').replace('-', '_'), AttributeNames.knownNames());
+        if (closest != null) return "Unknown attribute: " + token + ", did you mean '" + closest + "'?";
+        return "Unknown attribute: " + token;
     }
 }

@@ -4,8 +4,8 @@ import dev.lumenlang.lumen.api.emit.ScriptToken;
 import dev.lumenlang.lumen.api.type.BuiltinLumenTypes;
 import dev.lumenlang.lumen.api.type.CollectionType;
 import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.util.FuzzyMatch;
 import dev.lumenlang.lumen.pipeline.data.DataSchema;
-import dev.lumenlang.lumen.pipeline.util.FuzzyMatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

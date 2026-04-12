@@ -46,6 +46,9 @@ import java.util.List;
  */
 public final class LumenDiagnostic {
 
+    private static final int LONG_LINE_THRESHOLD = 80;
+    private static boolean verboseDiagnostics = false;
+
     private final @NotNull Severity severity;
     private final @NotNull String code;
     private final @NotNull String title;
@@ -54,6 +57,7 @@ public final class LumenDiagnostic {
     private final int columnStart;
     private final int columnEnd;
     private final @Nullable String underlineLabel;
+    private final @NotNull List<SubHighlight> subHighlights;
     private final @NotNull List<ContextLine> contextLines;
     private final @NotNull List<String> notes;
     private final @Nullable String help;
@@ -65,6 +69,7 @@ public final class LumenDiagnostic {
         this.line = builder.line;
         this.sourceText = builder.sourceText;
         this.underlineLabel = builder.underlineLabel;
+        this.subHighlights = List.copyOf(builder.subHighlights);
         this.contextLines = List.copyOf(builder.contextLines);
         this.notes = List.copyOf(builder.notes);
         this.help = builder.help;
@@ -76,22 +81,6 @@ public final class LumenDiagnostic {
             this.columnStart = builder.columnStart;
             this.columnEnd = builder.columnEnd;
         }
-    }
-
-    /**
-     * A secondary source line shown for additional context in a multi-line diagnostic.
-     *
-     * <p>Context lines appear before the primary source line in the formatted output,
-     * each with their own underline highlight and optional label. They are used to show
-     * related code such as the declaration site or a previous assignment.
-     *
-     * @param line        the 1-based line number in the source file
-     * @param source      the raw source text of the line
-     * @param columnStart the 0-based start column of the highlight (inclusive)
-     * @param columnEnd   the 0-based end column of the highlight (exclusive)
-     * @param label       the label shown under the highlight, or {@code null} for no label
-     */
-    public record ContextLine(int line, @NotNull String source, int columnStart, int columnEnd, @Nullable String label) {
     }
 
     /**
@@ -114,6 +103,18 @@ public final class LumenDiagnostic {
      */
     public static @NotNull Builder warning(@NotNull String code, @NotNull String title) {
         return new Builder(Severity.WARNING, code, title);
+    }
+
+    /**
+     * Configures verbose diagnostic mode globally.
+     *
+     * <p>When enabled, diagnostics highlight the entire source line and render all
+     * individual labels as notes instead of inline underlines.
+     *
+     * @param verbose whether verbose diagnostics are enabled
+     */
+    public static void configureVerbose(boolean verbose) {
+        verboseDiagnostics = verbose;
     }
 
     /**
@@ -192,14 +193,43 @@ public final class LumenDiagnostic {
         String lineNum = String.valueOf(line);
         String padded = " ".repeat(maxLineNum.length() - lineNum.length()) + lineNum;
         sb.append(padded).append(" | ").append(trimmed).append('\n');
-        int start = Math.max(0, Math.min(columnStart, trimmed.length()));
-        int end = Math.max(start + 1, Math.min(columnEnd, trimmed.length()));
-        sb.append(gutter).append(" ".repeat(start + 1)).append("~".repeat(Math.max(1, end - start)));
-        if (underlineLabel != null) {
-            sb.append(' ').append(underlineLabel);
+        boolean verbose = verboseDiagnostics;
+        boolean longLine = !verbose && !subHighlights.isEmpty() && trimmed.length() > LONG_LINE_THRESHOLD;
+        boolean subHighlightsAsNotes = verbose || longLine;
+        if (verbose) {
+            String stripped = trimmed.stripLeading();
+            int fullStart = trimmed.length() - stripped.length();
+            sb.append(gutter).append(" ".repeat(fullStart + 1)).append("~".repeat(stripped.length()));
+            sb.append('\n');
+        } else {
+            int start = Math.max(0, Math.min(columnStart, trimmed.length()));
+            int end = Math.max(start + 1, Math.min(columnEnd, trimmed.length()));
+            sb.append(gutter).append(" ".repeat(start + 1)).append("~".repeat(Math.max(1, end - start)));
+            if (underlineLabel != null) sb.append(' ').append(underlineLabel);
+            sb.append('\n');
         }
-        sb.append('\n');
+        if (!subHighlightsAsNotes) {
+            for (SubHighlight sh : subHighlights) {
+                int shStart = Math.max(0, Math.min(sh.columnStart, trimmed.length()));
+                int shEnd = Math.max(shStart + 1, Math.min(sh.columnEnd, trimmed.length()));
+                sb.append(gutter).append(" ".repeat(shStart + 1)).append("~".repeat(Math.max(1, shEnd - shStart)));
+                if (sh.label != null) sb.append(' ').append(sh.label);
+                sb.append('\n');
+            }
+        }
         sb.append(gutter).append('\n');
+        if (verbose && underlineLabel != null) {
+            sb.append("  = note: ").append(underlineLabel).append('\n');
+        }
+        if (subHighlightsAsNotes) {
+            for (SubHighlight sh : subHighlights) {
+                if (sh.label == null) continue;
+                int shStart = Math.max(0, Math.min(sh.columnStart, trimmed.length()));
+                int shEnd = Math.max(shStart + 1, Math.min(sh.columnEnd, trimmed.length()));
+                String tokenText = trimmed.substring(shStart, shEnd);
+                sb.append("  = note: '").append(tokenText).append("': ").append(sh.label).append('\n');
+            }
+        }
         for (String note : notes) {
             sb.append("  = note: ").append(note).append('\n');
         }
@@ -213,10 +243,41 @@ public final class LumenDiagnostic {
      * The severity level of a diagnostic.
      */
     public enum Severity {
-        /** A fatal error that prevents compilation. */
+        /**
+         * A fatal error that prevents compilation.
+         */
         ERROR,
-        /** A non-fatal warning that does not prevent compilation. */
+        /**
+         * A non-fatal warning that does not prevent compilation.
+         */
         WARNING
+    }
+
+    /**
+     * A secondary source line shown for additional context in a multi-line diagnostic.
+     *
+     * <p>Context lines appear before the primary source line in the formatted output,
+     * each with their own underline highlight and optional label. They are used to show
+     * related code such as the declaration site or a previous assignment.
+     *
+     * @param line        the 1-based line number in the source file
+     * @param source      the raw source text of the line
+     * @param columnStart the 0-based start column of the highlight (inclusive)
+     * @param columnEnd   the 0-based end column of the highlight (exclusive)
+     * @param label       the label shown under the highlight, or {@code null} for no label
+     */
+    public record ContextLine(int line, @NotNull String source, int columnStart, int columnEnd,
+                              @Nullable String label) {
+    }
+
+    /**
+     * An additional highlight on the primary source line, rendered below the main underline.
+     *
+     * @param columnStart the 0-based start column of the highlight (inclusive)
+     * @param columnEnd   the 0-based end column of the highlight (exclusive)
+     * @param label       the label shown under the highlight, or {@code null} for no label
+     */
+    public record SubHighlight(int columnStart, int columnEnd, @Nullable String label) {
     }
 
     /**
@@ -233,13 +294,14 @@ public final class LumenDiagnostic {
         private final @NotNull Severity severity;
         private final @NotNull String code;
         private final @NotNull String title;
+        private final @NotNull ArrayList<SubHighlight> subHighlights = new ArrayList<>();
+        private final @NotNull ArrayList<ContextLine> contextLines = new ArrayList<>();
+        private final @NotNull ArrayList<String> notes = new ArrayList<>();
         private int line;
         private @NotNull String sourceText = "";
         private int columnStart = -1;
         private int columnEnd = -1;
         private @Nullable String underlineLabel;
-        private final @NotNull ArrayList<ContextLine> contextLines = new ArrayList<>();
-        private final @NotNull ArrayList<String> notes = new ArrayList<>();
         private @Nullable String help;
 
         private Builder(@NotNull Severity severity, @NotNull String code, @NotNull String title) {
@@ -285,6 +347,19 @@ public final class LumenDiagnostic {
          */
         public @NotNull Builder label(@NotNull String label) {
             this.underlineLabel = label;
+            return this;
+        }
+
+        /**
+         * Adds a secondary highlight on the primary source line.
+         *
+         * @param columnStart the 0-based start column (inclusive)
+         * @param columnEnd   the 0-based end column (exclusive)
+         * @param label       the label under the highlight, or {@code null}
+         * @return this builder
+         */
+        public @NotNull Builder subHighlight(int columnStart, int columnEnd, @Nullable String label) {
+            this.subHighlights.add(new SubHighlight(columnStart, columnEnd, label));
             return this;
         }
 

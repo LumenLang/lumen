@@ -16,9 +16,9 @@ public final class BuiltinLumenTypes {
 
     public static final @NotNull ObjectType DATA = new ObjectType("DATA", "dev.lumenlang.lumen.pipeline.java.compiled.DataInstance");
 
-    private static final @NotNull ObjectType LIST_RAW = new ObjectType("LIST", "java.util.List", "String.valueOf($)", List.of(), new LumenTypeMeta("An ordered collection of values of a single type.", "list of int", List.of()));
+    private static final @NotNull ObjectType LIST_RAW = new ObjectType("LIST", "java.util.List", "String.valueOf($)", List.of(), new LumenTypeMeta("An ordered collection of values of a single type.", "list of <type>", List.of()));
 
-    private static final @NotNull ObjectType MAP_RAW = new ObjectType("MAP", "java.util.Map", "String.valueOf($)", List.of(), new LumenTypeMeta("A key-value mapping from one type to another.", "map of string to int", List.of()));
+    private static final @NotNull ObjectType MAP_RAW = new ObjectType("MAP", "java.util.Map", "String.valueOf($)", List.of(), new LumenTypeMeta("A key-value mapping from one type to another.", "map of <type> to <type>", List.of()));
 
     private BuiltinLumenTypes() {
     }

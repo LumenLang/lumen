@@ -1,6 +1,7 @@
 package dev.lumenlang.lumen.pipeline.language.match;
 
 import dev.lumenlang.lumen.api.exceptions.ParseFailureException;
+import dev.lumenlang.lumen.api.util.FuzzyMatch;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.pipeline.language.TypeBinding;
 import dev.lumenlang.lumen.pipeline.language.pattern.Pattern;
@@ -240,7 +241,8 @@ public final class PatternMatcher {
             if (!group.required()) {
                 return tryMatch(tokens, ti, parts, pi + 1, types, env, map, choices, validator, progress);
             }
-            if (progress != null) progress.recordFailure(ti, group, null, ti < tokens.size() ? List.of(tokens.get(ti)) : List.of());
+            if (progress != null)
+                progress.recordFailure(ti, group, null, ti < tokens.size() ? List.of(tokens.get(ti)) : List.of());
             return -1;
         }
 
@@ -278,7 +280,8 @@ public final class PatternMatcher {
 
             if (consumeCount == CONSUME_REJECTED) {
                 if (validator == null) {
-                    if (progress != null) progress.recordFailure(ti, pp, binding.id(), ti < tokens.size() ? List.of(tokens.get(ti)) : List.of());
+                    if (progress != null)
+                        progress.recordFailure(ti, pp, binding.id(), ti < tokens.size() ? List.of(tokens.get(ti)) : List.of());
                     return -1;
                 }
                 LumenLogger.debug("PatternMatcher.match", "  consumeCount rejected but validator present, falling through to inline backtracking");
@@ -331,7 +334,26 @@ public final class PatternMatcher {
                 while (choices.size() > choicesSnapshot)
                     choices.remove(choices.size() - 1);
             }
-            if (progress != null) progress.recordFailure(ti, pp, binding.id(), ti < tokens.size() ? List.of(tokens.get(ti)) : List.of());
+            if (progress != null) {
+                List<Token> fTokens = ti < tokens.size() ? List.of(tokens.get(ti)) : List.of();
+                if (consumeCount > 0) {
+                    progress.recordBindingFailure(ti, binding.id(), fTokens);
+                    int cEnd = ti + consumeCount;
+                    if (cEnd <= tokens.size()) {
+                        MatchProgress contProgress = new MatchProgress();
+                        Map<String, BoundValue> cSnapshot = new LinkedHashMap<>(map);
+                        int cChoices = choices.size();
+                        map.put(ph.name(), new BoundValue(ph, tokens.subList(ti, cEnd), PARSE_FAILED, binding));
+                        tryMatch(tokens, cEnd, parts, pi + 1, types, env, map, choices, validator, contProgress);
+                        progress.transferBindingFailures(contProgress);
+                        map.clear();
+                        map.putAll(cSnapshot);
+                        while (choices.size() > cChoices) choices.remove(choices.size() - 1);
+                    }
+                    discoverDownstreamFailures(tokens, ti + consumeCount, parts, pi + 1, types, env, progress);
+                }
+                progress.recordFailure(ti, pp, binding.id(), fTokens);
+            }
             return -1;
         }
 
@@ -446,5 +468,93 @@ public final class PatternMatcher {
             }
         }
         return -1;
+    }
+
+    private static void discoverDownstreamFailures(@NotNull List<Token> tokens, int ti, @NotNull List<PatternPart> parts, int pi, @NotNull TypeRegistry types, @NotNull TypeEnv env, @NotNull MatchProgress progress) {
+        for (int p = pi; p < parts.size(); p++) {
+            PatternPart part = parts.get(p);
+            if (part instanceof PatternPart.Literal lit) {
+                if (ti < tokens.size()) {
+                    if (tokens.get(ti).text().equalsIgnoreCase(lit.text())) {
+                        ti++;
+                    } else if (isLiteralTypo(tokens.get(ti).text(), lit.text())) {
+                        progress.recordLiteralTypo(tokens.get(ti), lit.text());
+                        ti++;
+                    }
+                }
+            } else if (part instanceof PatternPart.FlexLiteral flex) {
+                if (ti < tokens.size()) {
+                    String lower = tokens.get(ti).text().toLowerCase(Locale.ROOT);
+                    if (flex.forms().contains(lower)) {
+                        ti++;
+                    } else {
+                        String tokenText = tokens.get(ti).text();
+                        String matchedForm = null;
+                        for (String f : flex.forms()) {
+                            if (isLiteralTypo(tokenText, f)) {
+                                matchedForm = f;
+                                break;
+                            }
+                        }
+                        if (matchedForm != null) {
+                            progress.recordLiteralTypo(tokens.get(ti), matchedForm);
+                            ti++;
+                        }
+                    }
+                }
+            } else if (part instanceof PatternPart.PlaceholderPart pp) {
+                Placeholder ph = pp.ph();
+                TypeBinding binding = types.get(ph.typeId());
+                if (binding == null) continue;
+                List<Token> remaining = tokens.subList(ti, tokens.size());
+                if (remaining.isEmpty()) {
+                    progress.clearRejectionReason();
+                    progress.recordBindingFailure(ti, binding.id(), List.of());
+                    continue;
+                }
+                MatchProgress scratch = new MatchProgress();
+                int cc = safeConsumeCount(binding, remaining, env, scratch);
+                if (cc < 0) {
+                    progress.clearRejectionReason();
+                    if (scratch.failedReason() == null) progress.storeRejectionReason(binding.id() + " rejected input");
+                    progress.recordBindingFailure(ti, binding.id(), List.of(tokens.get(ti)));
+                    ti++;
+                    continue;
+                }
+                int end = ti + cc;
+                if (end <= tokens.size()) {
+                    List<Token> slice = tokens.subList(ti, end);
+                    Object val = safeParse(binding, slice, env, scratch);
+                    if (val == PARSE_FAILED) {
+                        progress.clearRejectionReason();
+                        progress.recordBindingFailure(ti, binding.id(), List.of(tokens.get(ti)));
+                    }
+                    ti = end;
+                } else {
+                    progress.clearRejectionReason();
+                    progress.recordBindingFailure(ti, binding.id(), List.of(tokens.get(ti)));
+                    ti++;
+                }
+            } else if (part instanceof PatternPart.Group group) {
+                if (ti < tokens.size()) {
+                    for (List<PatternPart> alt : group.alternatives()) {
+                        if (!alt.isEmpty() && alt.get(0) instanceof PatternPart.Literal gl && tokens.get(ti).text().equalsIgnoreCase(gl.text())) {
+                            ti++;
+                            break;
+                        }
+                        if (!alt.isEmpty() && alt.get(0) instanceof PatternPart.FlexLiteral fl && fl.forms().contains(tokens.get(ti).text().toLowerCase(Locale.ROOT))) {
+                            ti++;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private static boolean isLiteralTypo(@NotNull String tokenText, @NotNull String literalText) {
+        int threshold = Math.max(1, Math.min(3, (int) (Math.min(tokenText.length(), literalText.length()) * 0.4)));
+        if (tokenText.length() <= 2 || literalText.length() <= 2) return false;
+        return FuzzyMatch.prefixAwareDistance(tokenText, literalText) <= threshold;
     }
 }

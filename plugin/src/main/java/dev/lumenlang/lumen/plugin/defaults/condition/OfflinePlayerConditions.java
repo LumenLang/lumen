@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
  * Registers offline player related condition patterns.
  */
 @Registration
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "DataFlowIssue"})
 public final class OfflinePlayerConditions {
 
     @Call
@@ -41,7 +41,7 @@ public final class OfflinePlayerConditions {
 
         api.patterns().condition(b -> b
                 .by("Lumen")
-                .pattern("%op:OFFLINE_PLAYER% (is|is not) op")
+                .pattern("%op:OFFLINE_PLAYER% (is|is not) [a] op")
                 .description("Checks if an offline player has or does not have operator status.")
                 .examples("if offlinePlayer is op:", "if offlinePlayer is not op:")
                 .since("1.0.0")

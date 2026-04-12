@@ -4,8 +4,10 @@ import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.emit.ScriptToken;
 import dev.lumenlang.lumen.pipeline.language.match.MatchProgress;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
+import dev.lumenlang.lumen.pipeline.language.tokenization.TokenKind;
 import dev.lumenlang.lumen.pipeline.type.TypeAnnotationParser;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -21,7 +23,7 @@ public final class SuggestionDiagnostics {
     }
 
     /**
-     * Builds a diagnostic from a suggestion, highlighting the specific failure point.
+     * Builds a diagnostic from a suggestion, highlighting specific issues found by the simulator.
      *
      * @param errorCode the diagnostic error code (e.g. "E500", "E502")
      * @param title     the diagnostic title
@@ -32,61 +34,56 @@ public final class SuggestionDiagnostics {
      * @return a fully constructed diagnostic
      */
     public static @NotNull LumenDiagnostic build(@NotNull String errorCode, @NotNull String title, int line, @NotNull String raw, @NotNull List<Token> tokens, @NotNull PatternSimulator.Suggestion top) {
+        LumenDiagnostic unsupported = detectUnsupportedSyntax(line, raw, tokens);
+        if (unsupported != null) return unsupported;
         LumenDiagnostic.Builder builder = LumenDiagnostic.error(errorCode, title).at(line, raw);
         if (!tokens.isEmpty()) {
             builder.highlight(tokens.get(0).start(), tokens.get(tokens.size() - 1).end());
         }
-        switch (top.kind()) {
-            case TYPO, TYPO_AND_REORDER -> {
-                if (top.errorToken() != null) {
-                    boolean validated = top.progress() != null && top.progress().succeeded();
-                    builder.highlight(top.errorToken().start(), top.errorToken().end()).label(validated ? "replace with '" + top.expectedText() + "'" : "did you mean '" + top.expectedText() + "'?");
-                    if (top.kind() == PatternSimulator.SuggestionKind.TYPO_AND_REORDER && !top.reorderedTokens().isEmpty()) {
-                        builder.note("tokens '" + reorderNote(top.reorderedTokens()) + "' may be in the wrong order");
-                    }
+        List<PatternSimulator.SuggestionIssue> issues = top.issues();
+        PatternSimulator.SuggestionIssue primary = findPrimary(issues);
+        if (primary != null) {
+            applyPrimaryHighlight(builder, primary, top);
+            for (PatternSimulator.SuggestionIssue issue : issues) {
+                if (issue == primary) continue;
+                applySubHighlight(builder, issue);
+            }
+        } else if (top.progress() != null && !top.progress().bindingFailures().isEmpty()) {
+            List<MatchProgress.BindingFailure> failures = top.progress().bindingFailures();
+            MatchProgress.BindingFailure first = failures.get(0);
+            if (!first.failedTokens().isEmpty()) {
+                Token t = first.failedTokens().get(0);
+                String label = first.reason() != null ? first.bindingId() + " failed: " + first.reason() : first.bindingId() + " rejected '" + t.text() + "'";
+                builder.highlight(t.start(), t.end()).label(label);
+            } else {
+                Token last = tokens.isEmpty() ? null : tokens.get(tokens.size() - 1);
+                if (last != null) builder.highlight(last.end(), last.end() + 1).label(first.bindingId() + " is missing");
+                else builder.label(first.bindingId() + " is missing");
+            }
+            for (int i = 1; i < failures.size(); i++) {
+                MatchProgress.BindingFailure bf = failures.get(i);
+                if (!bf.failedTokens().isEmpty()) {
+                    Token t = bf.failedTokens().get(0);
+                    String label = bf.reason() != null ? bf.bindingId() + " failed: " + bf.reason() : bf.bindingId() + " rejected '" + t.text() + "'";
+                    builder.subHighlight(t.start(), t.end(), label);
                 }
             }
-            case REORDER -> {
-                if (!top.reorderedTokens().isEmpty()) {
-                    List<Token> reordered = top.reorderedTokens();
-                    int start = reordered.stream().mapToInt(Token::start).min().orElse(0);
-                    int end = reordered.stream().mapToInt(Token::end).max().orElse(0);
-                    builder.highlight(start, end).label("tokens '" + reorderNote(reordered) + "' may be in the wrong order");
-                }
+        } else if (top.progress() != null && top.progress().failedBindingId() != null) {
+            MatchProgress progress = top.progress();
+            Token last = tokens.isEmpty() ? null : tokens.get(tokens.size() - 1);
+            if (last != null) {
+                builder.highlight(last.end(), last.end() + 1).label(progress.failedBindingId() + " failed here");
+            } else {
+                builder.label(progress.failedBindingId() + " is missing");
             }
-            case TYPE_MISMATCH -> {
-                MatchProgress progress = top.progress();
-                if (progress != null && progress.failedBindingId() != null && !progress.failedTokens().isEmpty()) {
-                    Token failedAt = progress.failedTokens().get(0);
-                    String label;
-                    if (progress.failedReason() != null) {
-                        label = "type '" + progress.failedBindingId() + "' failed: " + progress.failedReason();
-                    } else {
-                        label = "type '" + progress.failedBindingId() + "' cannot parse '" + failedAt.text() + "'";
-                    }
-                    builder.highlight(failedAt.start(), failedAt.end()).label(label);
-                } else if (progress != null && progress.failedBindingId() != null) {
-                    Token last = tokens.isEmpty() ? null : tokens.get(tokens.size() - 1);
-                    if (last != null) {
-                        builder.highlight(last.end(), last.end() + 1).label("expected " + progress.failedBindingId() + " here");
-                    } else {
-                        builder.label("expected a value of type '" + progress.failedBindingId() + "'");
-                    }
-                } else if (progress != null && !progress.failedTokens().isEmpty()) {
-                    Token failedAt = progress.failedTokens().get(0);
-                    builder.highlight(failedAt.start(), failedAt.end()).label("unexpected token '" + failedAt.text() + "'");
-                } else {
-                    builder.label("pattern matches structurally but a type binding failed");
-                }
-            }
-            default -> {
-                if (!tokens.isEmpty()) {
-                    builder.label("'" + ExprResolver.joinTokens(tokens) + "' is not recognized");
-                } else {
-                    builder.label("no matching pattern was found");
-                }
+        } else {
+            if (!tokens.isEmpty()) {
+                builder.label("'" + ExprResolver.joinTokens(tokens) + "' is not recognized");
+            } else {
+                builder.label("no matching pattern was found");
             }
         }
+        builder.note("confidence: " + confidenceTier(top.confidence()));
         builder.help("closest pattern: " + top.pattern().raw());
         return builder.build();
     }
@@ -102,12 +99,55 @@ public final class SuggestionDiagnostics {
      * @return a fully constructed diagnostic
      */
     public static @NotNull LumenDiagnostic buildNoSuggestion(@NotNull String errorCode, @NotNull String title, int line, @NotNull String raw, @NotNull List<Token> tokens) {
+        LumenDiagnostic unsupported = detectUnsupportedSyntax(line, raw, tokens);
+        if (unsupported != null) return unsupported;
         LumenDiagnostic.Builder builder = LumenDiagnostic.error(errorCode, title).at(line, raw);
         if (!tokens.isEmpty()) {
             builder.highlight(tokens.get(0).start(), tokens.get(tokens.size() - 1).end()).label("not recognized");
         }
         builder.help("check spelling or ensure the pattern is defined");
         return builder.build();
+    }
+
+    private static @Nullable LumenDiagnostic detectUnsupportedSyntax(int line, @NotNull String raw, @NotNull List<Token> tokens) {
+        if (tokens.size() == 1 && tokens.get(0).kind() == TokenKind.SYMBOL) {
+            String text = tokens.get(0).text();
+            if (text.equals("{") || text.equals("}")) {
+                return LumenDiagnostic.error("E503", "Unsupported syntax")
+                        .at(line, raw)
+                        .highlight(tokens.get(0).start(), tokens.get(0).end())
+                        .label("curly braces are not part of Lumen syntax")
+                        .note("Lumen uses indentation to define blocks, not curly braces")
+                        .help("read the documentation at https://docs.lumenlang.dev/ to learn Lumen syntax")
+                        .build();
+            }
+        }
+        Token semicolon = null;
+        Token brace = null;
+        for (Token t : tokens) {
+            if (t.kind() != TokenKind.SYMBOL) continue;
+            if (semicolon == null && t.text().equals(";")) semicolon = t;
+            if (brace == null && (t.text().equals("{") || t.text().equals("}"))) brace = t;
+        }
+        if (semicolon != null || brace != null) {
+            LumenDiagnostic.Builder builder = LumenDiagnostic.error("E503", "Unsupported syntax").at(line, raw);
+            if (semicolon != null && brace != null) {
+                builder.highlight(semicolon.start(), semicolon.end())
+                        .label("semicolons and curly braces are not part of Lumen syntax")
+                        .note("Lumen does not use semicolons to end statements or curly braces for blocks");
+            } else if (semicolon != null) {
+                builder.highlight(semicolon.start(), semicolon.end())
+                        .label("semicolons are not part of Lumen syntax")
+                        .note("Lumen does not use semicolons to end statements");
+            } else {
+                builder.highlight(brace.start(), brace.end())
+                        .label("curly braces are not part of Lumen syntax")
+                        .note("Lumen uses indentation to define blocks, not curly braces");
+            }
+            builder.help("read the documentation at https://docs.lumenlang.dev/ to learn Lumen syntax");
+            return builder.build();
+        }
+        return null;
     }
 
     /**
@@ -148,5 +188,86 @@ public final class SuggestionDiagnostics {
             sb.append(reordered.get(i).text());
         }
         return sb.toString();
+    }
+
+    private static @Nullable PatternSimulator.SuggestionIssue findPrimary(@NotNull List<PatternSimulator.SuggestionIssue> issues) {
+        PatternSimulator.SuggestionIssue best = null;
+        int bestPriority = -1;
+        for (PatternSimulator.SuggestionIssue issue : issues) {
+            int priority = issuePriority(issue);
+            if (priority > bestPriority) {
+                bestPriority = priority;
+                best = issue;
+            }
+        }
+        return best;
+    }
+
+    private static int issuePriority(@NotNull PatternSimulator.SuggestionIssue issue) {
+        if (issue instanceof PatternSimulator.SuggestionIssue.Typo) return 4;
+        if (issue instanceof PatternSimulator.SuggestionIssue.ExtraTokens) return 3;
+        if (issue instanceof PatternSimulator.SuggestionIssue.TypeMismatch) return 2;
+        if (issue instanceof PatternSimulator.SuggestionIssue.MissingBinding) return 1;
+        if (issue instanceof PatternSimulator.SuggestionIssue.Reorder) return 1;
+        return 0;
+    }
+
+    private static void applyPrimaryHighlight(@NotNull LumenDiagnostic.Builder builder, @NotNull PatternSimulator.SuggestionIssue issue, @NotNull PatternSimulator.Suggestion top) {
+        if (issue instanceof PatternSimulator.SuggestionIssue.Typo typo) {
+            boolean validated = top.progress() != null && top.progress().succeeded();
+            builder.highlight(typo.token().start(), typo.token().end());
+            builder.label(validated ? "replace with '" + typo.expected() + "'" : "did you mean '" + typo.expected() + "'?");
+        } else if (issue instanceof PatternSimulator.SuggestionIssue.ExtraTokens extra) {
+            Token first = extra.tokens().get(0);
+            if (extra.tokens().size() == 1) {
+                builder.highlight(first.start(), first.end()).label("remove '" + first.text() + "'");
+            } else {
+                Token last = extra.tokens().get(extra.tokens().size() - 1);
+                builder.highlight(first.start(), last.end()).label("remove " + extra.tokens().size() + " extra tokens");
+            }
+        } else if (issue instanceof PatternSimulator.SuggestionIssue.TypeMismatch mismatch) {
+            builder.highlight(mismatch.token().start(), mismatch.token().end());
+            builder.label(typeMismatchLabel(mismatch));
+        } else if (issue instanceof PatternSimulator.SuggestionIssue.MissingBinding missing) {
+            builder.label(missing.bindingId() + " is missing");
+        } else if (issue instanceof PatternSimulator.SuggestionIssue.Reorder reorder) {
+            int start = reorder.tokens().stream().mapToInt(Token::start).min().orElse(0);
+            int end = reorder.tokens().stream().mapToInt(Token::end).max().orElse(0);
+            builder.highlight(start, end).label("tokens '" + reorderNote(reorder.tokens()) + "' may be in the wrong order");
+        }
+    }
+
+    private static void applySubHighlight(@NotNull LumenDiagnostic.Builder builder, @NotNull PatternSimulator.SuggestionIssue issue) {
+        if (issue instanceof PatternSimulator.SuggestionIssue.Typo typo) {
+            builder.subHighlight(typo.token().start(), typo.token().end(), "did you mean '" + typo.expected() + "'?");
+        } else if (issue instanceof PatternSimulator.SuggestionIssue.ExtraTokens extra) {
+            for (Token t : extra.tokens()) {
+                builder.subHighlight(t.start(), t.end(), "extra token");
+            }
+        } else if (issue instanceof PatternSimulator.SuggestionIssue.TypeMismatch mismatch) {
+            builder.subHighlight(mismatch.token().start(), mismatch.token().end(), typeMismatchLabel(mismatch));
+        } else if (issue instanceof PatternSimulator.SuggestionIssue.MissingBinding missing) {
+            builder.note(missing.bindingId() + " is missing");
+        } else if (issue instanceof PatternSimulator.SuggestionIssue.Reorder reorder) {
+            for (Token t : reorder.tokens()) {
+                builder.subHighlight(t.start(), t.end(), "out of order");
+            }
+        }
+    }
+
+    private static @NotNull String confidenceTier(double confidence) {
+        int pct = (int) Math.round(confidence * 100);
+        String tier;
+        if (pct >= 90) tier = "very high";
+        else if (pct >= 70) tier = "high";
+        else if (pct >= 50) tier = "moderate";
+        else if (pct >= 30) tier = "low";
+        else tier = "very low";
+        return pct + "% (" + tier + ")";
+    }
+
+    private static @NotNull String typeMismatchLabel(@NotNull PatternSimulator.SuggestionIssue.TypeMismatch mismatch) {
+        if (mismatch.reason() != null) return mismatch.bindingId() + " failed: " + mismatch.reason();
+        return mismatch.bindingId() + " rejected '" + mismatch.token().text() + "'";
     }
 }

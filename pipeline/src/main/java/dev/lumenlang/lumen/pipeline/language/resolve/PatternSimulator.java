@@ -2,6 +2,7 @@ package dev.lumenlang.lumen.pipeline.language.resolve;
 
 import dev.lumenlang.lumen.api.codegen.JavaOutput;
 import dev.lumenlang.lumen.api.pattern.PatternMeta;
+import dev.lumenlang.lumen.api.util.FuzzyMatch;
 import dev.lumenlang.lumen.pipeline.codegen.BindingContext;
 import dev.lumenlang.lumen.pipeline.codegen.BlockContext;
 import dev.lumenlang.lumen.pipeline.codegen.CodegenContext;
@@ -19,64 +20,86 @@ import dev.lumenlang.lumen.pipeline.language.pattern.registered.RegisteredPatter
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.language.tokenization.TokenKind;
 import dev.lumenlang.lumen.pipeline.typebinding.TypeRegistry;
-import dev.lumenlang.lumen.pipeline.util.FuzzyMatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Finds near matches when input tokens fail all normal matching paths.
  *
  * <p>This class is invoked after a statement, expression, condition, or block fails to match
- * any registered pattern through the normal pipeline. It scores every registered pattern against
- * the failed input and returns the best ranked suggestions for diagnostic reporting.
+ * any registered pattern through the normal pipeline. It uses a multi-pass approach:
  *
- * <h2>Pipeline</h2>
  * <ol>
- *   <li><b>Fuzzy literal scoring</b> ({@code scoreAgainst}): extracts required and optional
- *       literals from each pattern and fuzzy matches them against input tokens using edit distance.
- *       Produces a {@link CandidateScore} with typo detection, reorder detection, and an overall
- *       confidence score. Patterns that score below {@link #MIN_SCORE} are discarded. The top
- *       {@link #MAX_REAL_CANDIDATES} candidates advance to real matching.</li>
- *   <li><b>Real matching</b> ({@code matchWithProgress}): for each top candidate, runs the real
- *       {@link PatternMatcher} against the original tokens to capture a {@link MatchProgress}
- *       describing exactly where and why matching failed (binding ID, rejection reason, failed
- *       tokens). If this succeeds, the candidate is silently skipped (it matched normally).</li>
- *   <li><b>Corrected token validation</b> ({@code tryCorrectedMatch}): when a typo is detected,
- *       replaces the typo token with the expected literal and re runs real matching. If the
- *       corrected tokens match successfully, the suggestion is validated with high confidence.
- *       If the corrected tokens still fail, the candidate is skipped entirely (the pattern does
- *       not work for this input even with the typo fixed).</li>
- *   <li><b>Shape matching</b> ({@code tryShapeMatch}): anchors fuzzy matched literals at their
- *       detected positions, assigns remaining tokens to placeholders in pattern order, and
- *       re runs real matching on the rearranged sequence. If the rearranged tokens match
- *       successfully, the suggestion is a validated reorder. If reorder was detected by fuzzy
- *       scoring but the shape match fails with a type binding error, the failure details are
- *       preserved. If the shape match fails completely for a reorder candidate, the candidate
- *       is skipped (the pattern does not work even with corrected order).</li>
- *   <li><b>Handler sandbox</b> ({@code tryHandlerSandbox}): for builtin patterns (registered by
- *       Lumen core via {@code .by("Lumen")}), after a corrected match succeeds, executes the
- *       handler against a noop output to verify the match would produce valid code generation.
- *       If the handler throws, the candidate is skipped. Addon handlers are not sandboxed.</li>
+ *   <li><b>Pre-filter</b>: scores all registered patterns against input tokens using fuzzy
+ *       literal matching with prefix-aware distance. Keeps the top N candidates.</li>
+ *   <li><b>BFS token removal</b>: for each candidate, tries removing 0 to k tokens from the
+ *       input and matching against the real pattern matcher. At each removal level, also
+ *       attempts single typo correction on the remaining tokens.</li>
+ *   <li><b>Reorder fallback</b>: if BFS fails, attempts to rearrange tokens to match the
+ *       pattern's expected order.</li>
+ *   <li><b>Type mismatch fallback</b>: if all else fails, uses the match progress from
+ *       level 0 to diagnose type binding failures.</li>
  * </ol>
  *
- * <h2>Candidate Elimination</h2>
- * <p>Each validation step can eliminate a candidate by calling {@code continue}, which causes
- * the loop to try the next highest scoring candidate from fuzzy scoring. This prevents the
- * simulator from suggesting patterns that look similar on the surface but would never actually
- * work for the given input tokens.
+ * <h2>Confidence Scoring</h2>
+ * <p>Confidence is computed from a penalty model:
+ * <ul>
+ *   <li>Start at 1.0 (perfect match)</li>
+ *   <li>Subtract {@value #REMOVAL_PENALTY} per removed token</li>
+ *   <li>Subtract {@value #TYPO_PENALTY} per typo correction</li>
+ *   <li>Multiply by {@value #FIRST_TOKEN_MISS_MULTIPLIER} if the first required literal
+ *       does not match the first input token</li>
+ * </ul>
+ *
+ * <h2>Configuration</h2>
+ * <p>Configurable via system properties:
+ * <ul>
+ *   <li>{@code lumen.suggestion.maxRemovalDepth}: maximum BFS removal depth (default 3)</li>
+ *   <li>{@code lumen.suggestion.maxCandidates}: number of pre-filter candidates to analyze (default 10)</li>
+ * </ul>
  */
 public final class PatternSimulator {
 
-    private static final int MAX_SUGGESTIONS = 2;
-    private static final int MAX_REAL_CANDIDATES = 5;
-    private static final double MIN_SCORE = 5.0;
-    private static final int SHAPE_MATCH_TOKEN_LIMIT = 14;
+    private static final int DEFAULT_MAX_REMOVAL_DEPTH = 3;
+    private static final int DEFAULT_MAX_CANDIDATES = 10;
+    private static final int DEFAULT_MAX_SUGGESTIONS = 2;
+    private static final double MIN_PREFILTER_CONFIDENCE = 0.15;
+    private static final int SHAPE_MATCH_TOKEN_LIMIT = 20;
+    private static final int MAX_COMBINATIONS_PER_LEVEL = 300;
+
+    private static final double WEIGHT_LITERAL_COVERAGE = 0.40;
+    private static final double WEIGHT_EXACTNESS = 0.25;
+    private static final double WEIGHT_POSITION = 0.20;
+    private static final double WEIGHT_TOKEN_COVERAGE = 0.15;
+
+    private static final double REMOVAL_PENALTY = 0.08;
+    private static final double TYPO_PENALTY = 0.05;
+    private static final double FIRST_TOKEN_MISS_MULTIPLIER = 0.5;
+    private static final double VALIDATED_REORDER_FLOOR = 0.75;
+    private static final double SANDBOX_REJECTED_PENALTY = 0.75;
 
     private PatternSimulator() {
+    }
+
+    private static int maxRemovalDepth() {
+        return Integer.getInteger("lumen.suggestion.maxRemovalDepth", DEFAULT_MAX_REMOVAL_DEPTH);
+    }
+
+    private static int maxCandidates() {
+        return Integer.getInteger("lumen.suggestion.maxCandidates", DEFAULT_MAX_CANDIDATES);
+    }
+
+    private static int effectiveMaxK(int tokenCount) {
+        int base = maxRemovalDepth();
+        if (tokenCount > 25) return Math.min(base, 1);
+        if (tokenCount > 20) return Math.min(base, 2);
+        return base;
     }
 
     /**
@@ -88,12 +111,13 @@ public final class PatternSimulator {
      * @return ranked suggestions (at most 2), or empty if nothing is close
      */
     public static @NotNull List<Suggestion> suggestExpressions(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnv env) {
-        List<CandidateScore> scored = new ArrayList<>();
+        if (tokens.isEmpty()) return List.of();
+        List<PreFilterScore> scored = new ArrayList<>();
         for (RegisteredExpression re : reg.getExpressions()) {
-            CandidateScore cs = scoreAgainst(tokens, re.pattern(), re.meta(), re);
-            if (cs != null && cs.score >= MIN_SCORE) scored.add(cs);
+            PreFilterScore pfs = preFilter(tokens, re.pattern(), re.meta(), re);
+            if (pfs != null) scored.add(pfs);
         }
-        return simulateAndBuild(scored, tokens, reg.getTypeRegistry(), env);
+        return analyze(scored, tokens, reg.getTypeRegistry(), env);
     }
 
     /**
@@ -105,12 +129,13 @@ public final class PatternSimulator {
      * @return ranked suggestions (at most 2), or empty if nothing is close
      */
     public static @NotNull List<Suggestion> suggestConditions(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnv env) {
-        List<CandidateScore> scored = new ArrayList<>();
+        if (tokens.isEmpty()) return List.of();
+        List<PreFilterScore> scored = new ArrayList<>();
         for (RegisteredCondition rc : reg.getConditionRegistry().getConditions()) {
-            CandidateScore cs = scoreAgainst(tokens, rc.pattern(), rc.meta(), null);
-            if (cs != null && cs.score >= MIN_SCORE) scored.add(cs);
+            PreFilterScore pfs = preFilter(tokens, rc.pattern(), rc.meta(), null);
+            if (pfs != null) scored.add(pfs);
         }
-        return simulateAndBuild(scored, tokens, reg.getTypeRegistry(), env);
+        return analyze(scored, tokens, reg.getTypeRegistry(), env);
     }
 
     /**
@@ -122,12 +147,13 @@ public final class PatternSimulator {
      * @return ranked suggestions (at most 2), or empty if nothing is close
      */
     public static @NotNull List<Suggestion> suggestBlocks(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnv env) {
-        List<CandidateScore> scored = new ArrayList<>();
+        if (tokens.isEmpty()) return List.of();
+        List<PreFilterScore> scored = new ArrayList<>();
         for (RegisteredBlock rb : reg.getBlocks()) {
-            CandidateScore cs = scoreAgainst(tokens, rb.pattern(), rb.meta(), null);
-            if (cs != null && cs.score >= MIN_SCORE) scored.add(cs);
+            PreFilterScore pfs = preFilter(tokens, rb.pattern(), rb.meta(), null);
+            if (pfs != null) scored.add(pfs);
         }
-        return simulateAndBuild(scored, tokens, reg.getTypeRegistry(), env);
+        return analyze(scored, tokens, reg.getTypeRegistry(), env);
     }
 
     /**
@@ -139,141 +165,424 @@ public final class PatternSimulator {
      * @return ranked suggestions (at most 2), or empty if nothing is close
      */
     public static @NotNull List<Suggestion> suggestStatementsAndExpressions(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnv env) {
-        List<CandidateScore> scored = new ArrayList<>();
+        if (tokens.isEmpty()) return List.of();
+        List<PreFilterScore> scored = new ArrayList<>();
         for (RegisteredPattern rp : reg.getStatements()) {
-            CandidateScore cs = scoreAgainst(tokens, rp.pattern(), rp.meta(), rp);
-            if (cs != null && cs.score >= MIN_SCORE) scored.add(cs);
+            PreFilterScore pfs = preFilter(tokens, rp.pattern(), rp.meta(), rp);
+            if (pfs != null) scored.add(pfs);
         }
         for (RegisteredExpression re : reg.getExpressions()) {
-            CandidateScore cs = scoreAgainst(tokens, re.pattern(), re.meta(), re);
-            if (cs != null && cs.score >= MIN_SCORE) scored.add(cs);
+            PreFilterScore pfs = preFilter(tokens, re.pattern(), re.meta(), re);
+            if (pfs != null) scored.add(pfs);
         }
-        return simulateAndBuild(scored, tokens, reg.getTypeRegistry(), env);
+        return analyze(scored, tokens, reg.getTypeRegistry(), env);
     }
 
-    private static @NotNull List<Suggestion> simulateAndBuild(@NotNull List<CandidateScore> scored, @NotNull List<Token> tokens, @NotNull TypeRegistry types, @NotNull TypeEnv env) {
-        scored.sort(Comparator.comparingDouble((CandidateScore c) -> c.score).reversed());
-        List<Suggestion> results = new ArrayList<>();
-        int limit = Math.min(MAX_REAL_CANDIDATES, scored.size());
-        for (int i = 0; i < limit && results.size() < MAX_SUGGESTIONS; i++) {
-            CandidateScore cs = scored.get(i);
-
-            MatchProgress progress = null;
-            if (tokens.size() <= 20) {
-                progress = PatternMatcher.matchWithProgress(tokens, cs.pattern, types, env);
-                if (progress.succeeded()) continue;
+    private static @NotNull List<Suggestion> analyze(@NotNull List<PreFilterScore> scored, @NotNull List<Token> tokens, @NotNull TypeRegistry types, @NotNull TypeEnv env) {
+        scored.sort(Comparator.comparingDouble((PreFilterScore p) -> p.confidence).reversed());
+        int limit = Math.min(maxCandidates(), scored.size());
+        Map<Pattern, Suggestion> best = new LinkedHashMap<>();
+        for (int i = 0; i < limit; i++) {
+            Suggestion s = tryMatch(tokens, scored.get(i), types, env);
+            if (s == null) continue;
+            Suggestion existing = best.get(s.pattern());
+            if (existing == null || s.confidence() > existing.confidence()) {
+                best.put(s.pattern(), s);
             }
+        }
+        List<Suggestion> results = new ArrayList<>(best.values());
+        results.sort(Comparator.comparingDouble(Suggestion::confidence).reversed());
+        int max = Math.min(DEFAULT_MAX_SUGGESTIONS, results.size());
+        return List.copyOf(results.subList(0, max));
+    }
 
-            boolean hasTypo = cs.typoToken != null;
-            boolean hasReorder = !cs.reorderedTokens.isEmpty();
-
-            if (hasTypo && tokens.size() <= 20) {
-                MatchProgress corrected = tryCorrectedMatch(tokens, cs, types, env);
-                if (corrected.succeeded()) {
-                    if (isBuiltin(cs.meta) && corrected.match() != null && !tryHandlerSandbox(cs.handler, corrected.match(), env)) {
+    private static @Nullable Suggestion tryMatch(@NotNull List<Token> tokens, @NotNull PreFilterScore cs, @NotNull TypeRegistry types, @NotNull TypeEnv env) {
+        Pattern pattern = cs.pattern;
+        List<LiteralInfo> literals = extractLiterals(pattern);
+        int maxK = Math.min(effectiveMaxK(tokens.size()), tokens.size() - 1);
+        MatchProgress level0Progress = null;
+        TypoFix bestPartialTypo = null;
+        MatchProgress bestPartialProgress = null;
+        for (int k = 0; k <= maxK; k++) {
+            if (k == 0) {
+                MatchProgress progress = PatternMatcher.matchWithProgress(tokens, pattern, types, env);
+                level0Progress = progress;
+                if (progress.succeeded()) {
+                    if (isBuiltin(cs.meta) && progress.match() != null && !tryHandlerSandbox(cs.handler, progress.match(), env)) return null;
+                    return null;
+                }
+                TypoFix typo = findBestTypoFix(tokens, literals);
+                if (typo != null) {
+                    List<Token> corrected = applyTypoFix(tokens, typo);
+                    MatchProgress corrProgress = PatternMatcher.matchWithProgress(corrected, pattern, types, env);
+                    boolean sandboxRejected = false;
+                    if (corrProgress.succeeded()) {
+                        if (isBuiltin(cs.meta) && corrProgress.match() != null && !tryHandlerSandbox(cs.handler, corrProgress.match(), env)) {
+                            sandboxRejected = true;
+                        }
+                    }
+                    if (!sandboxRejected && corrProgress.succeeded()) {
+                        boolean firstMatch = firstTokenMatches(tokens, literals) || isFirstLiteralToken(typo, tokens, literals);
+                        double confidence = computeConfidence(0, 1, firstMatch);
+                        return new Suggestion(pattern, confidence, List.of(new SuggestionIssue.Typo(typo.token, typo.expected)), corrProgress);
+                    }
+                    if (sandboxRejected && corrProgress.succeeded()) {
+                        boolean firstMatch = firstTokenMatches(tokens, literals) || isFirstLiteralToken(typo, tokens, literals);
+                        double confidence = computeConfidence(0, 1, firstMatch) * SANDBOX_REJECTED_PENALTY;
+                        return new Suggestion(pattern, confidence, List.of(new SuggestionIssue.Typo(typo.token, typo.expected)), corrProgress);
+                    }
+                    if (corrProgress.furthestTokenIndex() >= progress.furthestTokenIndex()) {
+                        bestPartialTypo = typo;
+                        bestPartialProgress = corrProgress;
+                    }
+                }
+                continue;
+            }
+            List<Suggestion> levelResults = new ArrayList<>();
+            int[] combo = new int[k];
+            for (int ci = 0; ci < k; ci++) combo[ci] = ci;
+            int combinationsChecked = 0;
+            do {
+                if (combinationsChecked++ >= MAX_COMBINATIONS_PER_LEVEL) break;
+                List<Token> reduced = removeIndices(tokens, combo);
+                List<Token> removed = extractIndices(tokens, combo);
+                MatchProgress progress = PatternMatcher.matchWithProgress(reduced, pattern, types, env);
+                if (progress.succeeded()) {
+                    if (isBuiltin(cs.meta) && progress.match() != null && !tryHandlerSandbox(cs.handler, progress.match(), env)) {
+                        progress = null;
+                    }
+                }
+                if (progress != null && progress.succeeded()) {
+                    boolean firstMatch = firstTokenMatches(tokens, literals) || firstTokenMatches(reduced, literals);
+                    double confidence = computeConfidence(k, 0, firstMatch);
+                    levelResults.add(new Suggestion(pattern, confidence, List.of(new SuggestionIssue.ExtraTokens(List.copyOf(removed))), progress));
+                    continue;
+                }
+                TypoFix typo = findBestTypoFix(reduced, literals);
+                if (typo != null) {
+                    List<Token> corrected = applyTypoFix(reduced, typo);
+                    MatchProgress corrProgress = PatternMatcher.matchWithProgress(corrected, pattern, types, env);
+                    if (corrProgress.succeeded()) {
+                        if (isBuiltin(cs.meta) && corrProgress.match() != null && !tryHandlerSandbox(cs.handler, corrProgress.match(), env)) {
+                            corrProgress = null;
+                        }
+                    }
+                    if (corrProgress != null && corrProgress.succeeded()) {
+                        boolean firstMatch = firstTokenMatches(tokens, literals) || isFirstLiteralToken(typo, tokens, literals);
+                        double confidence = computeConfidence(k, 1, firstMatch);
+                        List<SuggestionIssue> issues = List.of(new SuggestionIssue.ExtraTokens(List.copyOf(removed)), new SuggestionIssue.Typo(typo.token, typo.expected));
+                        levelResults.add(new Suggestion(pattern, confidence, issues, corrProgress));
                         continue;
                     }
-                    SuggestionKind kind = hasReorder ? SuggestionKind.TYPO_AND_REORDER : SuggestionKind.TYPO;
-                    String detail = "did you mean '" + cs.expectedText + "'?";
-                    if (hasReorder)
-                        detail += " tokens '" + reorderDescription(cs.reorderedTokens) + "' may be in the wrong order";
-                    results.add(new Suggestion(cs.pattern, kind, cs.score + 40, detail, cs.typoToken, cs.expectedText, cs.reorderedTokens, corrected));
+                    if (corrProgress != null && corrProgress.furthestTokenIndex() > (bestPartialProgress != null ? bestPartialProgress.furthestTokenIndex() : -1)) {
+                        bestPartialTypo = typo;
+                        bestPartialProgress = corrProgress;
+                    }
                 }
-                continue;
+            } while (nextCombination(combo, tokens.size()));
+            if (!levelResults.isEmpty()) {
+                levelResults.sort(Comparator.comparingDouble(Suggestion::confidence).reversed().thenComparing(Comparator.comparingInt((Suggestion s) -> {
+                    for (PatternSimulator.SuggestionIssue si : s.issues()) {
+                        if (si instanceof SuggestionIssue.ExtraTokens extra) return extra.tokens().stream().mapToInt(Token::start).min().orElse(0);
+                    }
+                    return 0;
+                }).reversed()));
+                return levelResults.get(0);
             }
+        }
+        if (bestPartialTypo != null) {
+            if (bestPartialProgress.furthestTokenIndex() <= bestPartialTypo.tokenIndex() + 1 && bestPartialProgress.failedBindingId() == null && bestPartialProgress.bindingFailures().isEmpty()) {
+                bestPartialTypo = null;
+                bestPartialProgress = null;
+            }
+        }
+        if (bestPartialTypo != null) {
+            if (isBuiltin(cs.meta) && cs.handler != null) {
+                List<Token> corrected = applyTypoFix(tokens, bestPartialTypo);
+                MatchProgress check = PatternMatcher.matchWithProgress(corrected, pattern, types, env);
+                if (check.succeeded() && check.match() != null && !tryHandlerSandbox(cs.handler, check.match(), env)) {
+                    bestPartialTypo = null;
+                    bestPartialProgress = null;
+                }
+            }
+        }
+        if (bestPartialTypo != null) {
+            TypoFix primaryTypo = bestPartialTypo;
+            List<SuggestionIssue> issues = new ArrayList<>();
+            issues.add(new SuggestionIssue.Typo(primaryTypo.token, primaryTypo.expected));
+            if (!bestPartialProgress.bindingFailures().isEmpty()) {
+                for (MatchProgress.BindingFailure bf : bestPartialProgress.bindingFailures()) {
+                    if (!bf.failedTokens().isEmpty()) {
+                        issues.add(new SuggestionIssue.TypeMismatch(bf.failedTokens().get(0), bf.bindingId(), bf.reason()));
+                    } else {
+                        issues.add(new SuggestionIssue.MissingBinding(bf.bindingId()));
+                    }
+                }
+            } else if (bestPartialProgress.failedBindingId() != null && !bestPartialProgress.failedTokens().isEmpty()) {
+                Token ft = bestPartialProgress.failedTokens().get(0);
+                issues.add(new SuggestionIssue.TypeMismatch(ft, bestPartialProgress.failedBindingId(), bestPartialProgress.failedReason()));
+            }
+            for (MatchProgress.LiteralTypo lt : bestPartialProgress.literalTypos()) {
+                if (!lt.token().text().equals(primaryTypo.token.text())) {
+                    issues.add(new SuggestionIssue.Typo(lt.token(), lt.expected()));
+                }
+            }
+            boolean firstMatch = firstTokenMatches(tokens, literals) || isFirstLiteralToken(primaryTypo, tokens, literals);
+            int totalTypos = 1 + (int) bestPartialProgress.literalTypos().stream().filter(lt -> !lt.token().text().equals(primaryTypo.token.text())).count();
+            double confidence = Math.min(computeConfidence(0, totalTypos, firstMatch), computeTypeMatchConfidence(bestPartialProgress, tokens.size()));
+            return new Suggestion(pattern, confidence, List.copyOf(issues), bestPartialProgress);
+        }
+        if (level0Progress != null && (level0Progress.failedBindingId() != null || !level0Progress.bindingFailures().isEmpty())) {
+            List<SuggestionIssue> issues = new ArrayList<>();
+            TypoFix heuristicTypo = findBestTypoFix(tokens, literals);
+            if (heuristicTypo != null && FuzzyMatch.prefixAwareDistance(heuristicTypo.token.text(), heuristicTypo.expected) <= 1) {
+                issues.add(new SuggestionIssue.Typo(heuristicTypo.token, heuristicTypo.expected));
+            }
+            if (!level0Progress.bindingFailures().isEmpty()) {
+                for (MatchProgress.BindingFailure bf : level0Progress.bindingFailures()) {
+                    if (!bf.failedTokens().isEmpty()) {
+                        issues.add(new SuggestionIssue.TypeMismatch(bf.failedTokens().get(0), bf.bindingId(), bf.reason()));
+                    } else {
+                        issues.add(new SuggestionIssue.MissingBinding(bf.bindingId()));
+                    }
+                }
+            } else {
+                Token failedToken = level0Progress.failedTokens().isEmpty() ? null : level0Progress.failedTokens().get(0);
+                if (failedToken != null) {
+                    issues.add(new SuggestionIssue.TypeMismatch(failedToken, level0Progress.failedBindingId(), level0Progress.failedReason()));
+                }
+            }
+            double confidence = computeTypeMatchConfidence(level0Progress, tokens.size());
+            return new Suggestion(pattern, confidence, List.copyOf(issues), level0Progress);
+        }
+        return tryReorderMatch(tokens, cs, types, env, literals);
+    }
 
-            boolean shapeMatchSucceeded = false;
-            long anchoredCount = cs.matchDetails.stream().filter(m -> m.tokenIndex >= 0).count();
-            if (tokens.size() <= SHAPE_MATCH_TOKEN_LIMIT && anchoredCount >= 1) {
-                MatchProgress shaped = tryShapeMatch(tokens, cs.pattern, cs.matchDetails, types, env);
-                if (shaped != null) {
-                    if (shaped.succeeded()) {
-                        shapeMatchSucceeded = true;
-                        progress = shaped;
-                    } else if (hasReorder) {
-                        if (shaped.failedBindingId() != null && shaped.furthestTokenIndex() > 0) {
-                            progress = shaped;
-                        } else {
-                            continue;
-                        }
-                    } else if (progress == null || shaped.furthestTokenIndex() > progress.furthestTokenIndex()) {
-                        progress = shaped;
+    private static @Nullable PreFilterScore preFilter(@NotNull List<Token> tokens, @NotNull Pattern pattern, @NotNull PatternMeta meta, @Nullable Object handler) {
+        List<LiteralInfo> literals = extractLiterals(pattern);
+        if (literals.isEmpty()) return null;
+        boolean[] tokenUsed = new boolean[tokens.size()];
+        List<LiteralMatchResult> matches = new ArrayList<>();
+        for (LiteralInfo lit : literals) {
+            int bestIdx = -1;
+            int bestDist = Integer.MAX_VALUE;
+            for (int j = 0; j < tokens.size(); j++) {
+                if (tokenUsed[j]) continue;
+                int dist = bestFormDistance(tokens.get(j).text(), lit);
+                if (dist < bestDist) {
+                    bestDist = dist;
+                    bestIdx = j;
+                }
+            }
+            int threshold = bestIdx >= 0 ? effectiveThreshold(tokens.get(bestIdx).text(), lit.primaryForm()) : 0;
+            if (bestIdx >= 0 && bestDist <= threshold) {
+                tokenUsed[bestIdx] = true;
+                matches.add(new LiteralMatchResult(lit, bestIdx, bestDist));
+            } else if (!lit.optional) {
+                matches.add(new LiteralMatchResult(lit, -1, bestDist));
+            }
+        }
+        int requiredCount = (int) literals.stream().filter(l -> !l.optional).count();
+        if (requiredCount == 0) return null;
+        int matchedRequired = (int) matches.stream().filter(m -> m.tokenIndex >= 0 && !m.literal.optional).count();
+        if (matchedRequired == 0) return null;
+        int matchedTotal = (int) matches.stream().filter(m -> m.tokenIndex >= 0).count();
+        int exactMatches = (int) matches.stream().filter(m -> m.tokenIndex >= 0 && m.distance == 0).count();
+        double literalCoverage = matchedRequired / (double) requiredCount;
+        double tokenCoverage = tokens.isEmpty() ? 0.0 : matchedTotal / (double) tokens.size();
+        double exactness = matchedTotal > 0 ? exactMatches / (double) matchedTotal : 0.0;
+        List<Integer> positions = matches.stream().filter(m -> m.tokenIndex >= 0).map(m -> m.tokenIndex).toList();
+        double positionAccuracy;
+        if (positions.size() <= 1) {
+            positionAccuracy = 0.5;
+        } else {
+            int ordered = 0;
+            for (int p = 1; p < positions.size(); p++) {
+                if (positions.get(p) > positions.get(p - 1)) ordered++;
+            }
+            positionAccuracy = ordered / (double) (positions.size() - 1);
+        }
+        double base = literalCoverage * WEIGHT_LITERAL_COVERAGE + exactness * WEIGHT_EXACTNESS + positionAccuracy * WEIGHT_POSITION + tokenCoverage * WEIGHT_TOKEN_COVERAGE;
+        double firstMultiplier = computeFirstTokenMultiplier(tokens, literals, matches);
+        double confidence = Math.min(1.0, base * firstMultiplier);
+        if (confidence < MIN_PREFILTER_CONFIDENCE) return null;
+        return new PreFilterScore(pattern, confidence, matches, meta, handler);
+    }
+
+    private static int bestFormDistance(@NotNull String tokenText, @NotNull LiteralInfo lit) {
+        int best = Integer.MAX_VALUE;
+        for (String form : lit.forms) {
+            int dist = FuzzyMatch.prefixAwareDistance(tokenText, form);
+            if (dist < best) best = dist;
+        }
+        return best;
+    }
+
+    private static double computeFirstTokenMultiplier(@NotNull List<Token> tokens, @NotNull List<LiteralInfo> literals, @NotNull List<LiteralMatchResult> matches) {
+        LiteralInfo firstRequired = null;
+        for (LiteralInfo lit : literals) {
+            if (!lit.optional) {
+                firstRequired = lit;
+                break;
+            }
+        }
+        if (firstRequired == null) return FIRST_TOKEN_MISS_MULTIPLIER;
+        int firstInputIdx = -1;
+        for (int i = 0; i < tokens.size(); i++) {
+            if (tokens.get(i).kind() != TokenKind.SYMBOL) {
+                firstInputIdx = i;
+                break;
+            }
+        }
+        if (firstInputIdx < 0) return FIRST_TOKEN_MISS_MULTIPLIER;
+        for (LiteralMatchResult m : matches) {
+            if (m.literal == firstRequired && m.tokenIndex == firstInputIdx) {
+                return m.distance == 0 ? 1.0 : 0.85;
+            }
+        }
+        return FIRST_TOKEN_MISS_MULTIPLIER;
+    }
+
+    private static @Nullable TypoFix findBestTypoFix(@NotNull List<Token> tokens, @NotNull List<LiteralInfo> literals) {
+        TypoFix best = null;
+        int bestDist = Integer.MAX_VALUE;
+        for (int i = 0; i < tokens.size(); i++) {
+            Token token = tokens.get(i);
+            for (LiteralInfo lit : literals) {
+                for (String form : lit.forms) {
+                    int dist = FuzzyMatch.prefixAwareDistance(token.text(), form);
+                    int threshold = effectiveThreshold(token.text(), form);
+                    if (dist > 0 && dist <= threshold && dist < bestDist) {
+                        bestDist = dist;
+                        best = new TypoFix(token, form, i);
                     }
                 }
             }
-
-            SuggestionKind kind;
-            String detail;
-
-            if (shapeMatchSucceeded) {
-                kind = SuggestionKind.REORDER;
-                List<Token> reordered = findReorderedFromAnchors(tokens, cs.matchDetails);
-                if (!reordered.isEmpty()) {
-                    detail = "tokens '" + reorderDescription(reordered) + "' may be in the wrong order";
-                } else {
-                    detail = "tokens may be in the wrong order";
-                }
-                results.add(new Suggestion(cs.pattern, kind, cs.score + 30, detail, cs.typoToken, cs.expectedText, reordered.isEmpty() ? cs.reorderedTokens : reordered, progress));
-                continue;
-            } else if (progress != null && progress.failedBindingId() != null) {
-                kind = SuggestionKind.TYPE_MISMATCH;
-                if (progress.failedReason() != null) {
-                    detail = "type binding '" + progress.failedBindingId() + "' failed: " + progress.failedReason();
-                } else {
-                    detail = "type binding '" + progress.failedBindingId() + "' rejected the input";
-                }
-            } else if (progress != null && progress.furthestTokenIndex() > tokens.size() / 2) {
-                kind = SuggestionKind.TYPE_MISMATCH;
-                if (!progress.failedTokens().isEmpty()) {
-                    detail = "type binding '" + progress.failedBindingId() + "' rejected the input";
-                } else {
-                    detail = "pattern almost matched";
-                }
-            } else if (hasTypo && hasReorder) {
-                kind = SuggestionKind.TYPO_AND_REORDER;
-                detail = "did you mean '" + cs.expectedText + "'? tokens '" + reorderDescription(cs.reorderedTokens) + "' may be in the wrong order";
-            } else if (hasTypo) {
-                kind = SuggestionKind.TYPO;
-                detail = "did you mean '" + cs.expectedText + "'?";
-            } else if (hasReorder) {
-                kind = SuggestionKind.REORDER;
-                detail = "tokens '" + reorderDescription(cs.reorderedTokens) + "' may be in the wrong order";
-            } else if (cs.kind == SuggestionKind.TYPE_MISMATCH) {
-                kind = SuggestionKind.TYPE_MISMATCH;
-                detail = "pattern matches structurally but a type binding failed";
-            } else {
-                kind = SuggestionKind.CLOSE_MATCH;
-                detail = "closest matching pattern";
-            }
-            results.add(new Suggestion(cs.pattern, kind, cs.score, detail, cs.typoToken, cs.expectedText, cs.reorderedTokens, progress));
         }
-        return results;
+        return best;
     }
 
-    /**
-     * Tries to match tokens against a pattern by anchoring known literal positions
-     * and filling placeholders with the remaining tokens. This catches cases where
-     * the token order roughly matches the pattern structure but the raw match fails
-     * due to a typo or one swapped token breaking backtracking.
-     */
+    private static @NotNull List<Token> applyTypoFix(@NotNull List<Token> tokens, @NotNull TypoFix fix) {
+        List<Token> result = new ArrayList<>(tokens);
+        result.set(fix.tokenIndex, syntheticToken(fix.expected, tokens));
+        return result;
+    }
+
+    private static boolean firstTokenMatches(@NotNull List<Token> tokens, @NotNull List<LiteralInfo> literals) {
+        LiteralInfo firstRequired = null;
+        for (LiteralInfo lit : literals) {
+            if (!lit.optional) {
+                firstRequired = lit;
+                break;
+            }
+        }
+        if (firstRequired == null) return false;
+        Token firstInput = null;
+        for (Token t : tokens) {
+            if (t.kind() != TokenKind.SYMBOL) {
+                firstInput = t;
+                break;
+            }
+        }
+        if (firstInput == null) return false;
+        for (String form : firstRequired.forms) {
+            if (form.equalsIgnoreCase(firstInput.text())) return true;
+            if (FuzzyMatch.prefixAwareDistance(firstInput.text(), form) <= 1) return true;
+        }
+        return false;
+    }
+
+    private static boolean isFirstLiteralToken(@NotNull TypoFix typo, @NotNull List<Token> tokens, @NotNull List<LiteralInfo> literals) {
+        LiteralInfo firstRequired = null;
+        for (LiteralInfo lit : literals) {
+            if (!lit.optional) {
+                firstRequired = lit;
+                break;
+            }
+        }
+        if (firstRequired == null) return false;
+        int firstInputIdx = -1;
+        for (int i = 0; i < tokens.size(); i++) {
+            if (tokens.get(i).kind() != TokenKind.SYMBOL) {
+                firstInputIdx = i;
+                break;
+            }
+        }
+        if (firstInputIdx < 0) return false;
+        return typo.tokenIndex == firstInputIdx && firstRequired.forms.stream().anyMatch(f -> f.equalsIgnoreCase(typo.expected));
+    }
+
+    private static double computeConfidence(int removals, int typos, boolean firstTokenMatches) {
+        double base = 1.0 - (removals * REMOVAL_PENALTY) - (typos * TYPO_PENALTY);
+        if (!firstTokenMatches) base *= FIRST_TOKEN_MISS_MULTIPLIER;
+        return Math.max(0.0, Math.min(1.0, base));
+    }
+
+    private static double computeTypeMatchConfidence(@NotNull MatchProgress progress, int totalTokens) {
+        double fraction = totalTokens > 0 ? (double) (progress.furthestTokenIndex() + 1) / totalTokens : 0.0;
+        return Math.max(0.20, Math.min(0.85, fraction));
+    }
+
+    private static int effectiveThreshold(@NotNull String tokenText, @NotNull String formText) {
+        int tokenThreshold = tokenText.length() <= 2 ? 0 : Math.max(1, Math.min(3, (int) (tokenText.length() * 0.4)));
+        int formThreshold = formText.length() <= 2 ? 0 : Math.max(1, Math.min(3, (int) (formText.length() * 0.4)));
+        return Math.min(tokenThreshold, formThreshold);
+    }
+
+    private static @NotNull List<Token> removeIndices(@NotNull List<Token> tokens, int[] indices) {
+        boolean[] skip = new boolean[tokens.size()];
+        for (int idx : indices) skip[idx] = true;
+        List<Token> result = new ArrayList<>(tokens.size() - indices.length);
+        for (int i = 0; i < tokens.size(); i++) {
+            if (!skip[i]) result.add(tokens.get(i));
+        }
+        return result;
+    }
+
+    private static @NotNull List<Token> extractIndices(@NotNull List<Token> tokens, int[] indices) {
+        List<Token> result = new ArrayList<>(indices.length);
+        for (int idx : indices) result.add(tokens.get(idx));
+        return result;
+    }
+
+    private static boolean nextCombination(int[] combo, int n) {
+        int k = combo.length;
+        int i = k - 1;
+        while (i >= 0 && combo[i] == n - k + i) i--;
+        if (i < 0) return false;
+        combo[i]++;
+        for (int j = i + 1; j < k; j++) combo[j] = combo[j - 1] + 1;
+        return true;
+    }
+
+    private static @Nullable Suggestion tryReorderMatch(@NotNull List<Token> tokens, @NotNull PreFilterScore cs, @NotNull TypeRegistry types, @NotNull TypeEnv env, @NotNull List<LiteralInfo> literals) {
+        List<LiteralMatchResult> matchDetails = cs.matchDetails;
+        long anchoredCount = matchDetails.stream().filter(m -> m.tokenIndex >= 0).count();
+        if (tokens.size() > SHAPE_MATCH_TOKEN_LIMIT || anchoredCount < 1) return null;
+        MatchProgress shaped = tryShapeMatch(tokens, cs.pattern, matchDetails, types, env);
+        if (shaped == null || !shaped.succeeded()) return null;
+        if (isBuiltin(cs.meta) && shaped.match() != null && !tryHandlerSandbox(cs.handler, shaped.match(), env)) return null;
+        List<Token> reordered = findReorderedFromAnchors(tokens, matchDetails);
+        if (reordered.isEmpty()) return null;
+        boolean firstMatch = firstTokenMatches(tokens, literals);
+        double confidence = Math.max(VALIDATED_REORDER_FLOOR, computeConfidence(0, 0, firstMatch));
+        return new Suggestion(cs.pattern, confidence, List.of(new SuggestionIssue.Reorder(reordered)), shaped);
+    }
+
     private static @Nullable MatchProgress tryShapeMatch(@NotNull List<Token> tokens, @NotNull Pattern pattern, @NotNull List<LiteralMatchResult> matchDetails, @NotNull TypeRegistry types, @NotNull TypeEnv env) {
         List<LiteralMatchResult> anchored = matchDetails.stream().filter(m -> m.tokenIndex >= 0).sorted(Comparator.comparingInt(m -> m.literal.partIndex)).toList();
         if (anchored.isEmpty()) return null;
-
         boolean[] used = new boolean[tokens.size()];
         for (LiteralMatchResult m : anchored) {
             if (m.tokenIndex >= 0 && m.tokenIndex < tokens.size()) used[m.tokenIndex] = true;
         }
-
         List<Token> remaining = new ArrayList<>();
         for (int j = 0; j < tokens.size(); j++) {
             if (!used[j]) remaining.add(tokens.get(j));
         }
-
         List<PatternPart> parts = pattern.parts();
         List<Token> shaped = new ArrayList<>();
         int remIdx = 0;
-
         for (PatternPart part : parts) {
             if (part instanceof PatternPart.Literal lit) {
                 Token anchor = findAnchorToken(anchored, tokens, lit.text());
@@ -304,14 +613,13 @@ public final class PatternSimulator {
         while (remIdx < remaining.size()) {
             shaped.add(remaining.get(remIdx++));
         }
-
         if (shaped.isEmpty()) return null;
         return PatternMatcher.matchWithProgress(shaped, pattern, types, env);
     }
 
     private static @Nullable Token findAnchorToken(@NotNull List<LiteralMatchResult> anchored, @NotNull List<Token> tokens, @NotNull String text) {
         for (LiteralMatchResult m : anchored) {
-            if (m.literal.text.equalsIgnoreCase(text) && m.tokenIndex >= 0 && m.tokenIndex < tokens.size()) {
+            if (m.tokenIndex >= 0 && m.tokenIndex < tokens.size() && m.literal.forms.stream().anyMatch(f -> f.equalsIgnoreCase(text))) {
                 return tokens.get(m.tokenIndex);
             }
         }
@@ -324,35 +632,6 @@ public final class PatternSimulator {
             if (found != null) return found;
         }
         return null;
-    }
-
-    private static @NotNull Token syntheticToken(@NotNull String text, @NotNull List<Token> reference) {
-        int line = reference.isEmpty() ? 1 : reference.get(0).line();
-        return new Token(TokenKind.IDENT, text, line, 0, text.length());
-    }
-
-    private static @NotNull MatchProgress tryCorrectedMatch(@NotNull List<Token> tokens, @NotNull CandidateScore cs, @NotNull TypeRegistry types, @NotNull TypeEnv env) {
-        List<Token> corrected = new ArrayList<>(tokens);
-        for (int j = 0; j < corrected.size(); j++) {
-            if (corrected.get(j) == cs.typoToken) {
-                corrected.set(j, syntheticToken(cs.expectedText, tokens));
-                break;
-            }
-        }
-        return PatternMatcher.matchWithProgress(corrected, cs.pattern, types, env);
-    }
-
-    private static boolean isBuiltin(@NotNull PatternMeta meta) {
-        return "Lumen".equals(meta.by());
-    }
-
-    private static boolean tryHandlerSandbox(@Nullable Object handler, @NotNull Match match, @NotNull TypeEnv env) {
-        if (handler instanceof RegisteredPattern rp) {
-            return tryStatementHandler(rp, match, env);
-        } else if (handler instanceof RegisteredExpression re) {
-            return tryExpressionHandler(re, match, env);
-        }
-        return true;
     }
 
     private static @NotNull List<Token> findReorderedFromAnchors(@NotNull List<Token> tokens, @NotNull List<LiteralMatchResult> matchDetails) {
@@ -371,128 +650,20 @@ public final class PatternSimulator {
         return result.size() >= 2 ? List.copyOf(result) : List.of();
     }
 
-    private static @NotNull String reorderDescription(@NotNull List<Token> reordered) {
-        if (reordered.size() == 2) return reordered.get(0).text() + "' and '" + reordered.get(1).text();
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < reordered.size(); i++) {
-            if (i > 0) sb.append(i == reordered.size() - 1 ? "' and '" : "', '");
-            sb.append(reordered.get(i).text());
-        }
-        return sb.toString();
+    private static @NotNull Token syntheticToken(@NotNull String text, @NotNull List<Token> reference) {
+        int line = reference.isEmpty() ? 1 : reference.get(0).line();
+        return new Token(TokenKind.IDENT, text, line, 0, text.length());
     }
 
-    private static @Nullable CandidateScore scoreAgainst(@NotNull List<Token> tokens, @NotNull Pattern pattern, @NotNull PatternMeta meta, @Nullable Object handler) {
-        List<LiteralInfo> literals = extractLiterals(pattern);
-        if (literals.isEmpty()) return null;
-
-        boolean[] tokenUsed = new boolean[tokens.size()];
-        List<LiteralMatchResult> matches = new ArrayList<>();
-
-        for (LiteralInfo lit : literals) {
-            int bestIdx = -1;
-            int bestDist = Integer.MAX_VALUE;
-            for (int i = 0; i < tokens.size(); i++) {
-                if (tokenUsed[i]) continue;
-                int dist = FuzzyMatch.distance(tokens.get(i).text(), lit.text);
-                if (dist < bestDist) {
-                    bestDist = dist;
-                    bestIdx = i;
-                }
-            }
-            int threshold = lit.text.length() <= 2 ? 0 : Math.max(1, Math.min(3, (int) (lit.text.length() * 0.4)));
-            if (bestIdx >= 0 && bestDist <= threshold) {
-                tokenUsed[bestIdx] = true;
-                matches.add(new LiteralMatchResult(lit, bestIdx, bestDist));
-            } else if (!lit.optional) {
-                matches.add(new LiteralMatchResult(lit, -1, bestDist));
-            }
-        }
-
-        int requiredCount = (int) literals.stream().filter(l -> !l.optional).count();
-        if (requiredCount == 0) return null;
-        int matchedRequired = (int) matches.stream().filter(m -> m.tokenIndex >= 0 && !m.literal.optional).count();
-        if (matchedRequired == 0) return null;
-
-        double matchScore = 0;
-        Token typoToken = null;
-        String expectedText = null;
-
-        for (LiteralMatchResult m : matches) {
-            if (m.tokenIndex < 0) continue;
-            if (m.distance == 0) {
-                matchScore += 10.0;
-            } else {
-                matchScore += 5.0;
-                if (typoToken == null) {
-                    typoToken = tokens.get(m.tokenIndex);
-                    expectedText = m.literal.text;
-                }
-            }
-        }
-
-        double matchRatio = matchedRequired / (double) requiredCount;
-        double score = matchScore * matchRatio;
-
-        List<Integer> positions = matches.stream().filter(m -> m.tokenIndex >= 0).map(m -> m.tokenIndex).toList();
-        boolean inOrder = isOrdered(positions);
-        List<Token> reorderedTokens = inOrder ? List.of() : findReorderedTokens(tokens, matches);
-
-        SuggestionKind kind;
-        if (typoToken != null) {
-            kind = SuggestionKind.TYPO;
-        } else if (!inOrder) {
-            kind = SuggestionKind.REORDER;
-        } else if (matchedRequired == requiredCount) {
-            kind = SuggestionKind.TYPE_MISMATCH;
-        } else {
-            kind = SuggestionKind.CLOSE_MATCH;
-        }
-
-        return new CandidateScore(pattern, score, kind, typoToken, expectedText, reorderedTokens, matches, meta, handler);
+    private static boolean isBuiltin(@NotNull PatternMeta meta) {
+        return "Lumen".equals(meta.by());
     }
 
-    private static @NotNull List<Token> findReorderedTokens(@NotNull List<Token> tokens, @NotNull List<LiteralMatchResult> matches) {
-        List<LiteralMatchResult> matched = matches.stream().filter(m -> m.tokenIndex >= 0).toList();
-        if (matched.size() < 2) return List.of();
-        List<Token> result = new ArrayList<>();
-        for (int i = 1; i < matched.size(); i++) {
-            if (matched.get(i).tokenIndex < matched.get(i - 1).tokenIndex) {
-                Token prev = tokens.get(matched.get(i - 1).tokenIndex);
-                Token curr = tokens.get(matched.get(i).tokenIndex);
-                if (!result.contains(prev)) result.add(prev);
-                if (!result.contains(curr)) result.add(curr);
-            }
-        }
-        return List.copyOf(result);
-    }
-
-    private static @NotNull List<LiteralInfo> extractLiterals(@NotNull Pattern pattern) {
-        List<LiteralInfo> result = new ArrayList<>();
-        extractLiteralsFromParts(pattern.parts(), result, false);
-        return result;
-    }
-
-    private static void extractLiteralsFromParts(@NotNull List<PatternPart> parts, @NotNull List<LiteralInfo> result, boolean parentOptional) {
-        int partIndex = result.size();
-        for (PatternPart part : parts) {
-            if (part instanceof PatternPart.Literal lit) {
-                result.add(new LiteralInfo(lit.text(), partIndex++, parentOptional));
-            } else if (part instanceof PatternPart.FlexLiteral flex) {
-                result.add(new LiteralInfo(flex.forms().get(0), partIndex++, parentOptional));
-            } else if (part instanceof PatternPart.Group group) {
-                if (!group.alternatives().isEmpty()) {
-                    extractLiteralsFromParts(group.alternatives().get(0), result, !group.required() || parentOptional);
-                }
-                partIndex++;
-            } else {
-                partIndex++;
-            }
-        }
-    }
-
-    private static boolean isOrdered(@NotNull List<Integer> positions) {
-        for (int i = 1; i < positions.size(); i++) {
-            if (positions.get(i) <= positions.get(i - 1)) return false;
+    private static boolean tryHandlerSandbox(@Nullable Object handler, @NotNull Match match, @NotNull TypeEnv env) {
+        if (handler instanceof RegisteredPattern rp) {
+            return tryStatementHandler(rp, match, env);
+        } else if (handler instanceof RegisteredExpression re) {
+            return tryExpressionHandler(re, match, env);
         }
         return true;
     }
@@ -538,44 +709,103 @@ public final class PatternSimulator {
         }
     }
 
-    /**
-     * The kind of mismatch detected between input tokens and a candidate pattern.
-     */
-    public enum SuggestionKind {
-        TYPO,
-        REORDER,
-        TYPO_AND_REORDER,
-        TYPE_MISMATCH,
-        CLOSE_MATCH
+    private static @NotNull List<LiteralInfo> extractLiterals(@NotNull Pattern pattern) {
+        List<LiteralInfo> result = new ArrayList<>();
+        extractLiteralsFromParts(pattern.parts(), result, false);
+        return result;
+    }
+
+    private static void extractLiteralsFromParts(@NotNull List<PatternPart> parts, @NotNull List<LiteralInfo> result, boolean parentOptional) {
+        int partIndex = result.size();
+        for (PatternPart part : parts) {
+            if (part instanceof PatternPart.Literal lit) {
+                result.add(new LiteralInfo(List.of(lit.text()), partIndex++, parentOptional));
+            } else if (part instanceof PatternPart.FlexLiteral flex) {
+                result.add(new LiteralInfo(flex.forms(), partIndex++, parentOptional));
+            } else if (part instanceof PatternPart.Group group) {
+                if (!group.alternatives().isEmpty()) {
+                    extractLiteralsFromParts(group.alternatives().get(0), result, !group.required() || parentOptional);
+                }
+                partIndex++;
+            } else {
+                partIndex++;
+            }
+        }
     }
 
     /**
-     * A single simulation result describing a near match.
+     * A specific issue detected in the input tokens relative to a candidate pattern.
+     */
+    public sealed interface SuggestionIssue {
+
+        /**
+         * A token in the input that is a likely typo of a pattern literal.
+         *
+         * @param token    the input token containing the typo
+         * @param expected the correct literal text
+         */
+        record Typo(@NotNull Token token, @NotNull String expected) implements SuggestionIssue {
+        }
+
+        /**
+         * Tokens in the input that are not part of the matched pattern.
+         *
+         * @param tokens the extra tokens that should be removed
+         */
+        record ExtraTokens(@NotNull List<Token> tokens) implements SuggestionIssue {
+        }
+
+        /**
+         * Tokens in the input that are in the wrong order relative to the pattern.
+         *
+         * @param tokens the tokens that need reordering
+         */
+        record Reorder(@NotNull List<Token> tokens) implements SuggestionIssue {
+        }
+
+        /**
+         * A token that was rejected by a type binding in the pattern.
+         *
+         * @param token     the rejected input token
+         * @param bindingId the type binding ID that rejected it
+         * @param reason    human readable rejection reason, or null if unknown
+         */
+        record TypeMismatch(@NotNull Token token, @NotNull String bindingId, @Nullable String reason) implements SuggestionIssue {
+        }
+
+        /**
+         * A type binding that expects input but received none (missing tokens).
+         *
+         * @param bindingId the type binding ID that is missing
+         */
+        record MissingBinding(@NotNull String bindingId) implements SuggestionIssue {
+        }
+    }
+
+    /**
+     * A single simulation result describing a near match and the issues found.
      *
-     * @param pattern         the candidate pattern that closely matched the input
-     * @param kind            what type of mismatch was detected
-     * @param score           confidence score (higher is better)
-     * @param detail          human readable detail about the mismatch
-     * @param errorToken      the specific input token that was wrong (for typos), or null
-     * @param expectedText    what the token should have been (for typos), or null
-     * @param reorderedTokens input tokens that are out of order relative to the pattern, empty if no reorder
-     * @param progress        match progress from real simulation, or null if not enriched
+     * @param pattern    the candidate pattern that closely matched the input
+     * @param confidence confidence score between 0.0 and 1.0 (0% to 100%)
+     * @param issues     the specific issues detected (typos, extra tokens, reorders, type mismatches)
+     * @param progress   match progress from real simulation, or null if not enriched
      */
-    public record Suggestion(@NotNull Pattern pattern, @NotNull SuggestionKind kind, double score,
-                             @Nullable String detail, @Nullable Token errorToken, @Nullable String expectedText,
-                             @NotNull List<Token> reorderedTokens, @Nullable MatchProgress progress) {
+    public record Suggestion(@NotNull Pattern pattern, double confidence, @NotNull List<SuggestionIssue> issues, @Nullable MatchProgress progress) {
     }
 
-    private record CandidateScore(@NotNull Pattern pattern, double score, @NotNull SuggestionKind kind,
-                                  @Nullable Token typoToken, @Nullable String expectedText,
-                                  @NotNull List<Token> reorderedTokens, @NotNull List<LiteralMatchResult> matchDetails,
-                                  @NotNull PatternMeta meta, @Nullable Object handler) {
+    private record PreFilterScore(@NotNull Pattern pattern, double confidence, @NotNull List<LiteralMatchResult> matchDetails, @NotNull PatternMeta meta, @Nullable Object handler) {
     }
 
-    private record LiteralInfo(@NotNull String text, int partIndex, boolean optional) {
+    private record LiteralInfo(@NotNull List<String> forms, int partIndex, boolean optional) {
+        @NotNull String primaryForm() {
+            return forms.get(0);
+        }
     }
 
     private record LiteralMatchResult(@NotNull LiteralInfo literal, int tokenIndex, int distance) {
+    }
+
+    private record TypoFix(@NotNull Token token, @NotNull String expected, int tokenIndex) {
     }
 
     private static final class NoopJavaOutput implements JavaOutput {

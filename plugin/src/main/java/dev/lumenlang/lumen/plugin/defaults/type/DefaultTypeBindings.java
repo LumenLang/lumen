@@ -14,6 +14,7 @@ import dev.lumenlang.lumen.api.type.EnumTypeBinding;
 import dev.lumenlang.lumen.api.type.MinecraftTypes;
 import dev.lumenlang.lumen.api.type.RegistryTypeBinding;
 import dev.lumenlang.lumen.api.type.TypeBindingMeta;
+import dev.lumenlang.lumen.api.util.FuzzyMatch;
 import dev.lumenlang.lumen.api.version.MinecraftVersion;
 import dev.lumenlang.lumen.pipeline.java.compiled.DataInstance;
 import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
@@ -33,7 +34,7 @@ import org.bukkit.event.block.Action;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -180,8 +181,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx,
-                                          @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
                 if (value instanceof VarHandle ref) {
                     return ref.java();
                 }
@@ -224,8 +224,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx,
-                                          @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
                 if (value instanceof VarHandle ref) {
                     return "((long) " + ref.java() + ")";
                 }
@@ -265,8 +264,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx,
-                                          @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
                 if (value instanceof VarHandle ref) {
                     return "((double) " + ref.java() + ")";
                 }
@@ -322,8 +320,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx,
-                                          @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
                 if (value instanceof VarHandle ref) {
                     return "((double) " + ref.java() + ")";
                 }
@@ -356,35 +353,17 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public int consumeCount(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
-                if (tokens.isEmpty())
-                    throw new ParseFailureException("BOOLEAN requires at least one token");
-                String raw = tokens.get(0).replace("\"", "").toLowerCase(Locale.ROOT);
-                if (raw.equals("true") || raw.equals("yes") || raw.equals("on"))
-                    return 1;
-                if (raw.equals("false") || raw.equals("no") || raw.equals("off"))
-                    return 1;
-                if (env.lookupVar(tokens.get(0)) != null)
-                    return 1;
-                throw new ParseFailureException("Unknown boolean value: " + tokens.get(0));
-            }
-
-            @Override
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 String raw = tokens.get(0).replace("\"", "").toLowerCase(Locale.ROOT);
-                if (raw.equals("true") || raw.equals("yes") || raw.equals("on"))
-                    return Boolean.TRUE;
-                if (raw.equals("false") || raw.equals("no") || raw.equals("off"))
-                    return Boolean.FALSE;
+                if (raw.equals("true") || raw.equals("yes") || raw.equals("on")) return Boolean.TRUE;
+                if (raw.equals("false") || raw.equals("no") || raw.equals("off")) return Boolean.FALSE;
                 VarHandle ref = env.lookupVar(tokens.get(0));
-                if (ref != null)
-                    return ref;
+                if (ref != null) return ref;
                 throw new ParseFailureException("Unknown boolean value: " + tokens.get(0));
             }
 
             @Override
-            public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx,
-                                          @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
                 if (value instanceof VarHandle ref) {
                     return "Boolean.parseBoolean(String.valueOf(" + ref.java() + "))";
                 }
@@ -394,7 +373,7 @@ public final class DefaultTypeBindings {
     }
 
     private void registerMaterial(@NotNull LumenAPI api) {
-        Set<String> knownMats = new HashSet<>();
+        Set<String> knownMats = new LinkedHashSet<>();
         for (Material mat : Material.values()) {
             knownMats.add(mat.name());
         }
@@ -417,31 +396,16 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public int consumeCount(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
-                if (tokens.isEmpty())
-                    throw new ParseFailureException("MATERIAL requires at least one token");
-                String normalized = tokens.get(0).toUpperCase(Locale.ROOT);
-                if (frozenMats.contains(normalized))
-                    return 1;
-                if (env.lookupVar(tokens.get(0)) != null)
-                    return 1;
-                throw new ParseFailureException("Unknown material: " + tokens.get(0));
-            }
-
-            @Override
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 String normalized = tokens.get(0).toUpperCase(Locale.ROOT);
-                if (frozenMats.contains(normalized))
-                    return normalized;
+                if (frozenMats.contains(normalized)) return normalized;
                 VarHandle ref = env.lookupVar(tokens.get(0));
-                if (ref != null)
-                    return ref;
-                throw new ParseFailureException("Unknown material: " + tokens.get(0));
+                if (ref != null) return ref;
+                throw new ParseFailureException(fuzzyMaterial(tokens.get(0), frozenMats));
             }
 
             @Override
-            public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx,
-                                          @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
                 ctx.addImport(Material.class.getName());
                 if (value instanceof VarHandle ref) {
                     return "Material.valueOf(String.valueOf(" + ref.java() + ").toUpperCase())";
@@ -483,8 +447,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx,
-                                          @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null player reference");
                 return ((VarHandle) v).java();
@@ -527,8 +490,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx,
-                                          @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null player reference");
                 return ((VarHandle) v).java();
@@ -572,8 +534,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx,
-                                          @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null offline player reference");
                 return ((VarHandle) v).java();
@@ -616,8 +577,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx,
-                                          @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null offline player reference");
                 return ((VarHandle) v).java();
@@ -657,8 +617,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx,
-                                          @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
                 return (String) v;
             }
         });
@@ -768,8 +727,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx,
-                                          @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
                 return (String) v;
             }
         });
@@ -807,8 +765,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx,
-                                          @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null entity reference");
                 return ((VarHandle) v).java();
@@ -851,8 +808,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx,
-                                          @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null entity reference");
                 return ((VarHandle) v).java();
@@ -867,7 +823,7 @@ public final class DefaultTypeBindings {
             private final Set<String> knownEntities = buildKnownEntities();
 
             private Set<String> buildKnownEntities() {
-                Set<String> set = new HashSet<>();
+                Set<String> set = new LinkedHashSet<>();
                 for (EntityType et : EntityType.values()) {
                     if (et != EntityType.UNKNOWN) {
                         set.add(et.name());
@@ -892,19 +848,6 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public int consumeCount(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
-                if (tokens.isEmpty())
-                    throw new ParseFailureException("ENTITY_TYPE requires at least one token");
-                String normalized = tokens.get(0).toUpperCase(Locale.ROOT)
-                        .replace(' ', '_').replace('-', '_');
-                if (knownEntities.contains(normalized))
-                    return 1;
-                if (env.lookupVar(tokens.get(0)) != null)
-                    return 1;
-                throw new ParseFailureException("Unknown entity type: " + tokens.get(0));
-            }
-
-            @Override
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 String raw = tokens.get(0);
                 String normalized = raw.toUpperCase(Locale.ROOT)
@@ -914,12 +857,11 @@ public final class DefaultTypeBindings {
                 VarHandle ref = env.lookupVar(raw);
                 if (ref != null)
                     return ref;
-                throw new ParseFailureException("Unknown entity type: " + raw);
+                throw new ParseFailureException(fuzzyEntityType(raw, knownEntities));
             }
 
             @Override
-            public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx,
-                                          @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
                 if (value instanceof VarHandle ref) {
                     ctx.addImport(EntityType.class.getName());
                     return "EntityType.valueOf(String.valueOf(" + ref.java() + ").toUpperCase())";
@@ -935,7 +877,7 @@ public final class DefaultTypeBindings {
             private final Set<String> knownMaterials = buildKnownMaterials();
 
             private Set<String> buildKnownMaterials() {
-                Set<String> set = new HashSet<>();
+                Set<String> set = new LinkedHashSet<>();
                 for (Material mat : Material.values()) {
                     if (mat.isItem()) {
                         set.add(mat.name());
@@ -960,23 +902,6 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public int consumeCount(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
-                if (tokens.isEmpty())
-                    throw new ParseFailureException("ITEM requires at least one token");
-                String normalized = tokens.get(0).toUpperCase(Locale.ROOT)
-                        .replace(' ', '_').replace('-', '_');
-                if (knownMaterials.contains(normalized))
-                    return 1;
-                VarHandle ref = env.lookupVar(tokens.get(0));
-                if (ref != null) {
-                    if (MinecraftTypes.ITEMSTACK.equals(ref.type().unwrap()))
-                        throw new ParseFailureException("ITEM does not accept ITEMSTACK variable: " + tokens.get(0));
-                    return 1;
-                }
-                throw new ParseFailureException("Unknown item: " + tokens.get(0));
-            }
-
-            @Override
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 String raw = tokens.get(0);
                 String normalized = raw.toUpperCase(Locale.ROOT)
@@ -989,12 +914,11 @@ public final class DefaultTypeBindings {
                         throw new ParseFailureException("ITEM does not accept ITEMSTACK variable: " + raw);
                     return ref;
                 }
-                throw new ParseFailureException("Unknown item: " + raw);
+                throw new ParseFailureException(fuzzyItem(raw, knownMaterials));
             }
 
             @Override
-            public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx,
-                                          @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
                 ctx.addImport(ItemStack.class.getName());
                 ctx.addImport(Material.class.getName());
                 if (value instanceof VarHandle ref) {
@@ -1037,8 +961,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx,
-                                          @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null item stack reference");
                 return ((VarHandle) v).java();
@@ -1080,8 +1003,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx,
-                                          @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null item stack reference");
                 return ((VarHandle) v).java();
@@ -1122,8 +1044,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx,
-                                          @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
                 return ((VarHandle) v).java();
             }
 
@@ -1162,8 +1083,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx,
-                                          @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
                 return ((VarHandle) v).java();
             }
 
@@ -1191,16 +1111,6 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public int consumeCount(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
-                if (tokens.isEmpty())
-                    throw new ParseFailureException("LIST requires at least one token");
-                String name = tokens.get(0);
-                VarHandle ref = env.lookupVar(name);
-                if (ref != null && isList(ref)) return 1;
-                throw new ParseFailureException("Expected a list variable, got '" + name + "'");
-            }
-
-            @Override
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 String name = tokens.get(0);
                 VarHandle ref = env.lookupVar(name);
@@ -1212,8 +1122,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx,
-                                          @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
                 if (v instanceof VarHandle ref) return ref.java();
                 if (v instanceof String name) throw new RuntimeException("'" + name + "' is a scoped global variable. Retrieve it first: var " + name + " = get " + name + " for <scope>");
                 throw new RuntimeException("Cannot generate Java for null list reference");
@@ -1243,16 +1152,6 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public int consumeCount(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
-                if (tokens.isEmpty())
-                    throw new ParseFailureException("MAP requires at least one token");
-                String name = tokens.get(0);
-                VarHandle ref = env.lookupVar(name);
-                if (ref != null && isMap(ref)) return 1;
-                throw new ParseFailureException("Expected a map variable, got '" + name + "'");
-            }
-
-            @Override
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 String name = tokens.get(0);
                 VarHandle ref = env.lookupVar(name);
@@ -1264,8 +1163,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx,
-                                          @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
                 if (v instanceof VarHandle ref) return ref.java();
                 if (v instanceof String name) throw new RuntimeException("'" + name + "' is a scoped global variable. Retrieve it first: var " + name + " = get " + name + " for <scope>");
                 throw new RuntimeException("Cannot generate Java for null map reference");
@@ -1295,17 +1193,6 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public int consumeCount(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
-                if (tokens.isEmpty())
-                    throw new ParseFailureException("DATA requires at least one token");
-                String name = tokens.get(0);
-                VarHandle ref = env.lookupVar(name);
-                if (ref != null && isData(ref))
-                    return 1;
-                throw new ParseFailureException("Expected a data variable, got '" + name + "'");
-            }
-
-            @Override
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 String name = tokens.get(0);
                 VarHandle ref = env.lookupVar(name);
@@ -1318,8 +1205,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx,
-                                          @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null data reference");
                 return ((VarHandle) v).java();
@@ -1360,8 +1246,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx,
-                                          @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null block reference");
                 return ((VarHandle) v).java();
@@ -1371,5 +1256,23 @@ public final class DefaultTypeBindings {
                 return MinecraftTypes.BLOCK.equals(ref.type().unwrap());
             }
         });
+    }
+
+    private static @NotNull String fuzzyMaterial(@NotNull String token, @NotNull Set<String> known) {
+        String closest = FuzzyMatch.closest(token.toUpperCase(Locale.ROOT), known);
+        if (closest != null) return "Unknown material: " + token + ", did you mean '" + closest.toLowerCase(Locale.ROOT) + "'?";
+        return "Unknown material: " + token;
+    }
+
+    private static @NotNull String fuzzyEntityType(@NotNull String token, @NotNull Set<String> known) {
+        String closest = FuzzyMatch.closest(token.toUpperCase(Locale.ROOT).replace(' ', '_').replace('-', '_'), known);
+        if (closest != null) return "Unknown entity type: " + token + ", did you mean '" + closest.toLowerCase(Locale.ROOT) + "'?";
+        return "Unknown entity type: " + token;
+    }
+
+    private static @NotNull String fuzzyItem(@NotNull String token, @NotNull Set<String> known) {
+        String closest = FuzzyMatch.closest(token.toUpperCase(Locale.ROOT).replace(' ', '_').replace('-', '_'), known);
+        if (closest != null) return "Unknown item: " + token + ", did you mean '" + closest.toLowerCase(Locale.ROOT) + "'?";
+        return "Unknown item: " + token;
     }
 }
