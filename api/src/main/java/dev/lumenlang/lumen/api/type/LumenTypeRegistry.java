@@ -5,7 +5,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -28,45 +27,18 @@ public final class LumenTypeRegistry {
     }
 
     /**
-     * Registers a new object type with a default key template and no supertypes.
+     * Registers an object type.
      *
-     * @param id       a unique identifier (e.g. {@code "BLOCK"})
-     * @param javaType the fully qualified Java class name
-     * @return the registered object type
+     * <p>If an id is already registered, the existing instance is returned, and is not overwritten.
+     *
+     * @param type the object type to register
+     * @return the registered instance
      */
-    public static @NotNull ObjectType register(@NotNull String id, @NotNull String javaType) {
-        return register(id, javaType, "String.valueOf($)", List.of());
-    }
-
-    /**
-     * Registers a new object type with a custom key template and no supertypes.
-     *
-     * @param id          a unique identifier
-     * @param javaType    the fully qualified Java class name
-     * @param keyTemplate a template for producing a unique runtime key
-     * @return the registered object type
-     */
-    public static @NotNull ObjectType register(@NotNull String id, @NotNull String javaType, @NotNull String keyTemplate) {
-        return register(id, javaType, keyTemplate, List.of());
-    }
-
-    /**
-     * Registers a new object type with a custom key template and supertypes.
-     *
-     * <p>If the id is already registered with the same Java type, the existing instance is returned.
-     *
-     * @param id          a unique identifier
-     * @param javaType    the fully qualified Java class name
-     * @param keyTemplate a template for producing a unique runtime key
-     * @param superTypes  the parent types in the hierarchy
-     * @return the registered object type
-     */
-    public static @NotNull ObjectType register(@NotNull String id, @NotNull String javaType, @NotNull String keyTemplate, @NotNull List<LumenType> superTypes) {
-        ObjectType existing = BY_ID.get(id);
+    public static @NotNull ObjectType register(@NotNull ObjectType type) {
+        ObjectType existing = BY_ID.get(type.id());
         if (existing != null) return existing;
-        ObjectType type = new ObjectType(id, javaType, keyTemplate, superTypes);
-        BY_ID.put(id, type);
-        BY_JAVA.put(javaType, type);
+        BY_ID.put(type.id(), type);
+        BY_JAVA.put(type.javaType(), type);
         return type;
     }
 

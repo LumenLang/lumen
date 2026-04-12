@@ -16,9 +16,9 @@ public final class BuiltinLumenTypes {
 
     public static final @NotNull ObjectType DATA = new ObjectType("DATA", "dev.lumenlang.lumen.pipeline.java.compiled.DataInstance");
 
-    private static final @NotNull ObjectType LIST_RAW = new ObjectType("LIST", "java.util.List");
+    private static final @NotNull ObjectType LIST_RAW = new ObjectType("LIST", "java.util.List", "String.valueOf($)", List.of(), new LumenTypeMeta("An ordered collection of values of a single type.", "list of int", List.of()));
 
-    private static final @NotNull ObjectType MAP_RAW = new ObjectType("MAP", "java.util.Map");
+    private static final @NotNull ObjectType MAP_RAW = new ObjectType("MAP", "java.util.Map", "String.valueOf($)", List.of(), new LumenTypeMeta("A key-value mapping from one type to another.", "map of string to int", List.of()));
 
     private BuiltinLumenTypes() {
     }
@@ -44,8 +44,8 @@ public final class BuiltinLumenTypes {
      * Must be called during plugin initialization.
      */
     public static void registerAll() {
-        LumenTypeRegistry.register(DATA.id(), DATA.javaType(), DATA.keyTemplate(), DATA.superTypes());
-        LumenTypeRegistry.register(LIST_RAW.id(), LIST_RAW.javaType(), LIST_RAW.keyTemplate(), LIST_RAW.superTypes());
-        LumenTypeRegistry.register(MAP_RAW.id(), MAP_RAW.javaType(), MAP_RAW.keyTemplate(), MAP_RAW.superTypes());
+        LumenTypeRegistry.register(DATA);
+        LumenTypeRegistry.register(LIST_RAW);
+        LumenTypeRegistry.register(MAP_RAW);
     }
 }

@@ -118,6 +118,9 @@ import java.util.concurrent.CompletableFuture;
  *   <li>{@code names} - list of accepted user facing names (primitives only).</li>
  *   <li>{@code numeric} - {@code true} if the type supports arithmetic (primitives only).</li>
  *   <li>{@code superTypes} - list of parent type IDs in the hierarchy (object types only).</li>
+ *   <li>{@code description} - human-readable description of the type, or {@code null}.</li>
+ *   <li>{@code usageAsType} - example showing how a value of this type looks in Lumen source, or {@code null} if not applicable. Present for primitives and collection types.</li>
+ *   <li>{@code examples} - list of Lumen script examples demonstrating usage.</li>
  * </ul>
  *
  * @see PatternRegistry
@@ -476,6 +479,9 @@ public final class DocumentationDumper {
             obj.put("displayName", p.displayName());
             obj.put("names", p.names());
             obj.put("numeric", p.numeric());
+            obj.put("description", p.meta().description());
+            obj.put("usageAsType", p.meta().usageAsType());
+            obj.put("examples", p.meta().examples());
             result.add(obj);
         }
         for (ObjectType o : LumenTypeRegistry.values()) {
@@ -485,6 +491,9 @@ public final class DocumentationDumper {
             obj.put("javaType", o.javaType());
             obj.put("displayName", o.displayName());
             obj.put("superTypes", o.superTypes().stream().map(LumenType::id).toList());
+            obj.put("description", o.meta().description());
+            obj.put("usageAsType", o.meta().usageAsType());
+            obj.put("examples", o.meta().examples());
             result.add(obj);
         }
         return result;

@@ -36,17 +36,17 @@ public final class MinecraftTypes {
      * Must be called during plugin initialization.
      */
     public static void registerAll() {
-        LumenTypeRegistry.register(ENTITY.id(), ENTITY.javaType(), ENTITY.keyTemplate(), ENTITY.superTypes());
-        LumenTypeRegistry.register(LIVING_ENTITY.id(), LIVING_ENTITY.javaType(), LIVING_ENTITY.keyTemplate(), LIVING_ENTITY.superTypes());
-        LumenTypeRegistry.register(PLAYER.id(), PLAYER.javaType(), PLAYER.keyTemplate(), PLAYER.superTypes());
-        LumenTypeRegistry.register(SENDER.id(), SENDER.javaType(), SENDER.keyTemplate(), SENDER.superTypes());
-        LumenTypeRegistry.register(LOCATION.id(), LOCATION.javaType(), LOCATION.keyTemplate(), LOCATION.superTypes());
-        LumenTypeRegistry.register(ITEMSTACK.id(), ITEMSTACK.javaType(), ITEMSTACK.keyTemplate(), ITEMSTACK.superTypes());
-        LumenTypeRegistry.register(INVENTORY.id(), INVENTORY.javaType(), INVENTORY.keyTemplate(), INVENTORY.superTypes());
-        LumenTypeRegistry.register(WORLD.id(), WORLD.javaType(), WORLD.keyTemplate(), WORLD.superTypes());
-        LumenTypeRegistry.register(OFFLINE_PLAYER.id(), OFFLINE_PLAYER.javaType(), OFFLINE_PLAYER.keyTemplate(), OFFLINE_PLAYER.superTypes());
-        LumenTypeRegistry.register(BLOCK.id(), BLOCK.javaType(), BLOCK.keyTemplate(), BLOCK.superTypes());
-        LumenTypeRegistry.register(VECTOR.id(), VECTOR.javaType(), VECTOR.keyTemplate(), VECTOR.superTypes());
-        LumenTypeRegistry.register(ENTITY_TYPE.id(), ENTITY_TYPE.javaType(), ENTITY_TYPE.keyTemplate(), ENTITY_TYPE.superTypes());
+        LumenTypeRegistry.register(ENTITY);
+        LumenTypeRegistry.register(LIVING_ENTITY);
+        LumenTypeRegistry.register(PLAYER);
+        LumenTypeRegistry.register(SENDER);
+        LumenTypeRegistry.register(LOCATION);
+        LumenTypeRegistry.register(ITEMSTACK);
+        LumenTypeRegistry.register(INVENTORY);
+        LumenTypeRegistry.register(WORLD);
+        LumenTypeRegistry.register(OFFLINE_PLAYER);
+        LumenTypeRegistry.register(BLOCK);
+        LumenTypeRegistry.register(VECTOR);
+        LumenTypeRegistry.register(ENTITY_TYPE);
     }
 }

@@ -10,8 +10,8 @@ import java.util.Locale;
  *
  * <p>Object types are used for Bukkit types like Player, Entity, Location, ItemStack, etc.
  * Each object type carries a unique identifier, the fully qualified Java class name,
- * an optional key template for storage lookups, and a list of supertypes for the
- * subtype hierarchy.
+ * an optional key template for storage lookups, a list of supertypes for the
+ * subtype hierarchy, and optional documentation metadata.
  *
  * <p>The supertype list enables compile-time entity hierarchy validation:
  * {@code player.assignableFrom(entity)} returns {@code false}, while
@@ -21,8 +21,9 @@ import java.util.Locale;
  * @param javaType    the fully qualified Java class name
  * @param keyTemplate a template for producing a unique runtime key, where {@code $} is the variable name
  * @param superTypes  the parent types in the hierarchy
+ * @param meta        documentation metadata for this type
  */
-public record ObjectType(@NotNull String id, @NotNull String javaType, @NotNull String keyTemplate, @NotNull List<LumenType> superTypes) implements LumenType {
+public record ObjectType(@NotNull String id, @NotNull String javaType, @NotNull String keyTemplate, @NotNull List<LumenType> superTypes, @NotNull LumenTypeMeta meta) implements LumenType {
 
     /**
      * Creates an object type with a default key template and no supertypes.
@@ -31,7 +32,7 @@ public record ObjectType(@NotNull String id, @NotNull String javaType, @NotNull 
      * @param javaType the fully qualified Java class name
      */
     public ObjectType(@NotNull String id, @NotNull String javaType) {
-        this(id, javaType, "String.valueOf($)", List.of());
+        this(id, javaType, "String.valueOf($)", List.of(), LumenTypeMeta.EMPTY);
     }
 
     /**
@@ -42,7 +43,19 @@ public record ObjectType(@NotNull String id, @NotNull String javaType, @NotNull 
      * @param keyTemplate a template for producing a unique runtime key
      */
     public ObjectType(@NotNull String id, @NotNull String javaType, @NotNull String keyTemplate) {
-        this(id, javaType, keyTemplate, List.of());
+        this(id, javaType, keyTemplate, List.of(), LumenTypeMeta.EMPTY);
+    }
+
+    /**
+     * Creates an object type with a custom key template and supertypes.
+     *
+     * @param id          the unique type identifier
+     * @param javaType    the fully qualified Java class name
+     * @param keyTemplate a template for producing a unique runtime key
+     * @param superTypes  the parent types in the hierarchy
+     */
+    public ObjectType(@NotNull String id, @NotNull String javaType, @NotNull String keyTemplate, @NotNull List<LumenType> superTypes) {
+        this(id, javaType, keyTemplate, superTypes, LumenTypeMeta.EMPTY);
     }
 
     /**
@@ -89,5 +102,10 @@ public record ObjectType(@NotNull String id, @NotNull String javaType, @NotNull 
         if (this.equals(src)) return true;
         if (src instanceof ObjectType srcObj) return srcObj.isSubtypeOf(this);
         return false;
+    }
+
+    @Override
+    public @NotNull LumenTypeMeta meta() {
+        return meta;
     }
 }

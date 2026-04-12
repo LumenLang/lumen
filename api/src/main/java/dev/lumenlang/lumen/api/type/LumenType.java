@@ -120,6 +120,15 @@ public sealed interface LumenType permits PrimitiveType, ObjectType, CollectionT
     @NotNull String displayName();
 
     /**
+     * Returns documentation metadata for this type.
+     *
+     * @return the type's documentation metadata
+     */
+    default @NotNull LumenTypeMeta meta() {
+        return LumenTypeMeta.EMPTY;
+    }
+
+    /**
      * Returns whether this type represents a numeric value.
      *
      * @return {@code true} if this type supports arithmetic operations
