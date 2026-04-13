@@ -457,7 +457,7 @@ public final class VarDeclarationForm implements StatementFormHandler {
     private static @NotNull LumenDiagnostic buildExpressionDiagnostic(@NotNull List<Token> tokens, int line, @NotNull String raw, @NotNull TypeEnv env) {
         List<PatternSimulator.Suggestion> suggestions = PatternSimulator.suggestExpressions(tokens, PatternRegistry.instance(), env);
         if (!suggestions.isEmpty()) {
-            return SuggestionDiagnostics.build("E502", "Cannot resolve expression", line, raw, tokens, suggestions.get(0));
+            return SuggestionDiagnostics.build("E502", "Cannot resolve expression", line, raw, tokens, suggestions);
         }
         return SuggestionDiagnostics.buildNoSuggestion("E502", "Cannot resolve expression", line, raw, tokens);
     }

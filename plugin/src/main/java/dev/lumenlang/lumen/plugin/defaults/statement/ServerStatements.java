@@ -37,18 +37,6 @@ public final class ServerStatements {
 
         api.patterns().statement(b -> b
                 .by("Lumen")
-                .pattern("spawn %type:ENTITY_TYPE% at %loc:EXPR%")
-                .description("Spawns an entity of the given type at an expression that resolves to a location.")
-                .example("spawn zombie at get player's location")
-                .since("1.0.0")
-                .category(Categories.ENTITY)
-                .handler((line, ctx, out) -> {
-                    String locJava = ctx.java("loc");
-                    out.line(locJava + ".getWorld().spawnEntity(" + locJava + ", " + ctx.java("type") + ");");
-                }));
-
-        api.patterns().statement(b -> b
-                .by("Lumen")
                 .pattern("(broadcast|announce) %text:STRING%")
                 .description("Broadcasts a formatted message to all online players.")
                 .example("broadcast \"Server restarting in 5 minutes!\"")

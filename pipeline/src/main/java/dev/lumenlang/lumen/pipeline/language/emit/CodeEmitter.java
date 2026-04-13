@@ -244,7 +244,7 @@ public final class CodeEmitter {
         if (bm == null) {
             List<PatternSimulator.Suggestion> suggestions = PatternSimulator.suggestBlocks(head, reg, env);
             if (!suggestions.isEmpty()) {
-                throw new LumenScriptException(new DiagnosticException(SuggestionDiagnostics.build("E500", "Unknown block", b.line(), b.raw(), head, suggestions.get(0))));
+                throw new LumenScriptException(new DiagnosticException(SuggestionDiagnostics.build("E500", "Unknown block", b.line(), b.raw(), head, suggestions)));
             }
             throw new LumenScriptException(new DiagnosticException(SuggestionDiagnostics.buildNoSuggestion("E500", "Unknown block", b.line(), b.raw(), head)));
         }
@@ -349,7 +349,7 @@ public final class CodeEmitter {
         if (ts instanceof TypedStatement.ErrorStmt err) {
             List<Token> errTokens = err.errorTokens() != null ? err.errorTokens() : List.of();
             if (!err.suggestions().isEmpty()) {
-                throw new LumenScriptException(new DiagnosticException(SuggestionDiagnostics.build("E500", "Unknown statement", st.line(), st.raw(), errTokens, err.suggestions().get(0))));
+                throw new LumenScriptException(new DiagnosticException(SuggestionDiagnostics.build("E500", "Unknown statement", st.line(), st.raw(), errTokens, err.suggestions())));
             }
             throw new LumenScriptException(new DiagnosticException(SuggestionDiagnostics.buildNoSuggestion("E500", "Unknown statement", st.line(), st.raw(), errTokens)));
         }
@@ -374,7 +374,7 @@ public final class CodeEmitter {
         }
         if (e instanceof TokenCarryingException tce) {
             if (!tce.suggestions().isEmpty()) {
-                return new LumenScriptException(new DiagnosticException(SuggestionDiagnostics.build("E500", "Unknown condition", line, raw, tce.tokens(), tce.suggestions().get(0))));
+                return new LumenScriptException(new DiagnosticException(SuggestionDiagnostics.build("E500", "Unknown condition", line, raw, tce.tokens(), tce.suggestions())));
             }
             return new LumenScriptException(new DiagnosticException(SuggestionDiagnostics.buildNoSuggestion("E500", "Unknown condition", line, raw, tce.tokens())));
         }

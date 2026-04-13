@@ -278,16 +278,17 @@ public final class PatternMatcher {
             int consumeCount = safeConsumeCount(binding, remaining, env, progress);
             LumenLogger.debug("PatternMatcher.match", "  consumeCount=" + consumeCount);
 
+            boolean skipGreedy = false;
             if (consumeCount == CONSUME_REJECTED) {
                 if (validator == null) {
-                    if (progress != null)
-                        progress.recordFailure(ti, pp, binding.id(), ti < tokens.size() ? List.of(tokens.get(ti)) : List.of());
-                    return -1;
+                    if (progress == null) return -1;
+                    skipGreedy = true;
+                } else {
+                    LumenLogger.debug("PatternMatcher.match", "  consumeCount rejected but validator present, falling through to inline backtracking");
                 }
-                LumenLogger.debug("PatternMatcher.match", "  consumeCount rejected but validator present, falling through to inline backtracking");
             }
 
-            if (consumeCount >= 0) {
+            if (!skipGreedy && consumeCount >= 0) {
                 int end = ti + consumeCount;
                 if (end <= tokens.size()) {
                     List<Token> slice = tokens.subList(ti, end);
@@ -298,11 +299,11 @@ public final class PatternMatcher {
                         return tryMatch(tokens, end, parts, pi + 1, types, env, map, choices, validator, progress);
                     }
                 }
-                LumenLogger.debug("PatternMatcher.match",
-                        "  fixed consumeCount failed, falling through to greedy backtracking");
+                LumenLogger.debug("PatternMatcher.match", "  fixed consumeCount failed, falling through to greedy backtracking");
             }
 
-            String nextLit = findNextRequiredLiteral(parts, pi + 1);
+            if (!skipGreedy) {
+                String nextLit = findNextRequiredLiteral(parts, pi + 1);
             int maxEnd = tokens.size();
             if (nextLit != null) {
                 int litIdx = findLiteral(tokens, ti, nextLit);
@@ -334,23 +335,33 @@ public final class PatternMatcher {
                 while (choices.size() > choicesSnapshot)
                     choices.remove(choices.size() - 1);
             }
+            }
             if (progress != null) {
                 List<Token> fTokens = ti < tokens.size() ? List.of(tokens.get(ti)) : List.of();
-                if (consumeCount > 0) {
+                int effectiveConsume = consumeCount > 0 ? consumeCount : 1;
+                if (ti < tokens.size()) {
                     progress.recordBindingFailure(ti, binding.id(), fTokens);
-                    int cEnd = ti + consumeCount;
+                    int cEnd = ti + effectiveConsume;
                     if (cEnd <= tokens.size()) {
                         MatchProgress contProgress = new MatchProgress();
                         Map<String, BoundValue> cSnapshot = new LinkedHashMap<>(map);
                         int cChoices = choices.size();
                         map.put(ph.name(), new BoundValue(ph, tokens.subList(ti, cEnd), PARSE_FAILED, binding));
-                        tryMatch(tokens, cEnd, parts, pi + 1, types, env, map, choices, validator, contProgress);
+                        int contResult = tryMatch(tokens, cEnd, parts, pi + 1, types, env, map, choices, validator, contProgress);
                         progress.transferBindingFailures(contProgress);
+                        if (contResult >= 0 && contResult < tokens.size() && contResult > progress.furthestTokenIndex()) {
+                            progress.recordUnmatchedTrailingTokens(tokens.subList(contResult, tokens.size()));
+                        }
+                        if (contResult >= 0 && pi + 1 < parts.size()) {
+                            progress.recordFailure(contResult, pp, binding.id(), fTokens);
+                        } else if (contProgress.furthestTokenIndex() > progress.furthestTokenIndex()) {
+                            progress.recordFailure(contProgress.furthestTokenIndex(), pp, binding.id(), fTokens);
+                        }
                         map.clear();
                         map.putAll(cSnapshot);
                         while (choices.size() > cChoices) choices.remove(choices.size() - 1);
                     }
-                    discoverDownstreamFailures(tokens, ti + consumeCount, parts, pi + 1, types, env, progress);
+                    discoverDownstreamFailures(tokens, ti + effectiveConsume, parts, pi + 1, types, env, progress);
                 }
                 progress.recordFailure(ti, pp, binding.id(), fTokens);
             }

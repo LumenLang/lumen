@@ -34,16 +34,13 @@ import org.jetbrains.annotations.NotNull;
  * <p>Through this handle an addon can reach every registrar it needs:
  * <ul>
  *   <li>{@link #patterns()}  -  register statement, block, and condition patterns</li>
- *   <li>{@link #types()}  -  register custom type bindings (e.g. a new {@code ENTITY} type)</li>
+ *   <li>{@link #types()}  -  register custom type bindings (e.g. a new {@code PLAYER} type)</li>
  *   <li>{@link #events()}  -  register event definitions for {@code on <name>:} syntax</li>
- *   <li>{@link #placeholders()}  -  register placeholder properties for object types</li>
+ *   <li>{@link #placeholders()}  -  register placeholder properties for types</li>
  *   <li>{@link #emitters()}  -  register custom emit handlers (statement forms, block forms, hooks)</li>
  *   <li>{@link #binders()}  -  register custom script annotation binders</li>
  *   <li>{@link #transformers()}  -  register code transformers (experimental)</li>
  * </ul>
- *
- * <p>Implementations of this interface are provided by Lumen's internal code. Addons should
- * never implement this interface themselves.
  *
  * @see LumenAddon
  */
@@ -114,12 +111,12 @@ public interface LumenAPI {
     @NotNull TransformerRegistrar transformers();
 
     /**
-     * Adds an additional path to the script compilation classpath.
+     * Adds a path to the classpath used during script compilation.
      *
-     * <p>Addons whose classes are referenced from generated Java code must register
-     * their JAR path here so the compiler can resolve them.
+     * <p>Use this if your addon provides classes referenced by generated Java code
+     * that are not loaded by its initial classloader (for example, when using separate classloaders for dependencies).
      *
-     * @param path the absolute file path to add
+     * @param path the file path to add
      */
     void addClasspath(@NotNull String path);
 

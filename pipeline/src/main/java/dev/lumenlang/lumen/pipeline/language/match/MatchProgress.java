@@ -17,15 +17,12 @@ import java.util.Map;
  * failure across all backtracking branches. After matching completes, this
  * object describes either a successful match or exactly where and why
  * the best attempt failed.
- *
- * <p>In addition to the single deepest failure, this class accumulates a list
- * of all type binding failures discovered during continuation matching. This
- * allows diagnostics to report multiple binding failures at once.
  */
 public final class MatchProgress {
 
     private final @NotNull List<BindingFailure> bindingFailures = new ArrayList<>();
     private final @NotNull List<LiteralTypo> literalTypos = new ArrayList<>();
+    private @NotNull List<Token> unmatchedTrailingTokens = List.of();
     private @Nullable Match match;
     private int furthestTokenIndex = -1;
     private @Nullable PatternPart failedPart;
@@ -65,6 +62,12 @@ public final class MatchProgress {
 
     void recordLiteralTypo(@NotNull Token token, @NotNull String expected) {
         literalTypos.add(new LiteralTypo(token, expected));
+    }
+
+    void recordUnmatchedTrailingTokens(@NotNull List<Token> tokens) {
+        if (tokens.size() > unmatchedTrailingTokens.size()) {
+            unmatchedTrailingTokens = List.copyOf(tokens);
+        }
     }
 
     void recordSuccess(@NotNull Match match) {
@@ -118,6 +121,13 @@ public final class MatchProgress {
      */
     public @NotNull List<Token> failedTokens() {
         return failedTokens;
+    }
+
+    /**
+     * @return tokens that remained unmatched after all pattern parts were consumed during continuation
+     */
+    public @NotNull List<Token> unmatchedTrailingTokens() {
+        return unmatchedTrailingTokens;
     }
 
     /**

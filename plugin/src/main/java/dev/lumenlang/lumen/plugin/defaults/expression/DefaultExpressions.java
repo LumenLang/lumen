@@ -398,25 +398,6 @@ public final class DefaultExpressions {
                             MinecraftTypes.ENTITY,
                             meta);
                 }));
-
-        api.patterns().expression(b -> b
-                .by("Lumen")
-                .pattern("spawn %type:ENTITY_TYPE% at %loc:EXPR%")
-                .description("Spawns an entity at an expression that resolves to a location and returns it.")
-                .example("set mob to spawn zombie at get player's location")
-                .since("1.0.0")
-                .category(Categories.ENTITY)
-                .handler(ctx -> {
-                    ctx.codegen().addImport(Entity.class.getName());
-                    String typeEnum = ctx.java("type");
-                    String locJava = ctx.java("loc");
-                    Map<String, Object> meta = resolveEntityMeta(typeEnum);
-                    return new ExpressionResult(
-                            locJava + ".getWorld().spawnEntity(" + locJava
-                                    + ", " + typeEnum + ")",
-                            MinecraftTypes.ENTITY,
-                            meta);
-                }));
     }
 
     /**

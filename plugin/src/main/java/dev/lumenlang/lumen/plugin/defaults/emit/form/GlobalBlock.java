@@ -277,7 +277,7 @@ public final class GlobalBlock implements BlockFormHandler {
         List<Token> rawTokens = ((Expr.RawExpr) expr).tokens();
         List<PatternSimulator.Suggestion> suggestions = PatternSimulator.suggestExpressions(rawTokens, PatternRegistry.instance(), env);
         if (!suggestions.isEmpty()) {
-            throw new DiagnosticException(SuggestionDiagnostics.build("E502", "Cannot resolve default expression", line, raw, rawTokens, suggestions.get(0)));
+            throw new DiagnosticException(SuggestionDiagnostics.build("E502", "Cannot resolve default expression", line, raw, rawTokens, suggestions));
         }
         throw new DiagnosticException(SuggestionDiagnostics.buildNoSuggestion("E502", "Cannot resolve default expression", line, raw, rawTokens));
     }

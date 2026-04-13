@@ -143,8 +143,7 @@ public final class BuiltinTypeBindings {
                 if (first.kind() == TokenKind.STRING) return 1;
                 if (env.lookupVar(first.text()) != null) return 1;
                 if (first.text().contains("{")) return 1;
-                throw new ParseFailureException(
-                        "QSTRING requires a quoted string, variable reference, or placeholder");
+                throw new ParseFailureException("QSTRING requires a quoted string, variable reference, or placeholder");
             }
 
             @Override

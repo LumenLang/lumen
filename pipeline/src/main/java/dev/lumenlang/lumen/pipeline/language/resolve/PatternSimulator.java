@@ -327,6 +327,9 @@ public final class PatternSimulator {
                     issues.add(new SuggestionIssue.Typo(lt.token(), lt.expected()));
                 }
             }
+            if (!bestPartialProgress.unmatchedTrailingTokens().isEmpty()) {
+                issues.add(new SuggestionIssue.ExtraTokens(bestPartialProgress.unmatchedTrailingTokens()));
+            }
             boolean firstMatch = firstTokenMatches(tokens, literals) || isFirstLiteralToken(primaryTypo, tokens, literals);
             int totalTypos = 1 + (int) bestPartialProgress.literalTypos().stream().filter(lt -> !lt.token().text().equals(primaryTypo.token.text())).count();
             double confidence = Math.min(computeConfidence(0, totalTypos, firstMatch), computeTypeMatchConfidence(bestPartialProgress, tokens.size()));
@@ -351,6 +354,9 @@ public final class PatternSimulator {
                 if (failedToken != null) {
                     issues.add(new SuggestionIssue.TypeMismatch(failedToken, level0Progress.failedBindingId(), level0Progress.failedReason()));
                 }
+            }
+            if (!level0Progress.unmatchedTrailingTokens().isEmpty()) {
+                issues.add(new SuggestionIssue.ExtraTokens(level0Progress.unmatchedTrailingTokens()));
             }
             double confidence = computeTypeMatchConfidence(level0Progress, tokens.size());
             return new Suggestion(pattern, confidence, List.copyOf(issues), level0Progress);

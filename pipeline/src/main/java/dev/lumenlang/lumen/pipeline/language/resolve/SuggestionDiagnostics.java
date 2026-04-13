@@ -25,6 +25,21 @@ public final class SuggestionDiagnostics {
     /**
      * Builds a diagnostic from a suggestion, highlighting specific issues found by the simulator.
      *
+     * @param errorCode   the diagnostic error code (e.g. "E500", "E502")
+     * @param title       the diagnostic title
+     * @param line        the source line number
+     * @param raw         the raw source text
+     * @param tokens      the input tokens that failed matching (used for default highlighting)
+     * @param suggestions all ranked suggestions from the simulator (at least one)
+     * @return a fully constructed diagnostic
+     */
+    public static @NotNull LumenDiagnostic build(@NotNull String errorCode, @NotNull String title, int line, @NotNull String raw, @NotNull List<Token> tokens, @NotNull List<PatternSimulator.Suggestion> suggestions) {
+        return build(errorCode, title, line, raw, tokens, suggestions.get(0), suggestions.size() > 1 ? suggestions.get(1) : null);
+    }
+
+    /**
+     * Builds a diagnostic from a single suggestion.
+     *
      * @param errorCode the diagnostic error code (e.g. "E500", "E502")
      * @param title     the diagnostic title
      * @param line      the source line number
@@ -34,6 +49,10 @@ public final class SuggestionDiagnostics {
      * @return a fully constructed diagnostic
      */
     public static @NotNull LumenDiagnostic build(@NotNull String errorCode, @NotNull String title, int line, @NotNull String raw, @NotNull List<Token> tokens, @NotNull PatternSimulator.Suggestion top) {
+        return build(errorCode, title, line, raw, tokens, top, null);
+    }
+
+    private static @NotNull LumenDiagnostic build(@NotNull String errorCode, @NotNull String title, int line, @NotNull String raw, @NotNull List<Token> tokens, @NotNull PatternSimulator.Suggestion top, @Nullable PatternSimulator.Suggestion second) {
         LumenDiagnostic unsupported = detectUnsupportedSyntax(line, raw, tokens);
         if (unsupported != null) return unsupported;
         LumenDiagnostic.Builder builder = LumenDiagnostic.error(errorCode, title).at(line, raw);
@@ -85,6 +104,9 @@ public final class SuggestionDiagnostics {
         }
         builder.note("confidence: " + confidenceTier(top.confidence()));
         builder.help("closest pattern: " + top.pattern().raw());
+        if (second != null && !second.pattern().raw().equals(top.pattern().raw())) {
+            builder.help("also consider: " + second.pattern().raw());
+        }
         return builder.build();
     }
 

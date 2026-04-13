@@ -117,18 +117,9 @@ public final class InventoryGuiStatements {
     private void registerPlayerInteraction() {
         InventoryHelper.create()
                 .statement(
-                        "open %inv:EXPR% for %who:PLAYER%",
+                        "(show|open) %inv:EXPR% for %who:PLAYER%",
                         "Opens a custom inventory for a player.",
                         "open gui for player",
-                        (line, ctx, out) -> {
-                            ctx.codegen().addImport(INVENTORY);
-                            ctx.codegen().addImport(InventoryHotReload.class.getName());
-                            out.line("InventoryHotReload.openOrReplace(" + ctx.java("who") + ", (Inventory) " + ctx.java("inv") + ");");
-                        })
-                .statement(
-                        "show %inv:EXPR% to %who:PLAYER%",
-                        "Opens a custom inventory for a player (alias for 'open ... for').",
-                        "show gui to player",
                         (line, ctx, out) -> {
                             ctx.codegen().addImport(INVENTORY);
                             ctx.codegen().addImport(InventoryHotReload.class.getName());

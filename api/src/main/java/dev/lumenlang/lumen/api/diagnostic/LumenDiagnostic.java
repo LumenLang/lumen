@@ -60,7 +60,7 @@ public final class LumenDiagnostic {
     private final @NotNull List<SubHighlight> subHighlights;
     private final @NotNull List<ContextLine> contextLines;
     private final @NotNull List<String> notes;
-    private final @Nullable String help;
+    private final @NotNull List<String> helpLines;
 
     private LumenDiagnostic(@NotNull Builder builder) {
         this.severity = builder.severity;
@@ -72,7 +72,7 @@ public final class LumenDiagnostic {
         this.subHighlights = List.copyOf(builder.subHighlights);
         this.contextLines = List.copyOf(builder.contextLines);
         this.notes = List.copyOf(builder.notes);
-        this.help = builder.help;
+        this.helpLines = List.copyOf(builder.helpLines);
         if (builder.columnStart == -1 && builder.columnEnd == -1) {
             String stripped = sourceText.stripTrailing();
             this.columnStart = stripped.length() - stripped.stripLeading().length();
@@ -233,8 +233,8 @@ public final class LumenDiagnostic {
         for (String note : notes) {
             sb.append("  = note: ").append(note).append('\n');
         }
-        if (help != null) {
-            sb.append("  = help: ").append(help).append('\n');
+        for (String h : helpLines) {
+            sb.append("  = help: ").append(h).append('\n');
         }
         return sb.toString();
     }
@@ -302,7 +302,7 @@ public final class LumenDiagnostic {
         private int columnStart = -1;
         private int columnEnd = -1;
         private @Nullable String underlineLabel;
-        private @Nullable String help;
+        private final @NotNull ArrayList<String> helpLines = new ArrayList<>();
 
         private Builder(@NotNull Severity severity, @NotNull String code, @NotNull String title) {
             this.severity = severity;
@@ -397,16 +397,15 @@ public final class LumenDiagnostic {
         }
 
         /**
-         * Sets the help suggestion for the diagnostic.
+         * Adds a help suggestion for the diagnostic.
          *
-         * <p>The help text should describe a concrete action the user can take to fix
-         * the problem.
+         * <p>The help text should describe a concrete action the user can take to fix the problem.
          *
          * @param help the help text
          * @return this builder
          */
         public @NotNull Builder help(@NotNull String help) {
-            this.help = help;
+            this.helpLines.add(help);
             return this;
         }
 
