@@ -7,9 +7,8 @@ import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
 import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
-import dev.lumenlang.lumen.api.emit.ScriptToken;
-import dev.lumenlang.lumen.api.emit.StatementFormHandler;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
+import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.api.type.CollectionType;
 import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.NullableType;
@@ -39,46 +38,47 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Handles all {@code set x to <expr>} statements, including local variable
+ * Registers the {@code set <name> to <expr>} statement pattern for local variable
  * declaration, reassignment, and scoped global operations.
  */
 @Registration(order = -1998)
 @SuppressWarnings({"unused", "DataFlowIssue"})
-public final class VarDeclarationForm implements StatementFormHandler {
+public final class VarDeclarationForm {
 
     @Call
     public void register(@NotNull LumenAPI api) {
-        api.emitters().statementForm(this);
+        api.patterns().statement(b -> b
+                .by("Lumen")
+                .pattern("set %name:IDENT% to %val:EXPR%")
+                .description("Declares or reassigns a variable.")
+                .example("set x to 5")
+                .since("1.0.0")
+                .category(Categories.VARIABLE)
+                .handler(VarDeclarationForm::handle));
     }
 
-    @Override
-    public boolean tryHandle(@NotNull List<? extends ScriptToken> tokens, @NotNull HandlerContext ctx) {
-        if (tokens.size() < 4
-                || !tokens.get(0).text().equalsIgnoreCase("set")
-                || !tokens.get(2).text().equalsIgnoreCase("to")) {
-            return false;
-        }
-
-        List<Token> pipelineTokens = HandlerContextImpl.toPipelineTokens(tokens);
-        String name = pipelineTokens.get(1).text();
-        TypeEnv env = (TypeEnv) ctx.env();
+    private static void handle(@NotNull HandlerContext ctx) {
         HandlerContextImpl emitCtx = (HandlerContextImpl) ctx;
-        List<Token> exprTokens = pipelineTokens.subList(3, pipelineTokens.size());
+        TypeEnv env = (TypeEnv) ctx.env();
+
+        Token nameToken = emitCtx.bound("name").tokens().get(0);
+        String name = nameToken.text();
+        List<Token> exprTokens = emitCtx.bound("val").tokens();
 
         EnvironmentAccess.GlobalInfo globalInfo = env.getGlobalInfo(name);
         if (globalInfo != null && !env.isGlobalField(name)) {
             emitScopedGlobalSet(name, globalInfo, exprTokens, emitCtx, env);
-            return true;
+            return;
         }
 
         VarRef existing = env.lookupVar(name);
         if (existing != null) {
-            if (tryReassignment(name, existing, exprTokens, pipelineTokens, emitCtx, env)) {
-                return true;
+            if (tryReassignment(name, existing, exprTokens, nameToken, emitCtx, env)) {
+                return;
             }
             if (globalInfo != null) {
                 emitScopedGlobalSet(name, globalInfo, exprTokens, emitCtx, env);
-                return true;
+                return;
             }
             throw new DiagnosticException(LumenDiagnostic.error("E502", "Cannot resolve expression")
                     .at(emitCtx.line(), emitCtx.raw())
@@ -88,8 +88,7 @@ public final class VarDeclarationForm implements StatementFormHandler {
                     .build());
         }
 
-        emitDeclaration(name, exprTokens, pipelineTokens, emitCtx, env);
-        return true;
+        emitDeclaration(name, exprTokens, nameToken, emitCtx, env);
     }
 
     private static void emitScopedGlobalSet(@NotNull String name, @NotNull EnvironmentAccess.GlobalInfo info, @NotNull List<Token> exprTokens, @NotNull HandlerContextImpl ctx, @NotNull TypeEnv env) {
@@ -164,12 +163,12 @@ public final class VarDeclarationForm implements StatementFormHandler {
         }
     }
 
-    private static boolean tryReassignment(@NotNull String name, @NotNull VarRef ref, @NotNull List<Token> exprTokens, @NotNull List<Token> pipelineTokens, @NotNull HandlerContextImpl ctx, @NotNull TypeEnv env) {
+    private static boolean tryReassignment(@NotNull String name, @NotNull VarRef ref, @NotNull List<Token> exprTokens, @NotNull Token nameToken, @NotNull HandlerContextImpl ctx, @NotNull TypeEnv env) {
         BlockContext block = env.blockContext();
         if (block.getEnvFromParents("__lambda_block") != null && env.isVarCapturedByLambda(name)) {
             throw new DiagnosticException(LumenDiagnostic.error("E502", "Cannot modify '" + name + "' inside a schedule block")
                     .at(ctx.line(), ctx.raw())
-                    .highlight(pipelineTokens.get(1).start(), pipelineTokens.get(1).end())
+                    .highlight(nameToken.start(), nameToken.end())
                     .label("captured variable cannot be modified")
                     .help("use 'global " + name + " with default <value>' instead")
                     .build());
@@ -208,12 +207,12 @@ public final class VarDeclarationForm implements StatementFormHandler {
         return true;
     }
 
-    private static void emitDeclaration(@NotNull String name, @NotNull List<Token> exprTokens, @NotNull List<Token> pipelineTokens, @NotNull HandlerContextImpl ctx, @NotNull TypeEnv env) {
+    private static void emitDeclaration(@NotNull String name, @NotNull List<Token> exprTokens, @NotNull Token nameToken, @NotNull HandlerContextImpl ctx, @NotNull TypeEnv env) {
         String nameError = VarNameValidator.validate(name);
         if (nameError != null) {
             throw new DiagnosticException(LumenDiagnostic.error("E502", nameError)
                     .at(ctx.line(), ctx.raw())
-                    .highlight(pipelineTokens.get(1).start(), pipelineTokens.get(1).end())
+                    .highlight(nameToken.start(), nameToken.end())
                     .label("invalid variable name")
                     .build());
         }
@@ -221,14 +220,14 @@ public final class VarDeclarationForm implements StatementFormHandler {
         if (env.blockContext().isRoot()) {
             throw new DiagnosticException(LumenDiagnostic.error("E502", "'set' cannot be used at the top level of a script")
                     .at(ctx.line(), ctx.raw())
-                    .highlight(pipelineTokens.get(0).start(), pipelineTokens.get(0).end())
+                    .highlight(nameToken.start(), nameToken.end())
                     .label("top-level 'set' not allowed")
                     .help("use 'global " + name + " with default <value>' instead")
                     .build());
         }
 
         if (exprTokens.size() >= 2 && exprTokens.get(0).text().equalsIgnoreCase("nullable")) {
-            emitNullableDeclaration(name, exprTokens, pipelineTokens, ctx, env);
+            emitNullableDeclaration(name, exprTokens, nameToken, ctx, env);
             return;
         }
 
@@ -329,7 +328,7 @@ public final class VarDeclarationForm implements StatementFormHandler {
         }
     }
 
-    private static void emitNullableDeclaration(@NotNull String name, @NotNull List<Token> exprTokens, @NotNull List<Token> pipelineTokens, @NotNull HandlerContextImpl ctx, @NotNull TypeEnv env) {
+    private static void emitNullableDeclaration(@NotNull String name, @NotNull List<Token> exprTokens, @NotNull Token nameToken, @NotNull HandlerContextImpl ctx, @NotNull TypeEnv env) {
         TypeAnnotationParser.ParseResult result = TypeAnnotationParser.parseDetailed(exprTokens, 0, env::lookupDataSchema);
         if (result instanceof TypeAnnotationParser.ParseResult.Failure f) {
             throw new DiagnosticException(SuggestionDiagnostics.buildTypeFailure("E501", "Invalid nullable type", ctx.line(), ctx.raw(), exprTokens, f));

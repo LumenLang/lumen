@@ -5,20 +5,10 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Registrar for custom emit handlers that extend the code generation pipeline.
  *
- * <p>Statement form handlers and block form handlers are tried in registration order
- * before the pattern matching system. Block enter hooks run for every pattern-matched
- * block.
+ * <p>Block form handlers are tried in registration order before the pattern matching
+ * system. Block enter hooks run for every pattern-matched block.
  */
 public interface EmitRegistrar {
-
-    /**
-     * Registers a statement form handler.
-     *
-     * <p>Handlers are tried in registration order before pattern matching.
-     *
-     * @param handler the handler to register
-     */
-    void statementForm(@NotNull StatementFormHandler handler);
 
     /**
      * Registers a block form handler.

@@ -1,6 +1,5 @@
 package dev.lumenlang.lumen.pipeline.language.typed;
 
-import dev.lumenlang.lumen.api.emit.StatementFormHandler;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.pipeline.language.nodes.StatementNode;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
@@ -15,9 +14,8 @@ import java.util.List;
 /**
  * Classifies a raw {@link StatementNode} into a specific {@link TypedStatement} variant.
  *
- * <p>Operates as a fallback after all registered {@link StatementFormHandler} implementations
- * have been tried. Variable declarations ({@code set}, {@code global}, {@code load}) are
- * handled by form handlers and are not classified here.
+ * <p>Classifies statement nodes into typed variants using pattern matching, expression
+ * matching, and fuzzy suggestions.
  *
  * @see TypedStatement
  */

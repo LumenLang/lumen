@@ -5,7 +5,6 @@ import dev.lumenlang.lumen.api.binder.ScriptBinderRegistrar;
 import dev.lumenlang.lumen.api.emit.BlockEnterHook;
 import dev.lumenlang.lumen.api.emit.BlockFormHandler;
 import dev.lumenlang.lumen.api.emit.EmitRegistrar;
-import dev.lumenlang.lumen.api.emit.StatementFormHandler;
 import dev.lumenlang.lumen.api.emit.StatementValidator;
 import dev.lumenlang.lumen.api.emit.transform.CodeTransformer;
 import dev.lumenlang.lumen.api.emit.transform.TransformerRegistrar;
@@ -275,11 +274,6 @@ public final class LumenAPIImpl implements LumenAPI {
         };
 
         this.emitters = new EmitRegistrar() {
-            @Override
-            public void statementForm(@NotNull StatementFormHandler handler) {
-                emitRegistry.addStatementForm(handler);
-            }
-
             @Override
             public void blockForm(@NotNull BlockFormHandler handler) {
                 emitRegistry.addBlockForm(handler);

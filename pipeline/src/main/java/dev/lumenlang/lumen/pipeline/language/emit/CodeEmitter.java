@@ -5,7 +5,6 @@ import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.emit.BlockEnterHook;
 import dev.lumenlang.lumen.api.emit.BlockFormHandler;
 import dev.lumenlang.lumen.api.emit.ScriptLine;
-import dev.lumenlang.lumen.api.emit.StatementFormHandler;
 import dev.lumenlang.lumen.api.emit.StatementValidator;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.pipeline.codegen.BlockContext;
@@ -421,8 +420,7 @@ public final class CodeEmitter {
     }
 
     /**
-     * Emits a statement node by first trying registered statement form handlers,
-     * then falling back to pattern matching and expression matching.
+     * Emits a statement node using pattern matching and expression matching.
      */
     private static void emitStatement(
             @NotNull StatementNode st,
@@ -435,18 +433,6 @@ public final class CodeEmitter {
         List<Token> tokens = st.head();
 
         HandlerContextImpl emitCtx = new HandlerContextImpl(null, env, ctx, blockCtx, out, st.line(), st.raw());
-        for (StatementFormHandler handler : emitReg.statementForms()) {
-            try {
-                if (handler.tryHandle(tokens, emitCtx)) {
-                    return;
-                }
-            } catch (LumenScriptException e) {
-                throw e;
-            } catch (RuntimeException e) {
-                throw wrapRuntimeException(st.line(), st.raw(), e);
-            }
-        }
-
         for (StatementValidator validator : emitReg.statementValidators()) {
             try {
                 validator.validate(tokens, emitCtx);

@@ -57,8 +57,7 @@ public final class PatternCompiler {
                 if (i < len && raw.charAt(i) != ' ' && raw.charAt(i) != '%' && raw.charAt(i) != '(' && raw.charAt(i) != ')') {
                     int wordEnd = readWordEnd(raw, i);
                     String suffix = raw.substring(i, wordEnd);
-                    i = wordEnd;
-                    parts.add(toWordPart(suffix));
+                    throw new IllegalArgumentException("Literal '" + suffix + "' cannot be placed directly after a type binding in pattern: " + raw + ". Separate it with a space.");
                 }
 
             } else if (c == '(') {

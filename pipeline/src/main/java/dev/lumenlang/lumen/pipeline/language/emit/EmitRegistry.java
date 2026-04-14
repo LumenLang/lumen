@@ -2,7 +2,6 @@ package dev.lumenlang.lumen.pipeline.language.emit;
 
 import dev.lumenlang.lumen.api.emit.BlockEnterHook;
 import dev.lumenlang.lumen.api.emit.BlockFormHandler;
-import dev.lumenlang.lumen.api.emit.StatementFormHandler;
 import dev.lumenlang.lumen.api.emit.StatementValidator;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,7 +10,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Stores registered emit handlers (statement forms, block forms, and block enter hooks).
+ * Stores registered emit handlers (block forms and block enter hooks).
  *
  * <p>All built-in language features and addon-registered extensions are stored here.
  */
@@ -19,7 +18,6 @@ public final class EmitRegistry {
 
     private static EmitRegistry INSTANCE;
 
-    private final List<StatementFormHandler> statementForms = new ArrayList<>();
     private final List<BlockFormHandler> blockForms = new ArrayList<>();
     private final List<BlockEnterHook> blockEnterHooks = new ArrayList<>();
     private final List<StatementValidator> statementValidators = new ArrayList<>();
@@ -47,15 +45,6 @@ public final class EmitRegistry {
     }
 
     /**
-     * Registers a statement form handler.
-     *
-     * @param handler the handler to register
-     */
-    public void addStatementForm(@NotNull StatementFormHandler handler) {
-        statementForms.add(handler);
-    }
-
-    /**
      * Registers a block form handler.
      *
      * @param handler the handler to register
@@ -80,15 +69,6 @@ public final class EmitRegistry {
      */
     public void addStatementValidator(@NotNull StatementValidator validator) {
         statementValidators.add(validator);
-    }
-
-    /**
-     * Returns an unmodifiable view of all registered statement form handlers.
-     *
-     * @return the statement form handlers
-     */
-    public @NotNull List<StatementFormHandler> statementForms() {
-        return Collections.unmodifiableList(statementForms);
     }
 
     /**

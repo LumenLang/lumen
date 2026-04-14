@@ -6,74 +6,62 @@ import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
 import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
-import dev.lumenlang.lumen.api.emit.ScriptToken;
-import dev.lumenlang.lumen.api.emit.StatementFormHandler;
-import dev.lumenlang.lumen.pipeline.codegen.HandlerContextImpl;
-import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
+import dev.lumenlang.lumen.api.pattern.Categories;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-// TODO: Remove in 1.4.0
 /**
- * Legacy statement form handler for global variable declarations.
+ * Registers a statement pattern that catches deprecated inline global variable declarations
+ * and produces a migration diagnostic.
  *
  * @deprecated Use the typed {@code global:} block syntax instead.
  */
 @Deprecated
 @Registration(order = -2000)
 @SuppressWarnings("unused")
-public final class GlobalDeclarationForm implements StatementFormHandler {
+public final class GlobalDeclarationForm {
 
     @Call
     public void register(@NotNull LumenAPI api) {
-        api.emitters().statementForm(this);
+        api.patterns().statement(b -> b
+                .by("Lumen")
+                .pattern("global %rest:EXPR%")
+                .description("Deprecated inline global variable declaration.")
+                .example("global myVar with default 0")
+                .since("1.0.0")
+                .deprecated(true)
+                .category(Categories.VARIABLE)
+                .handler(GlobalDeclarationForm::handle));
     }
 
-    private static boolean isGlobalDeclaration(@NotNull List<Token> t) {
-        if (t.size() < 2) return false;
-        if (!t.get(0).text().equalsIgnoreCase("global")) return false;
-        int idx = 1;
-        if (t.get(idx).text().equalsIgnoreCase("stored")) idx++;
-        if (idx < t.size() && t.get(idx).text().equalsIgnoreCase("scoped")) idx++;
-        if (idx >= t.size()) return false;
-        String nameCandidate = t.get(idx).text();
-        return !nameCandidate.equalsIgnoreCase("with") && !nameCandidate.equalsIgnoreCase("default");
-    }
+    private static void handle(@NotNull HandlerContext ctx) {
+        List<String> tokens = ctx.tokens("rest");
 
-    @Override
-    public boolean tryHandle(@NotNull List<? extends ScriptToken> tokens, @NotNull HandlerContext ctx) {
-        List<Token> t = HandlerContextImpl.toPipelineTokens(tokens);
-        if (!isGlobalDeclaration(t)) return false;
-        throwDeprecation(t, ctx);
-        return true;
-    }
-
-    private void throwDeprecation(@NotNull List<Token> t, @NotNull HandlerContext ctx) {
-        int idx = 1;
+        int idx = 0;
         boolean stored = false;
         boolean scoped = false;
-        if (idx < t.size() && t.get(idx).text().equalsIgnoreCase("stored")) {
+        if (idx < tokens.size() && tokens.get(idx).equalsIgnoreCase("stored")) {
             stored = true;
             idx++;
         }
-        if (idx < t.size() && t.get(idx).text().equalsIgnoreCase("scoped")) {
+        if (idx < tokens.size() && tokens.get(idx).equalsIgnoreCase("scoped")) {
             scoped = true;
             idx++;
         }
-        String name = idx < t.size() ? t.get(idx).text() : "myVar";
+        String name = idx < tokens.size() ? tokens.get(idx) : "myVar";
         idx++;
 
         boolean hasDefault = false;
         StringBuilder defaultExpr = new StringBuilder();
-        if (idx < t.size() && t.get(idx).text().equalsIgnoreCase("with")) {
+        if (idx < tokens.size() && tokens.get(idx).equalsIgnoreCase("with")) {
             idx++;
-            if (idx < t.size() && t.get(idx).text().equalsIgnoreCase("default")) {
+            if (idx < tokens.size() && tokens.get(idx).equalsIgnoreCase("default")) {
                 idx++;
                 hasDefault = true;
-                for (int i = idx; i < t.size(); i++) {
+                for (int i = idx; i < tokens.size(); i++) {
                     if (i > idx) defaultExpr.append(' ');
-                    defaultExpr.append(t.get(i).text());
+                    defaultExpr.append(tokens.get(i));
                 }
             }
         }
@@ -91,5 +79,4 @@ public final class GlobalDeclarationForm implements StatementFormHandler {
                 .help("migrate to:\n" + migration)
                 .build());
     }
-
 }

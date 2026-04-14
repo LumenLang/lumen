@@ -4,38 +4,9 @@ description: "How to register custom emit handlers that run before pattern match
 
 # Emit System
 
-The emit system lets addons hook into the code generation pipeline at a lower level than patterns. Emit handlers run before pattern matching, giving them first priority over how statements and blocks are processed.
-
-All of Lumen's built in language features (variable declarations, global variables, stored variables, config blocks, data blocks) are implemented through this same system. Addons have the same capabilities as the core language.
+The emit system lets addons hook into the code generation pipeline at a lower level than patterns. Emit handlers run before pattern matching, giving them first priority over how blocks are processed.
 
 Emit handlers are registered through `api.emitters()`, which returns an `EmitRegistrar`.
-
-## Statement Form Handlers
-
-A `StatementFormHandler` is tried before pattern matching for every statement. If it returns `true`, the statement is considered handled and no further matching is attempted.
-
-```java
-api.emitters().statementForm((tokens, emitCtx) -> {
-    if (tokens.size() >= 2 && tokens.get(0).text().equals("debug")) {
-        String message = tokens.stream()
-            .skip(1)
-            .map(ScriptToken::text)
-            .collect(Collectors.joining(" "));
-        emitCtx.out().line(
-            "System.out.println(\"[DEBUG] \" + "
-                + emitCtx.env().expandPlaceholders(message) + ");"
-        );
-        return true;
-    }
-    return false;
-});
-```
-
-The handler receives:
-- `tokens`: the list of `ScriptToken` objects from the current line
-- `emitCtx`: an `EmitContext` that provides access to `env()`, `codegen()`, `out()`, and `resolveExpression()`
-
-Each `ScriptToken` has `text()` for the token text, `tokenType()` for the kind (`IDENT`, `NUMBER`, `STRING`, `SYMBOL`), and `line()`, `start()`, `end()` for source location.
 
 ## Block Form Handlers
 
@@ -86,10 +57,9 @@ Block enter hooks are called for all pattern matched blocks, not just specific o
 
 ## When to Use Emit Handlers
 
-Use statement and block form handlers when you need syntax that does not fit the pattern system. For example:
+Use block form handlers when you need block syntax that does not fit the pattern system. For example:
 
-- Variable declarations with special behavior
 - Block types with custom child processing
 - Syntax that requires inspecting raw tokens rather than typed placeholders
 
-For most cases, regular patterns are simpler. Emit handlers are the extension point for when you need full control over the compilation of specific syntax forms.
+For most cases, regular patterns are simpler. Emit handlers are the extension point for when you need full control over the compilation of specific block syntax forms.

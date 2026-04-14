@@ -36,6 +36,7 @@ public final class BuiltinTypeBindings {
         registerExpr(types);
         registerString(types);
         registerQString(types);
+        registerIdent(types);
 
         types.registerMeta("EXPR", new TypeBindingMeta(
                 "Captures all remaining tokens as a raw expression. Preserves string literal quoting and is used for arbitrary sub-expressions.",
@@ -53,6 +54,12 @@ public final class BuiltinTypeBindings {
                 "Captures a single quoted string literal, variable reference, or placeholder token. Rejects bare identifiers to prevent accidental matches with other patterns.",
                 "String",
                 List.of("%a:STRING% (is|equals) %b:QSTRING%"),
+                "1.0.0",
+                false));
+        types.registerMeta("IDENT", new TypeBindingMeta(
+                "Captures a single identifier token. Only matches bare identifiers, rejecting string literals, numbers, and other token kinds.",
+                "String",
+                List.of("set %name:IDENT% to %val:EXPR%"),
                 "1.0.0",
                 false));
     }
@@ -177,6 +184,32 @@ public final class BuiltinTypeBindings {
                 .replace("\n", "\\n")
                 .replace("\r", "\\r")
                 .replace("\t", "\\t");
+    }
+
+    private static void registerIdent(@NotNull TypeRegistry types) {
+        types.register(new TypeBinding() {
+            @Override
+            public @NotNull String id() {
+                return "IDENT";
+            }
+
+            @Override
+            public int consumeCount(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
+                if (tokens.isEmpty()) throw new ParseFailureException("expected an identifier");
+                if (tokens.get(0).kind() != TokenKind.IDENT) throw new ParseFailureException("expected an identifier");
+                return 1;
+            }
+
+            @Override
+            public Object parse(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
+                return tokens.get(0).text();
+            }
+
+            @Override
+            public @NotNull String toJava(Object value, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
+                return (String) value;
+            }
+        });
     }
 
     /**
