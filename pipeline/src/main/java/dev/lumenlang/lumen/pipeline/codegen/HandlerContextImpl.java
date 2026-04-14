@@ -138,7 +138,7 @@ public final class HandlerContextImpl implements HandlerContext {
     }
 
     @Override
-    public @Nullable Object value(@NotNull String name) {
+    public @NotNull Object value(@NotNull String name) {
         return resolveDeferred(bound(name).value());
     }
 

@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
  * Registers built-in condition patterns for string comparison and inspection.
  */
 @Registration(order = 200)
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "DataFlowIssue"})
 public final class StringConditions {
 
     @Call

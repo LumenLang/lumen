@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
  * Registers condition patterns that work on any {@code Entity}.
  */
 @Registration
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "DataFlowIssue"})
 public final class GenericEntityConditions {
 
     @Call

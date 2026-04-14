@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
  * and air/empty status.
  */
 @Registration
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "DataFlowIssue"})
 public final class BlockConditions {
 
     @Call

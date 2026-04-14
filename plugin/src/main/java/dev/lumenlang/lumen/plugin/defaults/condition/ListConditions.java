@@ -16,7 +16,7 @@ import java.util.List;
  * Registers built-in condition patterns for list inspection.
  */
 @Registration
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "DataFlowIssue"})
 public final class ListConditions {
 
     @Call

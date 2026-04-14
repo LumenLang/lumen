@@ -23,7 +23,7 @@ import java.util.function.Function;
  * Registers built-in statement patterns for list manipulation.
  */
 @Registration
-@SuppressWarnings({"unused", "DataFlowIssue"})
+@SuppressWarnings("unused")
 public final class ListStatements {
 
     private static @Nullable String listVarName(@NotNull HandlerContext ctx) {

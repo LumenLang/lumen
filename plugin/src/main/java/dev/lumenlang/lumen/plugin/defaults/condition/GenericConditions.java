@@ -18,7 +18,7 @@ import java.util.concurrent.ThreadLocalRandom;
  * specific patterns are tried first.
  */
 @Registration(order = 100)
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "DataFlowIssue"})
 public final class GenericConditions {
 
     private static void validateExprIdentifier(@NotNull String java,

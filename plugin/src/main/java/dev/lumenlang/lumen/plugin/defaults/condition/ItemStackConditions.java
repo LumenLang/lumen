@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
  * lore, enchantments, and unbreakable status.
  */
 @Registration
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "DataFlowIssue"})
 public final class ItemStackConditions {
 
     @Call

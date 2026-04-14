@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
  * Registers built-in condition patterns for location and spatial queries.
  */
 @Registration
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "DataFlowIssue"})
 public final class LocationConditions {
 
     @Call
