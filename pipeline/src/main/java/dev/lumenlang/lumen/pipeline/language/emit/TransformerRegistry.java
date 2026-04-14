@@ -114,9 +114,17 @@ public final class TransformerRegistry {
                 Map<Integer, String> tags = builder.tagMap();
                 Map<Integer, JavaBuilder.ScriptLineInfo> lineMap = builder.lineMap();
 
+                JavaBuilder.ScriptLineInfo[] resolvedInfo = new JavaBuilder.ScriptLineInfo[lines.size()];
+                JavaBuilder.ScriptLineInfo last = null;
+                for (int i = 0; i < lines.size(); i++) {
+                    JavaBuilder.ScriptLineInfo direct = lineMap.get(i);
+                    if (direct != null) last = direct;
+                    resolvedInfo[i] = last;
+                }
+
                 List<TaggedLine> lineSnapshot = new ArrayList<>(lines.size());
                 for (int i = 0; i < lines.size(); i++) {
-                    JavaBuilder.ScriptLineInfo info = findScriptLineInfo(i, lineMap);
+                    JavaBuilder.ScriptLineInfo info = resolvedInfo[i];
                     int scriptLine = info != null ? info.line() : -1;
                     String scriptSource = info != null ? info.source() : null;
                     lineSnapshot.add(new TaggedLineImpl(lines.get(i), tags.get(i), i, scriptLine, scriptSource));

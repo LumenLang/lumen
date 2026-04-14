@@ -276,7 +276,7 @@ public final class VarDeclarationForm implements StatementFormHandler {
                     exprLumenType = exprResult.type();
                     resolvedMetadata = exprResult.metadata();
                 } else {
-                    ExpressionResult resolvedResult = ExprResolver.resolveWithType(raw.tokens(), ctx.codegenContext(), env);
+                    ExpressionResult resolvedResult = ExprResolver.resolveWithTypeNoDirectMatch(raw.tokens(), ctx.codegenContext(), env);
                     if (resolvedResult != null) {
                         java = resolvedResult.java();
                         exprLumenType = resolvedResult.type();
@@ -438,7 +438,7 @@ public final class VarDeclarationForm implements StatementFormHandler {
         if (raw.tokens().size() > 1) {
             ExpressionResult result = tryExpressionPattern(raw.tokens(), ctx, env);
             if (result != null) return new TypedExpression(result.java(), result.type());
-            ExpressionResult resolved = ExprResolver.resolveWithType(raw.tokens(), ctx.codegenContext(), env);
+            ExpressionResult resolved = ExprResolver.resolveWithTypeNoDirectMatch(raw.tokens(), ctx.codegenContext(), env);
             if (resolved != null) return new TypedExpression(resolved.java(), resolved.type());
             return null;
         }

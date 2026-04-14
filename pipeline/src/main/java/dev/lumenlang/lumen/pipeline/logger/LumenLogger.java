@@ -11,7 +11,7 @@ import java.util.logging.Logger;
 @SuppressWarnings("unused")
 public final class LumenLogger {
     private static Logger logger;
-    private static boolean fullDebug = false;
+    public static boolean fullDebug = false;
     private static boolean logInfo = true;
     private static boolean logWarnings = true;
 

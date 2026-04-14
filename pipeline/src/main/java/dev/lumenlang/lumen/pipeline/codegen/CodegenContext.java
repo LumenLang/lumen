@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Holds per-script class-level metadata that is shared across all handlers during code generation.
@@ -34,6 +35,7 @@ public final class CodegenContext implements CodegenAccess {
     private final List<String> fieldLines = new ArrayList<>();
     private final List<String> interfaces = new ArrayList<>();
     private final List<String> methodLines = new ArrayList<>();
+    private final AtomicInteger methodIdCounter = new AtomicInteger(0);
     private boolean rawJavaEnabled = false;
 
     /**
@@ -96,7 +98,7 @@ public final class CodegenContext implements CodegenAccess {
      * @param fqcn the fully-qualified class name to import (e.g. {@code "org.bukkit.inventory.ItemStack"})
      */
     @Override
-    public void addImport(@NotNull String fqcn) {
+    public synchronized void addImport(@NotNull String fqcn) {
         imports.add("import " + fqcn + ";");
     }
 
@@ -115,7 +117,7 @@ public final class CodegenContext implements CodegenAccess {
      * @param line the full field declaration line (e.g. {@code "private String name = \"hello\";"})
      */
     @Override
-    public void addField(@NotNull String line) {
+    public synchronized void addField(@NotNull String line) {
         if (!fieldLines.contains(line)) {
             fieldLines.add(line);
         }
@@ -136,7 +138,7 @@ public final class CodegenContext implements CodegenAccess {
      * @param fqcn the simple or fully-qualified interface name
      */
     @Override
-    public void addInterface(@NotNull String fqcn) {
+    public synchronized void addInterface(@NotNull String fqcn) {
         if (!interfaces.contains(fqcn)) {
             interfaces.add(fqcn);
         }
@@ -152,8 +154,12 @@ public final class CodegenContext implements CodegenAccess {
     }
 
     @Override
-    public void addMethod(@NotNull String methodSource) {
+    public synchronized void addMethod(@NotNull String methodSource) {
         methodLines.add(methodSource);
+    }
+
+    public int nextMethodId() {
+        return methodIdCounter.getAndIncrement();
     }
 
     /**

@@ -42,7 +42,7 @@ public final class ExprResolver {
             @NotNull List<Token> tokens,
             @NotNull CodegenContext ctx,
             @NotNull TypeEnv env) {
-        ExpressionResult result = resolveRecursive(tokens, ctx, env, 0);
+        ExpressionResult result = resolveRecursive(tokens, ctx, env, 0, false);
         return result != null ? result.java() : null;
     }
 
@@ -59,7 +59,14 @@ public final class ExprResolver {
             @NotNull List<Token> tokens,
             @NotNull CodegenContext ctx,
             @NotNull TypeEnv env) {
-        return resolveRecursive(tokens, ctx, env, 0);
+        return resolveRecursive(tokens, ctx, env, 0, false);
+    }
+
+    public static @Nullable ExpressionResult resolveWithTypeNoDirectMatch(
+            @NotNull List<Token> tokens,
+            @NotNull CodegenContext ctx,
+            @NotNull TypeEnv env) {
+        return resolveRecursive(tokens, ctx, env, 0, true);
     }
 
     /**
@@ -93,7 +100,8 @@ public final class ExprResolver {
             @NotNull List<Token> tokens,
             @NotNull CodegenContext ctx,
             @NotNull TypeEnv env,
-            int depth) {
+            int depth,
+            boolean skipDirectMatch) {
         if (depth > MAX_RESOLVE_DEPTH || tokens.isEmpty()) return null;
 
         if (tokens.size() >= 3
@@ -101,7 +109,7 @@ public final class ExprResolver {
                 && tokens.get(0).text().equals("{")
                 && tokens.get(tokens.size() - 1).kind() == TokenKind.SYMBOL
                 && tokens.get(tokens.size() - 1).text().equals("}")) {
-            return resolveRecursive(tokens.subList(1, tokens.size() - 1), ctx, env, depth + 1);
+            return resolveRecursive(tokens.subList(1, tokens.size() - 1), ctx, env, depth + 1, false);
         }
 
         PatternRegistry reg;
@@ -111,13 +119,15 @@ public final class ExprResolver {
             return null;
         }
 
-        RegisteredExpressionMatch match = reg.matchExpression(tokens, env);
-        if (match != null) {
-            try {
-                BlockContext block = env.blockContext();
-                BindingContext bc = new BindingContext(match.match(), env, ctx, block);
-                return match.reg().handler().handle(bc);
-            } catch (RuntimeException ignored) {
+        if (!skipDirectMatch) {
+            RegisteredExpressionMatch match = reg.matchExpression(tokens, env);
+            if (match != null) {
+                try {
+                    BlockContext block = env.blockContext();
+                    BindingContext bc = new BindingContext(match.match(), env, ctx, block);
+                    return match.reg().handler().handle(bc);
+                } catch (RuntimeException ignored) {
+                }
             }
         }
 
@@ -175,7 +185,7 @@ public final class ExprResolver {
                             sub.get(0).line(), sub.get(0).start(), sub.get(0).end()));
                     newTokens.addAll(tokens.subList(end, tokens.size()));
 
-                    ExpressionResult resolved = resolveRecursive(newTokens, ctx, env, depth + 1);
+                    ExpressionResult resolved = resolveRecursive(newTokens, ctx, env, depth + 1, false);
                     if (resolved != null) return resolved;
                 } finally {
                     env.leaveBlock();
@@ -278,14 +288,14 @@ public final class ExprResolver {
                 && tokens.get(tokens.size() - 1).kind() == TokenKind.SYMBOL
                 && tokens.get(tokens.size() - 1).text().equals(")")) {
             List<Token> inner = tokens.subList(1, tokens.size() - 1);
-            ExpressionResult innerResolved = resolveRecursive(inner, ctx, env, depth + 1);
+            ExpressionResult innerResolved = resolveRecursive(inner, ctx, env, depth + 1, false);
             if (innerResolved != null) {
                 return new TypedOperand("(" + innerResolved.java() + ")", innerResolved.type());
             }
             return null;
         }
 
-        ExpressionResult result = resolveRecursive(tokens, ctx, env, depth + 1);
+        ExpressionResult result = resolveRecursive(tokens, ctx, env, depth + 1, false);
         if (result == null) return null;
         LumenType type = result.type();
         if (!type.numeric()) {

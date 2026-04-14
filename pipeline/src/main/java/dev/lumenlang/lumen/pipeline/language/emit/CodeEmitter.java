@@ -38,6 +38,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
  * Walks the parsed AST and emits Java source code.
@@ -45,8 +48,38 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class CodeEmitter {
 
     private static final Set<String> EMITTED_WARNINGS = ConcurrentHashMap.newKeySet();
+    private static volatile int parallelParseThreads = 3;
+    private static volatile ExecutorService parallelPool;
 
     private CodeEmitter() {
+    }
+
+    /**
+     * Configures the number of threads used for parallel block emission.
+     *
+     * <p>Set to 0 or 1 to disable parallel parsing entirely.
+     *
+     * @param threads the number of parallel threads
+     */
+    public static void setParallelParseThreads(int threads) {
+        int clamped = Math.max(0, threads);
+        if (clamped == parallelParseThreads) return;
+        parallelParseThreads = clamped;
+        ExecutorService old = parallelPool;
+        parallelPool = null;
+        if (old != null) old.shutdownNow();
+    }
+
+    private static @NotNull ExecutorService pool() {
+        ExecutorService p = parallelPool;
+        if (p != null) return p;
+        synchronized (CodeEmitter.class) {
+            p = parallelPool;
+            if (p != null) return p;
+            p = Executors.newFixedThreadPool(Math.max(1, parallelParseThreads));
+            parallelPool = p;
+            return p;
+        }
     }
 
     /**
@@ -125,6 +158,21 @@ public final class CodeEmitter {
             @NotNull JavaBuilder out,
             @NotNull List<LumenScriptException> errors) {
         List<Node> children = parent.children();
+        if (parentBlock != null || parallelParseThreads <= 1) {
+            emitChildrenSequential(children, parentBlock, reg, env, ctx, out, errors);
+            return;
+        }
+        emitChildrenParallel(children, reg, env, ctx, out, errors);
+    }
+
+    private static void emitChildrenSequential(
+            @NotNull List<Node> children,
+            @Nullable BlockContext parentBlock,
+            @NotNull PatternRegistry reg,
+            @NotNull TypeEnv env,
+            @NotNull CodegenContext ctx,
+            @NotNull JavaBuilder out,
+            @NotNull List<LumenScriptException> errors) {
         for (int i = 0; i < children.size(); i++) {
             if (parentBlock == null) {
                 try {
@@ -141,6 +189,98 @@ public final class CodeEmitter {
                 emit(children.get(i), parentBlock, children, i, reg, env, ctx, out, errors);
             }
         }
+    }
+
+    private static boolean isImportantBlock(@NotNull Node node) {
+        if (!(node instanceof BlockNode b)) return false;
+        for (BlockFormHandler handler : EmitRegistry.instance().blockForms()) {
+            if (handler.matches(b.head())) return true;
+        }
+        return false;
+    }
+
+    private static void emitChildrenParallel(
+            @NotNull List<Node> children,
+            @NotNull PatternRegistry reg,
+            @NotNull TypeEnv env,
+            @NotNull CodegenContext ctx,
+            @NotNull JavaBuilder out,
+            @NotNull List<LumenScriptException> errors) {
+        List<Integer> importantIndices = new ArrayList<>();
+        List<Integer> independentIndices = new ArrayList<>();
+        for (int i = 0; i < children.size(); i++) {
+            if (isImportantBlock(children.get(i))) {
+                importantIndices.add(i);
+            } else {
+                independentIndices.add(i);
+            }
+        }
+
+        for (int i : importantIndices) {
+            try {
+                emit(children.get(i), null, children, i, reg, env, ctx, out, errors);
+            } catch (LumenScriptException e) {
+                errors.add(e);
+            } catch (DiagnosticException e) {
+                errors.add(new LumenScriptException(e));
+            } catch (RuntimeException e) {
+                Node node = children.get(i);
+                errors.add(new LumenScriptException(node.line(), node.raw(), e.getMessage(), e));
+            }
+        }
+
+        if (independentIndices.size() <= 1) {
+            for (int i : independentIndices) {
+                try {
+                    emit(children.get(i), null, children, i, reg, env, ctx, out, errors);
+                } catch (LumenScriptException e) {
+                    errors.add(e);
+                } catch (DiagnosticException e) {
+                    errors.add(new LumenScriptException(e));
+                } catch (RuntimeException e) {
+                    Node node = children.get(i);
+                    errors.add(new LumenScriptException(node.line(), node.raw(), e.getMessage(), e));
+                }
+            }
+            return;
+        }
+
+        int threads = Math.min(parallelParseThreads, independentIndices.size());
+        ExecutorService pool = pool();
+        List<Future<BlockResult>> futures = new ArrayList<>(independentIndices.size());
+
+        for (int idx : independentIndices) {
+            final int blockIndex = idx;
+            futures.add(pool.submit(() -> {
+                TypeEnv forkedEnv = env.fork();
+                JavaBuilder blockOut = new JavaBuilder();
+                List<LumenScriptException> blockErrors = new ArrayList<>();
+                try {
+                    emit(children.get(blockIndex), null, children, blockIndex, reg, forkedEnv, ctx, blockOut, blockErrors);
+                } catch (LumenScriptException e) {
+                    blockErrors.add(e);
+                } catch (DiagnosticException e) {
+                    blockErrors.add(new LumenScriptException(e));
+                } catch (RuntimeException e) {
+                    Node node = children.get(blockIndex);
+                    blockErrors.add(new LumenScriptException(node.line(), node.raw(), e.getMessage(), e));
+                }
+                return new BlockResult(blockOut, blockErrors);
+            }));
+        }
+
+        for (Future<BlockResult> future : futures) {
+            try {
+                BlockResult result = future.get();
+                out.merge(result.output);
+                errors.addAll(result.errors);
+            } catch (Exception e) {
+                errors.add(new LumenScriptException(0, "", "Parallel block emission failed: " + e.getMessage()));
+            }
+        }
+    }
+
+    private record BlockResult(@NotNull JavaBuilder output, @NotNull List<LumenScriptException> errors) {
     }
 
     /**

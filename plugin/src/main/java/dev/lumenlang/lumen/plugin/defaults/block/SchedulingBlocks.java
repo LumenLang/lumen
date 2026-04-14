@@ -26,7 +26,7 @@ public class SchedulingBlocks {
     private static void emitRootPreamble(@NotNull BindingAccess ctx, @NotNull JavaOutput out, @NotNull String prefix) {
         if (ctx.block().isRoot()) {
             out.line("@LumenPreload");
-            out.line("public void __lumen_" + prefix + "_" + out.lineNum() + "() {");
+            out.line("public void __lumen_" + prefix + "_" + ctx.codegen().nextMethodId() + "() {");
         }
     }
 

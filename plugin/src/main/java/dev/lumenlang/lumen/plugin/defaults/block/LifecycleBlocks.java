@@ -39,9 +39,9 @@ public final class LifecycleBlocks {
                         if (!ctx.block().isRoot()) {
                             throw new RuntimeException("'load' blocks must be top-level");
                         }
-                        int lineNum = out.lineNum();
+                        int methodId = ctx.codegen().nextMethodId();
                         out.line("@LumenLoad");
-                        out.line("public void __lumen_load_" + lineNum + "() {");
+                        out.line("public void __lumen_load_" + methodId + "() {");
                     }
 
                     @Override
@@ -67,9 +67,9 @@ public final class LifecycleBlocks {
                         if (!ctx.block().isRoot()) {
                             throw new RuntimeException("'preload' blocks must be top-level");
                         }
-                        int lineNum = out.lineNum();
+                        int methodId = ctx.codegen().nextMethodId();
                         out.line("@LumenPreload");
-                        out.line("public void __lumen_preload_" + lineNum + "() {");
+                        out.line("public void __lumen_preload_" + methodId + "() {");
                     }
 
                     @Override

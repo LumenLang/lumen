@@ -161,4 +161,12 @@ public class ConditionRegistry {
         }
         return conditionIndex;
     }
+
+    /**
+     * Eagerly builds the internal pattern index so that the first match call
+     * does not pay the sorting and indexing cost.
+     */
+    public void warmup() {
+        ensureIndex();
+    }
 }

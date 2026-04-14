@@ -177,7 +177,7 @@ public final class InventoryEventBlocks {
                         ctx.block().putEnv("__event_block", true);
                         ctx.block().putEnv("__event_cancellable", true);
                         String safeName = sanitize(inv);
-                        String method = "__lumen_slot_click_" + safeName + "_" + out.lineNum();
+                        String method = "__lumen_slot_click_" + safeName + "_" + ctx.codegen().nextMethodId();
                         clickImports(jctx);
                         out.line("@LumenEvent(InventoryClickEvent.class)");
                         out.line("public void " + method + "(InventoryClickEvent event) {");
@@ -243,7 +243,7 @@ public final class InventoryEventBlocks {
                         ctx.block().putEnv("__event_block", true);
                         ctx.block().putEnv("__event_cancellable", true);
                         String safeName = sanitize(inv);
-                        String method = "__lumen_click_" + safeName + "_" + out.lineNum();
+                        String method = "__lumen_click_" + safeName + "_" + ctx.codegen().nextMethodId();
                         clickImports(jctx);
                         out.line("@LumenEvent(InventoryClickEvent.class)");
                         out.line("public void " + method + "(InventoryClickEvent event) {");
@@ -294,7 +294,7 @@ public final class InventoryEventBlocks {
                         ctx.block().putEnv("__event_block", true);
                         ctx.block().putEnv("__event_cancellable", false);
                         String safeName = sanitize(inv);
-                        String method = "__lumen_inv_close_" + safeName + "_" + out.lineNum();
+                        String method = "__lumen_inv_close_" + safeName + "_" + ctx.codegen().nextMethodId();
                         closeOpenImports(jctx, InventoryCloseEvent.class);
                         out.line("@LumenEvent(InventoryCloseEvent.class)");
                         out.line("public void " + method + "(InventoryCloseEvent event) {");
@@ -344,7 +344,7 @@ public final class InventoryEventBlocks {
                         ctx.block().putEnv("__event_block", true);
                         ctx.block().putEnv("__event_cancellable", true);
                         String safeName = sanitize(inv);
-                        String method = "__lumen_inv_open_" + safeName + "_" + out.lineNum();
+                        String method = "__lumen_inv_open_" + safeName + "_" + ctx.codegen().nextMethodId();
                         closeOpenImports(jctx, InventoryOpenEvent.class);
                         out.line("@LumenEvent(InventoryOpenEvent.class)");
                         out.line("public void " + method + "(InventoryOpenEvent event) {");

@@ -178,6 +178,7 @@ public final class Lumen extends JavaPlugin {
 
         RegistrationScanner.init(new RegistrationScannerBackend(lumenApi));
         RegistrationScanner.scan("dev.lumenlang.lumen.plugin.defaults");
+        patternRegistry.warmup();
     }
 
     /**

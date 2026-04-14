@@ -591,4 +591,31 @@ public final class TypeEnv implements EnvironmentAccess {
      */
     public record ConfigEntry(@NotNull String name, @NotNull String java) {
     }
+
+    /**
+     * Creates a lightweight copy of this environment for parallel block emission.
+     *
+     * <p>The forked environment shares all read-only state established by important blocks
+     * (root variables, global variable declarations, config entries, data schemas, stored
+     * variable metadata, runtime global markers, global fields, and experimental flags).
+     *
+     * <p>Mutable per-block state (scope stack, globals map, null states) starts fresh.
+     *
+     * @return a new TypeEnv suitable for independent block emission
+     */
+    public @NotNull TypeEnv fork() {
+        TypeEnv forked = new TypeEnv();
+        forked.rootVars.putAll(this.rootVars);
+        forked.globalVars.addAll(this.globalVars);
+        forked.globals.putAll(this.globals);
+        forked.configEntries.addAll(this.configEntries);
+        forked.dataSchemas.putAll(this.dataSchemas);
+        forked.storedKeys.putAll(this.storedKeys);
+        forked.storedBaseKeys.putAll(this.storedBaseKeys);
+        forked.storedScopeVars.putAll(this.storedScopeVars);
+        forked.runtimeGlobals.addAll(this.runtimeGlobals);
+        forked.globalFields.addAll(this.globalFields);
+        forked.experimental.addAll(this.experimental);
+        return forked;
+    }
 }

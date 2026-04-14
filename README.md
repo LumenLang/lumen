@@ -99,15 +99,15 @@ We also appreciate any feedback on the syntax, features, or anything else relate
 
 Tradeoffs are inevitable with Lumen, as no scripting system is perfect.
 
-- **Smaller Ecosystem:**
+### **Smaller Ecosystem**
 Lumen is still a relatively new project. Compared to more established scripting systems, the ecosystem is still growing.
 
-- **Strictly Typed Language Model:**
+### **Strictly Typed Language Model**
 
 Lumen is a fully statically typed scripting language. Every value has a known type at compile time, and type mismatches are reported immediately in the editor with precise diagnostics. There is no implicit coercion or “guessing” at runtime, what you write is exactly what gets executed.
 Skript is a dynamically typed language. Types are determined at runtime, and there is a lot of implicit coercion and guessing involved. This can lead to unexpected behavior, terribly unclear error messages, things just "not working" without any indication of why, and a generally frustrating experience.
 
 While Lumen may feel somewhat familiar to users coming from systems like Skript, its design is fundamentally different. Scripts are compiled with strict type checking, explicit nullability, and well-defined patterns. This results in more predictable behavior, clearer errors, and significantly fewer runtime issues.
 
-- **Documentation Is Still Expanding:**
+### **Documentation Is Still Expanding**
 Documentation is continuously improving. If you encounter missing information, unclear behavior, or patterns that are not properly documented, please report it through the project's issue tracker so it can be addressed.

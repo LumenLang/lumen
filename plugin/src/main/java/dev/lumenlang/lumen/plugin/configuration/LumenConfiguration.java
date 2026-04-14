@@ -188,6 +188,9 @@ public final class LumenConfiguration {
 
         @Key("async-define-class")
         public boolean ASYNC_DEFINE_CLASS = true;
+
+        @Key("parallel-parse-threads")
+        public int PARALLEL_PARSE_THREADS = 3;
     }
 
     public static final class Language {

@@ -44,7 +44,7 @@ import java.util.Map;
  *         public void begin(BindingAccess ctx, JavaOutput out) {
  *             ctx.codegen().addImport("dev.lumenlang.lumen.pipeline.annotations.LumenPreload");
  *             out.line("@LumenPreload");
- *             out.line("public void __tick_" + out.lineNum() + "() {");
+ *             out.line("public void __tick_" + ctx.codegen().nextMethodId() + "() {");
  *             out.line("new BukkitRunnable() { public void run() {");
  *         }
  *         public void end(BindingAccess ctx, JavaOutput out) {

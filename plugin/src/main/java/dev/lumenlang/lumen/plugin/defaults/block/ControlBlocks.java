@@ -41,9 +41,9 @@ public final class ControlBlocks {
                     @Override
                     public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
                         if (ctx.block().isRoot()) {
-                            int lineNum = out.lineNum();
+                            int methodId = ctx.codegen().nextMethodId();
                             out.line("@LumenPreload");
-                            out.line("public void __lumen_if_" + lineNum + "() {");
+                            out.line("public void __lumen_if_" + methodId + "() {");
                         }
                         out.line("if (" + ctx.parseCondition("cond") + ") {");
                     }

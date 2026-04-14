@@ -4,9 +4,11 @@ import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -18,6 +20,9 @@ import java.util.function.Function;
  * returned as candidates. Patterns with no required literals (all placeholders)
  * are always included.
  *
+ * <p>Uses a first-token dispatch map for fast initial narrowing before checking
+ * additional required literals.
+ *
  * <p>The original priority ordering of the input list is preserved, so specificity
  * based matching continues to work correctly.
  *
@@ -27,6 +32,10 @@ public final class PatternIndex<T> {
 
     private final List<T> all;
     private final List<Set<String>> requiredLiterals;
+    private final int[] minTokenCounts;
+    private final int[] maxTokenCounts;
+    private final Map<String, List<Integer>> firstTokenMap;
+    private final List<Integer> wildcardIndices;
 
     /**
      * Builds an index from a pre-sorted list of pattern items.
@@ -37,10 +46,25 @@ public final class PatternIndex<T> {
     public PatternIndex(@NotNull List<T> sortedItems, @NotNull Function<T, Pattern> patternExtractor) {
         this.all = List.copyOf(sortedItems);
         this.requiredLiterals = new ArrayList<>(sortedItems.size());
-        for (T item : sortedItems) {
+        this.minTokenCounts = new int[sortedItems.size()];
+        this.maxTokenCounts = new int[sortedItems.size()];
+        this.firstTokenMap = new HashMap<>();
+        this.wildcardIndices = new ArrayList<>();
+
+        for (int i = 0; i < sortedItems.size(); i++) {
+            Pattern pattern = patternExtractor.apply(sortedItems.get(i));
             Set<String> literals = new HashSet<>();
-            collectRequiredLiterals(patternExtractor.apply(item).parts(), literals);
+            collectRequiredLiterals(pattern.parts(), literals);
             requiredLiterals.add(literals);
+            minTokenCounts[i] = pattern.minTokens();
+            maxTokenCounts[i] = pattern.maxTokens();
+
+            String firstLiteral = firstLiteral(pattern.parts());
+            if (firstLiteral != null) {
+                firstTokenMap.computeIfAbsent(firstLiteral, k -> new ArrayList<>()).add(i);
+            } else {
+                wildcardIndices.add(i);
+            }
         }
     }
 
@@ -52,16 +76,40 @@ public final class PatternIndex<T> {
      */
     public @NotNull List<T> candidates(@NotNull List<Token> tokens) {
         if (tokens.isEmpty()) return all;
-        Set<String> inputTokens = new HashSet<>(tokens.size());
-        for (Token t : tokens) {
-            inputTokens.add(t.text().toLowerCase(Locale.ROOT));
-        }
+
+        int tokenCount = tokens.size();
+        String firstInput = tokens.get(0).text().toLowerCase(Locale.ROOT);
+        List<Integer> firstMatches = firstTokenMap.get(firstInput);
+
+        if (firstMatches == null && wildcardIndices.isEmpty()) return List.of();
+
+        Set<String> inputTokens = null;
+
         List<T> result = new ArrayList<>();
-        for (int i = 0; i < all.size(); i++) {
-            if (inputTokens.containsAll(requiredLiterals.get(i))) {
-                result.add(all.get(i));
+        if (firstMatches != null) {
+            for (int idx : firstMatches) {
+                if (minTokenCounts[idx] > tokenCount || maxTokenCounts[idx] < tokenCount) continue;
+                Set<String> needed = requiredLiterals.get(idx);
+                if (needed.size() <= 1) {
+                    result.add(all.get(idx));
+                } else {
+                    if (inputTokens == null) inputTokens = buildTokenSet(tokens);
+                    if (inputTokens.containsAll(needed)) result.add(all.get(idx));
+                }
             }
         }
+
+        for (int idx : wildcardIndices) {
+            if (minTokenCounts[idx] > tokenCount || maxTokenCounts[idx] < tokenCount) continue;
+            Set<String> needed = requiredLiterals.get(idx);
+            if (needed.isEmpty()) {
+                result.add(all.get(idx));
+            } else {
+                if (inputTokens == null) inputTokens = buildTokenSet(tokens);
+                if (inputTokens.containsAll(needed)) result.add(all.get(idx));
+            }
+        }
+
         return result;
     }
 
@@ -72,6 +120,22 @@ public final class PatternIndex<T> {
      */
     public @NotNull List<T> all() {
         return all;
+    }
+
+    private static @NotNull Set<String> buildTokenSet(@NotNull List<Token> tokens) {
+        Set<String> set = new HashSet<>(tokens.size());
+        for (Token t : tokens) {
+            set.add(t.text().toLowerCase(Locale.ROOT));
+        }
+        return set;
+    }
+
+    private static String firstLiteral(@NotNull List<PatternPart> parts) {
+        if (parts.isEmpty()) return null;
+        PatternPart first = parts.get(0);
+        if (first instanceof PatternPart.Literal lit) return lit.text();
+        if (first instanceof PatternPart.FlexLiteral flex && flex.forms().size() == 1) return flex.forms().iterator().next();
+        return null;
     }
 
     /**

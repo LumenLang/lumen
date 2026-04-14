@@ -79,28 +79,21 @@ public final class PatternMatcher {
             @NotNull TypeRegistry types,
             @NotNull TypeEnv env,
             @Nullable InlineExprValidator validator) {
-        LumenLogger.debug("PatternMatcher.match", "Matching pattern: '" + p.raw() + "'");
-        LumenLogger.debug("PatternMatcher.match", "Input tokens (" + tokens.size() + "): " +
-                tokens.stream().map(t -> "'" + t.text() + "'").reduce((a, b) -> a + " " + b).orElse(""));
-
-        StringBuilder partsDesc = new StringBuilder();
-        for (int i = 0; i < p.parts().size(); i++) {
-            if (i > 0)
-                partsDesc.append(", ");
-            PatternPart pt = p.parts().get(i);
-            if (pt instanceof PatternPart.Literal lit)
-                partsDesc.append("Lit(").append(lit.text()).append(")");
-            else if (pt instanceof PatternPart.FlexLiteral fl)
-                partsDesc.append("Flex(").append(fl.forms()).append(")");
-            else if (pt instanceof PatternPart.PlaceholderPart pp)
-                partsDesc.append("PH(").append(pp.ph().name()).append(":").append(pp.ph().typeId()).append(")");
-            else if (pt instanceof PatternPart.Group g)
-                partsDesc.append("Group(req=").append(g.required()).append(",alts=").append(g.alternatives().size())
-                        .append(")");
-            else
-                partsDesc.append("UNKNOWN(").append(pt.getClass().getName()).append(")");
+        if (LumenLogger.fullDebug) {
+            LumenLogger.debug("PatternMatcher.match", "Matching pattern: '" + p.raw() + "'");
+            LumenLogger.debug("PatternMatcher.match", "Input tokens (" + tokens.size() + "): " + tokens.stream().map(t -> "'" + t.text() + "'").reduce((a, b) -> a + " " + b).orElse(""));
+            StringBuilder partsDesc = new StringBuilder();
+            for (int i = 0; i < p.parts().size(); i++) {
+                if (i > 0) partsDesc.append(", ");
+                PatternPart pt = p.parts().get(i);
+                if (pt instanceof PatternPart.Literal lit) partsDesc.append("Lit(").append(lit.text()).append(")");
+                else if (pt instanceof PatternPart.FlexLiteral fl) partsDesc.append("Flex(").append(fl.forms()).append(")");
+                else if (pt instanceof PatternPart.PlaceholderPart pp) partsDesc.append("PH(").append(pp.ph().name()).append(":").append(pp.ph().typeId()).append(")");
+                else if (pt instanceof PatternPart.Group g) partsDesc.append("Group(req=").append(g.required()).append(",alts=").append(g.alternatives().size()).append(")");
+                else partsDesc.append("UNKNOWN(").append(pt.getClass().getName()).append(")");
+            }
+            LumenLogger.debug("PatternMatcher.match", "Parts (" + p.parts().size() + "): " + partsDesc);
         }
-        LumenLogger.debug("PatternMatcher.match", "Parts (" + p.parts().size() + "): " + partsDesc);
 
         Map<String, BoundValue> map = new LinkedHashMap<>();
         List<String> choices = new ArrayList<>();
@@ -108,18 +101,10 @@ public final class PatternMatcher {
         try {
             consumed = tryMatch(tokens, 0, p.parts(), 0, types, env, map, choices, validator, null);
         } catch (Throwable t) {
-            LumenLogger.debug("PatternMatcher.match",
-                    "EXCEPTION in tryMatch: " + t.getClass().getName() + ": " + t.getMessage());
             return null;
         }
 
-        if (consumed == tokens.size()) {
-            LumenLogger.debug("PatternMatcher.match", "SUCCESS: Pattern matched completely");
-            return new Match(p, map, List.copyOf(choices));
-        }
-
-        LumenLogger.debug("PatternMatcher.match", "FAILED: " +
-                (consumed < 0 ? "match failed" : "unmatched tokens remaining (" + (tokens.size() - consumed) + ")"));
+        if (consumed == tokens.size()) return new Match(p, map, List.copyOf(choices));
         return null;
     }
 
@@ -178,10 +163,8 @@ public final class PatternMatcher {
             @NotNull List<String> choices,
             @Nullable InlineExprValidator validator,
             @Nullable MatchProgress progress) {
-        if (pi >= parts.size())
-            return ti;
-
-        PatternPart part = parts.get(pi);
+        while (pi < parts.size()) {
+            PatternPart part = parts.get(pi);
 
         if (part instanceof PatternPart.Literal lit) {
             if (ti >= tokens.size()) {
@@ -192,7 +175,9 @@ public final class PatternMatcher {
                 if (progress != null) progress.recordFailure(ti, lit, null, List.of(tokens.get(ti)));
                 return -1;
             }
-            return tryMatch(tokens, ti + 1, parts, pi + 1, types, env, map, choices, validator, progress);
+            ti++;
+            pi++;
+            continue;
         }
 
         if (part instanceof PatternPart.FlexLiteral flex) {
@@ -200,10 +185,10 @@ public final class PatternMatcher {
                 if (progress != null) progress.recordFailure(ti, flex, null, List.of());
                 return -1;
             }
-            String tok = tokens.get(ti).text().toLowerCase(Locale.ROOT);
+            String tokText = tokens.get(ti).text();
             boolean matched = false;
             for (String form : flex.forms()) {
-                if (form.equals(tok)) {
+                if (form.equalsIgnoreCase(tokText)) {
                     matched = true;
                     break;
                 }
@@ -212,25 +197,24 @@ public final class PatternMatcher {
                 if (progress != null) progress.recordFailure(ti, flex, null, List.of(tokens.get(ti)));
                 return -1;
             }
-            return tryMatch(tokens, ti + 1, parts, pi + 1, types, env, map, choices, validator, progress);
+            ti++;
+            pi++;
+            continue;
         }
 
         if (part instanceof PatternPart.Group group) {
             List<PatternPart> tail = parts.subList(pi + 1, parts.size());
-
             for (List<PatternPart> alt : group.alternatives()) {
                 List<PatternPart> combined = new ArrayList<>(alt.size() + tail.size());
                 combined.addAll(alt);
                 combined.addAll(tail);
-
                 Map<String, BoundValue> snapshot = new LinkedHashMap<>(map);
                 int choicesSnapshot = choices.size();
                 if (group.required()) {
                     choices.add(altText(alt));
                 }
                 int result = tryMatch(tokens, ti, combined, 0, types, env, map, choices, validator, progress);
-                if (result >= 0)
-                    return result;
+                if (result >= 0) return result;
 
                 map.clear();
                 map.putAll(snapshot);
@@ -250,7 +234,6 @@ public final class PatternMatcher {
             Placeholder ph = pp.ph();
             TypeBinding binding = types.get(ph.typeId());
             if (binding == null) {
-                LumenLogger.debug("PatternMatcher.match", "FAILED: No type binding for '" + ph.typeId() + "'");
                 if (progress != null) progress.recordFailure(ti, pp, ph.typeId(), List.of());
                 return -1;
             }
@@ -262,29 +245,19 @@ public final class PatternMatcher {
                 if (braceEnd >= 0) {
                     List<Token> inner = tokens.subList(ti + 1, braceEnd);
                     List<Token> fullSlice = tokens.subList(ti, braceEnd + 1);
-                    LumenLogger.debug("PatternMatcher.match",
-                            "Brace group for %" + ph.name() + ":" + ph.typeId()
-                                    + "% consuming tokens " + ti + ".." + braceEnd);
                     map.put(ph.name(), new BoundValue(ph, fullSlice, new BraceExpr(inner), binding));
                     return tryMatch(tokens, braceEnd + 1, parts, pi + 1, types, env, map, choices, validator, progress);
                 }
             }
 
             List<Token> remaining = tokens.subList(ti, tokens.size());
-            LumenLogger.debug("PatternMatcher.match", "Placeholder %" + ph.name() + ":" + ph.typeId()
-                    + "% at ti=" + ti + " remaining=" + remaining.stream()
-                    .map(t -> "'" + t.text() + "'").reduce((a, b) -> a + " " + b).orElse("(empty)"));
-
             int consumeCount = safeConsumeCount(binding, remaining, env, progress);
-            LumenLogger.debug("PatternMatcher.match", "  consumeCount=" + consumeCount);
 
             boolean skipGreedy = false;
             if (consumeCount == CONSUME_REJECTED) {
                 if (validator == null) {
                     if (progress == null) return -1;
                     skipGreedy = true;
-                } else {
-                    LumenLogger.debug("PatternMatcher.match", "  consumeCount rejected but validator present, falling through to inline backtracking");
                 }
             }
 
@@ -294,12 +267,10 @@ public final class PatternMatcher {
                     List<Token> slice = tokens.subList(ti, end);
                     Object value = safeParse(binding, slice, env, progress);
                     if (value != PARSE_FAILED) {
-                        LumenLogger.debug("PatternMatcher.match", "  parse OK, value=" + value);
                         map.put(ph.name(), new BoundValue(ph, slice, value, binding));
                         return tryMatch(tokens, end, parts, pi + 1, types, env, map, choices, validator, progress);
                     }
                 }
-                LumenLogger.debug("PatternMatcher.match", "  fixed consumeCount failed, falling through to greedy backtracking");
             }
 
             if (!skipGreedy) {
@@ -370,6 +341,8 @@ public final class PatternMatcher {
 
         if (progress != null) progress.recordFailure(ti, part, null, List.of());
         return -1;
+        }
+        return ti;
     }
 
     /**
@@ -383,7 +356,6 @@ public final class PatternMatcher {
         try {
             return binding.consumeCount(tokens, env);
         } catch (ParseFailureException e) {
-            LumenLogger.debug("PatternMatcher.match", "  consumeCount threw: " + e.getMessage());
             if (progress != null) progress.storeRejectionReason(e.getMessage());
             return CONSUME_REJECTED;
         } catch (RuntimeException e) {

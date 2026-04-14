@@ -81,7 +81,7 @@ performance:
   # script. This warms up the entire pipeline (parser, code emitter, compiler)
   # so that the real scripts load faster when they are loaded later in the startup process.
   # This is done asynchronously to avoid blocking the main thread, but it may be worse overall startup for bad CPUs or limited resources.
-  # Note, JIT takes time to optimize, running a warmup way earlier in the startup process results much better compile times (40 avg to 20 avg ms on 9900x3d).
+  # Note, JIT takes time to optimize, running a warmup way earlier in the startup process results in much better compile times.
   warmup-on-startup: false
 
   # Exclude certain packages from the classpath when compiling scripts, such as internals or large libraries.
@@ -93,6 +93,12 @@ performance:
   # This reduces main thread usage during script loading and reloading.
   # The class activation (instantiation and lifecycle hooks) still runs on the main thread.
   async-define-class: true
+
+  # Number of threads used to parse independent top-level blocks in parallel within a script.
+  # Independent blocks (commands, events, schedules) are emitted concurrently, while blocks
+  # that affect global state (config, global, data class) are always processed sequentially first.
+  # Set to 0 or 1 to disable parallel parsing entirely.
+  parallel-parse-threads: 3
 
 # Language-level behavior
 language:

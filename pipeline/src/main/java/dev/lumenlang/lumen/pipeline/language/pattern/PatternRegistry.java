@@ -88,6 +88,19 @@ public final class PatternRegistry {
     }
 
     /**
+     * Eagerly builds all internal pattern indices so that the first match call
+     * does not pay the sorting and indexing cost.
+     *
+     * <p>Should be called once after all patterns have been registered.
+     */
+    public void warmup() {
+        ensureStatementIndex();
+        ensureExpressionIndex();
+        conditionRegistry.warmup();
+        loopRegistry.warmup();
+    }
+
+    /**
      * Computes a specificity score for a pattern. Patterns with more literal parts are
      * considered more specific and should be tried first during matching.
      *

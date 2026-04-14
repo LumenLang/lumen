@@ -62,4 +62,11 @@ public interface CodegenAccess {
      * @return the original script file name (e.g. {@code "hello.luma"})
      */
     @NotNull String scriptName();
+
+    /**
+     * Returns a unique method identifier for the current script compilation.
+     *
+     * @return a unique integer for method name generation
+     */
+    int nextMethodId();
 }

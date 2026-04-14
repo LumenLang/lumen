@@ -40,14 +40,3 @@ public class MyBinder implements ScriptAnnotationBinder {
 The `bind` method receives the script instance and its class. Iterate over declared methods, check for your annotation, and perform whatever setup you need.
 
 The `unbind` method is called when the script is unloaded. Remove any listeners, registrations, or state tied to that instance.
-
-## Registering a Binder
-
-Register your binder in your addon's `onEnable`:
-
-```java
-@Override
-public void onEnable(@NotNull LumenAPI api) {
-    api.binders().register(new MyBinder());
-}
-```

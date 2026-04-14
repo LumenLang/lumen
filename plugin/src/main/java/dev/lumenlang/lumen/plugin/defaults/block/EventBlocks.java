@@ -108,7 +108,7 @@ public final class EventBlocks {
                         ctx.block().putEnv("__event_meta", eventMeta);
                         ctx.block().putEnv("__event_annotation_idx", out.lineNum());
                         ctx.block().putEnv("__event_simple_name", simpleEventName);
-                        out.line("public void __lumen_evt_" + eventName + "_" + out.lineNum() + "("
+                        out.line("public void __lumen_evt_" + eventName + "_" + ctx.codegen().nextMethodId() + "("
                                 + simpleEventName
                                 + " event) {");
 
@@ -283,7 +283,7 @@ public final class EventBlocks {
                         String name = ctx.java("name");
                         String safeName = name.replaceAll("[^a-zA-Z0-9_]", "_")
                                 .replaceAll("^\"|\"$", "");
-                        String methodName = "__lumen_inv_" + safeName + "_" + out.lineNum();
+                        String methodName = "__lumen_inv_" + safeName + "_" + ctx.codegen().nextMethodId();
 
                         ctx.block().putEnv("inv_name", name);
                         ctx.block().putEnv("inv_annotation_idx", out.lineNum());

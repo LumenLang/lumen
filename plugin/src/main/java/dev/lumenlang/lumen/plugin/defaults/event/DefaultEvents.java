@@ -525,7 +525,7 @@ public final class DefaultEvents {
                     @Override
                     public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
                         out.line("@LumenEvent(AsyncPlayerChatEvent.class)");
-                        out.line("public void __lumen_evt_chat_" + out.lineNum() + "(AsyncPlayerChatEvent event) {");
+                        out.line("public void __lumen_evt_chat_" + ctx.codegen().nextMethodId() + "(AsyncPlayerChatEvent event) {");
                         out.line("final Player __chat_player = event.getPlayer();");
                         out.line("final String __chat_text = event.getMessage();");
                         out.line("Bukkit.getScheduler().runTask(Lumen.instance(), () -> {");

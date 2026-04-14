@@ -463,6 +463,7 @@ public final class ScriptManager {
     private static @NotNull GeneratedSource parse(@NotNull String name, @NotNull String source) {
         CodegenContext gen = new CodegenContext(name);
         gen.setRawJavaEnabled(LumenConfiguration.LANGUAGE.EXPERIMENTAL.RAW_JAVA);
+        CodeEmitter.setParallelParseThreads(LumenConfiguration.PERFORMANCE.PARALLEL_PARSE_THREADS);
         JavaBuilder output = new JavaBuilder();
         TypeEnv env = new TypeEnv();
 
