@@ -3,12 +3,12 @@ package dev.lumenlang.lumen.plugin.defaults.emit.form;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
+import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
 import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
-import dev.lumenlang.lumen.api.emit.EmitContext;
 import dev.lumenlang.lumen.api.emit.ScriptToken;
 import dev.lumenlang.lumen.api.emit.StatementFormHandler;
-import dev.lumenlang.lumen.pipeline.language.emit.EmitContextImpl;
+import dev.lumenlang.lumen.pipeline.codegen.HandlerContextImpl;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,14 +42,14 @@ public final class GlobalDeclarationForm implements StatementFormHandler {
     }
 
     @Override
-    public boolean tryHandle(@NotNull List<? extends ScriptToken> tokens, @NotNull EmitContext ctx) {
-        List<Token> t = EmitContextImpl.toPipelineTokens(tokens);
+    public boolean tryHandle(@NotNull List<? extends ScriptToken> tokens, @NotNull HandlerContext ctx) {
+        List<Token> t = HandlerContextImpl.toPipelineTokens(tokens);
         if (!isGlobalDeclaration(t)) return false;
         throwDeprecation(t, ctx);
         return true;
     }
 
-    private void throwDeprecation(@NotNull List<Token> t, @NotNull EmitContext ctx) {
+    private void throwDeprecation(@NotNull List<Token> t, @NotNull HandlerContext ctx) {
         int idx = 1;
         boolean stored = false;
         boolean scoped = false;

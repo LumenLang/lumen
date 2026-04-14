@@ -3,10 +3,10 @@ package dev.lumenlang.lumen.plugin.defaults.emit.form;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
+import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
 import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.emit.BlockFormHandler;
-import dev.lumenlang.lumen.api.emit.EmitContext;
 import dev.lumenlang.lumen.api.emit.ScriptLine;
 import dev.lumenlang.lumen.api.emit.ScriptToken;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
@@ -15,9 +15,8 @@ import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.NullableType;
 import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.api.util.FuzzyMatch;
-import dev.lumenlang.lumen.pipeline.codegen.BindingContext;
+import dev.lumenlang.lumen.pipeline.codegen.HandlerContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
-import dev.lumenlang.lumen.pipeline.language.emit.EmitContextImpl;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.language.pattern.registered.RegisteredExpressionMatch;
 import dev.lumenlang.lumen.pipeline.language.resolve.PatternSimulator;
@@ -69,7 +68,7 @@ public final class GlobalBlock implements BlockFormHandler {
     }
 
     @Override
-    public void handle(@NotNull List<? extends ScriptToken> headTokens, @NotNull List<? extends ScriptLine> children, @NotNull EmitContext ctx) {
+    public void handle(@NotNull List<? extends ScriptToken> headTokens, @NotNull List<? extends ScriptLine> children, @NotNull HandlerContext ctx) {
         TypeEnv env = (TypeEnv) ctx.env();
 
         if (env.has(GLOBAL_BLOCK_KEY)) {
@@ -82,13 +81,13 @@ public final class GlobalBlock implements BlockFormHandler {
         env.put(GLOBAL_BLOCK_KEY, true);
 
         for (ScriptLine child : children) {
-            List<Token> tokens = EmitContextImpl.toPipelineTokens(child.tokens());
+            List<Token> tokens = HandlerContextImpl.toPipelineTokens(child.tokens());
             if (tokens.isEmpty()) continue;
             parseGlobalLine(tokens, child.lineNumber(), child.raw(), env, ctx);
         }
     }
 
-    private void parseGlobalLine(@NotNull List<Token> tokens, int line, @NotNull String raw, @NotNull TypeEnv env, @NotNull EmitContext ctx) {
+    private void parseGlobalLine(@NotNull List<Token> tokens, int line, @NotNull String raw, @NotNull TypeEnv env, @NotNull HandlerContext ctx) {
         int idx = 0;
 
         boolean stored = false;
@@ -239,7 +238,7 @@ public final class GlobalBlock implements BlockFormHandler {
         env.registerGlobal(new TypeEnv.GlobalVarInfo(name, defaultJava, className, scoped, stored, exprMetadata, declaredType, scopeType));
     }
 
-    private @NotNull String resolveDefault(@NotNull LumenType declaredType, @Nullable List<Token> exprTokens, @NotNull String name, int line, @NotNull String raw, @NotNull TypeEnv env, @NotNull EmitContext ctx) {
+    private @NotNull String resolveDefault(@NotNull LumenType declaredType, @Nullable List<Token> exprTokens, @NotNull String name, int line, @NotNull String raw, @NotNull TypeEnv env, @NotNull HandlerContext ctx) {
         if (exprTokens != null) {
             return resolveExprJava(exprTokens, line, raw, env, ctx);
         }
@@ -263,14 +262,14 @@ public final class GlobalBlock implements BlockFormHandler {
                 .build());
     }
 
-    private @NotNull String resolveExprJava(@NotNull List<Token> exprTokens, int line, @NotNull String raw, @NotNull TypeEnv env, @NotNull EmitContext ctx) {
+    private @NotNull String resolveExprJava(@NotNull List<Token> exprTokens, int line, @NotNull String raw, @NotNull TypeEnv env, @NotNull HandlerContext ctx) {
         Expr expr = ExprParser.parse(exprTokens, env);
         if (!(expr instanceof Expr.RawExpr)) return resolveSimpleExprJava(expr, env);
 
         RegisteredExpressionMatch exprMatch = PatternRegistry.instance().matchExpression(exprTokens, env);
         if (exprMatch != null) {
-            BindingContext bc = new BindingContext(exprMatch.match(), env, ((EmitContextImpl) ctx).codegenContext(), env.blockContext());
-            ExpressionResult result = exprMatch.reg().handler().handle(bc);
+            HandlerContextImpl hctx = new HandlerContextImpl(exprMatch.match(), env, ((HandlerContextImpl) ctx).codegenContext(), env.blockContext(), null, 0, "");
+            ExpressionResult result = exprMatch.reg().handler().handle(hctx);
             return result.java();
         }
 
@@ -282,14 +281,14 @@ public final class GlobalBlock implements BlockFormHandler {
         throw new DiagnosticException(SuggestionDiagnostics.buildNoSuggestion("E502", "Cannot resolve default expression", line, raw, rawTokens));
     }
 
-    private @Nullable Map<String, Object> resolveExprMetadata(@Nullable List<Token> exprTokens, @NotNull TypeEnv env, @NotNull EmitContext ctx) {
+    private @Nullable Map<String, Object> resolveExprMetadata(@Nullable List<Token> exprTokens, @NotNull TypeEnv env, @NotNull HandlerContext ctx) {
         if (exprTokens == null) return null;
         Expr expr = ExprParser.parse(exprTokens, env);
         if (!(expr instanceof Expr.RawExpr)) return null;
         RegisteredExpressionMatch exprMatch = PatternRegistry.instance().matchExpression(exprTokens, env);
         if (exprMatch == null) return null;
-        BindingContext bc = new BindingContext(exprMatch.match(), env, ((EmitContextImpl) ctx).codegenContext(), env.blockContext());
-        ExpressionResult result = exprMatch.reg().handler().handle(bc);
+        HandlerContextImpl hctx = new HandlerContextImpl(exprMatch.match(), env, ((HandlerContextImpl) ctx).codegenContext(), env.blockContext(), null, 0, "");
+        ExpressionResult result = exprMatch.reg().handler().handle(hctx);
         return result.metadata();
     }
 

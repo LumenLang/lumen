@@ -25,9 +25,9 @@ public final class PlayerStatements {
                 .example("message player \"Hello, world!\"")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     ctx.codegen().addImport(LumenText.class.getName());
-                    out.line("LumenText.send(" + ctx.java("who") + ", " + ctx.java("text") + ");");
+                    ctx.out().line("LumenText.send(" + ctx.java("who") + ", " + ctx.java("text") + ");");
                 }));
 
         api.patterns().statement(b -> b
@@ -37,7 +37,7 @@ public final class PlayerStatements {
                 .example("set player's health to 20")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((line, ctx, out) -> out
+                .handler(ctx -> ctx.out()
                         .line(ctx.java("who") + ".setHealth(" + ctx.java("val") + ");")));
 
         api.patterns().statement(b -> b
@@ -47,7 +47,7 @@ public final class PlayerStatements {
                 .example("teleport player to target")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((line, ctx, out) -> out
+                .handler(ctx -> ctx.out()
                         .line(ctx.java("who") + ".teleport(" + ctx.java("target") + ");")));
 
         api.patterns().statement(b -> b
@@ -57,7 +57,7 @@ public final class PlayerStatements {
                 .example("teleport player to loc")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((line, ctx, out) -> out
+                .handler(ctx -> ctx.out()
                         .line(ctx.java("who") + ".teleport(" + ctx.java("loc") + ");")));
 
         api.patterns().statement(b -> b
@@ -67,10 +67,10 @@ public final class PlayerStatements {
                 .example("heal player")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     String attrName = AttributeNames.resolve("max_health");
                     ctx.codegen().addImport(Attribute.class.getName());
-                    out.line(ctx.java("who") + ".setHealth(" + ctx.java("who")
+                    ctx.out().line(ctx.java("who") + ".setHealth(" + ctx.java("who")
                             + ".getAttribute(Attribute." + attrName + ").getValue());");
                 }));
 
@@ -81,7 +81,7 @@ public final class PlayerStatements {
                 .example("feed player")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((line, ctx, out) -> out.line(ctx.java("who") + ".setFoodLevel(20);")));
+                .handler(ctx -> ctx.out().line(ctx.java("who") + ".setFoodLevel(20);")));
 
         api.patterns().statement(b -> b
                 .by("Lumen")
@@ -90,7 +90,7 @@ public final class PlayerStatements {
                 .example("kill player")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((line, ctx, out) -> out.line(ctx.java("who") + ".setHealth(0);")));
+                .handler(ctx -> ctx.out().line(ctx.java("who") + ".setHealth(0);")));
 
         api.patterns().statement(b -> b
                 .by("Lumen")
@@ -99,7 +99,7 @@ public final class PlayerStatements {
                 .example("set player's food level to 10")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((line, ctx, out) -> out
+                .handler(ctx -> ctx.out()
                         .line(ctx.java("who") + ".setFoodLevel(" + ctx.java("val") + ");")));
 
         api.patterns().statement(b -> b
@@ -109,7 +109,7 @@ public final class PlayerStatements {
                 .example("set player's xp level to 30")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((line, ctx, out) -> out
+                .handler(ctx -> ctx.out()
                         .line(ctx.java("who") + ".setLevel(" + ctx.java("val") + ");")));
 
         api.patterns().statement(b -> b
@@ -119,9 +119,7 @@ public final class PlayerStatements {
                 .example("set player's gamemode to \"creative\"")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((line, ctx, out) -> {
-                    out.line(ctx.java("who") + ".setGameMode(" + ctx.java("mode") + ");");
-                }));
+                .handler(ctx -> ctx.out().line(ctx.java("who") + ".setGameMode(" + ctx.java("mode") + ");")));
 
         api.patterns().statement(b -> b
                 .by("Lumen")
@@ -130,7 +128,7 @@ public final class PlayerStatements {
                 .example("kick player \"You have been kicked!\"")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((line, ctx, out) -> out
+                .handler(ctx -> ctx.out()
                         .line(ctx.java("who") + ".kickPlayer(" + ctx.java("reason") + ");")));
 
         api.patterns().statement(b -> b
@@ -140,7 +138,7 @@ public final class PlayerStatements {
                 .example("kick player")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((line, ctx, out) -> out.line(ctx.java("who") + ".kickPlayer(\"\");")));
+                .handler(ctx -> ctx.out().line(ctx.java("who") + ".kickPlayer(\"\");")));
 
         api.patterns().statement(b -> b
                 .by("Lumen")
@@ -149,9 +147,9 @@ public final class PlayerStatements {
                 .example("set player's fly to true")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((line, ctx, out) -> {
-                    out.line(ctx.java("who") + ".setAllowFlight(" + ctx.java("val") + ");");
-                    out.line(ctx.java("who") + ".setFlying(" + ctx.java("val") + ");");
+                .handler(ctx -> {
+                    ctx.out().line(ctx.java("who") + ".setAllowFlight(" + ctx.java("val") + ");");
+                    ctx.out().line(ctx.java("who") + ".setFlying(" + ctx.java("val") + ");");
                 }));
     }
 }

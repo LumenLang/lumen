@@ -3,8 +3,8 @@ package dev.lumenlang.lumen.plugin.defaults.expression;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
-import dev.lumenlang.lumen.api.codegen.BindingAccess;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
+import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.api.type.BuiltinLumenTypes;
@@ -34,7 +34,7 @@ public final class DataExpressions {
      * @param rawGet the Java expression for the raw {@code DataInstance.get()} call
      * @return an expression result with the correctly typed Java expression
      */
-    private static @NotNull ExpressionResult typedFieldResult(@NotNull BindingAccess ctx, @NotNull String rawGet) {
+    private static @NotNull ExpressionResult typedFieldResult(@NotNull HandlerContext ctx, @NotNull String rawGet) {
         LumenType fieldType = resolveFieldLumenType(ctx);
         if (fieldType != null) {
             return new ExpressionResult(DataSchema.castFromObject(fieldType, rawGet), fieldType);
@@ -49,7 +49,7 @@ public final class DataExpressions {
      * @param ctx the binding access
      * @return the field type, or {@code null} if it cannot be determined at compile time
      */
-    private static @Nullable LumenType resolveFieldLumenType(@NotNull BindingAccess ctx) {
+    private static @Nullable LumenType resolveFieldLumenType(@NotNull HandlerContext ctx) {
         List<String> objTokens = ctx.tokens("obj");
         if (objTokens.size() != 1) return null;
 

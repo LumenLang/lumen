@@ -1,5 +1,6 @@
 package dev.lumenlang.lumen.api.emit;
 
+import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +26,7 @@ public interface StatementValidator {
      * <p>If the statement is invalid, the implementation should throw a {@link DiagnosticException} with a descriptive diagnostic.
      *
      * @param tokens the statement tokens to validate
-     * @param ctx    the emit context providing environment, codegen, and output access
+     * @param ctx    the handler context providing environment, codegen, and output access
      */
-    void validate(@NotNull List<? extends ScriptToken> tokens, @NotNull EmitContext ctx);
+    void validate(@NotNull List<? extends ScriptToken> tokens, @NotNull HandlerContext ctx);
 }

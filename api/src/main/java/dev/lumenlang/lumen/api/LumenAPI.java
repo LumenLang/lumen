@@ -19,15 +19,15 @@ import org.jetbrains.annotations.NotNull;
  * <pre>{@code
  * // Via LumenAddon (jar-based or plugin-based):
  * public void onEnable(LumenAPI api) {
- *     api.patterns().statement("heal %who:PLAYER%", (line, ctx, out) ->
- *         out.line(ctx.java("who") + ".setHealth(20);")
+ *     api.patterns().statement("heal %who:PLAYER%", ctx ->
+ *         ctx.out().line(ctx.java("who") + ".setHealth(20);")
  *     );
  * }
  *
  * // Directly from a Bukkit plugin that depends on Lumen:
  * LumenAPI api = LumenProvider.api();
- * api.patterns().condition("%p:PLAYER% is swimming", (match, env, ctx) ->
- *     match.ref("p").java() + ".isSwimming()"
+ * api.patterns().condition("%p:PLAYER% is swimming", ctx ->
+ *     ctx.requireVarHandle("p").java() + ".isSwimming()"
  * );
  * }</pre>
  *

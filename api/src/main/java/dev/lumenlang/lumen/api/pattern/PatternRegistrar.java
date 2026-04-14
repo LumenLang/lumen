@@ -36,14 +36,14 @@ import java.util.function.Consumer;
  *     .example("if player is swimming:")
  *     .since("1.0.0")
  *     .category(Categories.PLAYER)
- *     .handler((match, env, ctx) -> match.ref("p").java() + ".isSwimming()")
+ *     .handler(ctx -> ctx.requireVarHandle("p").java() + ".isSwimming()")
  * );
  * }</pre>
  *
  * <h2>Simple Example</h2>
  * <pre>{@code
  * api.patterns().statement("explode %who:PLAYER%",
- *         (line, ctx, out) -> out.line(ctx.java("who") + ".getWorld().createExplosion(" +
+ *         ctx -> ctx.out().line(ctx.java("who") + ".getWorld().createExplosion(" +
  *                 ctx.java("who") + ".getLocation(), 4F);"));
  * }</pre>
  */

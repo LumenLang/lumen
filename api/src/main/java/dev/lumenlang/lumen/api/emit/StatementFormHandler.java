@@ -1,5 +1,6 @@
 package dev.lumenlang.lumen.api.emit;
 
+import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -33,12 +34,12 @@ public interface StatementFormHandler {
      *
      * <p>Implementations should inspect the tokens to decide whether they match the expected
      * form. If they do, the handler should emit the corresponding Java code via
-     * {@link EmitContext#out()} and return {@code true}. If the tokens do not match,
+     * {@link HandlerContext#out()} and return {@code true}. If the tokens do not match,
      * return {@code false} without emitting anything.
      *
      * @param tokens the tokens of the statement line
-     * @param ctx    the emit context providing environment, codegen, and output access
+     * @param ctx    the handler context providing environment, codegen, and output access
      * @return {@code true} if the statement was handled, {@code false} to try the next handler
      */
-    boolean tryHandle(@NotNull List<? extends ScriptToken> tokens, @NotNull EmitContext ctx);
+    boolean tryHandle(@NotNull List<? extends ScriptToken> tokens, @NotNull HandlerContext ctx);
 }

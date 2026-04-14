@@ -3,9 +3,9 @@ package dev.lumenlang.lumen.pipeline.language.resolve;
 import dev.lumenlang.lumen.api.codegen.JavaOutput;
 import dev.lumenlang.lumen.api.pattern.PatternMeta;
 import dev.lumenlang.lumen.api.util.FuzzyMatch;
-import dev.lumenlang.lumen.pipeline.codegen.BindingContext;
 import dev.lumenlang.lumen.pipeline.codegen.BlockContext;
 import dev.lumenlang.lumen.pipeline.codegen.CodegenContext;
+import dev.lumenlang.lumen.pipeline.codegen.HandlerContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.pipeline.conditions.registry.RegisteredCondition;
 import dev.lumenlang.lumen.pipeline.language.match.Match;
@@ -689,9 +689,8 @@ public final class PatternSimulator {
         try {
             CodegenContext codegenCtx = new CodegenContext("__simulation__.luma");
             BlockContext blockCtx = new BlockContext(null, null, List.of(), 0);
-            BindingContext bc = new BindingContext(match, env, codegenCtx, blockCtx);
-            JavaOutput noopOutput = new NoopJavaOutput();
-            handler.handler().handle(0, bc, noopOutput);
+            HandlerContextImpl hctx = new HandlerContextImpl(match, env, codegenCtx, blockCtx, new NoopJavaOutput(), 0, "");
+            handler.handler().handle(hctx);
             return true;
         } catch (Throwable ignored) {
             return false;
@@ -710,8 +709,8 @@ public final class PatternSimulator {
         try {
             CodegenContext codegenCtx = new CodegenContext("__simulation__.luma");
             BlockContext blockCtx = new BlockContext(null, null, List.of(), 0);
-            BindingContext bc = new BindingContext(match, env, codegenCtx, blockCtx);
-            handler.handler().handle(bc);
+            HandlerContextImpl hctx = new HandlerContextImpl(match, env, codegenCtx, blockCtx, null, 0, "");
+            handler.handler().handle(hctx);
             return true;
         } catch (Throwable ignored) {
             return false;

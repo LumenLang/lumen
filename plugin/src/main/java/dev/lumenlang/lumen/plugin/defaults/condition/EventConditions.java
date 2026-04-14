@@ -23,16 +23,16 @@ public final class EventConditions {
                 .example("if this is cancelled:")
                 .since("1.0.0")
                 .category(Categories.EVENT)
-                .handler((match, env, ctx) -> {
-                    if (env.block() == null || env.block().getEnvFromParents("__event_block") == null) {
+                .handler(ctx -> {
+                    if (ctx.env().block() == null || ctx.env().block().getEnvFromParents("__event_block") == null) {
                         throw new RuntimeException("'is cancelled' condition can only be used inside an event handler block");
                     }
-                    Boolean cancellable = env.block().getEnvFromParents("__event_cancellable");
+                    Boolean cancellable = ctx.env().block().getEnvFromParents("__event_cancellable");
                     if (cancellable != null && !cancellable) {
                         throw new RuntimeException("'is cancelled' condition cannot be used here because this event is not cancellable");
                     }
-                    ctx.addImport(Cancellable.class.getName());
-                    if (match.choice(0).equals("is not")) {
+                    ctx.codegen().addImport(Cancellable.class.getName());
+                    if (ctx.choice(0).equals("is not")) {
                         return "!((Cancellable) event).isCancelled()";
                     } else {
                         return "((Cancellable) event).isCancelled()";

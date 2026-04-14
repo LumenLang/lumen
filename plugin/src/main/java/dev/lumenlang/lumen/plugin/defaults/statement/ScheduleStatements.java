@@ -27,9 +27,9 @@ public final class ScheduleStatements {
                 .example("cancel schedule \"schedule_name\"")
                 .since("1.0.0")
                 .category(Categories.SCHEDULING)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     ctx.codegen().addImport(ScriptScheduler.class.getName());
-                    out.line("ScriptScheduler.cancelByName(this, "
+                    ctx.out().line("ScriptScheduler.cancelByName(this, "
                             + ctx.java("name") + ");");
                 }));
 
@@ -40,13 +40,13 @@ public final class ScheduleStatements {
                 .example("cancel")
                 .since("1.0.0")
                 .category(Categories.SCHEDULING)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     Boolean cancellable = ctx.block().getEnvFromParents("__cancellable_schedule");
                     if (cancellable == null || !cancellable) {
                         throw new RuntimeException(
                                 "The cancel statement can only be used inside a schedule block (wait, every, etc)");
                     }
-                    out.line("__cancelTask.run(); return;");
+                    ctx.out().line("__cancelTask.run(); return;");
                 }));
     }
 }

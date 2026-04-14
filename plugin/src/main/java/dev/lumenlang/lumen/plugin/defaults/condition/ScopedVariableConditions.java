@@ -70,12 +70,12 @@ public final class ScopedVariableConditions {
                 .example("if tp_toggle == 1 for target:")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
-                .handler((match, env, ctx) -> {
-                    String varName = match.java("a", ctx, env);
-                    String bVal = match.java("b", ctx, env);
-                    String scopeVarName = match.java("scope", ctx, env);
-                    String op = match.java("op", ctx, env);
-                    String readExpr = buildScopedRead(env, ctx, varName, scopeVarName);
+                .handler(ctx -> {
+                    String varName = ctx.java("a");
+                    String bVal = ctx.java("b");
+                    String scopeVarName = ctx.java("scope");
+                    String op = ctx.java("op");
+                    String readExpr = buildScopedRead(ctx.env(), ctx.codegen(), varName, scopeVarName);
                     if (op.equals("<") || op.equals(">") || op.equals("<=") || op.equals(">=")) {
                         return "((double) " + readExpr + ") " + op + " ((double) " + bVal + ")";
                     }
@@ -90,11 +90,11 @@ public final class ScopedVariableConditions {
                 .example("if tpa_requester is \"none\" for target:")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
-                .handler((match, env, ctx) -> {
-                    String varName = match.java("a", ctx, env);
-                    String bVal = match.java("b", ctx, env);
-                    String scopeVarName = match.java("scope", ctx, env);
-                    String readExpr = buildScopedRead(env, ctx, varName, scopeVarName);
+                .handler(ctx -> {
+                    String varName = ctx.java("a");
+                    String bVal = ctx.java("b");
+                    String scopeVarName = ctx.java("scope");
+                    String readExpr = buildScopedRead(ctx.env(), ctx.codegen(), varName, scopeVarName);
                     return "String.valueOf(" + readExpr + ").equalsIgnoreCase(String.valueOf(" + bVal + "))";
                 }));
 
@@ -106,11 +106,11 @@ public final class ScopedVariableConditions {
                 .example("if tpa_requester is not \"none\" for target:")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
-                .handler((match, env, ctx) -> {
-                    String varName = match.java("a", ctx, env);
-                    String bVal = match.java("b", ctx, env);
-                    String scopeVarName = match.java("scope", ctx, env);
-                    String readExpr = buildScopedRead(env, ctx, varName, scopeVarName);
+                .handler(ctx -> {
+                    String varName = ctx.java("a");
+                    String bVal = ctx.java("b");
+                    String scopeVarName = ctx.java("scope");
+                    String readExpr = buildScopedRead(ctx.env(), ctx.codegen(), varName, scopeVarName);
                     return "!String.valueOf(" + readExpr + ").equalsIgnoreCase(String.valueOf(" + bVal + "))";
                 }));
 
@@ -121,10 +121,10 @@ public final class ScopedVariableConditions {
                 .example("if tpa_requester is set for target:")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
-                .handler((match, env, ctx) -> {
-                    String varName = match.java("a", ctx, env);
-                    String scopeVarName = match.java("scope", ctx, env);
-                    String readExpr = buildScopedRead(env, ctx, varName, scopeVarName);
+                .handler(ctx -> {
+                    String varName = ctx.java("a");
+                    String scopeVarName = ctx.java("scope");
+                    String readExpr = buildScopedRead(ctx.env(), ctx.codegen(), varName, scopeVarName);
                     return readExpr + " != null";
                 }));
 
@@ -135,10 +135,10 @@ public final class ScopedVariableConditions {
                 .example("if tpa_requester is not set for target:")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
-                .handler((match, env, ctx) -> {
-                    String varName = match.java("a", ctx, env);
-                    String scopeVarName = match.java("scope", ctx, env);
-                    String readExpr = buildScopedRead(env, ctx, varName, scopeVarName);
+                .handler(ctx -> {
+                    String varName = ctx.java("a");
+                    String scopeVarName = ctx.java("scope");
+                    String readExpr = buildScopedRead(ctx.env(), ctx.codegen(), varName, scopeVarName);
                     return readExpr + " == null";
                 }));
     }

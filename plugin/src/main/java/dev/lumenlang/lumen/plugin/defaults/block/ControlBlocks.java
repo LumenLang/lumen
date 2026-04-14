@@ -3,9 +3,8 @@ package dev.lumenlang.lumen.plugin.defaults.block;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
-import dev.lumenlang.lumen.api.codegen.BindingAccess;
 import dev.lumenlang.lumen.api.codegen.BlockAccess;
-import dev.lumenlang.lumen.api.codegen.JavaOutput;
+import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
 import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.handler.BlockHandler;
@@ -39,20 +38,20 @@ public final class ControlBlocks {
                 .supportsRootLevel(true)
                 .handler(new BlockHandler() {
                     @Override
-                    public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
+                    public void begin(@NotNull HandlerContext ctx) {
                         if (ctx.block().isRoot()) {
                             int methodId = ctx.codegen().nextMethodId();
-                            out.line("@LumenPreload");
-                            out.line("public void __lumen_if_" + methodId + "() {");
+                            ctx.out().line("@LumenPreload");
+                            ctx.out().line("public void __lumen_if_" + methodId + "() {");
                         }
-                        out.line("if (" + ctx.parseCondition("cond") + ") {");
+                        ctx.out().line("if (" + ctx.parseCondition("cond") + ") {");
                     }
 
                     @Override
-                    public void end(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
-                        out.line("}");
+                    public void end(@NotNull HandlerContext ctx) {
+                        ctx.out().line("}");
                         if (ctx.block().isRoot()) {
-                            out.line("}");
+                            ctx.out().line("}");
                         }
                     }
                 }));
@@ -71,14 +70,14 @@ public final class ControlBlocks {
                 .category(Categories.CONTROL_FLOW)
                 .handler(new BlockHandler() {
                     @Override
-                    public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
+                    public void begin(@NotNull HandlerContext ctx) {
                         validateElseBranch(ctx, "else if");
-                        out.line("else if (" + ctx.parseCondition("cond") + ") {");
+                        ctx.out().line("else if (" + ctx.parseCondition("cond") + ") {");
                     }
 
                     @Override
-                    public void end(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
-                        out.line("}");
+                    public void end(@NotNull HandlerContext ctx) {
+                        ctx.out().line("}");
                     }
                 }));
 
@@ -96,14 +95,14 @@ public final class ControlBlocks {
                 .category(Categories.CONTROL_FLOW)
                 .handler(new BlockHandler() {
                     @Override
-                    public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
+                    public void begin(@NotNull HandlerContext ctx) {
                         validateElseBranch(ctx, "else");
-                        out.line("else {");
+                        ctx.out().line("else {");
                     }
 
                     @Override
-                    public void end(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
-                        out.line("}");
+                    public void end(@NotNull HandlerContext ctx) {
+                        ctx.out().line("}");
                     }
                 }));
 
@@ -118,7 +117,7 @@ public final class ControlBlocks {
                 .category(Categories.CONTROL_FLOW)
                 .handler(new BlockHandler() {
                     @Override
-                    public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
+                    public void begin(@NotNull HandlerContext ctx) {
                         if (ctx.block().isRoot()) {
                             throw new DiagnosticException(LumenDiagnostic.error("E500", "Invalid 'repeat' placement")
                                     .at(ctx.block().line(), ctx.block().raw())
@@ -126,17 +125,17 @@ public final class ControlBlocks {
                                     .help("a 'repeat' block must be inside an event or command handler")
                                     .build());
                         }
-                        out.line("for (int __i = 0; __i < " + ctx.java("n") + "; __i++) {");
+                        ctx.out().line("for (int __i = 0; __i < " + ctx.java("n") + "; __i++) {");
                     }
 
                     @Override
-                    public void end(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
-                        out.line("}");
+                    public void end(@NotNull HandlerContext ctx) {
+                        ctx.out().line("}");
                     }
                 }));
     }
 
-    private static void validateElseBranch(@NotNull BindingAccess ctx, @NotNull String keyword) {
+    private static void validateElseBranch(@NotNull HandlerContext ctx, @NotNull String keyword) {
         BlockAccess block = ctx.block();
         if (block.isRoot()) {
             throw new DiagnosticException(LumenDiagnostic.error("E500", "'" + keyword + "' without matching 'if'")

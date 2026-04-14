@@ -3,9 +3,9 @@ package dev.lumenlang.lumen.pipeline.language.resolve;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.PrimitiveType;
-import dev.lumenlang.lumen.pipeline.codegen.BindingContext;
 import dev.lumenlang.lumen.pipeline.codegen.BlockContext;
 import dev.lumenlang.lumen.pipeline.codegen.CodegenContext;
+import dev.lumenlang.lumen.pipeline.codegen.HandlerContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.language.pattern.registered.RegisteredExpressionMatch;
@@ -124,8 +124,8 @@ public final class ExprResolver {
             if (match != null) {
                 try {
                     BlockContext block = env.blockContext();
-                    BindingContext bc = new BindingContext(match.match(), env, ctx, block);
-                    return match.reg().handler().handle(bc);
+                    HandlerContextImpl hctx = new HandlerContextImpl(match.match(), env, ctx, block, null, 0, "");
+                    return match.reg().handler().handle(hctx);
                 } catch (RuntimeException ignored) {
                 }
             }
@@ -166,8 +166,8 @@ public final class ExprResolver {
                 ExpressionResult subResult;
                 try {
                     BlockContext block = env.blockContext();
-                    BindingContext bc = new BindingContext(subMatch.match(), env, ctx, block);
-                    subResult = subMatch.reg().handler().handle(bc);
+                    HandlerContextImpl hctx = new HandlerContextImpl(subMatch.match(), env, ctx, block, null, 0, "");
+                    subResult = subMatch.reg().handler().handle(hctx);
                 } catch (RuntimeException e) {
                     continue;
                 }

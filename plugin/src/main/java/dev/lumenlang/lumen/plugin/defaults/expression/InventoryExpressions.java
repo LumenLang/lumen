@@ -94,29 +94,23 @@ public final class InventoryExpressions {
                         "[get] item in slot %slot:INT% of %inv:INVENTORY%",
                         "Returns the item stack in a specific slot of an inventory, or null if the slot is empty.",
                         "set item to get item in slot 0 of gui",
-                        ctx -> {
-                            return new ExpressionResult(
-                                    ctx.java("inv") + ".getItem(" + ctx.java("slot") + ")",
-                                    MinecraftTypes.ITEMSTACK);
-                        })
+                        ctx -> new ExpressionResult(
+                                ctx.java("inv") + ".getItem(" + ctx.java("slot") + ")",
+                                MinecraftTypes.ITEMSTACK))
                 .expression(
                         "[get] %inv:INVENTORY% inventory size",
                         "Returns the total number of slots in an inventory.",
                         "set sz to get gui inventory size",
-                        ctx -> {
-                            return new ExpressionResult(
-                                    ctx.java("inv") + ".getSize()",
-                                    PrimitiveType.INT);
-                        })
+                        ctx -> new ExpressionResult(
+                                ctx.java("inv") + ".getSize()",
+                                PrimitiveType.INT))
                 .expression(
                         "[get] first empty slot of %inv:INVENTORY%",
                         "Returns the index of the first empty slot in an inventory, or -1 if full.",
                         "set freeSlot to get first empty slot of gui",
-                        ctx -> {
-                            return new ExpressionResult(
-                                    ctx.java("inv") + ".firstEmpty()",
-                                    PrimitiveType.INT);
-                        })
+                        ctx -> new ExpressionResult(
+                                ctx.java("inv") + ".firstEmpty()",
+                                PrimitiveType.INT))
                 .expression(
                         "[get] name of %inv:INVENTORY%",
                         "Returns the name of a Lumen inventory, or null if the inventory was not created by Lumen.",

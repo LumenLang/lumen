@@ -21,9 +21,9 @@ public final class BlockConditions {
                 .description("Checks if a block's type matches or does not match the given material.")
                 .examples("if block type is stone:", "if block type is not air:")
                 .since("1.0.0").category(Categories.BLOCK)
-                .handler((match, env, ctx) -> {
-                    boolean negated = match.choice(0).equals("is not");
-                    return "(" + match.java("b", ctx, env) + ".getType() " + (negated ? "!= " : "== ") + match.java("mat", ctx, env) + ")";
+                .handler(ctx -> {
+                    boolean negated = ctx.choice(0).equals("is not");
+                    return "(" + ctx.java("b") + ".getType() " + (negated ? "!= " : "== ") + ctx.java("mat") + ")";
                 }));
 
         api.patterns().condition(b -> b
@@ -31,9 +31,9 @@ public final class BlockConditions {
                 .description("Checks if a block is or is not solid.")
                 .examples("if block is solid:", "if block is not solid:")
                 .since("1.0.0").category(Categories.BLOCK)
-                .handler((match, env, ctx) -> {
-                    boolean negated = match.choice(0).equals("is not");
-                    return (negated ? "!" : "") + match.ref("b").java() + ".getType().isSolid()";
+                .handler(ctx -> {
+                    boolean negated = ctx.choice(0).equals("is not");
+                    return (negated ? "!" : "") + ctx.requireVarHandle("b").java() + ".getType().isSolid()";
                 }));
 
         api.patterns().condition(b -> b
@@ -41,9 +41,9 @@ public final class BlockConditions {
                 .description("Checks if a block is or is not air (empty).")
                 .examples("if block is air:", "if block is not air:")
                 .since("1.0.0").category(Categories.BLOCK)
-                .handler((match, env, ctx) -> {
-                    boolean negated = match.choice(0).equals("is not");
-                    return (negated ? "!" : "") + match.ref("b").java() + ".getType().isAir()";
+                .handler(ctx -> {
+                    boolean negated = ctx.choice(0).equals("is not");
+                    return (negated ? "!" : "") + ctx.requireVarHandle("b").java() + ".getType().isAir()";
                 }));
     }
 }

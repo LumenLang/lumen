@@ -3,9 +3,8 @@ package dev.lumenlang.lumen.plugin.defaults.block;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
-import dev.lumenlang.lumen.api.codegen.BindingAccess;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
-import dev.lumenlang.lumen.api.codegen.JavaOutput;
+import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
 import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.handler.BlockHandler;
@@ -43,7 +42,7 @@ public class ListBlocks {
      * @param ctx the binding access for the current pattern match
      * @return the element type from the list's type arguments
      */
-    private static @NotNull LumenType resolveElementType(@NotNull BindingAccess ctx) {
+    private static @NotNull LumenType resolveElementType(@NotNull HandlerContext ctx) {
         EnvironmentAccess.VarHandle listRef = (EnvironmentAccess.VarHandle) ctx.value("list");
         CollectionType listType = TypeUtils.asCollection(listRef.type());
         return listType.typeArguments().get(0);
@@ -55,7 +54,7 @@ public class ListBlocks {
      * @param ctx the binding access for the current pattern match
      * @return metadata map containing the {@code data_type} key, or {@code null} if not applicable
      */
-    private static @Nullable Map<String, Object> resolveElementMetadata(@NotNull BindingAccess ctx) {
+    private static @Nullable Map<String, Object> resolveElementMetadata(@NotNull HandlerContext ctx) {
         Object listValue = ctx.value("list");
         if (!(listValue instanceof EnvironmentAccess.VarHandle listRef)) return null;
         if (!listRef.hasMeta("element_type")) return null;
@@ -83,7 +82,7 @@ public class ListBlocks {
                     .varDescription("The current element in the list, named by the user (e.g. 'item' in 'loop item in myList'). The type depends on the list being looped over and is accurate at runtime.")
                 .handler(new BlockHandler() {
                     @Override
-                    public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
+                    public void begin(@NotNull HandlerContext ctx) {
                         if (ctx.block().isRoot()) {
                             throw new DiagnosticException(LumenDiagnostic.error("E502", "A 'loop' block cannot be top level")
                                     .at(ctx.block().line(), ctx.block().raw())
@@ -102,7 +101,7 @@ public class ListBlocks {
                         }
                         String listJava = ctx.java("list");
                         LumenType elementType = resolveElementType(ctx);
-                        out.line("for (" + elementType.javaTypeName() + " " + varName + " : (List<" + elementType.javaTypeName() + ">) " + listJava + ") {");
+                        ctx.out().line("for (" + elementType.javaTypeName() + " " + varName + " : (List<" + elementType.javaTypeName() + ">) " + listJava + ") {");
 
                         Map<String, Object> metadata = resolveElementMetadata(ctx);
                         if (metadata != null) {
@@ -113,8 +112,8 @@ public class ListBlocks {
                     }
 
                     @Override
-                    public void end(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
-                        out.line("}");
+                    public void end(@NotNull HandlerContext ctx) {
+                        ctx.out().line("}");
                     }
                 }));
 
@@ -129,7 +128,7 @@ public class ListBlocks {
                     .varDescription("The current element in the list")
                 .handler(new BlockHandler() {
                     @Override
-                    public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
+                    public void begin(@NotNull HandlerContext ctx) {
                         if (ctx.block().isRoot()) {
                             throw new DiagnosticException(LumenDiagnostic.error("E502", "A 'loop' block cannot be top level")
                                     .at(ctx.block().line(), ctx.block().raw())
@@ -178,13 +177,13 @@ public class ListBlocks {
                         LumenType elementType = listType.typeArguments().get(0);
                         ctx.codegen().addImport(List.class.getName());
                         ctx.codegen().addImport(ArrayList.class.getName());
-                        out.line("for (var " + varName + " : (List<" + elementType.javaTypeName() + ">) " + (info.stored() ? "PersistentVars" : "GlobalVars") + ".get(" + "\"" + info.className() + "." + listVarName + ".\" + " + ((ObjectType) scopeType).keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")) {");
+                        ctx.out().line("for (var " + varName + " : (List<" + elementType.javaTypeName() + ">) " + (info.stored() ? "PersistentVars" : "GlobalVars") + ".get(" + "\"" + info.className() + "." + listVarName + ".\" + " + ((ObjectType) scopeType).keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")) {");
                         env.defineVar(varName, elementType, varName);
                     }
 
                     @Override
-                    public void end(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
-                        out.line("}");
+                    public void end(@NotNull HandlerContext ctx) {
+                        ctx.out().line("}");
                     }
                 }));
     }

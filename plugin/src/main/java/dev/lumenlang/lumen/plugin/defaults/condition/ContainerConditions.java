@@ -26,10 +26,10 @@ public final class ContainerConditions {
                 .examples("if block inventory is empty:", "if block inventory is not empty:")
                 .since("1.0.0")
                 .category(Categories.INVENTORY)
-                .handler((match, env, ctx) -> {
-                    ctx.addImport(CONTAINER);
-                    String block = match.java("b", ctx, env);
-                    boolean negated = match.choice(0).equals("is not");
+                .handler(ctx -> {
+                    ctx.codegen().addImport(CONTAINER);
+                    String block = ctx.java("b");
+                    boolean negated = ctx.choice(0).equals("is not");
                     return "(" + block + ".getState() instanceof Container __ct && " + (negated ? "!" : "") + "__ct.getInventory().isEmpty())";
                 }));
 
@@ -40,9 +40,9 @@ public final class ContainerConditions {
                 .example("if block is a container:")
                 .since("1.0.0")
                 .category(Categories.INVENTORY)
-                .handler((match, env, ctx) -> {
-                    ctx.addImport(CONTAINER);
-                    String block = match.java("b", ctx, env);
+                .handler(ctx -> {
+                    ctx.codegen().addImport(CONTAINER);
+                    String block = ctx.java("b");
                     return block + ".getState() instanceof Container";
                 }));
     }

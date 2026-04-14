@@ -23,11 +23,11 @@ public final class EndermanStatements {
                         "set %e:ENTITY% carried block [to] %mat:MATERIAL%",
                         "Sets the block an enderman is carrying.",
                         "set mob carried block to grass_block",
-                        (line, ctx, out) -> {
+                        ctx -> {
                             VarHandle h = (VarHandle) ctx.value("e");
                             EntityValidation.requireSubtype(h, FQCN, "set carried block");
                             ctx.codegen().addImport(FQCN);
-                            out.line("if (" + ctx.java("e")
+                            ctx.out().line("if (" + ctx.java("e")
                                     + " instanceof Enderman _en) { _en.setCarriedMaterial("
                                     + ctx.java("mat") + ".createBlockData()); }");
                         })

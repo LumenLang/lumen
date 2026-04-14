@@ -41,15 +41,15 @@ import java.util.Map;
  *     .addImport("org.bukkit.scheduler.BukkitRunnable")
  *     .field("private int __tickCount = 0;")
  *     .handler(new BlockHandler() {
- *         public void begin(BindingAccess ctx, JavaOutput out) {
+ *         public void begin(HandlerContext ctx) {
  *             ctx.codegen().addImport("dev.lumenlang.lumen.pipeline.annotations.LumenPreload");
- *             out.line("@LumenPreload");
- *             out.line("public void __tick_" + ctx.codegen().nextMethodId() + "() {");
- *             out.line("new BukkitRunnable() { public void run() {");
+ *             ctx.out().line("@LumenPreload");
+ *             ctx.out().line("public void __tick_" + ctx.codegen().nextMethodId() + "() {");
+ *             ctx.out().line("new BukkitRunnable() { public void run() {");
  *         }
- *         public void end(BindingAccess ctx, JavaOutput out) {
- *             out.line("} }.runTaskTimer(Lumen.instance(), 0L, 1L);");
- *             out.line("}");
+ *         public void end(HandlerContext ctx) {
+ *             ctx.out().line("} }.runTaskTimer(Lumen.instance(), 0L, 1L);");
+ *             ctx.out().line("}");
  *         }
  *     })
  * );

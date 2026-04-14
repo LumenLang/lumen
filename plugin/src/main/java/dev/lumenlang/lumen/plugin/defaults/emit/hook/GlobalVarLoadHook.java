@@ -4,8 +4,8 @@ import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
+import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import dev.lumenlang.lumen.api.emit.BlockEnterHook;
-import dev.lumenlang.lumen.api.emit.EmitContext;
 import dev.lumenlang.lumen.api.type.CollectionType;
 import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.NullableType;
@@ -38,7 +38,7 @@ public final class GlobalVarLoadHook implements BlockEnterHook {
     }
 
     @Override
-    public void onBlockEnter(@NotNull EmitContext ctx) {
+    public void onBlockEnter(@NotNull HandlerContext ctx) {
         TypeEnv env = (TypeEnv) ctx.env();
         List<? extends EnvironmentAccess.GlobalInfo> globals = env.allGlobals();
 
@@ -76,7 +76,7 @@ public final class GlobalVarLoadHook implements BlockEnterHook {
         }
     }
 
-    private static void addTypeImports(@NotNull LumenType type, @NotNull EmitContext ctx) {
+    private static void addTypeImports(@NotNull LumenType type, @NotNull HandlerContext ctx) {
         if (type instanceof CollectionType ct) {
             String rawFqn = ct.rawType().javaType();
             if (rawFqn.contains(".") && !rawFqn.startsWith("java.lang.")) ctx.codegen().addImport(rawFqn);

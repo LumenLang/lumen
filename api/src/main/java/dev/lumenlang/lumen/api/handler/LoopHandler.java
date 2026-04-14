@@ -1,7 +1,6 @@
 package dev.lumenlang.lumen.api.handler;
 
-import dev.lumenlang.lumen.api.codegen.BindingAccess;
-import dev.lumenlang.lumen.api.pattern.PatternRegistrar;
+import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import dev.lumenlang.lumen.api.type.LumenType;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,8 +19,6 @@ import org.jetbrains.annotations.NotNull;
  *         .example("loop p in all players:")
  *         .handler(ctx -> new LoopResult("Bukkit.getOnlinePlayers()", MinecraftTypes.PLAYER)));
  * }</pre>
- *
- * @see PatternRegistrar#loop
  */
 @FunctionalInterface
 public interface LoopHandler {
@@ -29,10 +26,10 @@ public interface LoopHandler {
     /**
      * Generates the iterable Java expression and element type for a matched loop source.
      *
-     * @param ctx the binding access providing matched parameters
+     * @param ctx the handler context providing bound parameters and environment
      * @return the loop result containing the iterable expression and element type
      */
-    @NotNull LoopResult handle(@NotNull BindingAccess ctx);
+    @NotNull LoopResult handle(@NotNull HandlerContext ctx);
 
     /**
      * Result of a loop source match, containing the Java iterable expression

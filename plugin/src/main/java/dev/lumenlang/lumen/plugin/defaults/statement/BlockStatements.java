@@ -24,7 +24,7 @@ public final class BlockStatements {
                 .example("set block type to stone")
                 .since("1.0.0")
                 .category(Categories.BLOCK)
-                .handler((line, ctx, out) -> out.line(ctx.java("b") + ".setType(" + ctx.java("mat") + ");")));
+                .handler(ctx -> ctx.out().line(ctx.java("b") + ".setType(" + ctx.java("mat") + ");")));
 
         api.patterns().statement(b -> b
                 .by("Lumen").pattern("break %b:BLOCK% naturally")
@@ -32,7 +32,7 @@ public final class BlockStatements {
                 .example("break block naturally")
                 .since("1.0.0")
                 .category(Categories.BLOCK)
-                .handler((line, ctx, out) -> out.line(ctx.java("b") + ".breakNaturally();")));
+                .handler(ctx -> ctx.out().line(ctx.java("b") + ".breakNaturally();")));
 
         api.patterns().statement(b -> b
                 .by("Lumen").pattern("set %b:BLOCK% data [to] %data:STRING%")
@@ -40,9 +40,9 @@ public final class BlockStatements {
                 .example("set block data to \"facing=north\"")
                 .since("1.0.0")
                 .category(Categories.BLOCK)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     ctx.codegen().addImport(Bukkit.class.getName());
-                    out.line(ctx.java("b") + ".setBlockData(Bukkit.createBlockData(" + ctx.java("b") + ".getType(), " + ctx.java("data") + "));");
+                    ctx.out().line(ctx.java("b") + ".setBlockData(Bukkit.createBlockData(" + ctx.java("b") + ".getType(), " + ctx.java("data") + "));");
                 }));
 
         api.patterns().statement(b -> b
@@ -52,9 +52,9 @@ public final class BlockStatements {
                 .example("fill from loc1 to loc2 with stone")
                 .since("1.0.0")
                 .category(Categories.BLOCK)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     ctx.codegen().addImport(BlockFillHelper.class.getName());
-                    out.line("BlockFillHelper.fill(" + ctx.java("a") + ", " + ctx.java("b") + ", " + ctx.java("mat") + ");");
+                    ctx.out().line("BlockFillHelper.fill(" + ctx.java("a") + ", " + ctx.java("b") + ", " + ctx.java("mat") + ");");
                 }));
     }
 }

@@ -41,9 +41,9 @@ public final class PotionEffectConditions {
                 .example("if player has effect \"speed\":")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((match, env, ctx) -> {
-                    ctx.addImport(POTION_EFFECT_TYPE);
-                    return "(" + match.ref("p").java() + ".hasPotionEffect(PotionEffectType.getByName((" + match.java("effect", ctx, env) + ").toUpperCase().replace(\" \", \"_\"))))";
+                .handler(ctx -> {
+                    ctx.codegen().addImport(POTION_EFFECT_TYPE);
+                    return "(" + ctx.requireVarHandle("p").java() + ".hasPotionEffect(PotionEffectType.getByName((" + ctx.java("effect") + ").toUpperCase().replace(\" \", \"_\"))))";
                 }));
 
         api.patterns().condition(b -> b
@@ -53,9 +53,9 @@ public final class PotionEffectConditions {
                 .example("if player does not have effect \"speed\":")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((match, env, ctx) -> {
-                    ctx.addImport(POTION_EFFECT_TYPE);
-                    return "!(" + match.ref("p").java() + ".hasPotionEffect(PotionEffectType.getByName((" + match.java("effect", ctx, env) + ").toUpperCase().replace(\" \", \"_\"))))";
+                .handler(ctx -> {
+                    ctx.codegen().addImport(POTION_EFFECT_TYPE);
+                    return "!(" + ctx.requireVarHandle("p").java() + ".hasPotionEffect(PotionEffectType.getByName((" + ctx.java("effect") + ").toUpperCase().replace(\" \", \"_\"))))";
                 }));
 
         api.patterns().condition(b -> b
@@ -65,9 +65,9 @@ public final class PotionEffectConditions {
                 .example("if entity has effect \"poison\":")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler((match, env, ctx) -> {
-                    entityPotionImports(ctx);
-                    return "(" + match.ref("e").java() + " instanceof LivingEntity __le && __le.hasPotionEffect(PotionEffectType.getByName((" + match.java("effect", ctx, env) + ").toUpperCase().replace(\" \", \"_\"))))";
+                .handler(ctx -> {
+                    entityPotionImports(ctx.codegen());
+                    return "(" + ctx.requireVarHandle("e").java() + " instanceof LivingEntity __le && __le.hasPotionEffect(PotionEffectType.getByName((" + ctx.java("effect") + ").toUpperCase().replace(\" \", \"_\"))))";
                 }));
     }
 }

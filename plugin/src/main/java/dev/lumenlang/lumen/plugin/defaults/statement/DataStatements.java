@@ -32,9 +32,9 @@ public final class DataStatements {
                 .example("set field \"name\" of myArena to \"NewName\"")
                 .since("1.0.0")
                 .category(Categories.DATA)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     ctx.codegen().addImport(DataInstance.class.getName());
-                    out.line("((DataInstance) " + ctx.java("obj") + ").set(" + ctx.java("field") + ", " + ctx.java("val") + ");");
+                    ctx.out().line("((DataInstance) " + ctx.java("obj") + ").set(" + ctx.java("field") + ", " + ctx.java("val") + ");");
                 }));
     }
 }

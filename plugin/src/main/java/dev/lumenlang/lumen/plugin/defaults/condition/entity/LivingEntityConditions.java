@@ -26,10 +26,10 @@ public final class LivingEntityConditions {
                 .example("if mob is dead:")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler((match, env, ctx) -> {
-                    VarHandle h = match.ref("e");
+                .handler(ctx -> {
+                    VarHandle h = ctx.requireVarHandle("e");
                     boolean known = EntityValidation.requireLivingEntity(h, "is dead");
-                    ctx.addImport(LIVING_ENTITY);
+                    ctx.codegen().addImport(LIVING_ENTITY);
                     if (known) return "((LivingEntity) " + h.java() + ").isDead()";
                     return "(" + h.java() + " instanceof LivingEntity _le && _le.isDead())";
                 }));
@@ -40,10 +40,10 @@ public final class LivingEntityConditions {
                 .example("if mob is alive:")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler((match, env, ctx) -> {
-                    VarHandle h = match.ref("e");
+                .handler(ctx -> {
+                    VarHandle h = ctx.requireVarHandle("e");
                     boolean known = EntityValidation.requireLivingEntity(h, "is alive");
-                    ctx.addImport(LIVING_ENTITY);
+                    ctx.codegen().addImport(LIVING_ENTITY);
                     if (known) return "!((LivingEntity) " + h.java() + ").isDead()";
                     return "(" + h.java() + " instanceof LivingEntity _le && !_le.isDead())";
                 }));
@@ -54,12 +54,12 @@ public final class LivingEntityConditions {
                 .example("if mob's health >= 10:")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler((match, env, ctx) -> {
-                    VarHandle h = match.ref("e");
+                .handler(ctx -> {
+                    VarHandle h = ctx.requireVarHandle("e");
                     boolean known = EntityValidation.requireLivingEntity(h, "health check");
-                    ctx.addImport(LIVING_ENTITY);
-                    String op = match.java("op", ctx, env);
-                    String n = match.java("n", ctx, env);
+                    ctx.codegen().addImport(LIVING_ENTITY);
+                    String op = ctx.java("op");
+                    String n = ctx.java("n");
                     if (known) return "((LivingEntity) " + h.java() + ").getHealth() " + op + " " + n;
                     return "(" + h.java() + " instanceof LivingEntity _le && _le.getHealth() " + op + " " + n + ")";
                 }));

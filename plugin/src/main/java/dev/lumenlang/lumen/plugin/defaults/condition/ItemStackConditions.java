@@ -21,9 +21,9 @@ public final class ItemStackConditions {
                 .description("Checks if an item stack has or does not have a custom display name.")
                 .examples("if item has display name:", "if item does not have display name:")
                 .since("1.0.0").category(Categories.ITEM)
-                .handler((match, env, ctx) -> {
-                    boolean negated = !match.choice(0).equals("has");
-                    String expr = match.ref("i").java() + ".hasItemMeta() && " + match.ref("i").java() + ".getItemMeta().hasDisplayName()";
+                .handler(ctx -> {
+                    boolean negated = !ctx.choice(0).equals("has");
+                    String expr = ctx.requireVarHandle("i").java() + ".hasItemMeta() && " + ctx.requireVarHandle("i").java() + ".getItemMeta().hasDisplayName()";
                     return negated ? "(!(" + expr + "))" : "(" + expr + ")";
                 }));
 
@@ -32,9 +32,9 @@ public final class ItemStackConditions {
                 .description("Checks if an item stack has or does not have lore set.")
                 .examples("if item has lore:", "if item does not have lore:")
                 .since("1.0.0").category(Categories.ITEM)
-                .handler((match, env, ctx) -> {
-                    boolean negated = !match.choice(0).equals("has");
-                    String expr = match.ref("i").java() + ".hasItemMeta() && " + match.ref("i").java() + ".getItemMeta().hasLore()";
+                .handler(ctx -> {
+                    boolean negated = !ctx.choice(0).equals("has");
+                    String expr = ctx.requireVarHandle("i").java() + ".hasItemMeta() && " + ctx.requireVarHandle("i").java() + ".getItemMeta().hasLore()";
                     return negated ? "(!(" + expr + "))" : "(" + expr + ")";
                 }));
 
@@ -43,9 +43,9 @@ public final class ItemStackConditions {
                 .description("Checks if an item stack has or does not have any enchantments.")
                 .examples("if item has enchantments:", "if item does not have enchantments:")
                 .since("1.0.0").category(Categories.ITEM)
-                .handler((match, env, ctx) -> {
-                    boolean negated = !match.choice(0).equals("has");
-                    return (negated ? "" : "!") + match.ref("i").java() + ".getEnchantments().isEmpty()";
+                .handler(ctx -> {
+                    boolean negated = !ctx.choice(0).equals("has");
+                    return (negated ? "" : "!") + ctx.requireVarHandle("i").java() + ".getEnchantments().isEmpty()";
                 }));
 
         api.patterns().condition(b -> b
@@ -53,9 +53,9 @@ public final class ItemStackConditions {
                 .description("Checks if an item stack is or is not unbreakable.")
                 .examples("if item is unbreakable:", "if item is not unbreakable:")
                 .since("1.0.0").category(Categories.ITEM)
-                .handler((match, env, ctx) -> {
-                    boolean negated = match.choice(0).equals("is not");
-                    String expr = match.ref("i").java() + ".hasItemMeta() && " + match.ref("i").java() + ".getItemMeta().isUnbreakable()";
+                .handler(ctx -> {
+                    boolean negated = ctx.choice(0).equals("is not");
+                    String expr = ctx.requireVarHandle("i").java() + ".hasItemMeta() && " + ctx.requireVarHandle("i").java() + ".getItemMeta().isUnbreakable()";
                     return negated ? "(!(" + expr + "))" : "(" + expr + ")";
                 }));
     }

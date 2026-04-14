@@ -50,12 +50,12 @@ public final class PersistentDataStatements {
                 .example("set pdc \"myKey\" of entity to \"myValue\"")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     pdcImports(ctx.codegen());
-                    out.line("{");
-                    out.line("NamespacedKey __key = new NamespacedKey(Lumen.instance(), " + ctx.java("key") + ");");
-                    out.line(ctx.java("e") + ".getPersistentDataContainer().set(__key, PersistentDataType.STRING, " + ctx.java("val") + ");");
-                    out.line("}");
+                    ctx.out().line("{");
+                    ctx.out().line("NamespacedKey __key = new NamespacedKey(Lumen.instance(), " + ctx.java("key") + ");");
+                    ctx.out().line(ctx.java("e") + ".getPersistentDataContainer().set(__key, PersistentDataType.STRING, " + ctx.java("val") + ");");
+                    ctx.out().line("}");
                 }));
 
         api.patterns().statement(b -> b
@@ -65,12 +65,12 @@ public final class PersistentDataStatements {
                 .example("remove pdc \"myKey\" from entity")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     pdcImports(ctx.codegen());
-                    out.line("{");
-                    out.line("NamespacedKey __key = new NamespacedKey(Lumen.instance(), " + ctx.java("key") + ");");
-                    out.line(ctx.java("e") + ".getPersistentDataContainer().remove(__key);");
-                    out.line("}");
+                    ctx.out().line("{");
+                    ctx.out().line("NamespacedKey __key = new NamespacedKey(Lumen.instance(), " + ctx.java("key") + ");");
+                    ctx.out().line(ctx.java("e") + ".getPersistentDataContainer().remove(__key);");
+                    ctx.out().line("}");
                 }));
 
         api.patterns().statement(b -> b
@@ -80,15 +80,15 @@ public final class PersistentDataStatements {
                 .example("set pdc \"custom_id\" of item to \"magic_wand\"")
                 .since("1.0.0")
                 .category(Categories.ITEM)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     pdcItemImports(ctx.codegen());
                     String itemJava = ctx.java("i");
-                    out.line("{");
-                    out.line("NamespacedKey __key = new NamespacedKey(Lumen.instance(), " + ctx.java("key") + ");");
-                    out.line("ItemMeta __meta = " + itemJava + ".getItemMeta();");
-                    out.line("__meta.getPersistentDataContainer().set(__key, PersistentDataType.STRING, " + ctx.java("val") + ");");
-                    out.line(itemJava + ".setItemMeta(__meta);");
-                    out.line("}");
+                    ctx.out().line("{");
+                    ctx.out().line("NamespacedKey __key = new NamespacedKey(Lumen.instance(), " + ctx.java("key") + ");");
+                    ctx.out().line("ItemMeta __meta = " + itemJava + ".getItemMeta();");
+                    ctx.out().line("__meta.getPersistentDataContainer().set(__key, PersistentDataType.STRING, " + ctx.java("val") + ");");
+                    ctx.out().line(itemJava + ".setItemMeta(__meta);");
+                    ctx.out().line("}");
                 }));
 
         api.patterns().statement(b -> b
@@ -98,15 +98,15 @@ public final class PersistentDataStatements {
                 .example("remove pdc \"custom_id\" from item")
                 .since("1.0.0")
                 .category(Categories.ITEM)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     pdcItemImports(ctx.codegen());
                     String itemJava = ctx.java("i");
-                    out.line("{");
-                    out.line("NamespacedKey __key = new NamespacedKey(Lumen.instance(), " + ctx.java("key") + ");");
-                    out.line("ItemMeta __meta = " + itemJava + ".getItemMeta();");
-                    out.line("__meta.getPersistentDataContainer().remove(__key);");
-                    out.line(itemJava + ".setItemMeta(__meta);");
-                    out.line("}");
+                    ctx.out().line("{");
+                    ctx.out().line("NamespacedKey __key = new NamespacedKey(Lumen.instance(), " + ctx.java("key") + ");");
+                    ctx.out().line("ItemMeta __meta = " + itemJava + ".getItemMeta();");
+                    ctx.out().line("__meta.getPersistentDataContainer().remove(__key);");
+                    ctx.out().line(itemJava + ".setItemMeta(__meta);");
+                    ctx.out().line("}");
                 }));
 
         api.patterns().statement(b -> b
@@ -116,15 +116,15 @@ public final class PersistentDataStatements {
                 .example("set pdc \"owner\" of block to player's name")
                 .since("1.0.0")
                 .category(Categories.BLOCK)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     pdcBlockImports(ctx.codegen());
                     String blockJava = ctx.java("bl");
-                    out.line("{");
-                    out.line("BlockState __state = " + blockJava + ".getState();");
-                    out.line("NamespacedKey __key = new NamespacedKey(Lumen.instance(), " + ctx.java("key") + ");");
-                    out.line("__state.getPersistentDataContainer().set(__key, PersistentDataType.STRING, " + ctx.java("val") + ");");
-                    out.line("__state.update();");
-                    out.line("}");
+                    ctx.out().line("{");
+                    ctx.out().line("BlockState __state = " + blockJava + ".getState();");
+                    ctx.out().line("NamespacedKey __key = new NamespacedKey(Lumen.instance(), " + ctx.java("key") + ");");
+                    ctx.out().line("__state.getPersistentDataContainer().set(__key, PersistentDataType.STRING, " + ctx.java("val") + ");");
+                    ctx.out().line("__state.update();");
+                    ctx.out().line("}");
                 }));
 
         api.patterns().statement(b -> b
@@ -134,15 +134,15 @@ public final class PersistentDataStatements {
                 .example("remove pdc \"owner\" from block")
                 .since("1.0.0")
                 .category(Categories.BLOCK)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     pdcBlockImports(ctx.codegen());
                     String blockJava = ctx.java("bl");
-                    out.line("{");
-                    out.line("BlockState __state = " + blockJava + ".getState();");
-                    out.line("NamespacedKey __key = new NamespacedKey(Lumen.instance(), " + ctx.java("key") + ");");
-                    out.line("__state.getPersistentDataContainer().remove(__key);");
-                    out.line("__state.update();");
-                    out.line("}");
+                    ctx.out().line("{");
+                    ctx.out().line("BlockState __state = " + blockJava + ".getState();");
+                    ctx.out().line("NamespacedKey __key = new NamespacedKey(Lumen.instance(), " + ctx.java("key") + ");");
+                    ctx.out().line("__state.getPersistentDataContainer().remove(__key);");
+                    ctx.out().line("__state.update();");
+                    ctx.out().line("}");
                 }));
     }
 }

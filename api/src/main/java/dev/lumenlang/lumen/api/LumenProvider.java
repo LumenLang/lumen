@@ -24,8 +24,8 @@ import org.jetbrains.annotations.Nullable;
  * <pre>{@code
  * LumenAPI api = LumenProvider.api();
  * if (api != null) {
- *     api.patterns().statement("heal %who:PLAYER%", (line, ctx, out) ->
- *         out.line(ctx.java("who") + ".setHealth(20);")
+ *     api.patterns().statement("heal %who:PLAYER%", ctx ->
+ *         ctx.out().line(ctx.java("who") + ".setHealth(20);")
  *     );
  * }
  * }</pre>

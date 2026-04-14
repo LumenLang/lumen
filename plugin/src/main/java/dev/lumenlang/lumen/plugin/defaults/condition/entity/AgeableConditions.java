@@ -22,12 +22,12 @@ public final class AgeableConditions {
                         "%e:ENTITY% is (adult|grown|baby|young)",
                         "Checks if an ageable entity is an adult or a baby.",
                         "if mob is adult:",
-                        (match, env, ctx) -> {
-                            EntityValidation.requireSubtype(match.ref("e"), FQCN, "is (adult|grown|baby|young)");
-                            ctx.addImport(FQCN);
-                            String choice = match.choice(0);
+                        (ctx) -> {
+                            EntityValidation.requireSubtype(ctx.requireVarHandle("e"), FQCN, "is (adult|grown|baby|young)");
+                            ctx.codegen().addImport(FQCN);
+                            String choice = ctx.choice(0);
                             boolean adult = choice.equals("adult") || choice.equals("grown");
-                            return "(" + match.ref("e").java() + " instanceof Ageable _ag && " + (adult ? "" : "!") + "_ag.isAdult())";
+                            return "(" + ctx.requireVarHandle("e").java() + " instanceof Ageable _ag && " + (adult ? "" : "!") + "_ag.isAdult())";
                         });
     }
 }

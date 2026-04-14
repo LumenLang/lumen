@@ -1,5 +1,6 @@
 package dev.lumenlang.lumen.api.emit;
 
+import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import dev.lumenlang.lumen.api.pattern.PatternRegistrar;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,7 +27,7 @@ import java.util.List;
  *     }
  *     public void handle(List<? extends ScriptToken> headTokens,
  *                        List<? extends ScriptLine> children,
- *                        EmitContext ctx) {
+ *                        HandlerContext ctx) {
  *         for (ScriptLine child : children) {
  *             // process each child line
  *         }
@@ -53,9 +54,9 @@ public interface BlockFormHandler {
      *
      * @param headTokens the tokens from the block's header line
      * @param children   the child lines of the block
-     * @param ctx        the emit context providing environment, codegen, and output access
+     * @param ctx        the handler context providing environment, codegen, and output access
      */
     void handle(@NotNull List<? extends ScriptToken> headTokens,
                 @NotNull List<? extends ScriptLine> children,
-                @NotNull EmitContext ctx);
+                @NotNull HandlerContext ctx);
 }

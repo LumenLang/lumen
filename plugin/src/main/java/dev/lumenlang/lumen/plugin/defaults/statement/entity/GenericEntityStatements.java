@@ -22,7 +22,7 @@ public final class GenericEntityStatements {
                 .example("remove mob")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler((line, ctx, out) -> out.line(ctx.java("e") + ".remove();")));
+                .handler(ctx -> ctx.out().line(ctx.java("e") + ".remove();")));
 
         api.patterns().statement(b -> b
                 .by("Lumen").pattern("spawn %type:ENTITY_TYPE% at %who:PLAYER%")
@@ -30,7 +30,7 @@ public final class GenericEntityStatements {
                 .example("spawn zombie at player")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler((line, ctx, out) -> out.line(
+                .handler(ctx -> ctx.out().line(
                         ctx.java("who") + ".getLocation().getWorld().spawnEntity("
                                 + ctx.java("who") + ".getLocation(), " + ctx.java("type") + ");")));
 
@@ -40,7 +40,7 @@ public final class GenericEntityStatements {
                 .example("spawn zombie at loc")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler((line, ctx, out) -> out.line(
+                .handler(ctx -> ctx.out().line(
                         ctx.java("loc") + ".getWorld().spawnEntity("
                                 + ctx.java("loc") + ", " + ctx.java("type") + ");")));
 
@@ -50,7 +50,7 @@ public final class GenericEntityStatements {
                 .example("teleport mob to loc")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler((line, ctx, out) -> out.line(ctx.java("e") + ".teleport(" + ctx.java("loc") + ");")));
+                .handler(ctx -> ctx.out().line(ctx.java("e") + ".teleport(" + ctx.java("loc") + ");")));
 
         api.patterns().statement(b -> b
                 .by("Lumen").pattern("(teleport|tp) %e:ENTITY% [to] %target:ENTITY%")
@@ -58,7 +58,7 @@ public final class GenericEntityStatements {
                 .example("teleport mob to target")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler((line, ctx, out) -> out.line(ctx.java("e") + ".teleport(" + ctx.java("target") + ");")));
+                .handler(ctx -> ctx.out().line(ctx.java("e") + ".teleport(" + ctx.java("target") + ");")));
 
         api.patterns().statement(b -> b
                 .by("Lumen").pattern("(teleport|tp) %e:ENTITY% [to] %target:PLAYER%")
@@ -66,7 +66,7 @@ public final class GenericEntityStatements {
                 .example("teleport mob to player")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler((line, ctx, out) -> out.line(ctx.java("e") + ".teleport(" + ctx.java("target") + ");")));
+                .handler(ctx -> ctx.out().line(ctx.java("e") + ".teleport(" + ctx.java("target") + ");")));
 
         api.patterns().statement(b -> b
                 .by("Lumen").pattern("set %e:ENTITY% on fire [for] %ticks:INT% [ticks]")
@@ -74,13 +74,13 @@ public final class GenericEntityStatements {
                 .example("set mob on fire for 100 ticks")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler((line, ctx, out) -> out.line(ctx.java("e") + ".setFireTicks(" + ctx.java("ticks") + ");")));
+                .handler(ctx -> ctx.out().line(ctx.java("e") + ".setFireTicks(" + ctx.java("ticks") + ");")));
 
         api.patterns().statement(b -> b
                 .by("Lumen").pattern("(extinguish|put out) %e:ENTITY%")
                 .description("Extinguishes a burning entity.")
                 .example("extinguish mob").since("1.0.0").category(Categories.ENTITY)
-                .handler((line, ctx, out) -> out.line(ctx.java("e") + ".setFireTicks(0);")));
+                .handler(ctx -> ctx.out().line(ctx.java("e") + ".setFireTicks(0);")));
 
         api.patterns().statement(b -> b
                 .by("Lumen").pattern("set %e:ENTITY_POSSESSIVE% custom name [to] %name:STRING%")
@@ -88,9 +88,9 @@ public final class GenericEntityStatements {
                 .example("set mob's custom name to \"Boss\"")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler((line, ctx, out) -> {
-                    out.line(ctx.java("e") + ".setCustomName(" + ctx.java("name") + ");");
-                    out.line(ctx.java("e") + ".setCustomNameVisible(true);");
+                .handler(ctx -> {
+                    ctx.out().line(ctx.java("e") + ".setCustomName(" + ctx.java("name") + ");");
+                    ctx.out().line(ctx.java("e") + ".setCustomNameVisible(true);");
                 }));
 
         api.patterns().statement(b -> b
@@ -99,7 +99,7 @@ public final class GenericEntityStatements {
                 .example("eject mob")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler((line, ctx, out) -> out.line(ctx.java("e") + ".eject();")));
+                .handler(ctx -> ctx.out().line(ctx.java("e") + ".eject();")));
 
         api.patterns().statement(b -> b
                 .by("Lumen").pattern("set %e:ENTITY_POSSESSIVE% gravity [to] %val:BOOLEAN%")
@@ -107,7 +107,7 @@ public final class GenericEntityStatements {
                 .example("set mob's gravity to true")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler((line, ctx, out) -> out.line(
+                .handler(ctx -> ctx.out().line(
                         ctx.java("e") + ".setGravity(" + ctx.java("val") + ");")));
 
         api.patterns().statement(b -> b
@@ -116,7 +116,7 @@ public final class GenericEntityStatements {
                 .example("set mob's invulnerable to true")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler((line, ctx, out) -> out.line(
+                .handler(ctx -> ctx.out().line(
                         ctx.java("e") + ".setInvulnerable(" + ctx.java("val") + ");")));
 
         api.patterns().statement(b -> b
@@ -125,7 +125,7 @@ public final class GenericEntityStatements {
                 .example("set mob's silent to true")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler((line, ctx, out) -> out.line(
+                .handler(ctx -> ctx.out().line(
                         ctx.java("e") + ".setSilent(" + ctx.java("val") + ");")));
 
         api.patterns().statement(b -> b
@@ -134,7 +134,7 @@ public final class GenericEntityStatements {
                 .example("set mob's glowing to true")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler((line, ctx, out) -> out.line(
+                .handler(ctx -> ctx.out().line(
                         ctx.java("e") + ".setGlowing(" + ctx.java("val") + ");")));
 
         api.patterns().statement(b -> b
@@ -144,9 +144,9 @@ public final class GenericEntityStatements {
                 .example("launch player toward hook_loc")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     ctx.codegen().addImport(LaunchHelper.class.getName());
-                    out.line("LaunchHelper.launch(" + ctx.java("e") + ", " + ctx.java("loc") + ", 1);");
+                    ctx.out().line("LaunchHelper.launch(" + ctx.java("e") + ", " + ctx.java("loc") + ", 1);");
                 }));
 
         api.patterns().statement(b -> b
@@ -156,9 +156,9 @@ public final class GenericEntityStatements {
                 .example("launch player toward hook_loc with speed 2")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     ctx.codegen().addImport(LaunchHelper.class.getName());
-                    out.line("LaunchHelper.launch(" + ctx.java("e") + ", "
+                    ctx.out().line("LaunchHelper.launch(" + ctx.java("e") + ", "
                             + ctx.java("loc") + ", ((double) " + ctx.java("spd") + "));");
                 }));
 
@@ -169,9 +169,9 @@ public final class GenericEntityStatements {
                 .example("set mob's velocity to 0 1 0")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     ctx.codegen().addImport("org.bukkit.util.Vector");
-                    out.line(ctx.java("e") + ".setVelocity(new Vector(((double) "
+                    ctx.out().line(ctx.java("e") + ".setVelocity(new Vector(((double) "
                             + ctx.java("x") + "), ((double) " + ctx.java("y")
                             + "), ((double) " + ctx.java("z") + ")));");
                 }));

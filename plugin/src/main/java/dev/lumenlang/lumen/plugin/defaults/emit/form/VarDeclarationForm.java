@@ -4,9 +4,9 @@ import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
+import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
 import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
-import dev.lumenlang.lumen.api.emit.EmitContext;
 import dev.lumenlang.lumen.api.emit.ScriptToken;
 import dev.lumenlang.lumen.api.emit.StatementFormHandler;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
@@ -15,10 +15,9 @@ import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.NullableType;
 import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.api.util.FuzzyMatch;
-import dev.lumenlang.lumen.pipeline.codegen.BindingContext;
 import dev.lumenlang.lumen.pipeline.codegen.BlockContext;
+import dev.lumenlang.lumen.pipeline.codegen.HandlerContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
-import dev.lumenlang.lumen.pipeline.language.emit.EmitContextImpl;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.language.pattern.registered.RegisteredExpressionMatch;
 import dev.lumenlang.lumen.pipeline.language.resolve.ExprResolver;
@@ -53,17 +52,17 @@ public final class VarDeclarationForm implements StatementFormHandler {
     }
 
     @Override
-    public boolean tryHandle(@NotNull List<? extends ScriptToken> tokens, @NotNull EmitContext ctx) {
+    public boolean tryHandle(@NotNull List<? extends ScriptToken> tokens, @NotNull HandlerContext ctx) {
         if (tokens.size() < 4
                 || !tokens.get(0).text().equalsIgnoreCase("set")
                 || !tokens.get(2).text().equalsIgnoreCase("to")) {
             return false;
         }
 
-        List<Token> pipelineTokens = EmitContextImpl.toPipelineTokens(tokens);
+        List<Token> pipelineTokens = HandlerContextImpl.toPipelineTokens(tokens);
         String name = pipelineTokens.get(1).text();
         TypeEnv env = (TypeEnv) ctx.env();
-        EmitContextImpl emitCtx = (EmitContextImpl) ctx;
+        HandlerContextImpl emitCtx = (HandlerContextImpl) ctx;
         List<Token> exprTokens = pipelineTokens.subList(3, pipelineTokens.size());
 
         EnvironmentAccess.GlobalInfo globalInfo = env.getGlobalInfo(name);
@@ -93,7 +92,7 @@ public final class VarDeclarationForm implements StatementFormHandler {
         return true;
     }
 
-    private static void emitScopedGlobalSet(@NotNull String name, @NotNull EnvironmentAccess.GlobalInfo info, @NotNull List<Token> exprTokens, @NotNull EmitContextImpl ctx, @NotNull TypeEnv env) {
+    private static void emitScopedGlobalSet(@NotNull String name, @NotNull EnvironmentAccess.GlobalInfo info, @NotNull List<Token> exprTokens, @NotNull HandlerContextImpl ctx, @NotNull TypeEnv env) {
         if (!info.scoped()) {
             throw new DiagnosticException(LumenDiagnostic.error("E502", "Variable '" + name + "' is not a scoped global")
                     .at(ctx.line(), ctx.raw())
@@ -165,7 +164,7 @@ public final class VarDeclarationForm implements StatementFormHandler {
         }
     }
 
-    private static boolean tryReassignment(@NotNull String name, @NotNull VarRef ref, @NotNull List<Token> exprTokens, @NotNull List<Token> pipelineTokens, @NotNull EmitContextImpl ctx, @NotNull TypeEnv env) {
+    private static boolean tryReassignment(@NotNull String name, @NotNull VarRef ref, @NotNull List<Token> exprTokens, @NotNull List<Token> pipelineTokens, @NotNull HandlerContextImpl ctx, @NotNull TypeEnv env) {
         BlockContext block = env.blockContext();
         if (block.getEnvFromParents("__lambda_block") != null && env.isVarCapturedByLambda(name)) {
             throw new DiagnosticException(LumenDiagnostic.error("E502", "Cannot modify '" + name + "' inside a schedule block")
@@ -209,7 +208,7 @@ public final class VarDeclarationForm implements StatementFormHandler {
         return true;
     }
 
-    private static void emitDeclaration(@NotNull String name, @NotNull List<Token> exprTokens, @NotNull List<Token> pipelineTokens, @NotNull EmitContextImpl ctx, @NotNull TypeEnv env) {
+    private static void emitDeclaration(@NotNull String name, @NotNull List<Token> exprTokens, @NotNull List<Token> pipelineTokens, @NotNull HandlerContextImpl ctx, @NotNull TypeEnv env) {
         String nameError = VarNameValidator.validate(name);
         if (nameError != null) {
             throw new DiagnosticException(LumenDiagnostic.error("E502", nameError)
@@ -330,7 +329,7 @@ public final class VarDeclarationForm implements StatementFormHandler {
         }
     }
 
-    private static void emitNullableDeclaration(@NotNull String name, @NotNull List<Token> exprTokens, @NotNull List<Token> pipelineTokens, @NotNull EmitContextImpl ctx, @NotNull TypeEnv env) {
+    private static void emitNullableDeclaration(@NotNull String name, @NotNull List<Token> exprTokens, @NotNull List<Token> pipelineTokens, @NotNull HandlerContextImpl ctx, @NotNull TypeEnv env) {
         TypeAnnotationParser.ParseResult result = TypeAnnotationParser.parseDetailed(exprTokens, 0, env::lookupDataSchema);
         if (result instanceof TypeAnnotationParser.ParseResult.Failure f) {
             throw new DiagnosticException(SuggestionDiagnostics.buildTypeFailure("E501", "Invalid nullable type", ctx.line(), ctx.raw(), exprTokens, f));
@@ -361,7 +360,7 @@ public final class VarDeclarationForm implements StatementFormHandler {
         }
     }
 
-    private static @NotNull String resolveNullableDefault(@NotNull NullableType type, boolean explicitNone, @NotNull EmitContextImpl ctx) {
+    private static @NotNull String resolveNullableDefault(@NotNull NullableType type, boolean explicitNone, @NotNull HandlerContextImpl ctx) {
         if (explicitNone) return "null";
         LumenType inner = type.inner();
         if (inner instanceof CollectionType ct) {
@@ -386,7 +385,7 @@ public final class VarDeclarationForm implements StatementFormHandler {
         return text.equalsIgnoreCase("none") || text.equalsIgnoreCase("null");
     }
 
-    private static @Nullable ExpressionResult tryExpressionPattern(@NotNull List<Token> tokens, @NotNull EmitContextImpl ctx, @NotNull TypeEnv env) {
+    private static @Nullable ExpressionResult tryExpressionPattern(@NotNull List<Token> tokens, @NotNull HandlerContextImpl ctx, @NotNull TypeEnv env) {
         PatternRegistry reg;
         try {
             reg = PatternRegistry.instance();
@@ -402,8 +401,8 @@ public final class VarDeclarationForm implements StatementFormHandler {
         }
         try {
             BlockContext block = env.blockContext();
-            BindingContext bc = new BindingContext(match.match(), env, ctx.codegenContext(), block);
-            return match.reg().handler().handle(bc);
+            HandlerContextImpl hctx = new HandlerContextImpl(match.match(), env, ctx.codegenContext(), block, null, 0, "");
+            return match.reg().handler().handle(hctx);
         } catch (DiagnosticException e) {
             throw e;
         } catch (RuntimeException e) {
@@ -411,12 +410,12 @@ public final class VarDeclarationForm implements StatementFormHandler {
         }
     }
 
-    private static @Nullable String resolveExpressionJava(@NotNull List<Token> tokens, @NotNull EmitContextImpl ctx, @NotNull TypeEnv env) {
+    private static @Nullable String resolveExpressionJava(@NotNull List<Token> tokens, @NotNull HandlerContextImpl ctx, @NotNull TypeEnv env) {
         TypedExpression typed = resolveExpressionTyped(tokens, ctx, env);
         return typed != null ? typed.java : null;
     }
 
-    private static @Nullable TypedExpression resolveExpressionTyped(@NotNull List<Token> tokens, @NotNull EmitContextImpl ctx, @NotNull TypeEnv env) {
+    private static @Nullable TypedExpression resolveExpressionTyped(@NotNull List<Token> tokens, @NotNull HandlerContextImpl ctx, @NotNull TypeEnv env) {
         Expr e = ExprParser.parse(tokens, env, ctx.line(), ctx.raw());
         if (e instanceof Expr.Literal l) {
             String java;

@@ -3,9 +3,8 @@ package dev.lumenlang.lumen.plugin.defaults.statement;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
-import dev.lumenlang.lumen.api.codegen.BindingAccess;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
-import dev.lumenlang.lumen.api.codegen.JavaOutput;
+import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
 import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.pattern.Categories;
@@ -27,7 +26,7 @@ import java.util.function.Function;
 @SuppressWarnings("unused")
 public final class MapStatements {
 
-    private static @Nullable String mapVarName(@NotNull BindingAccess ctx) {
+    private static @Nullable String mapVarName(@NotNull HandlerContext ctx) {
         Object val = ctx.value("map");
         if (val instanceof EnvironmentAccess.VarHandle ref) {
             return ref.java();
@@ -35,18 +34,15 @@ public final class MapStatements {
         return null;
     }
 
-    private static void flushIfStored(
-            @NotNull EnvironmentAccess env,
-            @NotNull JavaOutput out,
-            @NotNull String mapJava,
-            @Nullable String varName) {
+    private static void flushIfStored(@NotNull HandlerContext ctx, @NotNull String mapJava, @Nullable String varName) {
+        EnvironmentAccess env = ctx.env();
         if (varName != null && env.isStored(varName)) {
-            out.line(env.storedClassName(varName) + ".set(" + env.getStoredKey(varName) + ", "
+            ctx.out().line(env.storedClassName(varName) + ".set(" + env.getStoredKey(varName) + ", "
                     + mapJava + ");");
         }
     }
 
-    private static void emitScopedMutation(@NotNull BindingAccess ctx, @NotNull JavaOutput out, @NotNull String mapVarName, @NotNull String scopeVarName, @NotNull Function<String, String> mutation) {
+    private static void emitScopedMutation(@NotNull HandlerContext ctx, @NotNull String mapVarName, @NotNull String scopeVarName, @NotNull Function<String, String> mutation) {
         EnvironmentAccess.GlobalInfo info = ctx.env().getGlobalInfo(mapVarName);
         if (info == null) {
             throw new DiagnosticException(LumenDiagnostic.error("E500", "'" + mapVarName + "' is not a global variable")
@@ -64,18 +60,15 @@ public final class MapStatements {
         }
         String storageClass = info.stored() ? "PersistentVars" : "GlobalVars";
         String scopeKey = buildScopedKey(ctx, mapVarName, scopeVarName, info);
-        String tmp = "__scoped_" + mapVarName + "_" + out.lineNum();
+        String tmp = "__scoped_" + mapVarName + "_" + ctx.out().lineNum();
         ctx.codegen().addImport(Map.class.getName());
         ctx.codegen().addImport(HashMap.class.getName());
-        out.line("var " + tmp + " = " + storageClass + ".get(" + scopeKey + ", " + info.defaultJava() + ");");
-        out.line(mutation.apply(tmp));
-        out.line(storageClass + ".set(" + scopeKey + ", " + tmp + ");");
+        ctx.out().line("var " + tmp + " = " + storageClass + ".get(" + scopeKey + ", " + info.defaultJava() + ");");
+        ctx.out().line(mutation.apply(tmp));
+        ctx.out().line(storageClass + ".set(" + scopeKey + ", " + tmp + ");");
     }
 
-    private static @NotNull String buildScopedKey(@NotNull BindingAccess ctx,
-                                                  @NotNull String varName,
-                                                  @NotNull String scopeVarName,
-                                                  @NotNull EnvironmentAccess.GlobalInfo info) {
+    private static @NotNull String buildScopedKey(@NotNull HandlerContext ctx, @NotNull String varName, @NotNull String scopeVarName, @NotNull EnvironmentAccess.GlobalInfo info) {
         EnvironmentAccess env = ctx.env();
         EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
         if (scopeRef == null) {
@@ -90,7 +83,7 @@ public final class MapStatements {
         return "\"" + info.className() + "." + varName + ".\" + " + scopeKeyPart;
     }
 
-    private static void validateMapEntry(@NotNull BindingAccess ctx) {
+    private static void validateMapEntry(@NotNull HandlerContext ctx) {
         EnvironmentAccess.VarHandle mapRef = ctx.varHandle("map");
         if (mapRef == null) return;
         CollectionType ct = TypeUtils.asCollection(mapRef.type());
@@ -115,7 +108,7 @@ public final class MapStatements {
         }
     }
 
-    private static void validateMapKey(@NotNull BindingAccess ctx) {
+    private static void validateMapKey(@NotNull HandlerContext ctx) {
         EnvironmentAccess.VarHandle mapRef = ctx.varHandle("map");
         if (mapRef == null) return;
         CollectionType ct = TypeUtils.asCollection(mapRef.type());
@@ -139,9 +132,9 @@ public final class MapStatements {
                 .example("set balances at key \"money\" to 100 for p")
                 .since("1.0.0")
                 .category(Categories.MAP)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     validateMapEntry(ctx);
-                    emitScopedMutation(ctx, out, ctx.tokens("map").get(0), ctx.java("scope"), tmp -> "((Map) " + tmp + ").put(" + ctx.java("key") + ", " + ctx.java("val") + ");");
+                    emitScopedMutation(ctx, ctx.tokens("map").get(0), ctx.java("scope"), tmp -> "((Map) " + tmp + ").put(" + ctx.java("key") + ", " + ctx.java("val") + ");");
                 }));
 
         api.patterns().statement(b -> b
@@ -151,12 +144,12 @@ public final class MapStatements {
                 .example("set myMap at key \"name\" to \"Steve\"")
                 .since("1.0.0")
                 .category(Categories.MAP)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     String mapJava = ctx.java("map");
                     validateMapEntry(ctx);
                     ctx.codegen().addImport(Map.class.getName());
-                    out.line("((Map) " + mapJava + ").put(" + ctx.java("key") + ", " + ctx.java("val") + ");");
-                    flushIfStored(ctx.env(), out, mapJava, mapVarName(ctx));
+                    ctx.out().line("((Map) " + mapJava + ").put(" + ctx.java("key") + ", " + ctx.java("val") + ");");
+                    flushIfStored(ctx, mapJava, mapVarName(ctx));
                 }));
 
         api.patterns().statement(b -> b
@@ -166,9 +159,9 @@ public final class MapStatements {
                 .example("remove key \"money\" from balances for p")
                 .since("1.0.0")
                 .category(Categories.MAP)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     validateMapKey(ctx);
-                    emitScopedMutation(ctx, out, ctx.tokens("map").get(0), ctx.java("scope"), tmp -> "((Map<?, ?>) " + tmp + ").remove(" + ctx.java("key") + ");");
+                    emitScopedMutation(ctx, ctx.tokens("map").get(0), ctx.java("scope"), tmp -> "((Map<?, ?>) " + tmp + ").remove(" + ctx.java("key") + ");");
                 }));
 
         api.patterns().statement(b -> b
@@ -178,12 +171,12 @@ public final class MapStatements {
                 .example("remove key \"name\" from myMap")
                 .since("1.0.0")
                 .category(Categories.MAP)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     String mapJava = ctx.java("map");
                     validateMapKey(ctx);
                     ctx.codegen().addImport(Map.class.getName());
-                    out.line("((Map<?, ?>) " + mapJava + ").remove(" + ctx.java("key") + ");");
-                    flushIfStored(ctx.env(), out, mapJava, mapVarName(ctx));
+                    ctx.out().line("((Map<?, ?>) " + mapJava + ").remove(" + ctx.java("key") + ");");
+                    flushIfStored(ctx, mapJava, mapVarName(ctx));
                 }));
 
         api.patterns().statement(b -> b
@@ -193,7 +186,7 @@ public final class MapStatements {
                 .example("clear stats for player")
                 .since("1.0.0")
                 .category(Categories.MAP)
-                .handler((line, ctx, out) -> emitScopedMutation(ctx, out, ctx.tokens("map").get(0), ctx.java("scope"), tmp -> "((Map<?, ?>) " + tmp + ").clear();")));
+                .handler(ctx -> emitScopedMutation(ctx, ctx.tokens("map").get(0), ctx.java("scope"), tmp -> "((Map<?, ?>) " + tmp + ").clear();")));
 
         api.patterns().statement(b -> b
                 .by("Lumen")
@@ -202,11 +195,11 @@ public final class MapStatements {
                 .example("clear myMap")
                 .since("1.0.0")
                 .category(Categories.MAP)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     String mapJava = ctx.java("map");
                     ctx.codegen().addImport(Map.class.getName());
-                    out.line("((Map<?, ?>) " + mapJava + ").clear();");
-                    flushIfStored(ctx.env(), out, mapJava, mapVarName(ctx));
+                    ctx.out().line("((Map<?, ?>) " + mapJava + ").clear();");
+                    flushIfStored(ctx, mapJava, mapVarName(ctx));
                 }));
     }
 }

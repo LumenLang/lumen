@@ -1,6 +1,6 @@
 package dev.lumenlang.lumen.plugin.inject.handler;
 
-import dev.lumenlang.lumen.api.codegen.BindingAccess;
+import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler;
 import dev.lumenlang.lumen.api.inject.body.InjectableExpression;
 import dev.lumenlang.lumen.api.type.LumenType;
@@ -66,7 +66,7 @@ public final class InjectableExpressionHandler implements ExpressionHandler, Pat
     }
 
     @Override
-    public @NotNull ExpressionResult handle(@NotNull BindingAccess ctx) {
+    public @NotNull ExpressionResult handle(@NotNull HandlerContext ctx) {
         MethodDecompiler.DecompiledInlineBody inlineBody = support.inlineBody();
         if (inlineBody != null && inlineBody.returnExpression() != null) {
             support.addInlineImports(ctx.codegen());

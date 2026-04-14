@@ -1,9 +1,7 @@
 package dev.lumenlang.lumen.api.handler;
 
-import dev.lumenlang.lumen.api.codegen.BindingAccess;
-import dev.lumenlang.lumen.api.pattern.PatternRegistrar;
+import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import dev.lumenlang.lumen.api.type.LumenType;
-import dev.lumenlang.lumen.api.type.PrimitiveType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -23,18 +21,10 @@ import java.util.Map;
  * );
  * }</pre>
  *
- * <p>When the expression evaluates to a primitive or common Java type, use
- * {@link PrimitiveType} constants:
- * <pre>{@code
- * new ExpressionResult(expr, PrimitiveType.DOUBLE)
- * }</pre>
- *
  * <p>Scripts can then write:
  * <pre>{@code
  * set target to get player "Notch"
  * }</pre>
- *
- * @see PatternRegistrar#expression(String, ExpressionHandler)
  */
 @FunctionalInterface
 public interface ExpressionHandler {
@@ -42,10 +32,10 @@ public interface ExpressionHandler {
     /**
      * Generates a Java expression for the matched pattern.
      *
-     * @param ctx the bound parameters from the pattern match
+     * @param ctx the handler context providing bound parameters and environment
      * @return the expression result containing the Java expression and its type
      */
-    @NotNull ExpressionResult handle(@NotNull BindingAccess ctx);
+    @NotNull ExpressionResult handle(@NotNull HandlerContext ctx);
 
     /**
      * The result of an expression handler.

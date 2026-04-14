@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
  * Registers player-related condition patterns.
  */
 @Registration
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "DataFlowIssue"})
 public final class PlayerConditions {
 
     @Call
@@ -22,9 +22,9 @@ public final class PlayerConditions {
                 .example("if player's health >= 10:")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((match, env, ctx) -> match.ref("p").java()
-                        + ".getHealth() " + match.java("op", ctx, env) + " "
-                        + match.java("n", ctx, env)));
+                .handler(ctx -> ctx.requireVarHandle("p").java()
+                        + ".getHealth() " + ctx.java("op") + " "
+                        + ctx.java("n")));
 
         api.patterns().condition(b -> b
                 .by("Lumen")
@@ -33,7 +33,7 @@ public final class PlayerConditions {
                 .example("if player exists:")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((match, env, ctx) -> match.ref("p").java() + " != null"));
+                .handler(ctx -> ctx.requireVarHandle("p").java() + " != null"));
 
         api.patterns().condition(b -> b
                 .by("Lumen")
@@ -42,8 +42,8 @@ public final class PlayerConditions {
                 .example("if player has permission \"myplugin.admin\":")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((match, env, ctx) -> match.ref("p").java() + ".hasPermission("
-                        + match.java("perm", ctx, env) + ")"));
+                .handler(ctx -> ctx.requireVarHandle("p").java() + ".hasPermission("
+                        + ctx.java("perm") + ")"));
 
         api.patterns().condition(b -> b
                 .by("Lumen")
@@ -52,9 +52,9 @@ public final class PlayerConditions {
                 .examples("if player is sneaking:", "if player is not sneaking:")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((match, env, ctx) -> {
-                    boolean negated = match.choice(0).equals("is not");
-                    return (negated ? "!" : "") + match.ref("p").java() + ".isSneaking()";
+                .handler(ctx -> {
+                    boolean negated = ctx.choice(0).equals("is not");
+                    return (negated ? "!" : "") + ctx.requireVarHandle("p").java() + ".isSneaking()";
                 }));
 
         api.patterns().condition(b -> b
@@ -64,9 +64,9 @@ public final class PlayerConditions {
                 .examples("if player is sprinting:", "if player is not sprinting:")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((match, env, ctx) -> {
-                    boolean negated = match.choice(0).equals("is not");
-                    return (negated ? "!" : "") + match.ref("p").java() + ".isSprinting()";
+                .handler(ctx -> {
+                    boolean negated = ctx.choice(0).equals("is not");
+                    return (negated ? "!" : "") + ctx.requireVarHandle("p").java() + ".isSprinting()";
                 }));
 
         api.patterns().condition(b -> b
@@ -76,9 +76,9 @@ public final class PlayerConditions {
                 .examples("if player is a op:", "if player is not op:")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((match, env, ctx) -> {
-                    boolean negated = match.choice(0).equals("is not");
-                    return (negated ? "!" : "") + match.ref("p").java() + ".isOp()";
+                .handler(ctx -> {
+                    boolean negated = ctx.choice(0).equals("is not");
+                    return (negated ? "!" : "") + ctx.requireVarHandle("p").java() + ".isOp()";
                 }));
 
         api.patterns().condition(b -> b
@@ -88,9 +88,9 @@ public final class PlayerConditions {
                 .examples("if player is flying:", "if player is not flying:")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((match, env, ctx) -> {
-                    boolean negated = match.choice(0).equals("is not");
-                    return (negated ? "!" : "") + match.ref("p").java() + ".isFlying()";
+                .handler(ctx -> {
+                    boolean negated = ctx.choice(0).equals("is not");
+                    return (negated ? "!" : "") + ctx.requireVarHandle("p").java() + ".isFlying()";
                 }));
 
         api.patterns().condition(b -> b
@@ -100,9 +100,9 @@ public final class PlayerConditions {
                 .examples("if player's gamemode is \"creative\":", "if player's gamemode is not \"creative\":")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((match, env, ctx) -> {
-                    boolean negated = match.choice(0).equals("is not");
-                    return match.ref("p").java() + ".getGameMode() " + (negated ? "!= " : "== ") + match.java("mode", ctx, env);
+                .handler(ctx -> {
+                    boolean negated = ctx.choice(0).equals("is not");
+                    return ctx.requireVarHandle("p").java() + ".getGameMode() " + (negated ? "!= " : "== ") + ctx.java("mode");
                 }));
 
         api.patterns().condition(b -> b
@@ -112,9 +112,9 @@ public final class PlayerConditions {
                 .example("if player's y >= 64:")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((match, env, ctx) -> match.ref("p").java()
-                        + ".getLocation().getY() " + match.java("op", ctx, env) + " "
-                        + match.java("n", ctx, env)));
+                .handler(ctx -> ctx.requireVarHandle("p").java()
+                        + ".getLocation().getY() " + ctx.java("op") + " "
+                        + ctx.java("n")));
 
         api.patterns().condition(b -> b
                 .by("Lumen")
@@ -123,9 +123,9 @@ public final class PlayerConditions {
                 .examples("if player is in world \"world_nether\":", "if player is not in world \"world_nether\":")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((match, env, ctx) -> {
-                    boolean negated = match.choice(0).equals("is not");
-                    return (negated ? "!" : "") + match.ref("p").java() + ".getWorld().getName().equals(" + match.java("w", ctx, env) + ")";
+                .handler(ctx -> {
+                    boolean negated = ctx.choice(0).equals("is not");
+                    return (negated ? "!" : "") + ctx.requireVarHandle("p").java() + ".getWorld().getName().equals(" + ctx.java("w") + ")";
                 }));
 
         api.patterns().condition(b -> b
@@ -135,9 +135,9 @@ public final class PlayerConditions {
                 .examples("if block under player is diamond_block:", "if block under player is not diamond_block:")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((match, env, ctx) -> {
-                    boolean negated = match.choice(0).equals("is not");
-                    return match.ref("p").java() + ".getLocation().subtract(0,1,0).getBlock().getType() " + (negated ? "!= " : "== ") + match.java("mat", ctx, env);
+                .handler(ctx -> {
+                    boolean negated = ctx.choice(0).equals("is not");
+                    return ctx.requireVarHandle("p").java() + ".getLocation().subtract(0,1,0).getBlock().getType() " + (negated ? "!= " : "== ") + ctx.java("mat");
                 }));
 
         api.patterns().condition(b -> b
@@ -147,9 +147,9 @@ public final class PlayerConditions {
                 .example("if player has 10 of diamond:")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((match, env, ctx) -> match.ref("p").java() + ".getInventory().contains("
-                        + match.java("mat", ctx, env)
-                        + ", " + match.java("amt", ctx, env) + ")"));
+                .handler(ctx -> ctx.requireVarHandle("p").java() + ".getInventory().contains("
+                        + ctx.java("mat")
+                        + ", " + ctx.java("amt") + ")"));
 
         api.patterns().condition(b -> b
                 .by("Lumen")
@@ -158,9 +158,9 @@ public final class PlayerConditions {
                 .example("if player is holding diamond_sword:")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((match, env, ctx) -> match.ref("p").java()
+                .handler(ctx -> ctx.requireVarHandle("p").java()
                         + ".getInventory().getItemInMainHand().getType() == "
-                        + match.java("mat", ctx, env)));
+                        + ctx.java("mat")));
 
         api.patterns().condition(b -> b
                 .by("Lumen")
@@ -169,7 +169,7 @@ public final class PlayerConditions {
                 .example("if player is dead:")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((match, env, ctx) -> match.ref("p").java() + ".isDead()"));
+                .handler(ctx -> ctx.requireVarHandle("p").java() + ".isDead()"));
 
         api.patterns().condition(b -> b
                 .by("Lumen")
@@ -178,9 +178,9 @@ public final class PlayerConditions {
                 .example("if player's food level >= 10:")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((match, env, ctx) -> match.ref("p").java()
-                        + ".getFoodLevel() " + match.java("op", ctx, env) + " "
-                        + match.java("n", ctx, env)));
+                .handler(ctx -> ctx.requireVarHandle("p").java()
+                        + ".getFoodLevel() " + ctx.java("op") + " "
+                        + ctx.java("n")));
 
         api.patterns().condition(b -> b
                 .by("Lumen")
@@ -189,8 +189,8 @@ public final class PlayerConditions {
                 .example("if player's xp level >= 30:")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((match, env, ctx) -> match.ref("p").java()
-                        + ".getLevel() " + match.java("op", ctx, env) + " "
-                        + match.java("n", ctx, env)));
+                .handler(ctx -> ctx.requireVarHandle("p").java()
+                        + ".getLevel() " + ctx.java("op") + " "
+                        + ctx.java("n")));
     }
 }

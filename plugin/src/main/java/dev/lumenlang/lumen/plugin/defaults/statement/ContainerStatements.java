@@ -27,12 +27,12 @@ public final class ContainerStatements {
                 .example("add diamond 3 to block inventory")
                 .since("1.0.0")
                 .category(Categories.INVENTORY)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     ctx.codegen().addImport(ItemStack.class.getName());
                     ctx.codegen().addImport(CONTAINER);
-                    out.line("if (" + ctx.java("b") + ".getState() instanceof Container __container) {");
-                    out.line("    __container.getInventory().addItem(new ItemStack(" + ctx.java("item") + ", " + ctx.java("amt") + "));");
-                    out.line("}");
+                    ctx.out().line("if (" + ctx.java("b") + ".getState() instanceof Container __container) {");
+                    ctx.out().line("    __container.getInventory().addItem(new ItemStack(" + ctx.java("item") + ", " + ctx.java("amt") + "));");
+                    ctx.out().line("}");
                 }));
 
         api.patterns().statement(b -> b
@@ -42,11 +42,11 @@ public final class ContainerStatements {
                 .example("add myItem to block inventory")
                 .since("1.0.0")
                 .category(Categories.INVENTORY)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     ctx.codegen().addImport(CONTAINER);
-                    out.line("if (" + ctx.java("b") + ".getState() instanceof Container __container) {");
-                    out.line("    __container.getInventory().addItem(" + ctx.java("item") + ");");
-                    out.line("}");
+                    ctx.out().line("if (" + ctx.java("b") + ".getState() instanceof Container __container) {");
+                    ctx.out().line("    __container.getInventory().addItem(" + ctx.java("item") + ");");
+                    ctx.out().line("}");
                 }));
 
         api.patterns().statement(b -> b
@@ -56,11 +56,11 @@ public final class ContainerStatements {
                 .example("clear block inventory")
                 .since("1.0.0")
                 .category(Categories.INVENTORY)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     ctx.codegen().addImport(CONTAINER);
-                    out.line("if (" + ctx.java("b") + ".getState() instanceof Container __container) {");
-                    out.line("    __container.getInventory().clear();");
-                    out.line("}");
+                    ctx.out().line("if (" + ctx.java("b") + ".getState() instanceof Container __container) {");
+                    ctx.out().line("    __container.getInventory().clear();");
+                    ctx.out().line("}");
                 }));
     }
 }

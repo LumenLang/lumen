@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
  * <p>Handlers use this to inspect sibling blocks, check scope depth, and enforce structural
  * constraints (e.g. ensuring an {@code else} follows an {@code if}).
  *
- * @see BindingAccess#block()
+ * @see HandlerContext#block()
  */
 @SuppressWarnings("unused")
 public interface BlockAccess {

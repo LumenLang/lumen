@@ -1,8 +1,6 @@
 package dev.lumenlang.lumen.api.handler;
 
-import dev.lumenlang.lumen.api.codegen.BindingAccess;
-import dev.lumenlang.lumen.api.codegen.JavaOutput;
-import dev.lumenlang.lumen.api.pattern.PatternRegistrar;
+import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -10,13 +8,11 @@ import org.jetbrains.annotations.NotNull;
  *
  * <h2>Example</h2>
  * <pre>{@code
- * api.patterns().statement("explode %who:PLAYER%", (line, ctx, out) ->
- *     out.line(ctx.java("who") + ".getWorld().createExplosion(" +
+ * api.patterns().statement("explode %who:PLAYER%", ctx ->
+ *     ctx.out().line(ctx.java("who") + ".getWorld().createExplosion(" +
  *              ctx.java("who") + ".getLocation(), 4F);")
  * );
  * }</pre>
- *
- * @see PatternRegistrar#statement(String, StatementHandler)
  */
 @FunctionalInterface
 public interface StatementHandler {
@@ -24,9 +20,7 @@ public interface StatementHandler {
     /**
      * Generates Java code for the matched statement.
      *
-     * @param line the source line number of the statement
-     * @param ctx  the bound parameters from the pattern match
-     * @param out  the builder to append Java source lines to
+     * @param ctx the handler context providing bound parameters, output, and environment
      */
-    void handle(int line, @NotNull BindingAccess ctx, @NotNull JavaOutput out);
+    void handle(@NotNull HandlerContext ctx);
 }

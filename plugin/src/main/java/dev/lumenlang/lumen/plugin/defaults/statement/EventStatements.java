@@ -28,7 +28,7 @@ public final class EventStatements {
                 .example("cancel event")
                 .since("1.0.0")
                 .category(Categories.EVENT)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     if (ctx.block().getEnvFromParents("__event_block") == null) {
                         throw new RuntimeException("'cancel event' can only be used inside an event handler block");
                     }
@@ -37,7 +37,7 @@ public final class EventStatements {
                         throw new RuntimeException("'cancel event' cannot be used here because this event is not cancellable");
                     }
                     ctx.codegen().addImport(Cancellable.class.getName());
-                    out.line("((Cancellable) event).setCancelled(true);");
+                    ctx.out().line("((Cancellable) event).setCancelled(true);");
                 }));
 
         api.patterns().statement(b -> b
@@ -50,7 +50,7 @@ public final class EventStatements {
                         secondly("message player \"Welcome!\"")))
                 .since("1.0.0")
                 .category(Categories.EVENT)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     EventMeta eventMeta = ctx.block().getEnvFromParents("__event_meta");
                     if (eventMeta == null) {
                         throw new RuntimeException("'with priority' must be used inside an event block");
@@ -76,7 +76,7 @@ public final class EventStatements {
                         secondly("message player \"You interacted!\"")))
                 .since("1.0.0")
                 .category(Categories.EVENT)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     EventMeta eventMeta = ctx.block().getEnvFromParents("__event_meta");
                     if (eventMeta == null) {
                         throw new RuntimeException("'ignore cancelled' must be used inside an event block");
@@ -91,7 +91,7 @@ public final class EventStatements {
                 .example("uncancel event")
                 .since("1.0.0")
                 .category(Categories.EVENT)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     if (ctx.block().getEnvFromParents("__event_block") == null) {
                         throw new RuntimeException("'uncancel event' can only be used inside an event handler block");
                     }
@@ -100,7 +100,7 @@ public final class EventStatements {
                         throw new RuntimeException("'uncancel event' cannot be used here because this event is not cancellable");
                     }
                     ctx.codegen().addImport(Cancellable.class.getName());
-                    out.line("((Cancellable) event).setCancelled(false);");
+                    ctx.out().line("((Cancellable) event).setCancelled(false);");
                 }));
     }
 }

@@ -2,7 +2,6 @@ package dev.lumenlang.lumen.pipeline.language.match;
 
 import dev.lumenlang.lumen.api.codegen.CodegenAccess;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
-import dev.lumenlang.lumen.api.handler.ConditionHandler;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.pipeline.codegen.CodegenContext;
@@ -28,7 +27,7 @@ public record Match(
         @NotNull Pattern pattern,
         @NotNull Map<String, BoundValue> values,
         @NotNull List<String> choices
-) implements ConditionHandler.ConditionMatch {
+) {
 
     /**
      * Resolves a bound value to Java source code. For EXPR-typed bindings with
@@ -202,24 +201,20 @@ public record Match(
         return resolveBinding(bv, ctx, env);
     }
 
-    @Override
     public @NotNull String java(@NotNull String name,
                                 @NotNull CodegenAccess ctx,
                                 @NotNull EnvironmentAccess env) {
         return java(name, (CodegenContext) ctx, (TypeEnv) env);
     }
 
-    @Override
     public <T> @NotNull T value(int index) {
         return valueAt(index);
     }
 
-    @Override
     public EnvironmentAccess.@NotNull VarHandle ref(int index) {
         return refAt(index);
     }
 
-    @Override
     public @NotNull String java(int index,
                                 @NotNull CodegenAccess ctx,
                                 @NotNull EnvironmentAccess env) {

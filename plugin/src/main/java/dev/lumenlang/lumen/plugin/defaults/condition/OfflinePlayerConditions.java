@@ -22,9 +22,9 @@ public final class OfflinePlayerConditions {
                 .examples("if offlinePlayer is banned:", "if offlinePlayer is not banned:")
                 .since("1.0.0")
                 .category(Categories.OFFLINE_PLAYER)
-                .handler((match, env, ctx) -> {
-                    boolean negated = match.choice(0).equals("is not");
-                    return (negated ? "!" : "") + match.ref("op").java() + ".isBanned()";
+                .handler(ctx -> {
+                    boolean negated = ctx.choice(0).equals("is not");
+                    return (negated ? "!" : "") + ctx.requireVarHandle("op").java() + ".isBanned()";
                 }));
 
         api.patterns().condition(b -> b
@@ -34,9 +34,9 @@ public final class OfflinePlayerConditions {
                 .examples("if offlinePlayer is whitelisted:", "if offlinePlayer is not whitelisted:")
                 .since("1.0.0")
                 .category(Categories.OFFLINE_PLAYER)
-                .handler((match, env, ctx) -> {
-                    boolean negated = match.choice(0).equals("is not");
-                    return (negated ? "!" : "") + match.ref("op").java() + ".isWhitelisted()";
+                .handler(ctx -> {
+                    boolean negated = ctx.choice(0).equals("is not");
+                    return (negated ? "!" : "") + ctx.requireVarHandle("op").java() + ".isWhitelisted()";
                 }));
 
         api.patterns().condition(b -> b
@@ -46,9 +46,9 @@ public final class OfflinePlayerConditions {
                 .examples("if offlinePlayer is op:", "if offlinePlayer is not op:")
                 .since("1.0.0")
                 .category(Categories.OFFLINE_PLAYER)
-                .handler((match, env, ctx) -> {
-                    boolean negated = match.choice(0).equals("is not");
-                    return (negated ? "!" : "") + match.ref("op").java() + ".isOp()";
+                .handler(ctx -> {
+                    boolean negated = ctx.choice(0).equals("is not");
+                    return (negated ? "!" : "") + ctx.requireVarHandle("op").java() + ".isOp()";
                 }));
 
         api.patterns().condition(b -> b
@@ -58,9 +58,9 @@ public final class OfflinePlayerConditions {
                 .examples("if offlinePlayer has played before:", "if offlinePlayer has not played before:")
                 .since("1.0.0")
                 .category(Categories.OFFLINE_PLAYER)
-                .handler((match, env, ctx) -> {
-                    boolean negated = match.choice(0).equals("has not");
-                    return (negated ? "!" : "") + match.ref("op").java() + ".hasPlayedBefore()";
+                .handler(ctx -> {
+                    boolean negated = ctx.choice(0).equals("has not");
+                    return (negated ? "!" : "") + ctx.requireVarHandle("op").java() + ".hasPlayedBefore()";
                 }));
 
         api.patterns().condition(b -> b
@@ -70,9 +70,9 @@ public final class OfflinePlayerConditions {
                 .examples("if offlinePlayer is online:", "if offlinePlayer is offline:")
                 .since("1.0.0")
                 .category(Categories.OFFLINE_PLAYER)
-                .handler((match, env, ctx) -> {
-                    boolean negated = match.choice(0).equals("is offline");
-                    return (negated ? "!" : "") + match.ref("op").java() + ".isOnline()";
+                .handler(ctx -> {
+                    boolean negated = ctx.choice(0).equals("is offline");
+                    return (negated ? "!" : "") + ctx.requireVarHandle("op").java() + ".isOnline()";
                 }));
     }
 }

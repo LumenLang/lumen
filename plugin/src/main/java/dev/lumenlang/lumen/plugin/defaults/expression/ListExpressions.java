@@ -13,7 +13,7 @@ import dev.lumenlang.lumen.api.type.CollectionType;
 import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.api.type.PrimitiveType;
-import dev.lumenlang.lumen.pipeline.codegen.BindingContext;
+import dev.lumenlang.lumen.pipeline.codegen.HandlerContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.pipeline.language.resolve.SuggestionDiagnostics;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
@@ -60,9 +60,9 @@ public final class ListExpressions {
                 .category(Categories.LIST)
                 .handler(ctx -> {
                     ctx.codegen().addImport(ArrayList.class.getName());
-                    BindingContext bc = (BindingContext) ctx;
+                    HandlerContextImpl hctx = (HandlerContextImpl) ctx;
                     TypeEnv env = (TypeEnv) ctx.env();
-                    List<Token> typeTokens = bc.bound("type").tokens();
+                    List<Token> typeTokens = hctx.bound("type").tokens();
                     TypeAnnotationParser.ParseResult result = TypeAnnotationParser.parseDetailed(typeTokens, 0, env::lookupDataSchema);
                     if (result instanceof TypeAnnotationParser.ParseResult.Failure f) {
                         throw new DiagnosticException(SuggestionDiagnostics.buildTypeFailure("E501", "Invalid list element type", ctx.block().line(), ctx.block().raw(), typeTokens, f));

@@ -3,9 +3,8 @@ package dev.lumenlang.lumen.plugin.defaults.statement;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
-import dev.lumenlang.lumen.api.codegen.BindingAccess;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
-import dev.lumenlang.lumen.api.codegen.JavaOutput;
+import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
 import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.pattern.Categories;
@@ -27,7 +26,7 @@ import java.util.function.Function;
 @SuppressWarnings({"unused", "DataFlowIssue"})
 public final class ListStatements {
 
-    private static @Nullable String listVarName(@NotNull BindingAccess ctx) {
+    private static @Nullable String listVarName(@NotNull HandlerContext ctx) {
         Object val = ctx.value("list");
         if (val instanceof EnvironmentAccess.VarHandle ref) {
             return ref.java();
@@ -35,7 +34,7 @@ public final class ListStatements {
         return null;
     }
 
-    private static void validateElementType(@NotNull BindingAccess ctx, @NotNull String paramName) {
+    private static void validateElementType(@NotNull HandlerContext ctx, @NotNull String paramName) {
         EnvironmentAccess.VarHandle listRef = ctx.varHandle("list");
         if (listRef == null) return;
         CollectionType ct = TypeUtils.asCollection(listRef.type());
@@ -50,21 +49,15 @@ public final class ListStatements {
                 .build());
     }
 
-    private static void flushIfStored(
-            @NotNull EnvironmentAccess env,
-            @NotNull JavaOutput out,
-            @NotNull String listJava,
-            @Nullable String varName) {
+    private static void flushIfStored(@NotNull HandlerContext ctx, @NotNull String listJava, @Nullable String varName) {
+        EnvironmentAccess env = ctx.env();
         if (varName != null && env.isStored(varName)) {
-            out.line(env.storedClassName(varName) + ".set(" + env.getStoredKey(varName) + ", "
+            ctx.out().line(env.storedClassName(varName) + ".set(" + env.getStoredKey(varName) + ", "
                     + listJava + ");");
         }
     }
 
-    private static @NotNull String buildScopedKey(@NotNull BindingAccess ctx,
-                                                  @NotNull String varName,
-                                                  @NotNull String scopeVarName,
-                                                  @NotNull EnvironmentAccess.GlobalInfo info) {
+    private static @NotNull String buildScopedKey(@NotNull HandlerContext ctx, @NotNull String varName, @NotNull String scopeVarName, @NotNull EnvironmentAccess.GlobalInfo info) {
         EnvironmentAccess env = ctx.env();
         EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
         if (scopeRef == null) {
@@ -78,7 +71,7 @@ public final class ListStatements {
         return "\"" + info.className() + "." + varName + ".\" + " + ((ObjectType) scopeType).keyExpression(scopeRef.java());
     }
 
-    private static void emitScopedMutation(@NotNull BindingAccess ctx, @NotNull JavaOutput out, @NotNull String listVarName, @NotNull String scopeVarName, @NotNull Function<String, String> mutation) {
+    private static void emitScopedMutation(@NotNull HandlerContext ctx, @NotNull String listVarName, @NotNull String scopeVarName, @NotNull Function<String, String> mutation) {
         EnvironmentAccess.GlobalInfo info = ctx.env().getGlobalInfo(listVarName);
         if (info == null) {
             throw new DiagnosticException(LumenDiagnostic.error("E500", "'" + listVarName + "' is not a global variable")
@@ -89,12 +82,12 @@ public final class ListStatements {
         }
         String storageClass = info.stored() ? "PersistentVars" : "GlobalVars";
         String scopeKey = buildScopedKey(ctx, listVarName, scopeVarName, info);
-        String tmp = "__scoped_" + listVarName + "_" + out.lineNum();
+        String tmp = "__scoped_" + listVarName + "_" + ctx.out().lineNum();
         ctx.codegen().addImport(List.class.getName());
         ctx.codegen().addImport(ArrayList.class.getName());
-        out.line("var " + tmp + " = " + storageClass + ".get(" + scopeKey + ", " + info.defaultJava() + ");");
-        out.line(mutation.apply(tmp));
-        out.line(storageClass + ".set(" + scopeKey + ", " + tmp + ");");
+        ctx.out().line("var " + tmp + " = " + storageClass + ".get(" + scopeKey + ", " + info.defaultJava() + ");");
+        ctx.out().line(mutation.apply(tmp));
+        ctx.out().line(storageClass + ".set(" + scopeKey + ", " + tmp + ");");
     }
 
     @Call
@@ -106,9 +99,9 @@ public final class ListStatements {
                 .example("add task to todos for player")
                 .since("1.0.0")
                 .category(Categories.LIST)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     validateElementType(ctx, "val");
-                    emitScopedMutation(ctx, out, ctx.tokens("list").get(0), ctx.java("scope"), tmp -> "((List) " + tmp + ").add(" + ctx.java("val") + ");");
+                    emitScopedMutation(ctx, ctx.tokens("list").get(0), ctx.java("scope"), tmp -> "((List) " + tmp + ").add(" + ctx.java("val") + ");");
                 }));
 
         api.patterns().statement(b -> b
@@ -118,9 +111,9 @@ public final class ListStatements {
                 .example("remove task from todos for player")
                 .since("1.0.0")
                 .category(Categories.LIST)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     validateElementType(ctx, "val");
-                    emitScopedMutation(ctx, out, ctx.tokens("list").get(0), ctx.java("scope"), tmp -> "((List<?>) " + tmp + ").remove(" + ctx.java("val") + ");");
+                    emitScopedMutation(ctx, ctx.tokens("list").get(0), ctx.java("scope"), tmp -> "((List<?>) " + tmp + ").remove(" + ctx.java("val") + ");");
                 }));
 
         api.patterns().statement(b -> b
@@ -130,7 +123,7 @@ public final class ListStatements {
                 .example("remove index 0 from todos for player")
                 .since("1.0.0")
                 .category(Categories.LIST)
-                .handler((line, ctx, out) -> emitScopedMutation(ctx, out, ctx.tokens("list").get(0), ctx.java("scope"), tmp -> "((List<?>) " + tmp + ").remove(" + ctx.java("i") + ");")));
+                .handler(ctx -> emitScopedMutation(ctx, ctx.tokens("list").get(0), ctx.java("scope"), tmp -> "((List<?>) " + tmp + ").remove(" + ctx.java("i") + ");")));
 
         api.patterns().statement(b -> b
                 .by("Lumen")
@@ -139,7 +132,7 @@ public final class ListStatements {
                 .example("clear todos for player")
                 .since("1.0.0")
                 .category(Categories.LIST)
-                .handler((line, ctx, out) -> emitScopedMutation(ctx, out, ctx.tokens("list").get(0), ctx.java("scope"), tmp -> "((List<?>) " + tmp + ").clear();")));
+                .handler(ctx -> emitScopedMutation(ctx, ctx.tokens("list").get(0), ctx.java("scope"), tmp -> "((List<?>) " + tmp + ").clear();")));
 
         api.patterns().statement(b -> b
                 .by("Lumen")
@@ -148,13 +141,12 @@ public final class ListStatements {
                 .example("add \"hello\" to myList")
                 .since("1.0.0")
                 .category(Categories.LIST)
-                .handler((line, ctx, out) -> {
-                    EnvironmentAccess env = ctx.env();
+                .handler(ctx -> {
                     String listJava = ctx.java("list");
                     validateElementType(ctx, "val");
                     ctx.codegen().addImport(List.class.getName());
-                    out.line("((List) " + listJava + ").add(" + ctx.java("val") + ");");
-                    flushIfStored(env, out, listJava, listVarName(ctx));
+                    ctx.out().line("((List) " + listJava + ").add(" + ctx.java("val") + ");");
+                    flushIfStored(ctx, listJava, listVarName(ctx));
                 }));
 
         api.patterns().statement(b -> b
@@ -164,12 +156,12 @@ public final class ListStatements {
                 .example("remove \"hello\" from myList")
                 .since("1.0.0")
                 .category(Categories.LIST)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     String listJava = ctx.java("list");
                     validateElementType(ctx, "val");
                     ctx.codegen().addImport(List.class.getName());
-                    out.line("((List<?>) " + listJava + ").remove(" + ctx.java("val") + ");");
-                    flushIfStored(ctx.env(), out, listJava, listVarName(ctx));
+                    ctx.out().line("((List<?>) " + listJava + ").remove(" + ctx.java("val") + ");");
+                    flushIfStored(ctx, listJava, listVarName(ctx));
                 }));
 
         api.patterns().statement(b -> b
@@ -179,11 +171,11 @@ public final class ListStatements {
                 .example("remove index 0 from myList")
                 .since("1.0.0")
                 .category(Categories.LIST)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     String listJava = ctx.java("list");
                     ctx.codegen().addImport(List.class.getName());
-                    out.line("((List<?>) " + listJava + ").remove(" + ctx.java("i") + ");");
-                    flushIfStored(ctx.env(), out, listJava, listVarName(ctx));
+                    ctx.out().line("((List<?>) " + listJava + ").remove(" + ctx.java("i") + ");");
+                    flushIfStored(ctx, listJava, listVarName(ctx));
                 }));
 
         api.patterns().statement(b -> b
@@ -193,11 +185,11 @@ public final class ListStatements {
                 .example("clear myList")
                 .since("1.0.0")
                 .category(Categories.LIST)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     String listJava = ctx.java("list");
                     ctx.codegen().addImport(List.class.getName());
-                    out.line("((List<?>) " + listJava + ").clear();");
-                    flushIfStored(ctx.env(), out, listJava, listVarName(ctx));
+                    ctx.out().line("((List<?>) " + listJava + ").clear();");
+                    flushIfStored(ctx, listJava, listVarName(ctx));
                 }));
 
         api.patterns().statement(b -> b
@@ -207,12 +199,12 @@ public final class ListStatements {
                 .example("set myList at index 0 to \"world\"")
                 .since("1.0.0")
                 .category(Categories.LIST)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     String listJava = ctx.java("list");
                     validateElementType(ctx, "val");
                     ctx.codegen().addImport(List.class.getName());
-                    out.line("((List) " + listJava + ").set(" + ctx.java("i") + ", " + ctx.java("val") + ");");
-                    flushIfStored(ctx.env(), out, listJava, listVarName(ctx));
+                    ctx.out().line("((List) " + listJava + ").set(" + ctx.java("i") + ", " + ctx.java("val") + ");");
+                    flushIfStored(ctx, listJava, listVarName(ctx));
                 }));
     }
 }

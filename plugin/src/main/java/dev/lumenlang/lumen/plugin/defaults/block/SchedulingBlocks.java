@@ -3,8 +3,7 @@ package dev.lumenlang.lumen.plugin.defaults.block;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
-import dev.lumenlang.lumen.api.codegen.BindingAccess;
-import dev.lumenlang.lumen.api.codegen.JavaOutput;
+import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import dev.lumenlang.lumen.api.handler.BlockHandler;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.plugin.scheduler.ScriptScheduler;
@@ -23,19 +22,19 @@ import static dev.lumenlang.lumen.api.pattern.LumaExample.top;
 @SuppressWarnings({"unused", "DataFlowIssue"})
 public class SchedulingBlocks {
 
-    private static void emitRootPreamble(@NotNull BindingAccess ctx, @NotNull JavaOutput out, @NotNull String prefix) {
+    private static void emitRootPreamble(@NotNull HandlerContext ctx, @NotNull String prefix) {
         if (ctx.block().isRoot()) {
-            out.line("@LumenPreload");
-            out.line("public void __lumen_" + prefix + "_" + ctx.codegen().nextMethodId() + "() {");
+            ctx.out().line("@LumenPreload");
+            ctx.out().line("public void __lumen_" + prefix + "_" + ctx.codegen().nextMethodId() + "() {");
         }
     }
 
-    private static void emitSchedulerImport(@NotNull BindingAccess ctx) {
+    private static void emitSchedulerImport(@NotNull HandlerContext ctx) {
         ctx.codegen().addImport(ScriptScheduler.class.getName());
         ctx.codegen().addImport(Consumer.class.getName());
     }
 
-    private static void markCancellable(@NotNull BindingAccess ctx) {
+    private static void markCancellable(@NotNull HandlerContext ctx) {
         ctx.block().putEnv("__cancellable_schedule", true);
         ctx.block().putEnv("__lambda_block", true);
     }
@@ -72,20 +71,20 @@ public class SchedulingBlocks {
                 .supportsRootLevel(true)
                 .handler(new BlockHandler() {
                     @Override
-                    public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
-                        emitRootPreamble(ctx, out, "wait");
+                    public void begin(@NotNull HandlerContext ctx) {
+                        emitRootPreamble(ctx, "wait");
                         emitSchedulerImport(ctx);
                         markCancellable(ctx);
-                        out.line("ScriptScheduler.schedule(this, (__cancelTask) -> {");
+                        ctx.out().line("ScriptScheduler.schedule(this, (__cancelTask) -> {");
                         ctx.block().putEnv("__delay_ticks", toTicksExpr(ctx.java("n"), ctx.choice(0)));
                     }
 
                     @Override
-                    public void end(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
+                    public void end(@NotNull HandlerContext ctx) {
                         String ticks = ctx.block().getEnv("__delay_ticks");
-                        out.line("}, " + ticks + ");");
+                        ctx.out().line("}, " + ticks + ");");
                         if (ctx.block().isRoot()) {
-                            out.line("}");
+                            ctx.out().line("}");
                         }
                     }
                 }));
@@ -105,22 +104,22 @@ public class SchedulingBlocks {
                 .supportsRootLevel(true)
                 .handler(new BlockHandler() {
                     @Override
-                    public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
-                        emitRootPreamble(ctx, out, "wait");
+                    public void begin(@NotNull HandlerContext ctx) {
+                        emitRootPreamble(ctx, "wait");
                         emitSchedulerImport(ctx);
                         markCancellable(ctx);
                         String nameJava = ctx.java("name");
-                        out.line("ScriptScheduler.scheduleNamed(this, " + nameJava + ", () -> {");
-                        out.line("Runnable __cancelTask = () -> ScriptScheduler.cancelByName(this, " + nameJava + ");");
+                        ctx.out().line("ScriptScheduler.scheduleNamed(this, " + nameJava + ", () -> {");
+                        ctx.out().line("Runnable __cancelTask = () -> ScriptScheduler.cancelByName(this, " + nameJava + ");");
                         ctx.block().putEnv("__delay_ticks", toTicksExpr(ctx.java("n"), ctx.choice(0)));
                     }
 
                     @Override
-                    public void end(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
+                    public void end(@NotNull HandlerContext ctx) {
                         String ticks = ctx.block().getEnv("__delay_ticks");
-                        out.line("}, " + ticks + ", false, false);");
+                        ctx.out().line("}, " + ticks + ", false, false);");
                         if (ctx.block().isRoot()) {
-                            out.line("}");
+                            ctx.out().line("}");
                         }
                     }
                 }));
@@ -137,20 +136,20 @@ public class SchedulingBlocks {
                 .supportsRootLevel(true)
                 .handler(new BlockHandler() {
                     @Override
-                    public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
-                        emitRootPreamble(ctx, out, "every");
+                    public void begin(@NotNull HandlerContext ctx) {
+                        emitRootPreamble(ctx, "every");
                         emitSchedulerImport(ctx);
                         markCancellable(ctx);
-                        out.line("ScriptScheduler.scheduleRepeating(this, (__cancelTask) -> {");
+                        ctx.out().line("ScriptScheduler.scheduleRepeating(this, (__cancelTask) -> {");
                         ctx.block().putEnv("__interval_ticks", toTicksExpr(ctx.java("n"), ctx.choice(0)));
                     }
 
                     @Override
-                    public void end(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
+                    public void end(@NotNull HandlerContext ctx) {
                         String ticks = ctx.block().getEnv("__interval_ticks");
-                        out.line("}, " + ticks + ", " + ticks + ");");
+                        ctx.out().line("}, " + ticks + ", " + ticks + ");");
                         if (ctx.block().isRoot()) {
-                            out.line("}");
+                            ctx.out().line("}");
                         }
                     }
                 }));
@@ -167,22 +166,22 @@ public class SchedulingBlocks {
                 .supportsRootLevel(true)
                 .handler(new BlockHandler() {
                     @Override
-                    public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
-                        emitRootPreamble(ctx, out, "every");
+                    public void begin(@NotNull HandlerContext ctx) {
+                        emitRootPreamble(ctx, "every");
                         emitSchedulerImport(ctx);
                         markCancellable(ctx);
                         String nameJava = ctx.java("name");
-                        out.line("ScriptScheduler.scheduleRepeatingNamed(this, " + nameJava + ", () -> {");
-                        out.line("Runnable __cancelTask = () -> ScriptScheduler.cancelByName(this, " + nameJava + ");");
+                        ctx.out().line("ScriptScheduler.scheduleRepeatingNamed(this, " + nameJava + ", () -> {");
+                        ctx.out().line("Runnable __cancelTask = () -> ScriptScheduler.cancelByName(this, " + nameJava + ");");
                         ctx.block().putEnv("__interval_ticks", toTicksExpr(ctx.java("n"), ctx.choice(0)));
                     }
 
                     @Override
-                    public void end(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
+                    public void end(@NotNull HandlerContext ctx) {
                         String ticks = ctx.block().getEnv("__interval_ticks");
-                        out.line("}, " + ticks + ", " + ticks + ", false, false);");
+                        ctx.out().line("}, " + ticks + ", " + ticks + ", false, false);");
                         if (ctx.block().isRoot()) {
-                            out.line("}");
+                            ctx.out().line("}");
                         }
                     }
                 }));
@@ -199,22 +198,22 @@ public class SchedulingBlocks {
                 .supportsRootLevel(true)
                 .handler(new BlockHandler() {
                     @Override
-                    public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
-                        emitRootPreamble(ctx, out, "every");
+                    public void begin(@NotNull HandlerContext ctx) {
+                        emitRootPreamble(ctx, "every");
                         emitSchedulerImport(ctx);
                         markCancellable(ctx);
                         String nameJava = ctx.java("name");
-                        out.line("ScriptScheduler.scheduleRepeatingNamed(this, " + nameJava + ", () -> {");
-                        out.line("Runnable __cancelTask = () -> ScriptScheduler.cancelByName(this, " + nameJava + ");");
+                        ctx.out().line("ScriptScheduler.scheduleRepeatingNamed(this, " + nameJava + ", () -> {");
+                        ctx.out().line("Runnable __cancelTask = () -> ScriptScheduler.cancelByName(this, " + nameJava + ");");
                         ctx.block().putEnv("__interval_ticks", toTicksExpr(ctx.java("n"), ctx.choice(0)));
                     }
 
                     @Override
-                    public void end(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
+                    public void end(@NotNull HandlerContext ctx) {
                         String ticks = ctx.block().getEnv("__interval_ticks");
-                        out.line("}, " + ticks + ", " + ticks + ", true, false);");
+                        ctx.out().line("}, " + ticks + ", " + ticks + ", true, false);");
                         if (ctx.block().isRoot()) {
-                            out.line("}");
+                            ctx.out().line("}");
                         }
                     }
                 }));
@@ -231,22 +230,22 @@ public class SchedulingBlocks {
                 .supportsRootLevel(true)
                 .handler(new BlockHandler() {
                     @Override
-                    public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
-                        emitRootPreamble(ctx, out, "every");
+                    public void begin(@NotNull HandlerContext ctx) {
+                        emitRootPreamble(ctx, "every");
                         emitSchedulerImport(ctx);
                         markCancellable(ctx);
                         String nameJava = ctx.java("name");
-                        out.line("ScriptScheduler.scheduleRepeatingNamed(this, " + nameJava + ", () -> {");
-                        out.line("Runnable __cancelTask = () -> ScriptScheduler.cancelByName(this, " + nameJava + ");");
+                        ctx.out().line("ScriptScheduler.scheduleRepeatingNamed(this, " + nameJava + ", () -> {");
+                        ctx.out().line("Runnable __cancelTask = () -> ScriptScheduler.cancelByName(this, " + nameJava + ");");
                         ctx.block().putEnv("__interval_ticks", toTicksExpr(ctx.java("n"), ctx.choice(0)));
                     }
 
                     @Override
-                    public void end(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
+                    public void end(@NotNull HandlerContext ctx) {
                         String ticks = ctx.block().getEnv("__interval_ticks");
-                        out.line("}, " + ticks + ", " + ticks + ", false, true);");
+                        ctx.out().line("}, " + ticks + ", " + ticks + ", false, true);");
                         if (ctx.block().isRoot()) {
-                            out.line("}");
+                            ctx.out().line("}");
                         }
                     }
                 }));

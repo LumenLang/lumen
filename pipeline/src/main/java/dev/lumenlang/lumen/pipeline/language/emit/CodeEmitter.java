@@ -8,9 +8,9 @@ import dev.lumenlang.lumen.api.emit.ScriptLine;
 import dev.lumenlang.lumen.api.emit.StatementFormHandler;
 import dev.lumenlang.lumen.api.emit.StatementValidator;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
-import dev.lumenlang.lumen.pipeline.codegen.BindingContext;
 import dev.lumenlang.lumen.pipeline.codegen.BlockContext;
 import dev.lumenlang.lumen.pipeline.codegen.CodegenContext;
+import dev.lumenlang.lumen.pipeline.codegen.HandlerContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.pipeline.java.JavaBuilder;
 import dev.lumenlang.lumen.pipeline.language.exceptions.LumenScriptException;
@@ -367,7 +367,7 @@ public final class CodeEmitter {
                 for (Node child : b.children()) {
                     children.add(new ScriptLineAdapter(child));
                 }
-                EmitContextImpl emitCtx = new EmitContextImpl(env, ctx, out, b.line(), b.raw());
+                HandlerContextImpl emitCtx = new HandlerContextImpl(null, env, ctx, null, out, b.line(), b.raw());
                 try {
                     handler.handle(head, children, emitCtx);
                 } catch (LumenScriptException e) {
@@ -388,17 +388,17 @@ public final class CodeEmitter {
             throw new LumenScriptException(new DiagnosticException(SuggestionDiagnostics.buildNoSuggestion("E500", "Unknown block", b.line(), b.raw(), head)));
         }
 
-        BindingContext bc = new BindingContext(bm.match(), env, ctx, blockCtx);
+        HandlerContextImpl hctx = new HandlerContextImpl(bm.match(), env, ctx, blockCtx, out, b.line(), b.raw());
 
         try {
-            bm.reg().handler().begin(bc, out);
+            bm.reg().handler().begin(hctx);
         } catch (LumenScriptException e) {
             throw e;
         } catch (RuntimeException e) {
             throw wrapRuntimeException(b.line(), b.raw(), e);
         }
 
-        EmitContextImpl hookCtx = new EmitContextImpl(env, ctx, out, b.line(), b.raw());
+        HandlerContextImpl hookCtx = new HandlerContextImpl(null, env, ctx, blockCtx, out, b.line(), b.raw());
         for (BlockEnterHook hook : emitReg.blockEnterHooks()) {
             try {
                 hook.onBlockEnter(hookCtx);
@@ -412,7 +412,7 @@ public final class CodeEmitter {
         emitChildren(b, blockCtx, reg, env, ctx, out, errors);
 
         try {
-            bm.reg().handler().end(bc, out);
+            bm.reg().handler().end(hctx);
         } catch (LumenScriptException e) {
             throw e;
         } catch (RuntimeException e) {
@@ -434,7 +434,7 @@ public final class CodeEmitter {
         EmitRegistry emitReg = EmitRegistry.instance();
         List<Token> tokens = st.head();
 
-        EmitContextImpl emitCtx = new EmitContextImpl(env, ctx, out, st.line(), st.raw());
+        HandlerContextImpl emitCtx = new HandlerContextImpl(null, env, ctx, blockCtx, out, st.line(), st.raw());
         for (StatementFormHandler handler : emitReg.statementForms()) {
             try {
                 if (handler.tryHandle(tokens, emitCtx)) {
@@ -461,9 +461,9 @@ public final class CodeEmitter {
 
         if (ts instanceof TypedStatement.PatternStmt ps) {
             RegisteredPatternMatch sm = ps.match();
-            BindingContext bc = new BindingContext(sm.match(), env, ctx, blockCtx);
+            HandlerContextImpl hctx = new HandlerContextImpl(sm.match(), env, ctx, blockCtx, out, st.line(), st.raw());
             try {
-                sm.reg().handler().handle(st.line(), bc, out);
+                sm.reg().handler().handle(hctx);
             } catch (LumenScriptException e) {
                 throw e;
             } catch (RuntimeException e) {
@@ -473,9 +473,9 @@ public final class CodeEmitter {
         }
 
         if (ts instanceof TypedStatement.ExprStmt es) {
-            BindingContext bc = new BindingContext(es.match().match(), env, ctx, blockCtx);
+            HandlerContextImpl hctx = new HandlerContextImpl(es.match().match(), env, ctx, blockCtx, out, st.line(), st.raw());
             try {
-                ExpressionResult result = es.match().reg().handler().handle(bc);
+                ExpressionResult result = es.match().reg().handler().handle(hctx);
                 out.line(asStatement(result.java()));
             } catch (LumenScriptException e) {
                 throw e;

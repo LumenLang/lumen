@@ -3,14 +3,13 @@ package dev.lumenlang.lumen.plugin.defaults.emit.form;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
-import dev.lumenlang.lumen.api.emit.EmitContext;
+import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import dev.lumenlang.lumen.api.emit.ScriptToken;
 import dev.lumenlang.lumen.api.emit.StatementFormHandler;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.type.ObjectType;
-import dev.lumenlang.lumen.pipeline.codegen.BindingContext;
+import dev.lumenlang.lumen.pipeline.codegen.HandlerContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
-import dev.lumenlang.lumen.pipeline.language.emit.EmitContextImpl;
 import dev.lumenlang.lumen.pipeline.language.exceptions.LumenScriptException;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.language.pattern.registered.RegisteredExpressionMatch;
@@ -53,14 +52,14 @@ public final class LoadStatementForm implements StatementFormHandler {
     }
 
     @Override
-    public boolean tryHandle(@NotNull List<? extends ScriptToken> tokens, @NotNull EmitContext ctx) {
-        List<Token> t = EmitContextImpl.toPipelineTokens(tokens);
+    public boolean tryHandle(@NotNull List<? extends ScriptToken> tokens, @NotNull HandlerContext ctx) {
+        List<Token> t = HandlerContextImpl.toPipelineTokens(tokens);
         if (!isLoadStatement(t)) return false;
         handleLoad(t, ctx);
         return true;
     }
 
-    private void handleLoad(@NotNull List<Token> t, @NotNull EmitContext ctx) {
+    private void handleLoad(@NotNull List<Token> t, @NotNull HandlerContext ctx) {
         String name = t.get(1).text();
         int idx = 2;
         String scopeVar = null;
@@ -87,7 +86,7 @@ public final class LoadStatementForm implements StatementFormHandler {
         emitLoadVar(name, scopeVar, exprTokens, ctx);
     }
 
-    private void emitLoadVar(@NotNull String name, @Nullable String scopeVar, @NotNull List<Token> exprTokens, @NotNull EmitContext ctx) {
+    private void emitLoadVar(@NotNull String name, @Nullable String scopeVar, @NotNull List<Token> exprTokens, @NotNull HandlerContext ctx) {
         TypeEnv env = (TypeEnv) ctx.env();
 
         String nameError = VarNameValidator.validate(name);
@@ -105,8 +104,8 @@ public final class LoadStatementForm implements StatementFormHandler {
         ObjectType resolvedObjectType = null;
 
         if (exprMatch != null) {
-            BindingContext bc = new BindingContext(exprMatch.match(), env, ((EmitContextImpl) ctx).codegenContext(), env.blockContext());
-            ExpressionResult result = exprMatch.reg().handler().handle(bc);
+            HandlerContextImpl hctx = new HandlerContextImpl(exprMatch.match(), env, ((HandlerContextImpl) ctx).codegenContext(), env.blockContext(), null, 0, "");
+            ExpressionResult result = exprMatch.reg().handler().handle(hctx);
             defaultJava = result.java();
             resolvedObjectType = result.type() instanceof ObjectType ot ? ot : null;
         } else {

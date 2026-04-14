@@ -31,12 +31,12 @@ import java.util.function.Consumer;
  *         .since("1.0.0")
  *         .category(Categories.CONTROL_FLOW)
  *         .handler(new BlockHandler() {
- *             public void begin(BindingAccess ctx, JavaOutput out) {
- *                 out.line("if (" + ctx.parseCondition("cond") + ") {");
+ *             public void begin(HandlerContext ctx) {
+ *                 ctx.out().line("if (" + ctx.parseCondition("cond") + ") {");
  *             }
  *
- *             public void end(BindingAccess ctx, JavaOutput out) {
- *                 out.line("}");
+ *             public void end(HandlerContext ctx) {
+ *                 ctx.out().line("}");
  *             }
  *         }));
  * }</pre>

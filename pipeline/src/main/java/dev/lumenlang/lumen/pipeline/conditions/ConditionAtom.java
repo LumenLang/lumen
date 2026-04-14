@@ -1,6 +1,7 @@
 package dev.lumenlang.lumen.pipeline.conditions;
 
 import dev.lumenlang.lumen.pipeline.codegen.CodegenContext;
+import dev.lumenlang.lumen.pipeline.codegen.HandlerContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.pipeline.conditions.registry.ConditionRegistry;
 import dev.lumenlang.lumen.pipeline.conditions.registry.RegisteredConditionMatch;
@@ -38,7 +39,8 @@ public final class ConditionAtom implements ConditionExpr {
     @Override
     public String toJava(TypeEnv env, CodegenContext ctx) {
         try {
-            return match.reg().handler().handle(match.match(), env, ctx);
+            HandlerContextImpl hctx = new HandlerContextImpl(match.match(), env, ctx, null, null, 0, "");
+            return match.reg().handler().handle(hctx);
         } catch (TokenCarryingException e) {
             throw e;
         } catch (RuntimeException e) {

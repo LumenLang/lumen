@@ -21,9 +21,9 @@ public final class GenericEntityConditions {
                 .examples("if mob is on fire:", "if mob is not on fire:")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler((match, env, ctx) -> {
-                    boolean negated = match.choice(0).equals("is not");
-                    return match.ref("e").java() + ".getFireTicks() " + (negated ? "<= 0" : "> 0");
+                .handler(ctx -> {
+                    boolean negated = ctx.choice(0).equals("is not");
+                    return ctx.requireVarHandle("e").java() + ".getFireTicks() " + (negated ? "<= 0" : "> 0");
                 }));
 
         api.patterns().condition(b -> b
@@ -32,9 +32,9 @@ public final class GenericEntityConditions {
                 .examples("if mob is on ground:", "if mob is not on ground:")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler((match, env, ctx) -> {
-                    boolean negated = match.choice(0).equals("is not");
-                    return (negated ? "!" : "") + match.ref("e").java() + ".isOnGround()";
+                .handler(ctx -> {
+                    boolean negated = ctx.choice(0).equals("is not");
+                    return (negated ? "!" : "") + ctx.requireVarHandle("e").java() + ".isOnGround()";
                 }));
 
         api.patterns().condition(b -> b
@@ -43,9 +43,9 @@ public final class GenericEntityConditions {
                 .examples("if mob is in water:", "if mob is not in water:")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler((match, env, ctx) -> {
-                    boolean negated = match.choice(0).equals("is not");
-                    return (negated ? "!" : "") + match.ref("e").java() + ".isInWater()";
+                .handler(ctx -> {
+                    boolean negated = ctx.choice(0).equals("is not");
+                    return (negated ? "!" : "") + ctx.requireVarHandle("e").java() + ".isInWater()";
                 }));
 
         api.patterns().condition(b -> b
@@ -54,9 +54,9 @@ public final class GenericEntityConditions {
                 .examples("if mob's type is zombie:", "if mob's type is not zombie:")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler((match, env, ctx) -> {
-                    boolean negated = match.choice(0).equals("is not");
-                    return match.ref("e").java() + ".getType() " + (negated ? "!= " : "== ") + match.java("type", ctx, env);
+                .handler(ctx -> {
+                    boolean negated = ctx.choice(0).equals("is not");
+                    return ctx.requireVarHandle("e").java() + ".getType() " + (negated ? "!= " : "== ") + ctx.java("type");
                 }));
 
         api.patterns().condition(b -> b
@@ -65,9 +65,9 @@ public final class GenericEntityConditions {
                 .examples("if mob is a zombie:", "if mob is not a zombie:")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler((match, env, ctx) -> {
-                    boolean negated = match.choice(0).equals("is not");
-                    return match.ref("e").java() + ".getType() " + (negated ? "!= " : "== ") + match.java("type", ctx, env);
+                .handler(ctx -> {
+                    boolean negated = ctx.choice(0).equals("is not");
+                    return ctx.requireVarHandle("e").java() + ".getType() " + (negated ? "!= " : "== ") + ctx.java("type");
                 }));
 
         api.patterns().condition(b -> b
@@ -76,9 +76,9 @@ public final class GenericEntityConditions {
                 .examples("if mob has custom name:", "if mob does not have custom name:")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler((match, env, ctx) -> {
-                    boolean negated = match.choice(0).equals("does not have");
-                    return match.ref("e").java() + ".getCustomName() " + (negated ? "== null" : "!= null");
+                .handler(ctx -> {
+                    boolean negated = ctx.choice(0).equals("does not have");
+                    return ctx.requireVarHandle("e").java() + ".getCustomName() " + (negated ? "== null" : "!= null");
                 }));
 
         api.patterns().condition(b -> b
@@ -87,9 +87,9 @@ public final class GenericEntityConditions {
                 .examples("if mob is valid:", "if mob is not valid:")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler((match, env, ctx) -> {
-                    boolean negated = match.choice(0).equals("is not");
-                    return (negated ? "!" : "") + match.ref("e").java() + ".isValid()";
+                .handler(ctx -> {
+                    boolean negated = ctx.choice(0).equals("is not");
+                    return (negated ? "!" : "") + ctx.requireVarHandle("e").java() + ".isValid()";
                 }));
     }
 }

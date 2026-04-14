@@ -3,8 +3,7 @@ package dev.lumenlang.lumen.plugin.defaults.event;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
-import dev.lumenlang.lumen.api.codegen.BindingAccess;
-import dev.lumenlang.lumen.api.codegen.JavaOutput;
+import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import dev.lumenlang.lumen.api.handler.BlockHandler;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.api.type.MinecraftTypes;
@@ -523,20 +522,20 @@ public final class DefaultEvents {
                 .varDescription("The chat message content")
                 .handler(new BlockHandler() {
                     @Override
-                    public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
-                        out.line("@LumenEvent(AsyncPlayerChatEvent.class)");
-                        out.line("public void __lumen_evt_chat_" + ctx.codegen().nextMethodId() + "(AsyncPlayerChatEvent event) {");
-                        out.line("final Player __chat_player = event.getPlayer();");
-                        out.line("final String __chat_text = event.getMessage();");
-                        out.line("Bukkit.getScheduler().runTask(Lumen.instance(), () -> {");
-                        out.line("Player player = __chat_player;");
-                        out.line("String text = __chat_text;");
+                    public void begin(@NotNull HandlerContext ctx) {
+                        ctx.out().line("@LumenEvent(AsyncPlayerChatEvent.class)");
+                        ctx.out().line("public void __lumen_evt_chat_" + ctx.codegen().nextMethodId() + "(AsyncPlayerChatEvent event) {");
+                        ctx.out().line("final Player __chat_player = event.getPlayer();");
+                        ctx.out().line("final String __chat_text = event.getMessage();");
+                        ctx.out().line("Bukkit.getScheduler().runTask(Lumen.instance(), () -> {");
+                        ctx.out().line("Player player = __chat_player;");
+                        ctx.out().line("String text = __chat_text;");
                     }
 
                     @Override
-                    public void end(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
-                        out.line("});");
-                        out.line("}");
+                    public void end(@NotNull HandlerContext ctx) {
+                        ctx.out().line("});");
+                        ctx.out().line("}");
                     }
                 }));
 

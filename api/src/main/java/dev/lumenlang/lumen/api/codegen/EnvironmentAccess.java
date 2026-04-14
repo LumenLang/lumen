@@ -14,7 +14,7 @@ import java.util.Map;
  * and inspect the current scope. This interface hides internal implementation details of the
  * scope stack.
  *
- * @see BindingAccess
+ * @see HandlerContext
  */
 @SuppressWarnings("unused")
 public interface EnvironmentAccess {

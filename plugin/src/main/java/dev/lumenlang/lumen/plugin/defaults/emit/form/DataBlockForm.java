@@ -3,10 +3,10 @@ package dev.lumenlang.lumen.plugin.defaults.emit.form;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
+import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
 import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.emit.BlockFormHandler;
-import dev.lumenlang.lumen.api.emit.EmitContext;
 import dev.lumenlang.lumen.api.emit.ScriptLine;
 import dev.lumenlang.lumen.api.emit.ScriptToken;
 import dev.lumenlang.lumen.api.type.LumenType;
@@ -47,7 +47,7 @@ public final class DataBlockForm implements BlockFormHandler {
     @Override
     public void handle(@NotNull List<? extends ScriptToken> headTokens,
                        @NotNull List<? extends ScriptLine> children,
-                       @NotNull EmitContext ctx) {
+                       @NotNull HandlerContext ctx) {
         String typeName = headTokens.get(1).text().toLowerCase();
         TypeEnv env = (TypeEnv) ctx.env();
         DataSchema.Builder builder = DataSchema.builder(typeName);

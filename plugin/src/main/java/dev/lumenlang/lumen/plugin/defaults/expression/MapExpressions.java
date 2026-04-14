@@ -13,7 +13,7 @@ import dev.lumenlang.lumen.api.type.CollectionType;
 import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.api.type.PrimitiveType;
-import dev.lumenlang.lumen.pipeline.codegen.BindingContext;
+import dev.lumenlang.lumen.pipeline.codegen.HandlerContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.pipeline.language.resolve.SuggestionDiagnostics;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
@@ -64,14 +64,14 @@ public final class MapExpressions {
                 .category(Categories.MAP)
                 .handler(ctx -> {
                     ctx.codegen().addImport(HashMap.class.getName());
-                    BindingContext bc = (BindingContext) ctx;
+                    HandlerContextImpl hctx = (HandlerContextImpl) ctx;
                     TypeEnv env = (TypeEnv) ctx.env();
-                    List<Token> keyTokens = bc.bound("keyType").tokens();
+                    List<Token> keyTokens = hctx.bound("keyType").tokens();
                     TypeAnnotationParser.ParseResult keyResult = TypeAnnotationParser.parseDetailed(keyTokens, 0, env::lookupDataSchema);
                     if (keyResult instanceof TypeAnnotationParser.ParseResult.Failure f) {
                         throw new DiagnosticException(SuggestionDiagnostics.buildTypeFailure("E501", "Invalid map key type", ctx.block().line(), ctx.block().raw(), keyTokens, f));
                     }
-                    List<Token> valueTokens = bc.bound("valueType").tokens();
+                    List<Token> valueTokens = hctx.bound("valueType").tokens();
                     TypeAnnotationParser.ParseResult valueResult = TypeAnnotationParser.parseDetailed(valueTokens, 0, env::lookupDataSchema);
                     if (valueResult instanceof TypeAnnotationParser.ParseResult.Failure f) {
                         throw new DiagnosticException(SuggestionDiagnostics.buildTypeFailure("E501", "Invalid map value type", ctx.block().line(), ctx.block().raw(), valueTokens, f));

@@ -29,12 +29,11 @@ public final class ZombieConditions {
                         "%e:ENTITY% is converting [to drowned]",
                         "Checks if a zombie is converting to a drowned.",
                         "if mob is converting to drowned:",
-                        (match, env, ctx) -> {
-                            VarHandle h = match.ref("e");
+                        (ctx) -> {
+                            VarHandle h = ctx.requireVarHandle("e");
                             EntityValidation.requireSubtype(h, FQCN, "is converting");
-                            ctx.addImport(FQCN);
-                            return "(" + h.java()
-                                    + " instanceof Zombie _zb && _zb.isConverting())";
+                            ctx.codegen().addImport(FQCN);
+                            return "(" + h.java() + " instanceof Zombie _zb && _zb.isConverting())";
                         });
     }
 }

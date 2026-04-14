@@ -37,9 +37,9 @@ public final class GenericConditions {
                 .example("if a chance of 50%:")
                 .since("1.0.0")
                 .category(Categories.SERVER)
-                .handler((match, env, ctx) -> {
-                    ctx.addImport(ThreadLocalRandom.class.getName());
-                    return "(ThreadLocalRandom.current().nextInt(100) < " + match.java("value", ctx, env) + ")";
+                .handler(ctx -> {
+                    ctx.codegen().addImport(ThreadLocalRandom.class.getName());
+                    return "(ThreadLocalRandom.current().nextInt(100) < " + ctx.java("value") + ")";
                 }));
 
         api.patterns().condition(b -> b
@@ -49,10 +49,10 @@ public final class GenericConditions {
                 .examples("if myVar is set:", "if myVar is not set:")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
-                .handler((match, env, ctx) -> {
-                    String java = match.java("v", ctx, env);
-                    validateExprIdentifier(java, env);
-                    boolean negated = match.choice(0).equals("is not");
+                .handler(ctx -> {
+                    String java = ctx.java("v");
+                    validateExprIdentifier(java, ctx.env());
+                    boolean negated = ctx.choice(0).equals("is not");
                     return java + (negated ? " == null" : " != null");
                 }));
 
@@ -63,14 +63,14 @@ public final class GenericConditions {
                 .examples("if player's x is between 100 and 200:", "if player's y is not between 60 and 120:")
                 .since("1.0.0")
                 .category(Categories.MATH)
-                .handler((match, env, ctx) -> {
-                    String val = match.java("val", ctx, env);
-                    String min = match.java("min", ctx, env);
-                    String max = match.java("max", ctx, env);
-                    validateExprIdentifier(val, env);
-                    validateExprIdentifier(min, env);
-                    validateExprIdentifier(max, env);
-                    boolean negated = match.choice(0).equals("is not");
+                .handler(ctx -> {
+                    String val = ctx.java("val");
+                    String min = ctx.java("min");
+                    String max = ctx.java("max");
+                    validateExprIdentifier(val, ctx.env());
+                    validateExprIdentifier(min, ctx.env());
+                    validateExprIdentifier(max, ctx.env());
+                    boolean negated = ctx.choice(0).equals("is not");
                     if (negated) return "(" + val + " < " + min + " || " + val + " > " + max + ")";
                     return "(" + val + " >= " + min + " && " + val + " <= " + max + ")";
                 }));

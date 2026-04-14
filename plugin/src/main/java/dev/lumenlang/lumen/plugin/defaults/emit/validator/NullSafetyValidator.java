@@ -3,9 +3,9 @@ package dev.lumenlang.lumen.plugin.defaults.emit.validator;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
+import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
 import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
-import dev.lumenlang.lumen.api.emit.EmitContext;
 import dev.lumenlang.lumen.api.emit.ScriptToken;
 import dev.lumenlang.lumen.api.emit.StatementValidator;
 import dev.lumenlang.lumen.api.type.LumenType;
@@ -19,10 +19,6 @@ import java.util.List;
 
 /**
  * Validates that nullable variables are not used in a context where they are known to be null.
- *
- * <p>This validator runs before pattern matching and checks every identifier token in the statement.
- * If a token refers to a nullable variable whose current null state is {@link TypeEnv.NullState#NULL},
- * a diagnostic error is thrown.
  */
 @Registration(order = -1999)
 @SuppressWarnings("unused")
@@ -34,7 +30,7 @@ public final class NullSafetyValidator implements StatementValidator {
     }
 
     @Override
-    public void validate(@NotNull List<? extends ScriptToken> tokens, @NotNull EmitContext ctx) {
+    public void validate(@NotNull List<? extends ScriptToken> tokens, @NotNull HandlerContext ctx) {
         TypeEnv env = (TypeEnv) ctx.env();
         for (ScriptToken t : tokens) {
             if (t.tokenType() != ScriptToken.TokenType.IDENT) continue;

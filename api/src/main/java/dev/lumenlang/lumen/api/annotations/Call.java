@@ -18,8 +18,8 @@ import java.lang.annotation.Target;
  * public class MyRegistrations {
  *     @Call
  *     public void register(@NotNull LumenAPI api) {
- *         api.patterns().statement("heal %who:PLAYER%", (line, ctx, out) ->
- *             out.line(ctx.java("who") + ".setHealth(20);"));
+ *         api.patterns().statement("heal %who:PLAYER%", ctx ->
+ *             ctx.out().line(ctx.java("who") + ".setHealth(20);"));
  *     }
  * }
  * }</pre>

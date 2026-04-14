@@ -34,10 +34,10 @@ public final class PersistentDataConditions {
                 .description("Checks if an entity's PersistentDataContainer has a given key.")
                 .example("if entity has pdc \"myKey\":")
                 .since("1.0.0").category(Categories.ENTITY)
-                .handler((match, env, ctx) -> {
-                    pdcImports(ctx);
-                    return match.ref("e").java() + ".getPersistentDataContainer().has(new NamespacedKey(Lumen.instance(), "
-                            + match.java("key", ctx, env) + "), PersistentDataType.STRING)";
+                .handler(ctx -> {
+                    pdcImports(ctx.codegen());
+                    return ctx.requireVarHandle("e").java() + ".getPersistentDataContainer().has(new NamespacedKey(Lumen.instance(), "
+                            + ctx.java("key") + "), PersistentDataType.STRING)";
                 }));
 
         api.patterns().condition(b -> b
@@ -45,10 +45,10 @@ public final class PersistentDataConditions {
                 .description("Checks if an entity's PersistentDataContainer does not have a given key.")
                 .example("if entity does not have pdc \"myKey\":")
                 .since("1.0.0").category(Categories.ENTITY)
-                .handler((match, env, ctx) -> {
-                    pdcImports(ctx);
-                    return "!" + match.ref("e").java() + ".getPersistentDataContainer().has(new NamespacedKey(Lumen.instance(), "
-                            + match.java("key", ctx, env) + "), PersistentDataType.STRING)";
+                .handler(ctx -> {
+                    pdcImports(ctx.codegen());
+                    return "!" + ctx.requireVarHandle("e").java() + ".getPersistentDataContainer().has(new NamespacedKey(Lumen.instance(), "
+                            + ctx.java("key") + "), PersistentDataType.STRING)";
                 }));
 
         api.patterns().condition(b -> b
@@ -56,11 +56,11 @@ public final class PersistentDataConditions {
                 .description("Checks if an item stack's PersistentDataContainer has a given key.")
                 .example("if item has pdc \"custom_id\":")
                 .since("1.0.0").category(Categories.ITEM)
-                .handler((match, env, ctx) -> {
-                    pdcImports(ctx);
-                    return "(" + match.ref("i").java() + ".hasItemMeta() && " + match.ref("i").java()
+                .handler(ctx -> {
+                    pdcImports(ctx.codegen());
+                    return "(" + ctx.requireVarHandle("i").java() + ".hasItemMeta() && " + ctx.requireVarHandle("i").java()
                             + ".getItemMeta().getPersistentDataContainer().has(new NamespacedKey(Lumen.instance(), "
-                            + match.java("key", ctx, env) + "), PersistentDataType.STRING))";
+                            + ctx.java("key") + "), PersistentDataType.STRING))";
                 }));
 
         api.patterns().condition(b -> b
@@ -68,11 +68,11 @@ public final class PersistentDataConditions {
                 .description("Checks if an item stack's PersistentDataContainer does not have a given key.")
                 .example("if item does not have pdc \"custom_id\":")
                 .since("1.0.0").category(Categories.ITEM)
-                .handler((match, env, ctx) -> {
-                    pdcImports(ctx);
-                    return "(!(" + match.ref("i").java() + ".hasItemMeta() && " + match.ref("i").java()
+                .handler(ctx -> {
+                    pdcImports(ctx.codegen());
+                    return "(!(" + ctx.requireVarHandle("i").java() + ".hasItemMeta() && " + ctx.requireVarHandle("i").java()
                             + ".getItemMeta().getPersistentDataContainer().has(new NamespacedKey(Lumen.instance(), "
-                            + match.java("key", ctx, env) + "), PersistentDataType.STRING)))";
+                            + ctx.java("key") + "), PersistentDataType.STRING)))";
                 }));
 
         api.patterns().condition(b -> b
@@ -80,10 +80,10 @@ public final class PersistentDataConditions {
                 .description("Checks if a block's PersistentDataContainer has a given key.")
                 .example("if block has pdc \"owner\":")
                 .since("1.0.0").category(Categories.BLOCK)
-                .handler((match, env, ctx) -> {
-                    pdcImports(ctx);
-                    return match.ref("bl").java() + ".getState().getPersistentDataContainer().has(new NamespacedKey(Lumen.instance(), "
-                            + match.java("key", ctx, env) + "), PersistentDataType.STRING)";
+                .handler(ctx -> {
+                    pdcImports(ctx.codegen());
+                    return ctx.requireVarHandle("bl").java() + ".getState().getPersistentDataContainer().has(new NamespacedKey(Lumen.instance(), "
+                            + ctx.java("key") + "), PersistentDataType.STRING)";
                 }));
 
         api.patterns().condition(b -> b
@@ -91,10 +91,10 @@ public final class PersistentDataConditions {
                 .description("Checks if a block's PersistentDataContainer does not have a given key.")
                 .example("if block does not have pdc \"owner\":")
                 .since("1.0.0").category(Categories.BLOCK)
-                .handler((match, env, ctx) -> {
-                    pdcImports(ctx);
-                    return "!" + match.ref("bl").java() + ".getState().getPersistentDataContainer().has(new NamespacedKey(Lumen.instance(), "
-                            + match.java("key", ctx, env) + "), PersistentDataType.STRING)";
+                .handler(ctx -> {
+                    pdcImports(ctx.codegen());
+                    return "!" + ctx.requireVarHandle("bl").java() + ".getState().getPersistentDataContainer().has(new NamespacedKey(Lumen.instance(), "
+                            + ctx.java("key") + "), PersistentDataType.STRING)";
                 }));
     }
 }

@@ -3,7 +3,7 @@ package dev.lumenlang.lumen.plugin.defaults.statement;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
-import dev.lumenlang.lumen.api.codegen.BindingAccess;
+import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.plugin.commands.CommandMeta;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 @SuppressWarnings("unused")
 public final class CommandMetaStatements {
 
-    private static @NotNull CommandMeta requireCommandMeta(@NotNull BindingAccess ctx) {
+    private static @NotNull CommandMeta requireCommandMeta(@NotNull HandlerContext ctx) {
         CommandMeta cmd = ctx.block().getEnvFromParents("cmd_meta");
         if (cmd == null) {
             throw new RuntimeException("Command metadata statements used outside a 'command' block");
@@ -39,7 +39,7 @@ public final class CommandMetaStatements {
                 .example("description \"Teleports the player home\"")
                 .since("1.0.0")
                 .category(Categories.COMMAND)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     CommandMeta cmd = requireCommandMeta(ctx);
                     cmd.setDescription(ctx.java("d"));
                 }));
@@ -51,7 +51,7 @@ public final class CommandMetaStatements {
                 .example("name tp")
                 .since("1.0.0")
                 .category(Categories.COMMAND)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     CommandMeta cmd = requireCommandMeta(ctx);
                     cmd.setName(ctx.java("n"));
                 }));
@@ -63,7 +63,7 @@ public final class CommandMetaStatements {
                 .example("aliases tp, teleport, goto")
                 .since("1.0.0")
                 .category(Categories.COMMAND)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     CommandMeta cmd = requireCommandMeta(ctx);
                     // noinspection DataFlowIssue
                     String raw = ctx.value("list").toString();
@@ -85,7 +85,7 @@ public final class CommandMetaStatements {
                 .example("namespace myplugin")
                 .since("1.0.0")
                 .category(Categories.COMMAND)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     CommandMeta cmd = requireCommandMeta(ctx);
                     cmd.setNamespace(ctx.java("ns"));
                 }));
@@ -97,7 +97,7 @@ public final class CommandMetaStatements {
                 .example("permission \"myplugin.admin\"")
                 .since("1.0.0")
                 .category(Categories.COMMAND)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     CommandMeta cmd = requireCommandMeta(ctx);
                     cmd.setPermission(ctx.java("perm"));
                 }));

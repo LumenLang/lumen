@@ -1,7 +1,6 @@
 package dev.lumenlang.lumen.plugin.inject.handler;
 
-import dev.lumenlang.lumen.api.codegen.CodegenAccess;
-import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
+import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import dev.lumenlang.lumen.api.handler.ConditionHandler;
 import dev.lumenlang.lumen.api.inject.body.InjectableCondition;
 import dev.lumenlang.lumen.pipeline.inject.PatternHinted;
@@ -53,23 +52,23 @@ public final class InjectableConditionHandler implements ConditionHandler, Patte
     }
 
     @Override
-    public @NotNull String handle(@NotNull ConditionMatch match, @NotNull EnvironmentAccess env, @NotNull CodegenAccess ctx) {
+    public @NotNull String handle(@NotNull HandlerContext ctx) {
         MethodDecompiler.DecompiledInlineBody inlineBody = support.inlineBody();
         if (inlineBody != null && inlineBody.returnExpression() != null) {
-            support.addInlineImports(ctx);
+            support.addInlineImports(ctx.codegen());
             Map<String, String> bindingExpressions = new HashMap<>();
             for (ExtractedBody.FakeBinding binding : support.bindings()) {
-                bindingExpressions.put(binding.bindingName(), match.java(binding.bindingName(), ctx, env));
+                bindingExpressions.put(binding.bindingName(), ctx.java(binding.bindingName()));
             }
             return support.replaceBindings(inlineBody.returnExpression(), bindingExpressions);
         }
 
-        List<ExtractedBody.FakeBinding> bindings = support.emitIfNeeded(ctx);
+        List<ExtractedBody.FakeBinding> bindings = support.emitIfNeeded(ctx.codegen());
         StringBuilder call = new StringBuilder();
         call.append(support.methodName()).append("(");
         for (int i = 0; i < bindings.size(); i++) {
             if (i > 0) call.append(", ");
-            call.append(match.java(bindings.get(i).bindingName(), ctx, env));
+            call.append(ctx.java(bindings.get(i).bindingName()));
         }
         call.append(")");
         return call.toString();

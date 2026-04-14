@@ -3,9 +3,8 @@ package dev.lumenlang.lumen.plugin.defaults.block;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
-import dev.lumenlang.lumen.api.codegen.BindingAccess;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
-import dev.lumenlang.lumen.api.codegen.JavaOutput;
+import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
 import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.handler.BlockHandler;
@@ -49,7 +48,7 @@ public final class MapBlocks {
                     .varDescription("The current map value, named by the user (e.g. 'v' in 'loop k v in myMap'). The type depends on the map being looped over and is accurate at runtime.")
                 .handler(new BlockHandler() {
                     @Override
-                    public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
+                    public void begin(@NotNull HandlerContext ctx) {
                         if (ctx.block().isRoot()) {
                             throw new DiagnosticException(LumenDiagnostic.error("E502", "A 'loop' block cannot be top level")
                                     .at(ctx.block().line(), ctx.block().raw())
@@ -80,16 +79,16 @@ public final class MapBlocks {
                         LumenType valType = mapType.typeArguments().get(1);
                         String mapJava = ctx.java("map");
                         String entryVar = "__entry_" + keyName + "_" + valName;
-                        out.line("for (var " + entryVar + " : ((Map<?, ?>) " + mapJava + ").entrySet()) {");
-                        out.line(keyType.javaTypeName() + " " + keyName + " = (" + keyType.javaTypeName() + ") " + entryVar + ".getKey();");
-                        out.line(valType.javaTypeName() + " " + valName + " = (" + valType.javaTypeName() + ") " + entryVar + ".getValue();");
+                        ctx.out().line("for (var " + entryVar + " : ((Map<?, ?>) " + mapJava + ").entrySet()) {");
+                        ctx.out().line(keyType.javaTypeName() + " " + keyName + " = (" + keyType.javaTypeName() + ") " + entryVar + ".getKey();");
+                        ctx.out().line(valType.javaTypeName() + " " + valName + " = (" + valType.javaTypeName() + ") " + entryVar + ".getValue();");
                         ctx.env().defineVar(keyName, keyType, keyName);
                         ctx.env().defineVar(valName, valType, valName);
                     }
 
                     @Override
-                    public void end(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
-                        out.line("}");
+                    public void end(@NotNull HandlerContext ctx) {
+                        ctx.out().line("}");
                     }
                 }));
 
@@ -106,7 +105,7 @@ public final class MapBlocks {
                     .varDescription("The current map value, named by the user (e.g. 'v' in 'loop k v in stats for player'). The type depends on the map being looped over and is accurate at runtime.")
                 .handler(new BlockHandler() {
                     @Override
-                    public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
+                    public void begin(@NotNull HandlerContext ctx) {
                         if (ctx.block().isRoot()) {
                             throw new DiagnosticException(LumenDiagnostic.error("E502", "A 'loop' block cannot be top level")
                                     .at(ctx.block().line(), ctx.block().raw())
@@ -166,17 +165,17 @@ public final class MapBlocks {
                         LumenType keyType = mapType.typeArguments().get(0);
                         LumenType valType = mapType.typeArguments().get(1);
                         String entryVar = "__entry_" + keyName + "_" + valName;
-                        out.line("for (Map.Entry<?, ?> " + entryVar + " : ((Map<?, ?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") +
+                        ctx.out().line("for (Map.Entry<?, ?> " + entryVar + " : ((Map<?, ?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") +
                                 ".get(" + "\"" + info.className() + "." + mapVarName + ".\" + " + ((ObjectType) scopeType).keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")).entrySet()) {");
-                        out.line(keyType.javaTypeName() + " " + keyName + " = (" + keyType.javaTypeName() + ") " + entryVar + ".getKey();");
-                        out.line(valType.javaTypeName() + " " + valName + " = (" + valType.javaTypeName() + ") " + entryVar + ".getValue();");
+                        ctx.out().line(keyType.javaTypeName() + " " + keyName + " = (" + keyType.javaTypeName() + ") " + entryVar + ".getKey();");
+                        ctx.out().line(valType.javaTypeName() + " " + valName + " = (" + valType.javaTypeName() + ") " + entryVar + ".getValue();");
                         ctx.env().defineVar(keyName, keyType, keyName);
                         ctx.env().defineVar(valName, valType, valName);
                     }
 
                     @Override
-                    public void end(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
-                        out.line("}");
+                    public void end(@NotNull HandlerContext ctx) {
+                        ctx.out().line("}");
                     }
                 }));
     }

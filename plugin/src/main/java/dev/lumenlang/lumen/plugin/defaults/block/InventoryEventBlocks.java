@@ -3,10 +3,8 @@ package dev.lumenlang.lumen.plugin.defaults.block;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
-import dev.lumenlang.lumen.api.codegen.BindingAccess;
 import dev.lumenlang.lumen.api.codegen.CodegenAccess;
-import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
-import dev.lumenlang.lumen.api.codegen.JavaOutput;
+import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import dev.lumenlang.lumen.api.handler.BlockHandler;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.api.type.MinecraftTypes;
@@ -66,57 +64,51 @@ public final class InventoryEventBlocks {
      * Emits a guard that returns early if the inventory is not a Lumen inventory
      * with the expected name.
      */
-    private static void emitNameGuard(@NotNull JavaOutput out, @NotNull String name) {
-        out.line("if (!(event.getView().getTopInventory().getHolder() instanceof LumenInventoryHolder __lh)"
+    private static void emitNameGuard(@NotNull HandlerContext ctx, @NotNull String name) {
+        ctx.out().line("if (!(event.getView().getTopInventory().getHolder() instanceof LumenInventoryHolder __lh)"
                 + " || !__lh.name().equals(" + name + ")) return;");
     }
 
     /**
      * Emits all standard click event variables and defines them in the environment.
      */
-    private static void emitClickVars(
-            @NotNull EnvironmentAccess env,
-            @NotNull BindingAccess ctx,
-            @NotNull JavaOutput out) {
-        out.line("if (!(event.getWhoClicked() instanceof Player player)) return;");
-        out.line("World world = player.getWorld();");
-        out.line("Inventory inventory = event.getView().getTopInventory();");
-        out.line("int slot = event.getRawSlot();");
-        out.line("String clickType = event.getClick().name();");
-        out.line("String action = event.getAction().name();");
-        out.line("String title = event.getView().getTitle();");
-        out.line("ItemStack item = event.getCurrentItem();");
-        out.line("ItemStack cursor = (event.getCursor() != null"
+    private static void emitClickVars(@NotNull HandlerContext ctx) {
+        ctx.out().line("if (!(event.getWhoClicked() instanceof Player player)) return;");
+        ctx.out().line("World world = player.getWorld();");
+        ctx.out().line("Inventory inventory = event.getView().getTopInventory();");
+        ctx.out().line("int slot = event.getRawSlot();");
+        ctx.out().line("String clickType = event.getClick().name();");
+        ctx.out().line("String action = event.getAction().name();");
+        ctx.out().line("String title = event.getView().getTitle();");
+        ctx.out().line("ItemStack item = event.getCurrentItem();");
+        ctx.out().line("ItemStack cursor = (event.getCursor() != null"
                 + " && event.getCursor().getType() != Material.AIR)"
                 + " ? event.getCursor() : null;");
 
-        env.defineVar("player", MinecraftTypes.PLAYER, "player");
-        env.defineVar("world", MinecraftTypes.WORLD, "world");
-        env.defineVar("inventory", MinecraftTypes.INVENTORY, "inventory");
-        env.defineVar("slot", PrimitiveType.INT, "slot");
-        env.defineVar("clickType", PrimitiveType.STRING, "clickType");
-        env.defineVar("action", PrimitiveType.STRING, "action");
-        env.defineVar("title", PrimitiveType.STRING, "title");
-        env.defineVar("item", MinecraftTypes.ITEMSTACK, "item");
-        env.defineVar("cursor", MinecraftTypes.ITEMSTACK, "cursor");
+        ctx.env().defineVar("player", MinecraftTypes.PLAYER, "player");
+        ctx.env().defineVar("world", MinecraftTypes.WORLD, "world");
+        ctx.env().defineVar("inventory", MinecraftTypes.INVENTORY, "inventory");
+        ctx.env().defineVar("slot", PrimitiveType.INT, "slot");
+        ctx.env().defineVar("clickType", PrimitiveType.STRING, "clickType");
+        ctx.env().defineVar("action", PrimitiveType.STRING, "action");
+        ctx.env().defineVar("title", PrimitiveType.STRING, "title");
+        ctx.env().defineVar("item", MinecraftTypes.ITEMSTACK, "item");
+        ctx.env().defineVar("cursor", MinecraftTypes.ITEMSTACK, "cursor");
     }
 
     /**
      * Emits close/open event variables and defines them in the environment.
      */
-    private static void emitCloseOpenVars(
-            @NotNull EnvironmentAccess env,
-            @NotNull BindingAccess ctx,
-            @NotNull JavaOutput out) {
-        out.line("if (!(event.getPlayer() instanceof Player player)) return;");
-        out.line("World world = player.getWorld();");
-        out.line("Inventory inventory = event.getView().getTopInventory();");
-        out.line("String title = event.getView().getTitle();");
+    private static void emitCloseOpenVars(@NotNull HandlerContext ctx) {
+        ctx.out().line("if (!(event.getPlayer() instanceof Player player)) return;");
+        ctx.out().line("World world = player.getWorld();");
+        ctx.out().line("Inventory inventory = event.getView().getTopInventory();");
+        ctx.out().line("String title = event.getView().getTitle();");
 
-        env.defineVar("player", MinecraftTypes.PLAYER, "player");
-        env.defineVar("world", MinecraftTypes.WORLD, "world");
-        env.defineVar("inventory", MinecraftTypes.INVENTORY, "inventory");
-        env.defineVar("title", PrimitiveType.STRING, "title");
+        ctx.env().defineVar("player", MinecraftTypes.PLAYER, "player");
+        ctx.env().defineVar("world", MinecraftTypes.WORLD, "world");
+        ctx.env().defineVar("inventory", MinecraftTypes.INVENTORY, "inventory");
+        ctx.env().defineVar("title", PrimitiveType.STRING, "title");
     }
 
     @Call
@@ -164,8 +156,7 @@ public final class InventoryEventBlocks {
                     .varDescription("The item on the cursor, or null if empty or air")
                 .handler(new BlockHandler() {
                     @Override
-                    public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
-                        EnvironmentAccess env = ctx.env();
+                    public void begin(@NotNull HandlerContext ctx) {
                         CodegenAccess jctx = ctx.codegen();
                         String inv = ctx.java("inv");
                         String slotJava = ctx.java("slot");
@@ -179,17 +170,17 @@ public final class InventoryEventBlocks {
                         String safeName = sanitize(inv);
                         String method = "__lumen_slot_click_" + safeName + "_" + ctx.codegen().nextMethodId();
                         clickImports(jctx);
-                        out.line("@LumenEvent(InventoryClickEvent.class)");
-                        out.line("public void " + method + "(InventoryClickEvent event) {");
-                        emitNameGuard(out, inv);
-                        out.line("if (event.getRawSlot() != " + slotJava + ") return;");
-                        out.line("event.setCancelled(true);");
-                        emitClickVars(env, ctx, out);
+                        ctx.out().line("@LumenEvent(InventoryClickEvent.class)");
+                        ctx.out().line("public void " + method + "(InventoryClickEvent event) {");
+                        emitNameGuard(ctx, inv);
+                        ctx.out().line("if (event.getRawSlot() != " + slotJava + ") return;");
+                        ctx.out().line("event.setCancelled(true);");
+                        emitClickVars(ctx);
                     }
 
                     @Override
-                    public void end(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
-                        out.line("}");
+                    public void end(@NotNull HandlerContext ctx) {
+                        ctx.out().line("}");
                     }
                 }));
     }
@@ -231,8 +222,7 @@ public final class InventoryEventBlocks {
                     .varDescription("The item on the cursor, or null if empty or air")
                 .handler(new BlockHandler() {
                     @Override
-                    public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
-                        EnvironmentAccess env = ctx.env();
+                    public void begin(@NotNull HandlerContext ctx) {
                         CodegenAccess jctx = ctx.codegen();
                         String inv = ctx.java("inv");
 
@@ -245,16 +235,16 @@ public final class InventoryEventBlocks {
                         String safeName = sanitize(inv);
                         String method = "__lumen_click_" + safeName + "_" + ctx.codegen().nextMethodId();
                         clickImports(jctx);
-                        out.line("@LumenEvent(InventoryClickEvent.class)");
-                        out.line("public void " + method + "(InventoryClickEvent event) {");
-                        emitNameGuard(out, inv);
-                        out.line("event.setCancelled(true);");
-                        emitClickVars(env, ctx, out);
+                        ctx.out().line("@LumenEvent(InventoryClickEvent.class)");
+                        ctx.out().line("public void " + method + "(InventoryClickEvent event) {");
+                        emitNameGuard(ctx, inv);
+                        ctx.out().line("event.setCancelled(true);");
+                        emitClickVars(ctx);
                     }
 
                     @Override
-                    public void end(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
-                        out.line("}");
+                    public void end(@NotNull HandlerContext ctx) {
+                        ctx.out().line("}");
                     }
                 }));
     }
@@ -282,8 +272,7 @@ public final class InventoryEventBlocks {
                     .varDescription("The title of the inventory view")
                 .handler(new BlockHandler() {
                     @Override
-                    public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
-                        EnvironmentAccess env = ctx.env();
+                    public void begin(@NotNull HandlerContext ctx) {
                         CodegenAccess jctx = ctx.codegen();
                         String inv = ctx.java("inv");
 
@@ -296,15 +285,15 @@ public final class InventoryEventBlocks {
                         String safeName = sanitize(inv);
                         String method = "__lumen_inv_close_" + safeName + "_" + ctx.codegen().nextMethodId();
                         closeOpenImports(jctx, InventoryCloseEvent.class);
-                        out.line("@LumenEvent(InventoryCloseEvent.class)");
-                        out.line("public void " + method + "(InventoryCloseEvent event) {");
-                        emitNameGuard(out, inv);
-                        emitCloseOpenVars(env, ctx, out);
+                        ctx.out().line("@LumenEvent(InventoryCloseEvent.class)");
+                        ctx.out().line("public void " + method + "(InventoryCloseEvent event) {");
+                        emitNameGuard(ctx, inv);
+                        emitCloseOpenVars(ctx);
                     }
 
                     @Override
-                    public void end(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
-                        out.line("}");
+                    public void end(@NotNull HandlerContext ctx) {
+                        ctx.out().line("}");
                     }
                 }));
     }
@@ -332,8 +321,7 @@ public final class InventoryEventBlocks {
                     .varDescription("The title of the inventory view")
                 .handler(new BlockHandler() {
                     @Override
-                    public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
-                        EnvironmentAccess env = ctx.env();
+                    public void begin(@NotNull HandlerContext ctx) {
                         CodegenAccess jctx = ctx.codegen();
                         String inv = ctx.java("inv");
 
@@ -346,15 +334,15 @@ public final class InventoryEventBlocks {
                         String safeName = sanitize(inv);
                         String method = "__lumen_inv_open_" + safeName + "_" + ctx.codegen().nextMethodId();
                         closeOpenImports(jctx, InventoryOpenEvent.class);
-                        out.line("@LumenEvent(InventoryOpenEvent.class)");
-                        out.line("public void " + method + "(InventoryOpenEvent event) {");
-                        emitNameGuard(out, inv);
-                        emitCloseOpenVars(env, ctx, out);
+                        ctx.out().line("@LumenEvent(InventoryOpenEvent.class)");
+                        ctx.out().line("public void " + method + "(InventoryOpenEvent event) {");
+                        emitNameGuard(ctx, inv);
+                        emitCloseOpenVars(ctx);
                     }
 
                     @Override
-                    public void end(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
-                        out.line("}");
+                    public void end(@NotNull HandlerContext ctx) {
+                        ctx.out().line("}");
                     }
                 }));
     }

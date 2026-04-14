@@ -36,12 +36,12 @@ public final class GenericComparisonCondition {
                 .example("if damage > 5:")
                 .since("1.0.0")
                 .category(Categories.MATH)
-                .handler((match, env, ctx) -> {
-                    String aVal = match.java("a", ctx, env);
-                    String bVal = match.java("b", ctx, env);
-                    validateExprIdentifier(aVal, env);
-                    validateExprIdentifier(bVal, env);
-                    String op = match.java("op", ctx, env);
+                .handler(ctx -> {
+                    String aVal = ctx.java("a");
+                    String bVal = ctx.java("b");
+                    validateExprIdentifier(aVal, ctx.env());
+                    validateExprIdentifier(bVal, ctx.env());
+                    String op = ctx.java("op");
                     if (op.equals("<") || op.equals(">") || op.equals("<=") || op.equals(">=")) {
                         return "((double) " + aVal + ") " + op + " ((double) " + bVal + ")";
                     }

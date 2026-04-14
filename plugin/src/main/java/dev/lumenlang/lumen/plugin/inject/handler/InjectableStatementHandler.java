@@ -1,7 +1,6 @@
 package dev.lumenlang.lumen.plugin.inject.handler;
 
-import dev.lumenlang.lumen.api.codegen.BindingAccess;
-import dev.lumenlang.lumen.api.codegen.JavaOutput;
+import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import dev.lumenlang.lumen.api.handler.StatementHandler;
 import dev.lumenlang.lumen.api.inject.body.InjectableBody;
 import dev.lumenlang.lumen.pipeline.inject.PatternHinted;
@@ -63,7 +62,7 @@ public final class InjectableStatementHandler implements StatementHandler, Patte
     }
 
     @Override
-    public void handle(int line, @NotNull BindingAccess ctx, @NotNull JavaOutput out) {
+    public void handle(@NotNull HandlerContext ctx) {
         MethodDecompiler.DecompiledInlineBody inlineBody = support.inlineBody();
         if (inlineBody != null && canInlineStatement(inlineBody)) {
             support.addInlineImports(ctx.codegen());
@@ -71,9 +70,9 @@ public final class InjectableStatementHandler implements StatementHandler, Patte
             for (ExtractedBody.FakeBinding binding : support.bindings()) {
                 bindingExpressions.put(binding.bindingName(), ctx.java(binding.bindingName()));
             }
-            out.line("// @injected");
+            ctx.out().line("// @injected");
             for (String bodyLine : inlineBody.bodyLines()) {
-                out.line(support.replaceBindings(bodyLine, bindingExpressions));
+                ctx.out().line(support.replaceBindings(bodyLine, bindingExpressions));
             }
             return;
         }
@@ -86,6 +85,6 @@ public final class InjectableStatementHandler implements StatementHandler, Patte
             call.append(ctx.java(bindings.get(i).bindingName()));
         }
         call.append(");");
-        out.line(call.toString());
+        ctx.out().line(call.toString());
     }
 }

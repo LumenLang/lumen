@@ -127,11 +127,11 @@ public final class EntityHelper {
                 .example(example)
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler((match, env, ctx) -> {
-                    VarHandle h = match.ref("e");
+                .handler(ctx -> {
+                    VarHandle h = ctx.requireVarHandle("e");
                     EntityValidation.requireSubtype(h, fqcn, pattern);
-                    ctx.addImport(fqcn);
-                    boolean negated = !positiveChoice.equals(match.choice(choiceIndex));
+                    ctx.codegen().addImport(fqcn);
+                    boolean negated = !positiveChoice.equals(ctx.choice(choiceIndex));
                     return "(" + h.java() + " instanceof " + simpleName + " " + alias
                             + " && " + (negated ? "!" : "") + alias + "." + methodCall + ")";
                 }));
@@ -183,10 +183,10 @@ public final class EntityHelper {
                 .example(example)
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     EntityValidation.requireSubtype((VarHandle) ctx.value("e"), fqcn, setterName);
                     ctx.codegen().addImport(fqcn);
-                    out.line("if (" + ctx.java("e") + " instanceof " + simpleName + " " + alias
+                    ctx.out().line("if (" + ctx.java("e") + " instanceof " + simpleName + " " + alias
                             + ") { " + alias + "." + setterName + "(" + ctx.java("val") + "); }");
                 }));
         return this;
@@ -212,10 +212,10 @@ public final class EntityHelper {
                 .example(example)
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     EntityValidation.requireSubtype((VarHandle) ctx.value("e"), fqcn, setterName);
                     ctx.codegen().addImport(fqcn);
-                    out.line("if (" + ctx.java("e") + " instanceof " + simpleName + " " + alias
+                    ctx.out().line("if (" + ctx.java("e") + " instanceof " + simpleName + " " + alias
                             + ") { " + alias + "." + setterName + "(" + ctx.java("val") + "); }");
                 }));
         return this;
@@ -241,10 +241,10 @@ public final class EntityHelper {
                 .example(example)
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     EntityValidation.requireSubtype((VarHandle) ctx.value("e"), fqcn, pattern);
                     ctx.codegen().addImport(fqcn);
-                    out.line("if (" + ctx.java("e") + " instanceof " + simpleName + " " + alias
+                    ctx.out().line("if (" + ctx.java("e") + " instanceof " + simpleName + " " + alias
                             + ") { " + alias + "." + methodCall + "; }");
                 }));
         return this;
@@ -277,10 +277,10 @@ public final class EntityHelper {
                 .example(example)
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     EntityValidation.requireSubtype((VarHandle) ctx.value("e"), fqcn, pattern);
                     ctx.codegen().addImport(fqcn);
-                    out.line("if (" + ctx.java("e") + " instanceof " + simpleName + " " + alias
+                    ctx.out().line("if (" + ctx.java("e") + " instanceof " + simpleName + " " + alias
                             + ") { " + alias + "." + setterMethod + "("
                             + ctx.java(valBinding) + "); }");
                 }));

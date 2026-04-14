@@ -33,14 +33,14 @@ public final class ItemStackStatements {
                 .example("set item's display name to \"<gold>Golden Sword\"")
                 .since("1.0.0")
                 .category(Categories.ITEM)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     ctx.codegen().addImport(ITEM_META);
                     String itemJava = ctx.java("i");
-                    out.line("{");
-                    out.line("ItemMeta __meta = " + itemJava + ".getItemMeta();");
-                    out.line("__meta.setDisplayName(LumenText.colorize(" + ctx.java("name") + "));");
-                    out.line(itemJava + ".setItemMeta(__meta);");
-                    out.line("}");
+                    ctx.out().line("{");
+                    ctx.out().line("ItemMeta __meta = " + itemJava + ".getItemMeta();");
+                    ctx.out().line("__meta.setDisplayName(LumenText.colorize(" + ctx.java("name") + "));");
+                    ctx.out().line(itemJava + ".setItemMeta(__meta);");
+                    ctx.out().line("}");
                 }));
 
         api.patterns().statement(b -> b
@@ -50,16 +50,16 @@ public final class ItemStackStatements {
                 .example("set item's lore to \"<gray>Golden Sword|<yellow>Quite cool huh?\"")
                 .since("1.0.0")
                 .category(Categories.ITEM)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     ctx.codegen().addImport(ITEM_META);
                     ctx.codegen().addImport(Arrays.class.getName());
                     ctx.codegen().addImport(Collectors.class.getName());
                     String itemJava = ctx.java("i");
-                    out.line("{");
-                    out.line("ItemMeta __meta = " + itemJava + ".getItemMeta();");
-                    out.line("__meta.setLore(Arrays.stream((" + ctx.java("lore") + ").split(\"\\\\|\")).map(LumenText::colorize).collect(Collectors.toList()));");
-                    out.line(itemJava + ".setItemMeta(__meta);");
-                    out.line("}");
+                    ctx.out().line("{");
+                    ctx.out().line("ItemMeta __meta = " + itemJava + ".getItemMeta();");
+                    ctx.out().line("__meta.setLore(Arrays.stream((" + ctx.java("lore") + ").split(\"\\\\|\")).map(LumenText::colorize).collect(Collectors.toList()));");
+                    ctx.out().line(itemJava + ".setItemMeta(__meta);");
+                    ctx.out().line("}");
                 }));
 
         api.patterns().statement(b -> b
@@ -69,18 +69,18 @@ public final class ItemStackStatements {
                 .example("add lore \"<green>This item is special\" to item")
                 .since("1.0.0")
                 .category(Categories.ITEM)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     ctx.codegen().addImport(ITEM_META);
                     ctx.codegen().addImport(List.class.getName());
                     ctx.codegen().addImport(ArrayList.class.getName());
                     String itemJava = ctx.java("i");
-                    out.line("{");
-                    out.line("ItemMeta __meta = " + itemJava + ".getItemMeta();");
-                    out.line("List<String> __lore = __meta.hasLore() ? new ArrayList<>(__meta.getLore()) : new ArrayList<>();");
-                    out.line("__lore.add(LumenText.colorize(" + ctx.java("line") + "));");
-                    out.line("__meta.setLore(__lore);");
-                    out.line(itemJava + ".setItemMeta(__meta);");
-                    out.line("}");
+                    ctx.out().line("{");
+                    ctx.out().line("ItemMeta __meta = " + itemJava + ".getItemMeta();");
+                    ctx.out().line("List<String> __lore = __meta.hasLore() ? new ArrayList<>(__meta.getLore()) : new ArrayList<>();");
+                    ctx.out().line("__lore.add(LumenText.colorize(" + ctx.java("line") + "));");
+                    ctx.out().line("__meta.setLore(__lore);");
+                    ctx.out().line(itemJava + ".setItemMeta(__meta);");
+                    ctx.out().line("}");
                 }));
 
         api.patterns().statement(b -> b
@@ -90,14 +90,14 @@ public final class ItemStackStatements {
                 .example("clear item's lore")
                 .since("1.0.0")
                 .category(Categories.ITEM)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     ctx.codegen().addImport(ITEM_META);
                     String itemJava = ctx.java("i");
-                    out.line("{");
-                    out.line("ItemMeta __meta = " + itemJava + ".getItemMeta();");
-                    out.line("__meta.setLore(null);");
-                    out.line(itemJava + ".setItemMeta(__meta);");
-                    out.line("}");
+                    ctx.out().line("{");
+                    ctx.out().line("ItemMeta __meta = " + itemJava + ".getItemMeta();");
+                    ctx.out().line("__meta.setLore(null);");
+                    ctx.out().line(itemJava + ".setItemMeta(__meta);");
+                    ctx.out().line("}");
                 }));
 
         api.patterns().statement(b -> b
@@ -107,8 +107,8 @@ public final class ItemStackStatements {
                 .example("set item's amount to 32")
                 .since("1.0.0")
                 .category(Categories.ITEM)
-                .handler((line, ctx, out) ->
-                        out.line(ctx.java("i") + ".setAmount(" + ctx.java("amt") + ");")));
+                .handler(ctx ->
+                        ctx.out().line(ctx.java("i") + ".setAmount(" + ctx.java("amt") + ");")));
 
         api.patterns().statement(b -> b
                 .by("Lumen")
@@ -117,8 +117,8 @@ public final class ItemStackStatements {
                 .example("set item's type to diamond_sword")
                 .since("1.0.0")
                 .category(Categories.ITEM)
-                .handler((line, ctx, out) ->
-                        out.line(ctx.java("i") + ".setType(" + ctx.java("mat") + ");")));
+                .handler(ctx ->
+                        ctx.out().line(ctx.java("i") + ".setType(" + ctx.java("mat") + ");")));
 
         api.patterns().statement(b -> b
                 .by("Lumen")
@@ -127,14 +127,14 @@ public final class ItemStackStatements {
                 .example("set item's custom model data to 1001")
                 .since("1.0.0")
                 .category(Categories.ITEM)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     ctx.codegen().addImport(ITEM_META);
                     String itemJava = ctx.java("i");
-                    out.line("{");
-                    out.line("ItemMeta __meta = " + itemJava + ".getItemMeta();");
-                    out.line("__meta.setCustomModelData(" + ctx.java("val") + ");");
-                    out.line(itemJava + ".setItemMeta(__meta);");
-                    out.line("}");
+                    ctx.out().line("{");
+                    ctx.out().line("ItemMeta __meta = " + itemJava + ".getItemMeta();");
+                    ctx.out().line("__meta.setCustomModelData(" + ctx.java("val") + ");");
+                    ctx.out().line(itemJava + ".setItemMeta(__meta);");
+                    ctx.out().line("}");
                 }));
 
         api.patterns().statement(b -> b
@@ -144,14 +144,14 @@ public final class ItemStackStatements {
                 .example("make item unbreakable")
                 .since("1.0.0")
                 .category(Categories.ITEM)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     ctx.codegen().addImport(ITEM_META);
                     String itemJava = ctx.java("i");
-                    out.line("{");
-                    out.line("ItemMeta __meta = " + itemJava + ".getItemMeta();");
-                    out.line("__meta.setUnbreakable(true);");
-                    out.line(itemJava + ".setItemMeta(__meta);");
-                    out.line("}");
+                    ctx.out().line("{");
+                    ctx.out().line("ItemMeta __meta = " + itemJava + ".getItemMeta();");
+                    ctx.out().line("__meta.setUnbreakable(true);");
+                    ctx.out().line(itemJava + ".setItemMeta(__meta);");
+                    ctx.out().line("}");
                 }));
 
         api.patterns().statement(b -> b
@@ -161,14 +161,14 @@ public final class ItemStackStatements {
                 .example("make item breakable")
                 .since("1.0.0")
                 .category(Categories.ITEM)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     ctx.codegen().addImport(ITEM_META);
                     String itemJava = ctx.java("i");
-                    out.line("{");
-                    out.line("ItemMeta __meta = " + itemJava + ".getItemMeta();");
-                    out.line("__meta.setUnbreakable(false);");
-                    out.line(itemJava + ".setItemMeta(__meta);");
-                    out.line("}");
+                    ctx.out().line("{");
+                    ctx.out().line("ItemMeta __meta = " + itemJava + ".getItemMeta();");
+                    ctx.out().line("__meta.setUnbreakable(false);");
+                    ctx.out().line(itemJava + ".setItemMeta(__meta);");
+                    ctx.out().line("}");
                 }));
 
         api.patterns().statement(b -> b
@@ -178,17 +178,17 @@ public final class ItemStackStatements {
                 .example("set item's durability to 100")
                 .since("1.0.0")
                 .category(Categories.ITEM)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     ctx.codegen().addImport(DAMAGEABLE);
                     ctx.codegen().addImport(ITEM_META);
                     String itemJava = ctx.java("i");
-                    out.line("{");
-                    out.line("ItemMeta __meta = " + itemJava + ".getItemMeta();");
-                    out.line("if (__meta instanceof Damageable __dmg) {");
-                    out.line("__dmg.setDamage(" + ctx.java("val") + ");");
-                    out.line(itemJava + ".setItemMeta(__meta);");
-                    out.line("}");
-                    out.line("}");
+                    ctx.out().line("{");
+                    ctx.out().line("ItemMeta __meta = " + itemJava + ".getItemMeta();");
+                    ctx.out().line("if (__meta instanceof Damageable __dmg) {");
+                    ctx.out().line("__dmg.setDamage(" + ctx.java("val") + ");");
+                    ctx.out().line(itemJava + ".setItemMeta(__meta);");
+                    ctx.out().line("}");
+                    ctx.out().line("}");
                 }));
     }
 }

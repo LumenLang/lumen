@@ -32,17 +32,17 @@ public final class InventoryConditions {
                         "Checks if a specific slot in an inventory contains an item.",
                         "if slot 0 of gui is empty:",
                         "if slot 0 of gui is not empty:",
-                        (match, env, ctx) -> {
-                            ctx.addImport(MATERIAL);
-                            String inv = match.java("inv", ctx, env);
-                            String slot = match.java("slot", ctx, env);
+                        (ctx) -> {
+                            ctx.codegen().addImport(MATERIAL);
+                            String inv = ctx.java("inv");
+                            String slot = ctx.java("slot");
                             return "(" + inv + ".getItem(" + slot + ") == null || "
                                     + inv + ".getItem(" + slot + ").getType() == org.bukkit.Material.AIR)";
                         },
-                        (match, env, ctx) -> {
-                            ctx.addImport(MATERIAL);
-                            String inv = match.java("inv", ctx, env);
-                            String slot = match.java("slot", ctx, env);
+                        (ctx) -> {
+                            ctx.codegen().addImport(MATERIAL);
+                            String inv = ctx.java("inv");
+                            String slot = ctx.java("slot");
                             return "(" + inv + ".getItem(" + slot + ") != null && "
                                     + inv + ".getItem(" + slot + ").getType() != org.bukkit.Material.AIR)";
                         })
@@ -53,28 +53,20 @@ public final class InventoryConditions {
                         "Checks if a custom inventory contains at least one item.",
                         "if gui inventory is empty:",
                         "if gui inventory is not empty:",
-                        (match, env, ctx) -> {
-                            return match.java("inv", ctx, env) + ".isEmpty()";
-                        },
-                        (match, env, ctx) -> {
-                            return "!" + match.java("inv", ctx, env) + ".isEmpty()";
-                        })
+                        (ctx) -> ctx.java("inv") + ".isEmpty()",
+                        (ctx) -> "!" + ctx.java("inv") + ".isEmpty()")
                 .condition(
                         "%inv:INVENTORY% inventory contains %mat:MATERIAL%",
                         "Checks if a custom inventory contains at least one item of the given material.",
                         "if gui inventory contains diamond:",
-                        (match, env, ctx) -> {
-                            return match.java("inv", ctx, env)
-                                    + ".contains(" + match.java("mat", ctx, env) + ")";
-                        })
+                        (ctx) -> ctx.java("inv")
+                                + ".contains(" + ctx.java("mat") + ")")
                 .condition(
                         "%inv:INVENTORY% inventory does not contain %mat:MATERIAL%",
                         "Checks if a custom inventory does not contain any item of the given material.",
                         "if gui inventory does not contain diamond:",
-                        (match, env, ctx) -> {
-                            return "!" + match.java("inv", ctx, env)
-                                    + ".contains(" + match.java("mat", ctx, env) + ")";
-                        })
+                        (ctx) -> "!" + ctx.java("inv")
+                                + ".contains(" + ctx.java("mat") + ")")
                 .conditionPair(
                         "%inv:INVENTORY% is [a] lumen inventory",
                         "%inv:INVENTORY% is not [a] lumen inventory",
@@ -82,14 +74,14 @@ public final class InventoryConditions {
                         "Checks if the inventory was not created by Lumen.",
                         "if inventory is a lumen inventory:",
                         "if inventory is not a lumen inventory:",
-                        (match, env, ctx) -> {
-                            ctx.addImport(LumenInventoryHolder.class.getName());
-                            return "(" + match.java("inv", ctx, env)
+                        (ctx) -> {
+                            ctx.codegen().addImport(LumenInventoryHolder.class.getName());
+                            return "(" + ctx.java("inv")
                                     + ".getHolder() instanceof LumenInventoryHolder)";
                         },
-                        (match, env, ctx) -> {
-                            ctx.addImport(LumenInventoryHolder.class.getName());
-                            return "(!(" + match.java("inv", ctx, env)
+                        (ctx) -> {
+                            ctx.codegen().addImport(LumenInventoryHolder.class.getName());
+                            return "(!(" + ctx.java("inv")
                                     + ".getHolder() instanceof LumenInventoryHolder))";
                         });
     }
