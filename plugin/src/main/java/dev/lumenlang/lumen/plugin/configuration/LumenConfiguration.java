@@ -9,8 +9,8 @@ import net.vansencool.lsyaml.LSYAML;
 import net.vansencool.lsyaml.binding.ConfigFile;
 import net.vansencool.lsyaml.binding.ConfigLoader;
 import net.vansencool.lsyaml.binding.Ignore;
-import net.vansencool.lsyaml.binding.Key;
 import net.vansencool.lsyaml.binding.LatestConfig;
+import net.vansencool.lsyaml.binding.PreferKeysWith;
 import net.vansencool.lsyaml.binding.watcher.ConfigWatcher;
 import net.vansencool.lsyaml.binding.watcher.WatchAction;
 import net.vansencool.lsyaml.binding.watcher.WatcherOptions;
@@ -29,6 +29,7 @@ import java.util.List;
  */
 @ConfigFile("plugins/Lumen/config.yml")
 @LatestConfig("config.yml")
+@PreferKeysWith("-")
 public final class LumenConfiguration {
 
     public static Scripts SCRIPTS = new Scripts();
@@ -132,64 +133,46 @@ public final class LumenConfiguration {
 
         public String EXTENSION = ".luma";
 
-        @Key("load-all-on-startup")
         public boolean LOAD_ALL_ON_STARTUP = true;
 
-        @Key("enable-all-scripts-immediately-on-startup")
         public boolean ENABLE_ALL_SCRIPTS_IMMEDIATELY_ON_STARTUP = false;
 
-        @Key("reload-on-save")
         public boolean RELOAD_ON_SAVE = true;
 
-        @Key("load-on-create")
         public boolean LOAD_ON_CREATE = true;
 
-        @Key("unload-on-delete")
         public boolean UNLOAD_ON_DELETE = true;
 
-        @Key("watcher-debounce-ms")
         public long WATCHER_DEBOUNCE_MS = 200;
     }
 
     public static final class Debug {
 
-        @Key("log-warnings")
         public boolean LOG_WARNINGS = true;
 
-        @Key("log-info")
         public boolean LOG_INFO = true;
 
-        @Key("log-compilation")
         public boolean LOG_COMPILATION = false;
 
-        @Key("dump-generated-java")
         public boolean DUMP_GENERATED_JAVA = false;
 
-        @Key("full-debug")
         public boolean FULL_DEBUG = false;
 
-        @Key("verbose-diagnostics")
         public boolean VERBOSE_DIAGNOSTICS = false;
     }
 
     public static final class Performance {
 
-        @Key("cache-compiled-classes")
         public boolean CACHE_COMPILED_CLASSES = true;
 
-        @Key("load-scripts-async-on-startup")
         public boolean LOAD_SCRIPTS_ASYNC_ON_STARTUP = false;
 
-        @Key("warmup-on-startup")
         public boolean WARMUP_ON_STARTUP = true;
 
-        @Key("reduce-classpath")
         public boolean REDUCE_CLASSPATH = false;
 
-        @Key("async-define-class")
         public boolean ASYNC_DEFINE_CLASS = true;
 
-        @Key("parallel-parse-threads")
         public int PARALLEL_PARSE_THREADS = 3;
     }
 
@@ -199,37 +182,30 @@ public final class LumenConfiguration {
 
         public static final class Experimental {
 
-            @Key("raw-java")
             public boolean RAW_JAVA = false;
 
-            @Key("code-transform")
             public boolean CODE_TRANSFORM = false;
         }
     }
 
     public static final class Features {
 
-        @Key("use-legacy-colors")
         public boolean USE_LEGACY_COLORS = true;
 
-        @Key("paper-only-features")
         public boolean PAPER_ONLY_FEATURES = true;
 
         public Inventories INVENTORIES = new Inventories();
 
         public static final class Inventories {
 
-            @Key("hot-reload")
             public boolean HOT_RELOAD = true;
         }
     }
 
     public static final class Extra {
 
-        @Key("enable-config-file-watcher")
         public boolean ENABLE_CONFIG_FILE_WATCHER = true;
 
-        @Key("enable-documentation-tool")
         public boolean ENABLE_DOCUMENTATION_TOOL = false;
     }
 }

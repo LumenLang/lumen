@@ -83,7 +83,7 @@ public final class MapExpressions {
 
         api.patterns().expression(b -> b
                 .by("Lumen")
-                .pattern("get %map:MAP% at key %key:EXPR% for %scope:EXPR%")
+                .pattern("get %map:MAP% at key %key:STRING% for %scope:EXPR%")
                 .description("Returns the value associated with a key in a scoped global map for a specific scope reference.")
                 .example("set bal to get balances at key \"money\" for p")
                 .since("1.0.0")
@@ -128,7 +128,7 @@ public final class MapExpressions {
 
         api.patterns().expression(b -> b
                 .by("Lumen")
-                .pattern("get %map:MAP% at key %key:EXPR%")
+                .pattern("get %map:MAP% at key %key:STRING%")
                 .description("Returns the value associated with a key in a map, or null if the key is not present.")
                 .example("set name to get myMap at key \"name\"")
                 .since("1.0.0")

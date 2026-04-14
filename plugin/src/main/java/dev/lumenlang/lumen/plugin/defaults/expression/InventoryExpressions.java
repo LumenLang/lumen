@@ -91,45 +91,41 @@ public final class InventoryExpressions {
     private void registerExpressions() {
         InventoryHelper.create()
                 .expression(
-                        "[get] item in slot %slot:INT% of %inv:EXPR%",
+                        "[get] item in slot %slot:INT% of %inv:INVENTORY%",
                         "Returns the item stack in a specific slot of an inventory, or null if the slot is empty.",
                         "set item to get item in slot 0 of gui",
                         ctx -> {
-                            ctx.codegen().addImport(INVENTORY);
                             return new ExpressionResult(
-                                    "((Inventory) " + ctx.java("inv") + ").getItem(" + ctx.java("slot") + ")",
+                                    ctx.java("inv") + ".getItem(" + ctx.java("slot") + ")",
                                     MinecraftTypes.ITEMSTACK);
                         })
                 .expression(
-                        "[get] %inv:EXPR% inventory size",
+                        "[get] %inv:INVENTORY% inventory size",
                         "Returns the total number of slots in an inventory.",
                         "set sz to get gui inventory size",
                         ctx -> {
-                            ctx.codegen().addImport(INVENTORY);
                             return new ExpressionResult(
-                                    "((Inventory) " + ctx.java("inv") + ").getSize()",
+                                    ctx.java("inv") + ".getSize()",
                                     PrimitiveType.INT);
                         })
                 .expression(
-                        "[get] first empty slot of %inv:EXPR%",
+                        "[get] first empty slot of %inv:INVENTORY%",
                         "Returns the index of the first empty slot in an inventory, or -1 if full.",
                         "set freeSlot to get first empty slot of gui",
                         ctx -> {
-                            ctx.codegen().addImport(INVENTORY);
                             return new ExpressionResult(
-                                    "((Inventory) " + ctx.java("inv") + ").firstEmpty()",
+                                    ctx.java("inv") + ".firstEmpty()",
                                     PrimitiveType.INT);
                         })
                 .expression(
-                        "[get] name of %inv:EXPR%",
+                        "[get] name of %inv:INVENTORY%",
                         "Returns the name of a Lumen inventory, or null if the inventory was not created by Lumen.",
                         "set gui_name to get name of inventory",
                         ctx -> {
-                            ctx.codegen().addImport(INVENTORY);
                             ctx.codegen().addImport(LumenInventoryHolder.class.getName());
                             String inv = ctx.java("inv");
                             return new ExpressionResult(
-                                    "(((Inventory) " + inv + ").getHolder() instanceof LumenInventoryHolder __lh ? __lh.name() : null)",
+                                    "(" + inv + ".getHolder() instanceof LumenInventoryHolder __lh ? __lh.name() : null)",
                                     PrimitiveType.STRING);
                         });
     }

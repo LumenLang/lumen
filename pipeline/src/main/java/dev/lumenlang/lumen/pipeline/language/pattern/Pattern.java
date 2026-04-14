@@ -55,7 +55,6 @@ public record Pattern(@NotNull String raw, @NotNull List<PatternPart> parts, int
                     if (altMax == Integer.MAX_VALUE) return Integer.MAX_VALUE;
                     max = Math.max(max, altMax);
                 }
-                if (max == Integer.MAX_VALUE) return Integer.MAX_VALUE;
                 count += max;
             }
         }

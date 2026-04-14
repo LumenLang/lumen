@@ -112,7 +112,7 @@ public final class FuzzyMatch {
         int bestDist = Integer.MAX_VALUE;
         for (String candidate : candidates) {
             int dist = prefixAwareDistance(input, candidate);
-            if (dist < bestDist && dist <= threshold) {
+            if (dist <= threshold && (dist < bestDist || (dist == bestDist && best != null && candidate.length() < best.length()))) {
                 bestDist = dist;
                 best = candidate;
             }

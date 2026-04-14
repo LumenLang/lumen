@@ -101,7 +101,7 @@ public final class DefaultExpressions {
 
         api.patterns().expression(b -> b
                 .by("Lumen")
-                .pattern("get player by (name|username) %name:EXPR%")
+                .pattern("get player by (name|username) %name:STRING%")
                 .description("Looks up an online player by a name expression (variable or value).")
                 .example("set p to get player by name target_name")
                 .since("1.0.0")

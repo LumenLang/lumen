@@ -224,10 +224,7 @@ public final class LumenDiagnostic {
         if (subHighlightsAsNotes) {
             for (SubHighlight sh : subHighlights) {
                 if (sh.label == null) continue;
-                int shStart = Math.max(0, Math.min(sh.columnStart, trimmed.length()));
-                int shEnd = Math.max(shStart + 1, Math.min(sh.columnEnd, trimmed.length()));
-                String tokenText = trimmed.substring(shStart, shEnd);
-                sb.append("  = note: '").append(tokenText).append("': ").append(sh.label).append('\n');
+                sb.append("  = note: ").append(sh.label).append('\n');
             }
         }
         for (String note : notes) {

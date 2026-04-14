@@ -94,7 +94,7 @@ public interface AddonTypeBinding {
      */
     default int consumeCount(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
         if (tokens.isEmpty())
-            throw new ParseFailureException(id() + " requires at least one token");
+            throw new ParseFailureException("expected a value here");
         return 1;
     }
 

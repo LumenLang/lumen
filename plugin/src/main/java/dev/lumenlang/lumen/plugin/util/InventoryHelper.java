@@ -18,13 +18,13 @@ import java.util.Objects;
  * <pre>{@code
  * InventoryHelper.create()
  *     .statement(
- *         "set slot %slot:INT% of %inv:EXPR% to %item:ITEMSTACK%",
+ *         "set slot %slot:INT% of %inv:INVENTORY% to %item:ITEMSTACK%",
  *         "Sets an item in a specific slot of an inventory.",
  *         "set slot 0 of inv to sword",
  *         (line, ctx, out) -> { ... }
  *     )
  *     .expression(
- *         "[get] item in slot %slot:INT% of %inv:EXPR%",
+ *         "[get] item in slot %slot:INT% of %inv:INVENTORY%",
  *         "Returns the item in the given slot.",
  *         "set item to get item in slot 0 of inv",
  *         ctx -> { ... }

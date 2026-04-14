@@ -134,7 +134,7 @@ public final class MapStatements {
     public void register(@NotNull LumenAPI api) {
         api.patterns().statement(b -> b
                 .by("Lumen")
-                .pattern("set %map:MAP% at key %key:EXPR% to %val:EXPR% for %scope:EXPR%")
+                .pattern("set %map:MAP% at key %key:STRING% to %val:EXPR% for %scope:EXPR%")
                 .description("Sets a key-value pair in a scoped global map for a specific scope reference. Reads the map from storage, inserts the entry, and writes it back.")
                 .example("set balances at key \"money\" to 100 for p")
                 .since("1.0.0")
@@ -146,7 +146,7 @@ public final class MapStatements {
 
         api.patterns().statement(b -> b
                 .by("Lumen")
-                .pattern("set %map:MAP% at key %key:EXPR% to %val:EXPR%")
+                .pattern("set %map:MAP% at key %key:STRING% to %val:EXPR%")
                 .description("Sets a key-value pair in a map. If the key already exists, its value is replaced.")
                 .example("set myMap at key \"name\" to \"Steve\"")
                 .since("1.0.0")
@@ -161,7 +161,7 @@ public final class MapStatements {
 
         api.patterns().statement(b -> b
                 .by("Lumen")
-                .pattern("remove key %key:EXPR% from %map:MAP% for %scope:EXPR%")
+                .pattern("remove key %key:STRING% from %map:MAP% for %scope:EXPR%")
                 .description("Removes a key from a scoped global map for a specific scope reference.")
                 .example("remove key \"money\" from balances for p")
                 .since("1.0.0")
@@ -173,7 +173,7 @@ public final class MapStatements {
 
         api.patterns().statement(b -> b
                 .by("Lumen")
-                .pattern("remove key %key:EXPR% from %map:MAP%")
+                .pattern("remove key %key:STRING% from %map:MAP%")
                 .description("Removes a key and its associated value from a map.")
                 .example("remove key \"name\" from myMap")
                 .since("1.0.0")

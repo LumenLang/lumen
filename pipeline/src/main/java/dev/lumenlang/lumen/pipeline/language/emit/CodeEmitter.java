@@ -245,7 +245,6 @@ public final class CodeEmitter {
             return;
         }
 
-        int threads = Math.min(parallelParseThreads, independentIndices.size());
         ExecutorService pool = pool();
         List<Future<BlockResult>> futures = new ArrayList<>(independentIndices.size());
 

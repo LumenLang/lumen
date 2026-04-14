@@ -526,7 +526,10 @@ public final class PatternSimulator {
 
     private static double computeTypeMatchConfidence(@NotNull MatchProgress progress, int totalTokens) {
         double fraction = totalTokens > 0 ? (double) (progress.furthestTokenIndex() + 1) / totalTokens : 0.0;
-        return Math.max(0.20, Math.min(0.85, fraction));
+        double base = Math.max(0.20, Math.min(0.85, fraction));
+        int failures = progress.bindingFailures().size();
+        double penalty = failures * 0.12;
+        return Math.max(0.05, base - penalty);
     }
 
     private static int effectiveThreshold(@NotNull String tokenText, @NotNull String formText) {

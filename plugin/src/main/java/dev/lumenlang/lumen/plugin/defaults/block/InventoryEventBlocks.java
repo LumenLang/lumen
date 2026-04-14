@@ -130,7 +130,7 @@ public final class InventoryEventBlocks {
     private void registerSlotClick(@NotNull LumenAPI api) {
         api.patterns().block(b -> b
                 .by("Lumen")
-                .pattern("slot %slot:INT% click [in|of] %inv:EXPR%")
+                .pattern("slot %slot:INT% click [in|of] %inv:QSTRING%")
                 .description("Handles a click on a specific slot in a Lumen inventory. "
                         + "The event is automatically cancelled. "
                         + "Provides player, inventory, slot, item, cursor, clickType, action, "
@@ -197,7 +197,7 @@ public final class InventoryEventBlocks {
     private void registerClick(@NotNull LumenAPI api) {
         api.patterns().block(b -> b
                 .by("Lumen")
-                .pattern("click [in|of] %inv:EXPR%")
+                .pattern("click [in|of] %inv:QSTRING%")
                 .description("Handles any click in a Lumen inventory. "
                         + "The event is automatically cancelled. "
                         + "Provides player, inventory, slot, item, cursor, clickType, action, "
@@ -262,7 +262,7 @@ public final class InventoryEventBlocks {
     private void registerClose(@NotNull LumenAPI api) {
         api.patterns().block(b -> b
                 .by("Lumen")
-                .pattern("close [of] %inv:EXPR%")
+                .pattern("close [of] %inv:QSTRING%")
                 .description("Handles the close event of a Lumen inventory. "
                         + "Provides player, inventory, and title variables.")
                 .example(of(
@@ -312,7 +312,7 @@ public final class InventoryEventBlocks {
     private void registerOpen(@NotNull LumenAPI api) {
         api.patterns().block(b -> b
                 .by("Lumen")
-                .pattern("open [of] %inv:EXPR%")
+                .pattern("open [of] %inv:QSTRING%")
                 .description("Handles the open event of a Lumen inventory. "
                         + "Provides player, inventory, and title variables.")
                 .example(of(

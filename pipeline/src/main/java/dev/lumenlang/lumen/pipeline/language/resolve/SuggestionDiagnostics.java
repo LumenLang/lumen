@@ -72,28 +72,27 @@ public final class SuggestionDiagnostics {
             MatchProgress.BindingFailure first = failures.get(0);
             if (!first.failedTokens().isEmpty()) {
                 Token t = first.failedTokens().get(0);
-                String label = first.reason() != null ? first.bindingId() + " failed: " + first.reason() : first.bindingId() + " rejected '" + t.text() + "'";
+                String label = fallbackBindingLabel(first, t);
                 builder.highlight(t.start(), t.end()).label(label);
             } else {
                 Token last = tokens.isEmpty() ? null : tokens.get(tokens.size() - 1);
-                if (last != null) builder.highlight(last.end(), last.end() + 1).label(first.bindingId() + " is missing");
-                else builder.label(first.bindingId() + " is missing");
+                if (last != null) builder.highlight(last.end(), last.end() + 1).label("expected " + bindingDescription(first.bindingId()));
+                else builder.label("expected " + bindingDescription(first.bindingId()));
             }
             for (int i = 1; i < failures.size(); i++) {
                 MatchProgress.BindingFailure bf = failures.get(i);
                 if (!bf.failedTokens().isEmpty()) {
                     Token t = bf.failedTokens().get(0);
-                    String label = bf.reason() != null ? bf.bindingId() + " failed: " + bf.reason() : bf.bindingId() + " rejected '" + t.text() + "'";
-                    builder.subHighlight(t.start(), t.end(), label);
+                    builder.subHighlight(t.start(), t.end(), fallbackBindingLabel(bf, t));
                 }
             }
         } else if (top.progress() != null && top.progress().failedBindingId() != null) {
             MatchProgress progress = top.progress();
             Token last = tokens.isEmpty() ? null : tokens.get(tokens.size() - 1);
             if (last != null) {
-                builder.highlight(last.end(), last.end() + 1).label(progress.failedBindingId() + " failed here");
+                builder.highlight(last.end(), last.end() + 1).label("expected " + bindingDescription(progress.failedBindingId()));
             } else {
-                builder.label(progress.failedBindingId() + " is missing");
+                builder.label("expected " + bindingDescription(progress.failedBindingId()));
             }
         } else {
             if (!tokens.isEmpty()) {
@@ -251,7 +250,7 @@ public final class SuggestionDiagnostics {
             builder.highlight(mismatch.token().start(), mismatch.token().end());
             builder.label(typeMismatchLabel(mismatch));
         } else if (issue instanceof PatternSimulator.SuggestionIssue.MissingBinding missing) {
-            builder.label(missing.bindingId() + " is missing");
+            builder.label("missing " + bindingDescription(missing.bindingId()));
         } else if (issue instanceof PatternSimulator.SuggestionIssue.Reorder reorder) {
             int start = reorder.tokens().stream().mapToInt(Token::start).min().orElse(0);
             int end = reorder.tokens().stream().mapToInt(Token::end).max().orElse(0);
@@ -269,7 +268,7 @@ public final class SuggestionDiagnostics {
         } else if (issue instanceof PatternSimulator.SuggestionIssue.TypeMismatch mismatch) {
             builder.subHighlight(mismatch.token().start(), mismatch.token().end(), typeMismatchLabel(mismatch));
         } else if (issue instanceof PatternSimulator.SuggestionIssue.MissingBinding missing) {
-            builder.note(missing.bindingId() + " is missing");
+            builder.note("missing " + bindingDescription(missing.bindingId()));
         } else if (issue instanceof PatternSimulator.SuggestionIssue.Reorder reorder) {
             for (Token t : reorder.tokens()) {
                 builder.subHighlight(t.start(), t.end(), "out of order");
@@ -289,7 +288,54 @@ public final class SuggestionDiagnostics {
     }
 
     private static @NotNull String typeMismatchLabel(@NotNull PatternSimulator.SuggestionIssue.TypeMismatch mismatch) {
-        if (mismatch.reason() != null) return mismatch.bindingId() + " failed: " + mismatch.reason();
-        return mismatch.bindingId() + " rejected '" + mismatch.token().text() + "'";
+        if (mismatch.reason() != null) return mismatch.reason();
+        String token = mismatch.token().text();
+        return switch (mismatch.bindingId()) {
+            case "INVENTORY" -> "'" + token + "' is not a known inventory variable";
+            case "PLAYER" -> "'" + token + "' is not a known player variable";
+            case "ENTITY" -> "'" + token + "' is not a known entity variable";
+            case "ENTITY_POSSESSIVE" -> "'" + token + "' must use possessive form (e.g. entity's)";
+            case "ITEMSTACK" -> "'" + token + "' is not a known item variable";
+            case "WORLD" -> "'" + token + "' is not a known world variable";
+            case "LIST" -> "'" + token + "' is not a known list variable";
+            case "MAP" -> "'" + token + "' is not a known map variable";
+            case "DATA" -> "'" + token + "' is not a known data variable";
+            default -> "'" + token + "' is not valid here";
+        };
+    }
+
+    private static @NotNull String fallbackBindingLabel(@NotNull MatchProgress.BindingFailure bf, @NotNull Token t) {
+        if (bf.reason() != null) return bf.reason();
+        return "'" + t.text() + "' is not " + bindingDescription(bf.bindingId());
+    }
+
+    private static @NotNull String bindingDescription(@NotNull String bindingId) {
+        return switch (bindingId) {
+            case "PLAYER" -> "a player variable";
+            case "ENTITY" -> "an entity variable";
+            case "ENTITY_POSSESSIVE" -> "a possessive entity reference (e.g. entity's)";
+            case "ITEMSTACK" -> "an item variable";
+            case "INVENTORY" -> "an inventory variable";
+            case "WORLD" -> "a world variable";
+            case "LOCATION" -> "a location variable";
+            case "BLOCK" -> "a block variable";
+            case "LIST" -> "a list variable";
+            case "MAP" -> "a map variable";
+            case "DATA" -> "a data variable";
+            case "INT" -> "a valid integer";
+            case "DOUBLE", "NUMBER" -> "a valid number";
+            case "LONG" -> "a valid long";
+            case "BOOLEAN" -> "a boolean (true or false)";
+            case "MATERIAL" -> "a valid material";
+            case "ATTRIBUTE" -> "a valid attribute";
+            case "ENTITY_TYPE" -> "a valid entity type";
+            case "GAME_MODE" -> "a valid game mode";
+            case "STRING" -> "a string value";
+            case "QSTRING" -> "a quoted string, variable, or placeholder";
+            case "COND" -> "a condition";
+            case "EXPR" -> "an expression";
+            case "VAR" -> "a variable";
+            default -> "a valid " + bindingId.toLowerCase().replace('_', ' ');
+        };
     }
 }

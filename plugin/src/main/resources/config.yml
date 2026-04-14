@@ -55,6 +55,7 @@ debug:
   # Logs detailed information about pattern matching, token consumption,
   # type binding resolution, and Java code generation.
   # Only enable this when debugging issues with pattern matching or compilation.
+  # Note: This can produce a large amount of log output, so it is recommended that you only have small test scripts when enabling this.
   full-debug: false
 
   # When enabled, diagnostic output highlights the entire source line

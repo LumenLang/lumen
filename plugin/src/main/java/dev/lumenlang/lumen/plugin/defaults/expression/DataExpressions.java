@@ -173,7 +173,7 @@ public final class DataExpressions {
     private void registerFieldAccess(@NotNull LumenAPI api) {
         api.patterns().expression(b -> b
                 .by("Lumen")
-                .pattern("get field %field:STRING% (of|from) %obj:EXPR%")
+                .pattern("get field %field:STRING% (of|from) %obj:DATA%")
                 .description("Gets a field value from a data instance.")
                 .examples("set name to get field \"name\" of myArena", "set x to get field \"x1\" from myArena")
                 .since("1.0.0")
@@ -188,7 +188,7 @@ public final class DataExpressions {
 
         api.patterns().expression(b -> b
                 .by("Lumen")
-                .pattern("%obj:EXPR% field [of] %field:STRING%")
+                .pattern("%obj:DATA% field [of] %field:STRING%")
                 .description("Gets a field value from a data instance using postfix syntax.")
                 .example("set name to myArena field \"name\"")
                 .since("1.0.0")

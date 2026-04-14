@@ -70,7 +70,7 @@ public final class AttributeBinding {
             @Override
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 if (tokens.isEmpty())
-                    throw new ParseFailureException("Expected attribute name");
+                    throw new ParseFailureException("expected an attribute name here");
 
                 if (tokens.size() >= 3) {
                     String threeWord = tokens.get(0) + "_" + tokens.get(1) + "_" + tokens.get(2);
@@ -102,7 +102,7 @@ public final class AttributeBinding {
 
     private static @NotNull String fuzzyAttribute(@NotNull String token) {
         String closest = FuzzyMatch.closest(token.toLowerCase().replace(' ', '_').replace('-', '_'), AttributeNames.knownNames());
-        if (closest != null) return "Unknown attribute: " + token + ", did you mean '" + closest + "'?";
-        return "Unknown attribute: " + token;
+        if (closest != null) return "'" + token + "' is not a valid attribute, did you mean '" + closest + "'?";
+        return "'" + token + "' is not a valid attribute";
     }
 }

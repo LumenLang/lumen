@@ -18,7 +18,7 @@ public final class ServerStatements {
     public void register(@NotNull LumenAPI api) {
         api.patterns().statement(b -> b
                 .by("Lumen")
-                .pattern("(use|import) %clazz:EXPR%")
+                .pattern("(use|import) %clazz:STRING%")
                 .description("Adds a Java import to the compiled script.")
                 .example("use org.bukkit.Material")
                 .since("1.0.0")
@@ -46,7 +46,7 @@ public final class ServerStatements {
 
         api.patterns().statement(b -> b
                 .by("Lumen")
-                .pattern("set time [of] %w:EXPR% [to] %val:INT%")
+                .pattern("set time [of] %w:WORLD% [to] %val:INT%")
                 .description("Sets the time of a world.")
                 .example("set time of world to 6000")
                 .since("1.0.0")

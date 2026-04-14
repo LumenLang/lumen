@@ -140,16 +140,6 @@ public final class TransformerRegistry {
         }
     }
 
-    private static @Nullable JavaBuilder.ScriptLineInfo findScriptLineInfo(int javaLineIndex, @NotNull Map<Integer, JavaBuilder.ScriptLineInfo> lineMap) {
-        JavaBuilder.ScriptLineInfo direct = lineMap.get(javaLineIndex);
-        if (direct != null) return direct;
-        for (int i = javaLineIndex - 1; i >= 0; i--) {
-            JavaBuilder.ScriptLineInfo info = lineMap.get(i);
-            if (info != null) return info;
-        }
-        return null;
-    }
-
     private static boolean applyModifications(@NotNull JavaBuilder builder,
                                               @Nullable List<String> transformerTags,
                                               @NotNull TransformContextImpl ctx) {

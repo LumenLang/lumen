@@ -6,11 +6,8 @@ import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.plugin.defaults.util.AttributeNames;
 import dev.lumenlang.lumen.plugin.text.LumenText;
-import org.bukkit.GameMode;
 import org.bukkit.attribute.Attribute;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Locale;
 
 /**
  * Registers all built-in player-related statement patterns.
@@ -117,15 +114,13 @@ public final class PlayerStatements {
 
         api.patterns().statement(b -> b
                 .by("Lumen")
-                .pattern("set %who:PLAYER_POSSESSIVE% (gamemode|gm) [to] %mode:EXPR%")
+                .pattern("set %who:PLAYER_POSSESSIVE% (gamemode|gm) [to] %mode:GAME_MODE%")
                 .description("Sets a player's gamemode.")
                 .example("set player's gamemode to \"creative\"")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .handler((line, ctx, out) -> {
-                    ctx.codegen().addImport(GameMode.class.getName());
-                    String mode = ctx.java("mode").replace("\"", "").toUpperCase(Locale.ROOT);
-                    out.line(ctx.java("who") + ".setGameMode(GameMode." + mode + ");");
+                    out.line(ctx.java("who") + ".setGameMode(" + ctx.java("mode") + ");");
                 }));
 
         api.patterns().statement(b -> b

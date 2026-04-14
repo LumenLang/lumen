@@ -137,7 +137,7 @@ public final class RegistryTypeBinding {
 
     private static @NotNull String rejectMessage(@NotNull String typeId, @NotNull String token, @NotNull Set<String> known) {
         String closest = FuzzyMatch.closest(token.toUpperCase(Locale.ROOT).replace(' ', '_').replace('-', '_'), known);
-        if (closest != null) return "Unknown " + typeId + " value: " + token + ", did you mean '" + closest.toLowerCase(Locale.ROOT) + "'?";
-        return "Unknown " + typeId + " value: " + token;
+        if (closest != null) return "'" + token + "' is not a valid " + typeId.toLowerCase(Locale.ROOT).replace('_', ' ') + ", did you mean '" + closest.toLowerCase(Locale.ROOT) + "'?";
+        return "'" + token + "' is not a valid " + typeId.toLowerCase(Locale.ROOT).replace('_', ' ');
     }
 }

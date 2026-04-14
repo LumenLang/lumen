@@ -28,7 +28,7 @@ public final class AttributeConditions {
     public void register(@NotNull LumenAPI api) {
         api.patterns().condition(b -> b
                 .by("Lumen")
-                .pattern("%e:ENTITY_POSSESSIVE% %attr:ATTRIBUTE% [value] %op:OP% %val:EXPR%")
+                .pattern("%e:ENTITY_POSSESSIVE% %attr:ATTRIBUTE% [value] %op:OP% %val:DOUBLE%")
                 .description("Compares a living entity's attribute value against a number using a relational operator.")
                 .example("if mob's max_health > 20:")
                 .since("1.0.0")

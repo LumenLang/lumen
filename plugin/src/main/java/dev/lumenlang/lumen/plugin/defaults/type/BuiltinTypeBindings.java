@@ -67,7 +67,7 @@ public final class BuiltinTypeBindings {
             @Override
             public Object parse(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
                 if (tokens.isEmpty()) {
-                    throw new ParseFailureException("EXPR requires at least one token");
+                    throw new ParseFailureException("expected an expression here");
                 }
                 return new TokenList(List.copyOf(tokens));
             }
@@ -99,7 +99,7 @@ public final class BuiltinTypeBindings {
             @Override
             public int consumeCount(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
                 if (tokens.isEmpty())
-                    throw new ParseFailureException("STRING requires at least one token");
+                    throw new ParseFailureException("expected a string value here");
                 return 1;
             }
 
@@ -138,12 +138,12 @@ public final class BuiltinTypeBindings {
             @Override
             public int consumeCount(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
                 if (tokens.isEmpty())
-                    throw new ParseFailureException("QSTRING requires at least one token");
+                    throw new ParseFailureException("expected a quoted string value here");
                 Token first = tokens.get(0);
                 if (first.kind() == TokenKind.STRING) return 1;
                 if (env.lookupVar(first.text()) != null) return 1;
                 if (first.text().contains("{")) return 1;
-                throw new ParseFailureException("QSTRING requires a quoted string, variable reference, or placeholder");
+                throw new ParseFailureException("expected a quoted string, variable, or placeholder");
             }
 
             @Override

@@ -28,7 +28,7 @@ public final class ControlBlocks {
     public void register(@NotNull LumenAPI api) {
         api.patterns().block(b -> b
                 .by("Lumen")
-                .pattern("if %cond:EXPR%")
+                .pattern("if %cond:COND%")
                 .description("Conditionally executes a block of code. When used at the top level, wraps the block in a preload method that runs on script load.")
                 .example(of(
                         top("on join:"),
@@ -59,7 +59,7 @@ public final class ControlBlocks {
 
         api.patterns().block(b -> b
                 .by("Lumen")
-                .pattern("else if %cond:EXPR%")
+                .pattern("else if %cond:COND%")
                 .description("An alternative condition branch that follows an if or else if block.")
                 .example(of(
                         top("on join:"),

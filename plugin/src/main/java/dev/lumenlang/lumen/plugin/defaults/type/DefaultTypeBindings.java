@@ -116,6 +116,9 @@ public final class DefaultTypeBindings {
         registerMap(api);
         registerData(api);
         registerBlock(api);
+        registerInventory(api);
+        registerVar(api);
+        registerLiteralList(api);
         registerEnums(api);
     }
 
@@ -161,7 +164,7 @@ public final class DefaultTypeBindings {
             @Override
             public int consumeCount(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 if (tokens.isEmpty())
-                    throw new ParseFailureException("INT requires at least one token");
+                    throw new ParseFailureException("expected an integer value here");
                 if (tokens.size() >= 2 && tokens.get(1).equals("%"))
                     return 2;
                 return 1;
@@ -176,7 +179,7 @@ public final class DefaultTypeBindings {
                     VarHandle ref = env.lookupVar(text);
                     if (ref != null)
                         return ref;
-                    throw new ParseFailureException("Not a valid integer: " + text);
+                    throw new ParseFailureException("'" + text + "' is not a valid integer");
                 }
             }
 
@@ -219,7 +222,7 @@ public final class DefaultTypeBindings {
                     VarHandle ref = env.lookupVar(tokens.get(0));
                     if (ref != null)
                         return ref;
-                    throw e;
+                    throw new ParseFailureException("'" + tokens.get(0) + "' is not a valid long");
                 }
             }
 
@@ -259,7 +262,7 @@ public final class DefaultTypeBindings {
                     VarHandle ref = env.lookupVar(text);
                     if (ref != null)
                         return ref;
-                    throw e;
+                    throw new ParseFailureException("'" + text + "' is not a number");
                 }
             }
 
@@ -314,7 +317,7 @@ public final class DefaultTypeBindings {
                         VarHandle ref = env.lookupVar(text);
                         if (ref != null)
                             return ref;
-                        throw new ParseFailureException("Not a valid number: " + text);
+                        throw new ParseFailureException("'" + text + "' is not a valid number");
                     }
                 }
             }
@@ -359,7 +362,7 @@ public final class DefaultTypeBindings {
                 if (raw.equals("false") || raw.equals("no") || raw.equals("off")) return Boolean.FALSE;
                 VarHandle ref = env.lookupVar(tokens.get(0));
                 if (ref != null) return ref;
-                throw new ParseFailureException("Unknown boolean value: " + tokens.get(0));
+                throw new ParseFailureException("'" + tokens.get(0) + "' is not a valid boolean (expected true/false, yes/no, or on/off)");
             }
 
             @Override
@@ -436,13 +439,11 @@ public final class DefaultTypeBindings {
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 String raw = tokens.get(0);
                 if (raw.endsWith("'s"))
-                    throw new ParseFailureException("PLAYER does not accept possessive form: " + raw);
+                    throw new ParseFailureException("'" + raw + "' should not use possessive form here");
 
                 VarHandle ref = env.lookupVar(raw);
-                if (ref == null)
-                    throw new ParseFailureException("Unknown player reference: " + raw);
-                if (!isPlayer(ref))
-                    throw new ParseFailureException(raw + " is not a player");
+                if (ref == null || !isPlayer(ref))
+                    throw new ParseFailureException("'" + raw + "' is not a player variable");
                 return ref;
             }
 
@@ -478,14 +479,12 @@ public final class DefaultTypeBindings {
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 String raw = tokens.get(0);
                 if (!raw.endsWith("'s"))
-                    throw new ParseFailureException("PLAYER_POSSESSIVE requires possessive form (e.g. player's): " + raw);
+                    throw new ParseFailureException("'" + raw + "' must use possessive form (e.g. player's)");
                 String name = raw.substring(0, raw.length() - 2);
 
                 VarHandle ref = env.lookupVar(name);
-                if (ref == null)
-                    throw new ParseFailureException("Unknown player reference: " + name);
-                if (!isPlayer(ref))
-                    throw new ParseFailureException(name + " is not a player");
+                if (ref == null || !isPlayer(ref))
+                    throw new ParseFailureException("'" + name + "' is not a player variable");
                 return ref;
             }
 
@@ -523,13 +522,11 @@ public final class DefaultTypeBindings {
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 String raw = tokens.get(0);
                 if (raw.endsWith("'s"))
-                    throw new ParseFailureException("OFFLINE_PLAYER does not accept possessive form: " + raw);
+                    throw new ParseFailureException("'" + raw + "' should not use possessive form here");
 
                 VarHandle ref = env.lookupVar(raw);
-                if (ref == null)
-                    throw new ParseFailureException("Unknown offline player reference: " + raw);
-                if (!isOfflinePlayer(ref))
-                    throw new ParseFailureException(raw + " is not an offline player");
+                if (ref == null || !isOfflinePlayer(ref))
+                    throw new ParseFailureException("'" + raw + "' is not a player variable");
                 return ref;
             }
 
@@ -565,14 +562,12 @@ public final class DefaultTypeBindings {
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 String raw = tokens.get(0);
                 if (!raw.endsWith("'s"))
-                    throw new ParseFailureException("OFFLINE_PLAYER_POSSESSIVE requires possessive form (e.g. player's): " + raw);
+                    throw new ParseFailureException("'" + raw + "' must use possessive form (e.g. player's)");
                 String name = raw.substring(0, raw.length() - 2);
 
                 VarHandle ref = env.lookupVar(name);
-                if (ref == null)
-                    throw new ParseFailureException("Unknown offline player reference: " + name);
-                if (!isOfflinePlayer(ref))
-                    throw new ParseFailureException(name + " is not an offline player");
+                if (ref == null || !isOfflinePlayer(ref))
+                    throw new ParseFailureException("'" + name + "' is not a player variable");
                 return ref;
             }
 
@@ -643,7 +638,7 @@ public final class DefaultTypeBindings {
             @Override
             public int consumeCount(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 if (tokens.isEmpty())
-                    throw new ParseFailureException("OP requires at least one token");
+                    throw new ParseFailureException("expected an operator here");
                 String first = tokens.get(0).toLowerCase(Locale.ROOT);
                 if (tokens.size() >= 3) {
                     String second = tokens.get(1).toLowerCase(Locale.ROOT);
@@ -720,7 +715,7 @@ public final class DefaultTypeBindings {
                         String op = tokens.get(0);
                         yield switch (op) {
                             case "==", "!=", "<", ">", "<=", ">=" -> op;
-                            default -> throw new ParseFailureException("Unknown operator: " + joined);
+                            default -> throw new ParseFailureException("'" + joined + "' is not a valid operator");
                         };
                     }
                 };
@@ -754,13 +749,11 @@ public final class DefaultTypeBindings {
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 String raw = tokens.get(0);
                 if (raw.endsWith("'s"))
-                    throw new ParseFailureException("ENTITY does not accept possessive form: " + raw);
+                    throw new ParseFailureException("'" + raw + "' should not use possessive form here");
 
                 VarHandle ref = env.lookupVar(raw);
-                if (ref == null)
-                    throw new ParseFailureException("Unknown entity reference: " + raw);
-                if (!isEntity(ref))
-                    throw new ParseFailureException(raw + " is not an entity");
+                if (ref == null || !isEntity(ref))
+                    throw new ParseFailureException("'" + raw + "' is not an entity variable");
                 return ref;
             }
 
@@ -796,14 +789,12 @@ public final class DefaultTypeBindings {
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 String raw = tokens.get(0);
                 if (!raw.endsWith("'s"))
-                    throw new ParseFailureException("ENTITY_POSSESSIVE requires possessive form (e.g. entity's): " + raw);
+                    throw new ParseFailureException("'" + raw + "' must use possessive form (e.g. entity's)");
                 String name = raw.substring(0, raw.length() - 2);
 
                 VarHandle ref = env.lookupVar(name);
-                if (ref == null)
-                    throw new ParseFailureException("Unknown entity reference: " + name);
-                if (!isEntity(ref))
-                    throw new ParseFailureException(name + " is not an entity");
+                if (ref == null || !isEntity(ref))
+                    throw new ParseFailureException("'" + name + "' is not an entity variable");
                 return ref;
             }
 
@@ -911,7 +902,7 @@ public final class DefaultTypeBindings {
                 VarHandle ref = env.lookupVar(raw);
                 if (ref != null) {
                     if (MinecraftTypes.ITEMSTACK.equals(ref.type().unwrap()))
-                        throw new ParseFailureException("ITEM does not accept ITEMSTACK variable: " + raw);
+                        throw new ParseFailureException("'" + raw + "' is an item stack variable, not a material name");
                     return ref;
                 }
                 throw new ParseFailureException(fuzzyItem(raw, knownMaterials));
@@ -951,12 +942,10 @@ public final class DefaultTypeBindings {
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 String raw = tokens.get(0);
                 if (raw.endsWith("'s"))
-                    throw new ParseFailureException("ITEMSTACK does not accept possessive form: " + raw);
+                    throw new ParseFailureException("'" + raw + "' should not use possessive form here");
                 VarHandle ref = env.lookupVar(raw);
-                if (ref == null)
-                    throw new ParseFailureException("Unknown item stack reference: " + raw);
-                if (!isItemStack(ref))
-                    throw new ParseFailureException(raw + " is not an item stack");
+                if (ref == null || !isItemStack(ref))
+                    throw new ParseFailureException("'" + raw + "' is not an item variable");
                 return ref;
             }
 
@@ -992,13 +981,11 @@ public final class DefaultTypeBindings {
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 String raw = tokens.get(0);
                 if (!raw.endsWith("'s"))
-                    throw new ParseFailureException("ITEMSTACK_POSSESSIVE requires possessive form (e.g. item's): " + raw);
+                    throw new ParseFailureException("'" + raw + "' must use possessive form (e.g. item's)");
                 String name = raw.substring(0, raw.length() - 2);
                 VarHandle ref = env.lookupVar(name);
-                if (ref == null)
-                    throw new ParseFailureException("Unknown item stack reference: " + name);
-                if (!isItemStack(ref))
-                    throw new ParseFailureException(name + " is not an item stack");
+                if (ref == null || !isItemStack(ref))
+                    throw new ParseFailureException("'" + name + "' is not an item variable");
                 return ref;
             }
 
@@ -1036,10 +1023,8 @@ public final class DefaultTypeBindings {
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 String name = tokens.get(0);
                 VarHandle ref = env.lookupVar(name);
-                if (ref == null)
-                    throw new ParseFailureException("Unknown world reference: " + name);
-                if (!isWorld(ref))
-                    throw new ParseFailureException(name + " is not a world");
+                if (ref == null || !isWorld(ref))
+                    throw new ParseFailureException("'" + name + "' is not a world variable");
                 return ref;
             }
 
@@ -1075,10 +1060,8 @@ public final class DefaultTypeBindings {
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 String name = tokens.get(0);
                 VarHandle ref = env.lookupVar(name);
-                if (ref == null)
-                    throw new ParseFailureException("Unknown location reference: " + name);
-                if (!isLocation(ref))
-                    throw new ParseFailureException(name + " is not a location");
+                if (ref == null || !isLocation(ref))
+                    throw new ParseFailureException("'" + name + "' is not a location variable");
                 return ref;
             }
 
@@ -1115,10 +1098,10 @@ public final class DefaultTypeBindings {
                 String name = tokens.get(0);
                 VarHandle ref = env.lookupVar(name);
                 if (ref != null) {
-                    if (!isList(ref)) throw new ParseFailureException(name + " is not a list");
+                    if (!isList(ref)) throw new ParseFailureException("'" + name + "' is not a list variable");
                     return ref;
                 }
-                throw new ParseFailureException("Unknown list variable: " + name);
+                throw new ParseFailureException("'" + name + "' is not a list variable");
             }
 
             @Override
@@ -1156,10 +1139,10 @@ public final class DefaultTypeBindings {
                 String name = tokens.get(0);
                 VarHandle ref = env.lookupVar(name);
                 if (ref != null) {
-                    if (!isMap(ref)) throw new ParseFailureException(name + " is not a map");
+                    if (!isMap(ref)) throw new ParseFailureException("'" + name + "' is not a map variable");
                     return ref;
                 }
-                throw new ParseFailureException("Unknown map variable: " + name);
+                throw new ParseFailureException("'" + name + "' is not a map variable");
             }
 
             @Override
@@ -1198,10 +1181,10 @@ public final class DefaultTypeBindings {
                 VarHandle ref = env.lookupVar(name);
                 if (ref != null) {
                     if (!isData(ref))
-                        throw new ParseFailureException(name + " is not a data instance");
+                        throw new ParseFailureException("'" + name + "' is not a data variable");
                     return ref;
                 }
-                throw new ParseFailureException("Unknown data variable: " + name);
+                throw new ParseFailureException("'" + name + "' is not a data variable");
             }
 
             @Override
@@ -1238,10 +1221,8 @@ public final class DefaultTypeBindings {
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 String name = tokens.get(0);
                 VarHandle ref = env.lookupVar(name);
-                if (ref == null)
-                    throw new ParseFailureException("Unknown block reference: " + name);
-                if (!isBlock(ref))
-                    throw new ParseFailureException(name + " is not a block");
+                if (ref == null || !isBlock(ref))
+                    throw new ParseFailureException("'" + name + "' is not a block variable");
                 return ref;
             }
 
@@ -1258,21 +1239,129 @@ public final class DefaultTypeBindings {
         });
     }
 
+    private void registerInventory(@NotNull LumenAPI api) {
+        api.types().register(new AddonTypeBinding() {
+            @Override
+            public @NotNull String id() {
+                return "INVENTORY";
+            }
+
+            @Override
+            public @NotNull TypeBindingMeta meta() {
+                return new TypeBindingMeta(
+                        "Resolves an inventory reference from a variable name.",
+                        "org.bukkit.inventory.Inventory",
+                        List.of("set slot 0 of %inv:INVENTORY% to diamond"),
+                        "1.0.0",
+                        false);
+            }
+
+            @Override
+            public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
+                String name = tokens.get(0);
+                VarHandle ref = env.lookupVar(name);
+                if (ref == null || !isInventory(ref))
+                    throw new ParseFailureException("'" + name + "' is not an inventory variable");
+                return ref;
+            }
+
+            @Override
+            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
+                if (v == null)
+                    throw new RuntimeException("Cannot generate Java for null inventory reference");
+                return ((VarHandle) v).java();
+            }
+
+            private boolean isInventory(@NotNull VarHandle ref) {
+                return MinecraftTypes.INVENTORY.equals(ref.type().unwrap());
+            }
+        });
+    }
+
+    private void registerVar(@NotNull LumenAPI api) {
+        api.types().register(new AddonTypeBinding() {
+            @Override
+            public @NotNull String id() {
+                return "VAR";
+            }
+
+            @Override
+            public @NotNull TypeBindingMeta meta() {
+                return new TypeBindingMeta(
+                        "Resolves any variable reference from a single token. Validates that the name refers to a known variable.",
+                        "Object",
+                        List.of("add 1 to %name:VAR%"),
+                        "1.0.0",
+                        false);
+            }
+
+            @Override
+            public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
+                String name = tokens.get(0);
+                VarHandle ref = env.lookupVar(name);
+                if (ref == null)
+                    throw new ParseFailureException("'" + name + "' is not a known variable");
+                return ref;
+            }
+
+            @Override
+            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
+                return ((VarHandle) v).java();
+            }
+        });
+    }
+
+    private void registerLiteralList(@NotNull LumenAPI api) {
+        api.types().register(new AddonTypeBinding() {
+            @Override
+            public @NotNull String id() {
+                return "LITERAL_LIST";
+            }
+
+            @Override
+            public @NotNull TypeBindingMeta meta() {
+                return new TypeBindingMeta(
+                        "Parses a comma separated list of literal values from all remaining tokens (e.g. 'hello, hi, hey').",
+                        "String",
+                        List.of("aliases %list:LITERAL_LIST%"),
+                        "1.0.0",
+                        false);
+            }
+
+            @Override
+            public int consumeCount(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
+                return -1;
+            }
+
+            @Override
+            public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
+                if (tokens.isEmpty())
+                    throw new ParseFailureException("expected a comma separated list here");
+                return String.join(" ", tokens);
+            }
+
+            @Override
+            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
+                return (String) v;
+            }
+        });
+    }
+
     private static @NotNull String fuzzyMaterial(@NotNull String token, @NotNull Set<String> known) {
         String closest = FuzzyMatch.closest(token.toUpperCase(Locale.ROOT), known);
-        if (closest != null) return "Unknown material: " + token + ", did you mean '" + closest.toLowerCase(Locale.ROOT) + "'?";
-        return "Unknown material: " + token;
+        if (closest != null) return "'" + token + "' is not a valid material, did you mean '" + closest.toLowerCase(Locale.ROOT) + "'?";
+        return "'" + token + "' is not a valid material";
     }
 
     private static @NotNull String fuzzyEntityType(@NotNull String token, @NotNull Set<String> known) {
         String closest = FuzzyMatch.closest(token.toUpperCase(Locale.ROOT).replace(' ', '_').replace('-', '_'), known);
-        if (closest != null) return "Unknown entity type: " + token + ", did you mean '" + closest.toLowerCase(Locale.ROOT) + "'?";
-        return "Unknown entity type: " + token;
+        if (closest != null) return "'" + token + "' is not a valid entity type, did you mean '" + closest.toLowerCase(Locale.ROOT) + "'?";
+        return "'" + token + "' is not a valid entity type";
     }
 
     private static @NotNull String fuzzyItem(@NotNull String token, @NotNull Set<String> known) {
         String closest = FuzzyMatch.closest(token.toUpperCase(Locale.ROOT).replace(' ', '_').replace('-', '_'), known);
-        if (closest != null) return "Unknown item: " + token + ", did you mean '" + closest.toLowerCase(Locale.ROOT) + "'?";
-        return "Unknown item: " + token;
+        if (closest != null) return "'" + token + "' is not a valid item, did you mean '" + closest.toLowerCase(Locale.ROOT) + "'?";
+        return "'" + token + "' is not a valid item";
     }
 }

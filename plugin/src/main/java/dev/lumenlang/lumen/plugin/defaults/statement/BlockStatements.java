@@ -35,7 +35,7 @@ public final class BlockStatements {
                 .handler((line, ctx, out) -> out.line(ctx.java("b") + ".breakNaturally();")));
 
         api.patterns().statement(b -> b
-                .by("Lumen").pattern("set %b:BLOCK% data [to] %data:EXPR%")
+                .by("Lumen").pattern("set %b:BLOCK% data [to] %data:STRING%")
                 .description("Sets raw block data on a block from a string representation.")
                 .example("set block data to \"facing=north\"")
                 .since("1.0.0")

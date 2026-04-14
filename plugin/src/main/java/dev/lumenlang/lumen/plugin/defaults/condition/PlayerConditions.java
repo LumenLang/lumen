@@ -4,7 +4,6 @@ import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.pattern.Categories;
-import org.bukkit.GameMode;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -96,27 +95,14 @@ public final class PlayerConditions {
 
         api.patterns().condition(b -> b
                 .by("Lumen")
-                .pattern("%p:PLAYER_POSSESSIVE% gamemode (is|is not) %mode:EXPR%")
+                .pattern("%p:PLAYER_POSSESSIVE% gamemode (is|is not) %mode:GAME_MODE%")
                 .description("Checks if a player's gamemode matches or does not match the given mode.")
                 .examples("if player's gamemode is \"creative\":", "if player's gamemode is not \"creative\":")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .handler((match, env, ctx) -> {
-                    String mode = match.java("mode", ctx, env)
-                            .replace("\"", "")
-                            .toLowerCase();
-
-                    String gm = switch (mode) {
-                        case "survival" -> "SURVIVAL";
-                        case "creative" -> "CREATIVE";
-                        case "adventure" -> "ADVENTURE";
-                        case "spectator" -> "SPECTATOR";
-                        default -> throw new RuntimeException("Invalid gamemode: " + mode);
-                    };
-
-                    ctx.addImport(GameMode.class.getName());
                     boolean negated = match.choice(0).equals("is not");
-                    return match.ref("p").java() + ".getGameMode() " + (negated ? "!= " : "== ") + "GameMode." + gm;
+                    return match.ref("p").java() + ".getGameMode() " + (negated ? "!= " : "== ") + match.java("mode", ctx, env);
                 }));
 
         api.patterns().condition(b -> b

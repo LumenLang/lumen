@@ -46,7 +46,7 @@ public final class CommandMetaStatements {
 
         api.patterns().statement(b -> b
                 .by("Lumen")
-                .pattern("name %n:EXPR%")
+                .pattern("name %n:QSTRING%")
                 .description("Sets the primary name of a command, useful if you need to have the command name based on a variable or expression.")
                 .example("name tp")
                 .since("1.0.0")
@@ -58,7 +58,7 @@ public final class CommandMetaStatements {
 
         api.patterns().statement(b -> b
                 .by("Lumen")
-                .pattern("aliases %list:EXPR%")
+                .pattern("aliases %list:LITERAL_LIST%")
                 .description("Adds comma-separated aliases to a command.")
                 .example("aliases tp, teleport, goto")
                 .since("1.0.0")
@@ -80,7 +80,7 @@ public final class CommandMetaStatements {
 
         api.patterns().statement(b -> b
                 .by("Lumen")
-                .pattern("namespace %ns:EXPR%")
+                .pattern("namespace %ns:QSTRING%")
                 .description("Sets the namespace of a command.")
                 .example("namespace myplugin")
                 .since("1.0.0")
@@ -92,7 +92,7 @@ public final class CommandMetaStatements {
 
         api.patterns().statement(b -> b
                 .by("Lumen")
-                .pattern("permission %perm:STRING%")
+                .pattern("permission %perm:QSTRING%")
                 .description("Sets the required permission for a command.")
                 .example("permission \"myplugin.admin\"")
                 .since("1.0.0")

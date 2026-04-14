@@ -26,7 +26,7 @@ dependencies {
     // However, do not use any of the internals.
     //paperweight.paperDevBundle("1.20-R0.1-SNAPSHOT")
     compileOnly "org.spigotmc:spigot-api:1.20-R0.1-SNAPSHOT"
-    api "net.vansencool:LSYAML:1.3.5"
+    api "net.vansencool:LSYAML:1.3.6"
     api "org.ow2.asm:asm:9.9.1"
     api "org.ow2.asm:asm-commons:9.9.1"
     api "org.vineflower:vineflower:1.11.2"

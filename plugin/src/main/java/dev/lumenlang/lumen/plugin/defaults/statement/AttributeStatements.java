@@ -40,7 +40,7 @@ public final class AttributeStatements {
     public void register(@NotNull LumenAPI api) {
         api.patterns().statement(b -> b
                 .by("Lumen")
-                .pattern("set %e:ENTITY_POSSESSIVE% %attr:ATTRIBUTE% [base] [value] [to] %val:EXPR%")
+                .pattern("set %e:ENTITY_POSSESSIVE% %attr:ATTRIBUTE% [base] [value] [to] %val:DOUBLE%")
                 .description("Sets the base value of an attribute on a living entity.")
                 .example("set mob's max_health to 40")
                 .since("1.0.0")
@@ -75,7 +75,7 @@ public final class AttributeStatements {
 
         api.patterns().statement(b -> b
                 .by("Lumen")
-                .pattern("add %val:EXPR% [to] %e:ENTITY_POSSESSIVE% %attr:ATTRIBUTE%")
+                .pattern("add %val:DOUBLE% [to] %e:ENTITY_POSSESSIVE% %attr:ATTRIBUTE%")
                 .description("Adds a value to an entity's attribute base value.")
                 .example("add 10 to mob's max_health")
                 .since("1.0.0")

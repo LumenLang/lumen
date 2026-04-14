@@ -23,7 +23,7 @@ public final class MapConditions {
     public void register(@NotNull LumenAPI api) {
         api.patterns().condition(b -> b
                 .by("Lumen")
-                .pattern("%map:MAP% (contains|does not contain) key %key:EXPR%")
+                .pattern("%map:MAP% (contains|does not contain) key %key:STRING%")
                 .description("Checks if a map contains or does not contain a specific key.")
                 .examples("if myMap contains key \"name\":", "if myMap does not contain key \"name\":")
                 .since("1.0.0")
