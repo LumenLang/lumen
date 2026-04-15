@@ -131,6 +131,6 @@ command online:
 | **String Variables**| `"Hello %player%"` | `"Hello {player_name}"` |
 | **Send Message** | `send "hi" to player` | `message player "hi"` |
 | **Broadcast** | `broadcast "hi"` | `broadcast "hi"` |
-| **If Statement** | `if arg-1 is set:` | `if args size > 0:` |
-| **Give Item** | `give 1 diamond to player`| `give player diamond 1` |
 | **Math** | `add 1 to {_x}` | `add 1 to x` |
+
+Note: Lumen is actively adding Skript-style aliases for common patterns, so some of these may accept Skript syntax directly in future versions.

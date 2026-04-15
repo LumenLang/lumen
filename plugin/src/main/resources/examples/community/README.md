@@ -30,8 +30,7 @@ A collection of ready-to-use `.luma` scripts for common Minecraft server tasks, 
 ## How to Use
 
 1. Drop any `.luma` file into your server's `plugins/Lumen/scripts/` folder
-2. Run `/lumen reload` in-game or restart the server
-3. That's it — scripts compile and activate immediately
+2. That's it — Lumen automatically detects new files and compiles them on the fly
 
 ## Notes
 
