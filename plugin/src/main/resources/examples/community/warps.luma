@@ -58,7 +58,7 @@ command warp:
                 set wn to get field "world_name" of entry
                 
                 set w to get world wn
-                if w is not null:
+                if w is set:
                     set dest to new location in w at wx wy wz
                     teleport player to dest
                     message player "{warp_prefix} &aTeleported to '&f{target_name}&a'!"
