@@ -1,6 +1,7 @@
 package dev.lumenlang.lumen.plugin.commands.luma;
 
 import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
+import dev.lumenlang.lumen.pipeline.persist.PersistentVars;
 import dev.lumenlang.lumen.plugin.commands.CommandRegistry;
 import dev.lumenlang.lumen.plugin.scripts.ScriptManager;
 import dev.lumenlang.lumen.plugin.scripts.ScriptSourceLoader;
@@ -14,7 +15,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Command executor for the /lumen command, which provides subcommands for
@@ -43,7 +47,7 @@ public final class LumaCommand implements CommandExecutor, TabCompleter {
                              @NotNull String[] args) {
 
         if (args.length < 1) {
-            LumenText.send(sender, RED + "Usage: /lumen reload | reload scripts | reload <file> | unload <file>");
+            LumenText.send(sender, RED + "Usage: /lumen reload | reload scripts | reload <file> | unload <file> | vars");
             return true;
         }
 
@@ -142,8 +146,112 @@ public final class LumaCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
+        if (sub.equalsIgnoreCase("vars")) {
+            return handleVars(sender, args);
+        }
+
         LumenText.send(sender, RED + "Unknown subcommand");
         return true;
+    }
+
+    private boolean handleVars(@NotNull CommandSender sender, @NotNull String[] args) {
+        if (args.length < 2) {
+            LumenText.send(sender, RED + "Usage: /lumen vars list | set <key> <value> | delete <key>");
+            return true;
+        }
+
+        String action = args[1];
+
+        if (action.equalsIgnoreCase("list")) {
+            Set<String> keys = PersistentVars.keys();
+            if (keys.isEmpty()) {
+                LumenText.send(sender, OK + "No stored variables");
+                return true;
+            }
+
+            Map<String, List<String>> grouped = new LinkedHashMap<>();
+            for (String key : keys) {
+                int lastDot = key.lastIndexOf('.');
+                int firstDot = key.indexOf('.');
+                String groupKey = (firstDot != -1 && firstDot != lastDot) ? key.substring(0, lastDot) : key;
+                grouped.computeIfAbsent(groupKey, k -> new ArrayList<>()).add(key);
+            }
+
+            LumenText.send(sender, OK + "Stored variables (" + keys.size() + " entries):");
+            for (var entry : grouped.entrySet()) {
+                List<String> entryKeys = entry.getValue();
+                if (entryKeys.size() == 1) {
+                    String key = entryKeys.get(0);
+                    Object val = PersistentVars.get(key, null);
+                    String typeName = val != null ? val.getClass().getSimpleName() : "null";
+                    LumenText.send(sender, OK + "  " + key + " = " + val + " (" + typeName + ")");
+                } else {
+                    LumenText.send(sender, OK + "  " + entry.getKey() + " (" + entryKeys.size() + " scoped entries)");
+                    for (String key : entryKeys) {
+                        Object val = PersistentVars.get(key, null);
+                        String suffix = key.substring(entry.getKey().length() + 1);
+                        LumenText.send(sender, OK + "    [" + suffix + "] = " + val);
+                    }
+                }
+            }
+            return true;
+        }
+
+        if (action.equalsIgnoreCase("set")) {
+            if (args.length < 4) {
+                LumenText.send(sender, RED + "Usage: /lumen vars set <key> <value>");
+                return true;
+            }
+            String key = args[2];
+            StringBuilder valueBuilder = new StringBuilder();
+            for (int i = 3; i < args.length; i++) {
+                if (i > 3) valueBuilder.append(' ');
+                valueBuilder.append(args[i]);
+            }
+            String raw = valueBuilder.toString();
+            Object parsed = parseVarValue(raw);
+            PersistentVars.set(key, parsed);
+            LumenText.send(sender, OK + "Set " + key + " = " + parsed + " (" + parsed.getClass().getSimpleName() + ")");
+            return true;
+        }
+
+        if (action.equalsIgnoreCase("delete")) {
+            if (args.length < 3) {
+                LumenText.send(sender, RED + "Usage: /lumen vars delete <key>");
+                return true;
+            }
+            String key = args[2];
+            if (key.endsWith("*")) {
+                String prefix = key.substring(0, key.length() - 1);
+                PersistentVars.deleteByPrefix(prefix);
+                LumenText.send(sender, OK + "Deleted all entries with prefix '" + prefix + "'");
+            } else {
+                PersistentVars.delete(key);
+                LumenText.send(sender, OK + "Deleted " + key);
+            }
+            return true;
+        }
+
+        LumenText.send(sender, RED + "Usage: /lumen vars list | set <key> <value> | delete <key>");
+        return true;
+    }
+
+    private static @NotNull Object parseVarValue(@NotNull String raw) {
+        if (raw.equalsIgnoreCase("true")) return true;
+        if (raw.equalsIgnoreCase("false")) return false;
+        try {
+            return Integer.parseInt(raw);
+        } catch (NumberFormatException ignored) {
+        }
+        try {
+            return Long.parseLong(raw);
+        } catch (NumberFormatException ignored) {
+        }
+        try {
+            return Double.parseDouble(raw);
+        } catch (NumberFormatException ignored) {
+        }
+        return raw;
     }
 
     @Override
@@ -157,6 +265,8 @@ public final class LumaCommand implements CommandExecutor, TabCompleter {
                 out.add("reload");
             if ("unload".startsWith(last))
                 out.add("unload");
+            if ("vars".startsWith(last))
+                out.add("vars");
         } else if (args.length == 2) {
             if (args[0].equalsIgnoreCase("reload")) {
                 if ("scripts".startsWith(last))
@@ -166,6 +276,17 @@ public final class LumaCommand implements CommandExecutor, TabCompleter {
                 for (String s : ScriptSourceLoader.list()) {
                     if (s.toLowerCase().startsWith(last))
                         out.add(s);
+                }
+            }
+            if (args[0].equalsIgnoreCase("vars")) {
+                if ("list".startsWith(last)) out.add("list");
+                if ("set".startsWith(last)) out.add("set");
+                if ("delete".startsWith(last)) out.add("delete");
+            }
+        } else if (args.length == 3 && args[0].equalsIgnoreCase("vars")) {
+            if (args[1].equalsIgnoreCase("set") || args[1].equalsIgnoreCase("delete")) {
+                for (String key : PersistentVars.keys()) {
+                    if (key.toLowerCase().startsWith(last)) out.add(key);
                 }
             }
         }

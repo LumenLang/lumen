@@ -25,6 +25,8 @@ import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.language.typed.Expr;
 import dev.lumenlang.lumen.pipeline.language.typed.ExprParser;
 import dev.lumenlang.lumen.pipeline.language.validator.VarNameValidator;
+import dev.lumenlang.lumen.pipeline.persist.PersistentStorage;
+import dev.lumenlang.lumen.pipeline.persist.PersistentVars;
 import dev.lumenlang.lumen.pipeline.placeholder.PlaceholderExpander;
 import dev.lumenlang.lumen.pipeline.type.TypeAnnotationParser;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
@@ -34,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Block form handler for the {@code global:} block.
@@ -200,6 +203,7 @@ public final class GlobalBlock implements BlockFormHandler {
             if (idx >= tokens.size() || !tokens.get(idx).text().equalsIgnoreCase("default")) {
                 throw new DiagnosticException(LumenDiagnostic.error("E609", "Expected 'default' after 'with'")
                         .at(line, raw)
+                        .highlight(tokens.get(idx - 1).start(), tokens.get(idx - 1).end())
                         .label("expected 'with default <expr>'")
                         .build());
             }
@@ -207,6 +211,7 @@ public final class GlobalBlock implements BlockFormHandler {
             if (idx >= tokens.size()) {
                 throw new DiagnosticException(LumenDiagnostic.error("E609", "Expected expression after 'with default'")
                         .at(line, raw)
+                        .highlight(tokens.get(idx - 1).start(), tokens.get(idx - 1).end())
                         .label("missing default value expression")
                         .build());
             }
@@ -219,8 +224,12 @@ public final class GlobalBlock implements BlockFormHandler {
                     .build());
         }
 
-        String defaultJava = resolveDefault(declaredType, exprTokens, name, line, raw, env, ctx);
+        String defaultJava = resolveDefault(declaredType, exprTokens, name, line, raw, stored, env, ctx);
         String className = ctx.codegen().className();
+
+        if (stored && !scoped) validateStoredTypeUnchanged(className, name, declaredType, line, raw);
+        if (stored && scoped) validateScopedStoredTypeUnchanged(className, name, declaredType, line, raw);
+
         Map<String, Object> exprMetadata = resolveExprMetadata(exprTokens, env, ctx);
 
         String schemaName = typeResult.dataSchemaName();
@@ -238,8 +247,49 @@ public final class GlobalBlock implements BlockFormHandler {
         env.registerGlobal(new TypeEnv.GlobalVarInfo(name, defaultJava, className, scoped, stored, exprMetadata, declaredType, scopeType));
     }
 
-    private @NotNull String resolveDefault(@NotNull LumenType declaredType, @Nullable List<Token> exprTokens, @NotNull String name, int line, @NotNull String raw, @NotNull TypeEnv env, @NotNull HandlerContext ctx) {
+    private void validateStoredTypeUnchanged(@NotNull String className, @NotNull String name, @NotNull LumenType declaredType, int line, @NotNull String raw) {
+        PersistentStorage backend = PersistentVars.storage();
+        if (backend == null) return;
+        String key = className + "." + name;
+        Object existing = backend.get(key);
+        if (existing == null) return;
+        LumenType existingType = LumenType.fromJavaType(existing.getClass().getName());
+        if (existingType == null) return;
+        if (!declaredType.assignableFrom(existingType)) {
+            throw new DiagnosticException(LumenDiagnostic.error("E613", "Stored variable '" + name + "' already exists with a different type")
+                    .at(line, raw)
+                    .label("stored value is '" + existingType.displayName() + "' but declared type is '" + declaredType.displayName() + "'")
+                    .help("delete the stored variable with '/lumen vars delete " + key + "' before changing its type")
+                    .build());
+        }
+    }
+
+    private void validateScopedStoredTypeUnchanged(@NotNull String className, @NotNull String name, @NotNull LumenType declaredType, int line, @NotNull String raw) {
+        PersistentStorage backend = PersistentVars.storage();
+        if (backend == null) return;
+        String prefix = className + "." + name + ".";
+        Set<String> keys = backend.keys();
+        if (keys == null) return;
+        for (String key : keys) {
+            if (!key.startsWith(prefix)) continue;
+            Object existing = backend.get(key);
+            if (existing == null) continue;
+            LumenType existingType = LumenType.fromJavaType(existing.getClass().getName());
+            if (existingType == null) continue;
+            if (!declaredType.assignableFrom(existingType)) {
+                throw new DiagnosticException(LumenDiagnostic.error("E613", "Stored variable '" + name + "' already has scoped entries with a different type")
+                        .at(line, raw)
+                        .label("stored scoped values are '" + existingType.displayName() + "' but declared type is '" + declaredType.displayName() + "'")
+                        .help("delete the scoped entries with '/lumen vars delete " + prefix + "*' or change the type to match")
+                        .build());
+            }
+            return;
+        }
+    }
+
+    private @NotNull String resolveDefault(@NotNull LumenType declaredType, @Nullable List<Token> exprTokens, @NotNull String name, int line, @NotNull String raw, boolean stored, @NotNull TypeEnv env, @NotNull HandlerContext ctx) {
         if (exprTokens != null) {
+            if (stored) validateDefaultType(declaredType, exprTokens, name, line, raw, env);
             return resolveExprJava(exprTokens, line, raw, env, ctx);
         }
 
@@ -260,6 +310,20 @@ public final class GlobalBlock implements BlockFormHandler {
                 .label("'" + name + "' has no default and is not nullable")
                 .help("add 'with default <value>', or change the type to 'nullable " + declaredType.displayName() + "'")
                 .build());
+    }
+
+    private void validateDefaultType(@NotNull LumenType declaredType, @NotNull List<Token> exprTokens, @NotNull String name, int line, @NotNull String raw, @NotNull TypeEnv env) {
+        Expr expr = ExprParser.parse(exprTokens, env);
+        if (expr instanceof Expr.RawExpr) return;
+        LumenType exprType = expr.resolvedType();
+        if (!declaredType.assignableFrom(exprType)) {
+            throw new DiagnosticException(LumenDiagnostic.error("E612", "Default value type mismatch for stored variable '" + name + "'")
+                    .at(line, raw)
+                    .highlight(exprTokens.get(0).start(), exprTokens.get(exprTokens.size() - 1).end())
+                    .label("declared type is '" + declaredType.displayName() + "' but default value is '" + exprType.displayName() + "'")
+                    .help("change the default value to match type '" + declaredType.displayName() + "', or change the variable type")
+                    .build());
+        }
     }
 
     private @NotNull String resolveExprJava(@NotNull List<Token> exprTokens, int line, @NotNull String raw, @NotNull TypeEnv env, @NotNull HandlerContext ctx) {

@@ -4,6 +4,7 @@ import dev.lumenlang.lumen.pipeline.persist.impl.FilePersistentStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Set;
 import java.util.function.Function;
 
 /**
@@ -142,6 +143,16 @@ public final class PersistentVars {
     public static void deleteByPrefix(@NotNull String prefix) {
         if (storage == null) return;
         storage.deleteByPrefix(prefix);
+    }
+
+    /**
+     * Returns an unmodifiable snapshot of all stored keys.
+     *
+     * @return the set of all keys, or an empty set if not initialized
+     */
+    public static @NotNull Set<String> keys() {
+        if (storage == null) return Set.of();
+        return storage.keys();
     }
 
     /**

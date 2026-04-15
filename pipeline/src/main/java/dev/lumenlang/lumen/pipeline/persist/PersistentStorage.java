@@ -4,6 +4,8 @@ import dev.lumenlang.lumen.pipeline.persist.impl.FilePersistentStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Set;
+
 /**
  * Strategy interface for persistent variable storage backends.
  *
@@ -68,4 +70,13 @@ public interface PersistentStorage {
      * Loads the backing store into memory. Called once during initialization.
      */
     void load();
+
+    /**
+     * Returns an unmodifiable snapshot of all stored keys.
+     *
+     * @return the set of all keys currently in storage
+     */
+    default @NotNull Set<String> keys() {
+        return Set.of();
+    }
 }
