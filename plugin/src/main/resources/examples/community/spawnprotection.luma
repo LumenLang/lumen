@@ -9,12 +9,12 @@ config:
     spawn_z: 0
 
 on entity_damage_by_entity:
-    # entity = victim, damagerPlayer = attacker (null if not a player)
-    if entity is a player:
+    # player = victim (null if not a player), damagerPlayer = attacker (null if not a player)
+    if player is set:
         if damagerPlayer is set:
             # Check if victim is in spawn
-            set px to get entity's x
-            set pz to get entity's z
+            set px to get player's x
+            set pz to get player's z
             
             # Simple distance check (ignoring Y for a cylinder-shaped zone)
             set dx to px - spawn_x
