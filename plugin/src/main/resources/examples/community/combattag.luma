@@ -10,24 +10,24 @@ global scoped tagged with default 0
 
 on entity_damage_by_entity:
     # Only care about player vs player
-    if player is set:
-        if damager_player is set:
+    # entity = victim, damagerPlayer = attacker (null if not a player)
+    if entity is a player:
+        if damagerPlayer is set:
             # Tag both players
-            set tagged to 1 for player
-            set tagged to 1 for damager_player
+            set tagged to 1 for entity
+            set tagged to 1 for damagerPlayer
             
-            send actionbar "&c&lYou are now in combat!" to player
-            send actionbar "&c&lYou are now in combat!" to damager_player
+            send actionbar "&c&lYou are now in combat!" to entity
+            send actionbar "&c&lYou are now in combat!" to damagerPlayer
             
             # Reset tag after duration
-            # We use the player's name to create unique schedule names
             wait tag_duration ticks:
-                set tagged to 0 for player
-                send actionbar "&a&lYou are no longer in combat." to player
+                set tagged to 0 for entity
+                send actionbar "&a&lYou are no longer in combat." to entity
             
             wait tag_duration ticks:
-                set tagged to 0 for damager_player
-                send actionbar "&a&lYou are no longer in combat." to damager_player
+                set tagged to 0 for damagerPlayer
+                send actionbar "&a&lYou are no longer in combat." to damagerPlayer
 
 on quit:
     set is_tagged to get tagged for player
