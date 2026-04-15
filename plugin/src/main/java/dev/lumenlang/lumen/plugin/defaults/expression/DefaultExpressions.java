@@ -32,8 +32,7 @@ public final class DefaultExpressions {
      * key. Falls back to {@code LivingEntity} when the concrete class cannot
      * be resolved.
      *
-     * @param typeEnum the Java expression for the EntityType constant
-     *                 (e.g. {@code "org.bukkit.entity.EntityType.ZOMBIE"})
+     * @param typeEnum the Java expression for the EntityType constant (e.g. {@code "org.bukkit.entity.EntityType.ZOMBIE"})
      * @return metadata map containing the javaClass, or empty if unresolvable
      */
     private static @NotNull Map<String, Object> resolveEntityMeta(@NotNull String typeEnum) {
@@ -51,7 +50,6 @@ public final class DefaultExpressions {
 
     @Call
     public void register(@NotNull LumenAPI api) {
-        registerLocation(api);
         registerSpawn(api);
         registerProjectile(api);
 
@@ -312,53 +310,7 @@ public final class DefaultExpressions {
     }
 
     /**
-     * Registers location constructor expressions.
-     *
-     * <p>
-     * Allows creating {@code Location} objects from coordinates:
-     *
-     * <pre>{@code
-     * set loc to new location in myWorld at 100 64 -200
-     * }</pre>
-     */
-    private void registerLocation(@NotNull LumenAPI api) {
-        api.patterns().expression(b -> b
-                .by("Lumen")
-                .pattern("new location in %w:WORLD% at %x:INT% %y:INT% %z:INT%")
-                .description("Creates a new Location from a world and XYZ coordinates.")
-                .example("set loc to new location in myWorld at 100 64 -200")
-                .since("1.0.0")
-                .category(Categories.LOCATION)
-                .handler(ctx -> {
-                    ctx.codegen().addImport(Location.class.getName());
-                    return new ExpressionResult(
-                            "new Location(" + ctx.java("w") + ", " + ctx.java("x") + ", "
-                                    + ctx.java("y") + ", " + ctx.java("z") + ")",
-                            MinecraftTypes.LOCATION);
-                }));
-
-        api.patterns().expression(b -> b
-                .by("Lumen")
-                .pattern("new location at %x:INT% %y:INT% %z:INT% in %w:WORLD%")
-                .description("Creates a new Location from XYZ coordinates and a world.")
-                .example("set loc to new location at 100 64 -200 in myWorld")
-                .since("1.0.0")
-                .category(Categories.LOCATION)
-                .handler(ctx -> {
-                    ctx.codegen().addImport(Location.class.getName());
-                    return new ExpressionResult(
-                            "new Location(" + ctx.java("w") + ", " + ctx.java("x") + ", "
-                                    + ctx.java("y") + ", " + ctx.java("z") + ")",
-                            MinecraftTypes.LOCATION);
-                }));
-    }
-
-    /**
-     * Registers spawn as an expression so it can be used in variable assignment.
-     *
-     * <p>
-     * This makes {@code set mob to spawn zombie at loc} work, returning the
-     * spawned entity as an {@code ENTITY}-typed variable.
+     * Registers spawn entity expressions.
      */
     private void registerSpawn(@NotNull LumenAPI api) {
         api.patterns().expression(b -> b
@@ -402,15 +354,6 @@ public final class DefaultExpressions {
 
     /**
      * Registers projectile launch expressions.
-     *
-     * <p>
-     * Allows launching a projectile from a player in the direction they are looking:
-     *
-     * <pre>{@code
-     * set proj to launch snowball from player
-     * }</pre>
-     *
-     * @param api the Lumen API to register expressions on
      */
     private void registerProjectile(@NotNull LumenAPI api) {
         api.patterns().expression(b -> b
@@ -451,16 +394,6 @@ public final class DefaultExpressions {
      * Registers typed null expressions ({@code no location}, {@code no player},
      * etc.)
      * that produce a {@code null} value tagged with the corresponding type.
-     *
-     * <p>
-     * These allow global or persistent vars to carry compile-time type information
-     * even when their initial value is absent:
-     *
-     * <pre>{@code
-     * global scoped pos1 with default no location
-     * }</pre>
-     *
-     * @param api the Lumen API to register expressions on
      */
     private void registerTypedNulls(@NotNull LumenAPI api) {
         api.patterns().expression(b -> b

@@ -151,7 +151,7 @@ public final class LumaCommand implements CommandExecutor, TabCompleter {
         }
 
         LumenText.send(sender, RED + "Unknown subcommand");
-        return true;
+        return false;
     }
 
     private boolean handleVars(@NotNull CommandSender sender, @NotNull String[] args) {
@@ -233,7 +233,7 @@ public final class LumaCommand implements CommandExecutor, TabCompleter {
         }
 
         LumenText.send(sender, RED + "Usage: /lumen vars list | set <key> <value> | delete <key>");
-        return true;
+        return false;
     }
 
     private static @NotNull Object parseVarValue(@NotNull String raw) {

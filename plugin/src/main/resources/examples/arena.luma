@@ -84,12 +84,12 @@ command arena:
             message player "&cUnknown subcommand. Use /arena for help."
 
 on move:
-    set px to to x
-    set py to to y
-    set pz to to z
-    set fx to from x
-    set fy to from y
-    set fz to from z
+    set px to get x of to
+    set py to get y of to
+    set pz to get z of to
+    set fx to get x of from
+    set fy to get y of from
+    set fz to get z of from
 
     loop entry in arenas:
         set arenaname to get field "name" of entry

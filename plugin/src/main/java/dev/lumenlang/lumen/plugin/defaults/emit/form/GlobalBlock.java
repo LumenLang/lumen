@@ -269,7 +269,6 @@ public final class GlobalBlock implements BlockFormHandler {
         if (backend == null) return;
         String prefix = className + "." + name + ".";
         Set<String> keys = backend.keys();
-        if (keys == null) return;
         for (String key : keys) {
             if (!key.startsWith(prefix)) continue;
             Object existing = backend.get(key);

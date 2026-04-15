@@ -202,6 +202,14 @@ public final class DefaultEvents {
                 .varDescription("The entity that took damage")
                 .addVar("damager", MinecraftTypes.ENTITY, "event.getDamager()")
                 .varDescription("The entity that dealt the damage")
+                .addVar("player", MinecraftTypes.PLAYER,
+                        """
+                                if (event.getEntity() instanceof Player __p) {
+                                    player = __p;
+                                } else {
+                                    player = null;
+                                }""")
+                .varDescription("The player that took damage, or null if the damaged entity is not a player")
                 .addVar("damagerPlayer", MinecraftTypes.PLAYER,
                         """
                                 if (event.getDamager() instanceof Player __dp) {
@@ -517,19 +525,22 @@ public final class DefaultEvents {
                 .addVar("player", MinecraftTypes.PLAYER, "player")
                 .withMeta("nullable", false)
                 .varDescription("The player who sent the chat message")
-                .addVar("text", PrimitiveType.STRING, "text")
+                .addVar("message", PrimitiveType.STRING, "message")
                 .withMeta("nullable", false)
                 .varDescription("The chat message content")
+                .addVar("text", PrimitiveType.STRING, "message")
+                .varDescription("The chat message content (alias for 'message')")
+                .withMeta("nullable", false)
                 .handler(new BlockHandler() {
                     @Override
                     public void begin(@NotNull HandlerContext ctx) {
                         ctx.out().line("@LumenEvent(AsyncPlayerChatEvent.class)");
                         ctx.out().line("public void __lumen_evt_chat_" + ctx.codegen().nextMethodId() + "(AsyncPlayerChatEvent event) {");
                         ctx.out().line("final Player __chat_player = event.getPlayer();");
-                        ctx.out().line("final String __chat_text = event.getMessage();");
+                        ctx.out().line("final String __chat_message = event.getMessage();");
                         ctx.out().line("Bukkit.getScheduler().runTask(Lumen.instance(), () -> {");
                         ctx.out().line("Player player = __chat_player;");
-                        ctx.out().line("String text = __chat_text;");
+                        ctx.out().line("String message = __chat_message;");
                     }
 
                     @Override
