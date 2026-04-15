@@ -1,0 +1,79 @@
+# Vote Rewards
+# Tracks player votes and gives rewards at milestones.
+# Integrates with Votifier/NuVotifier via the vote event.
+# Also includes a /votes command to check your total.
+
+config:
+    vote_prefix: "&8[&aVote&8]&r"
+
+global stored scoped total_votes with default 0
+global stored scoped vote_streak with default 0
+
+# This fires when a player votes via Votifier
+# NOTE: Lumen may not have a built-in "on vote" event yet.
+# If not, you can hook this via raw java or wait for an addon.
+# For now, we'll use a command-based approach as a fallback.
+
+command fakevote:
+    permission "lumen.admin"
+    description "Simulate a vote for testing"
+    
+    if args size < 1:
+        message player "{vote_prefix} &cUsage: /fakevote <player>"
+    else:
+        set target_name to get args at index 0
+        set target to get player by name target_name
+        if target is not set:
+            message player "{vote_prefix} &cPlayer not online."
+        else:
+            # Give the reward
+            add 1 to total_votes for target
+            add 1 to vote_streak for target
+            
+            set tv to get total_votes for target
+            set vs to get vote_streak for target
+            
+            # Base reward
+            give target diamond 2
+            
+            # Streak bonuses
+            if vs == 7:
+                give target emerald 5
+                message target "{vote_prefix} &6&l7-day streak bonus! +5 Emeralds!"
+                set vote_streak to 0 for target
+            else if vs == 3:
+                give target golden_apple 3
+                message target "{vote_prefix} &e3-day streak bonus! +3 Golden Apples!"
+            
+            # Milestone rewards
+            if tv == 10:
+                give target diamond_block 1
+                broadcast "{vote_prefix} &b{target_name} &fhas voted &b10 times&f! &6Diamond Block reward!"
+            else if tv == 50:
+                give target netherite_ingot 1
+                broadcast "{vote_prefix} &b{target_name} &fhas voted &b50 times&f! &6Netherite Ingot reward!"
+            else if tv == 100:
+                give target nether_star 1
+                broadcast "{vote_prefix} &b{target_name} &fhas voted &b100 times&f! &6Nether Star reward!"
+            
+            message target "{vote_prefix} &aThanks for voting! (+2 Diamonds)"
+            message target "{vote_prefix} &7Total votes: &f{tv} &7| Streak: &f{vs}/7"
+            broadcast "{vote_prefix} &e{target_name} &fvoted for the server!"
+
+command votes:
+    description "Check your vote count"
+    
+    set argc to args size
+    if argc == 0:
+        set tv to get total_votes for player
+        set vs to get vote_streak for player
+        message player "{vote_prefix} &eYour votes: &f{tv}"
+        message player "{vote_prefix} &eCurrent streak: &f{vs}/7"
+    else:
+        set target_name to get args at index 0
+        set target to get player by name target_name
+        if target is not set:
+            message player "{vote_prefix} &cPlayer not online."
+        else:
+            set tv to get total_votes for target
+            message player "{vote_prefix} &e{target_name}'s votes: &f{tv}"

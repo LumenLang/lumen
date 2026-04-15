@@ -1,0 +1,55 @@
+# Staff Chat System
+# A simple toggleable staff chat for server moderators.
+# Features a toggle command and a quick-message command.
+
+config:
+    sc_prefix: "&8[&cStaff&8]&r"
+    sc_permission: "lumen.staffchat"
+
+# Store whether a player has staff chat toggled on
+global scoped staffchat_enabled with default 0
+
+# Command to toggle staff chat on/off
+command staffchat:
+    permission sc_permission
+    description "Toggle staff chat or send a quick message"
+    aliases sc
+    
+    set argc to args size
+    if argc == 0:
+        # Toggle mode
+        set current to get staffchat_enabled for player
+        if current == 0:
+            set staffchat_enabled to 1 for player
+            message player "{sc_prefix} &aStaff chat enabled. All your messages will go to staff."
+        else:
+            set staffchat_enabled to 0 for player
+            message player "{sc_prefix} &cStaff chat disabled. You are back in global chat."
+    else:
+        # Quick message mode (e.g. /sc hello everyone)
+        set msg to args joined with " "
+        
+        # We need to loop through all online players and send it to those with permission
+        loop p in all players:
+            # We use raw java to check permission since Lumen doesn't have a built-in 
+            # 'if player has permission' expression yet outside of command definitions
+            java:
+                if (p.hasPermission(sc_permission)) {
+                    p.sendMessage(sc_prefix + " §e" + player.getName() + "§f: " + msg);
+                }
+
+# Intercept normal chat if staff chat is toggled on
+on chat:
+    set enabled to get staffchat_enabled for player
+    if enabled == 1:
+        # Cancel the normal chat event so it doesn't go to everyone
+        cancel event
+        
+        set msg to message
+        
+        # Send to all staff
+        loop p in all players:
+            java:
+                if (p.hasPermission(sc_permission)) {
+                    p.sendMessage(sc_prefix + " §e" + player.getName() + "§f: " + msg);
+                }

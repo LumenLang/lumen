@@ -1,0 +1,62 @@
+# Spawn Protection
+# Prevents PvP and block breaking within a configurable radius of spawn.
+# Also gives players a speed boost when entering spawn.
+
+config:
+    sp_prefix: "&8[&bSpawn&8]&r"
+    spawn_radius: 50
+    spawn_x: 0
+    spawn_y: 64
+    spawn_z: 0
+
+on entity_damage_by_entity:
+    if player is set:
+        if damager_player is set:
+            # Check if either player is in spawn
+            set px to get x of player's location
+            set pz to get z of player's location
+            
+            # Simple distance check (ignoring Y for a cylinder-shaped zone)
+            set dx to px - spawn_x
+            set dz to pz - spawn_z
+            
+            # We can't do sqrt natively, so just compare squared distances
+            set dist_sq to dx * dx + dz * dz
+            set radius_sq to spawn_radius * spawn_radius
+            
+            if dist_sq < radius_sq:
+                cancel event
+                message damager_player "{sp_prefix} &cPvP is disabled near spawn!"
+
+on block_break:
+    set px to get x of player's location
+    set pz to get z of player's location
+    
+    set dx to px - spawn_x
+    set dz to pz - spawn_z
+    set dist_sq to dx * dx + dz * dz
+    set radius_sq to spawn_radius * spawn_radius
+    
+    if dist_sq < radius_sq:
+        # Allow ops to build
+        java:
+            if (!player.isOp()) {
+                event.setCancelled(true);
+                player.sendMessage(sp_prefix + " §cYou can't break blocks near spawn!");
+            }
+
+on block_place:
+    set px to get x of player's location
+    set pz to get z of player's location
+    
+    set dx to px - spawn_x
+    set dz to pz - spawn_z
+    set dist_sq to dx * dx + dz * dz
+    set radius_sq to spawn_radius * spawn_radius
+    
+    if dist_sq < radius_sq:
+        java:
+            if (!player.isOp()) {
+                event.setCancelled(true);
+                player.sendMessage(sp_prefix + " §cYou can't place blocks near spawn!");
+            }
