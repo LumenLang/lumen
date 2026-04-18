@@ -35,9 +35,8 @@ public final class LumenTypeRegistry {
      * @return the registered instance
      */
     public static @NotNull ObjectType register(@NotNull ObjectType type) {
-        ObjectType existing = BY_ID.get(type.id());
+        ObjectType existing = BY_ID.putIfAbsent(type.id(), type);
         if (existing != null) return existing;
-        BY_ID.put(type.id(), type);
         BY_JAVA.put(type.javaType(), type);
         return type;
     }

@@ -153,6 +153,14 @@ public final class VarDeclarationForm {
                     .help("use a typed variable as scope")
                     .build());
         }
+        if (scopeRef.type() instanceof NullableType && env.nullState(scopeRef.java()) != TypeEnv.NullState.NON_NULL) {
+            env.addWarning(LumenDiagnostic.warning("W301", "Nullable scope used for scoped global access")
+                    .at(ctx.line(), ctx.raw())
+                    .highlight(scopeTokens.get(0).start(), scopeTokens.get(0).end())
+                    .label("'" + scopeVarName + "' is " + scopeRef.type().displayName() + " and may be null at runtime")
+                    .help("narrow first with 'if " + scopeVarName + " is set:' to avoid a possible NullPointerException")
+                    .build());
+        }
 
         String storageClass = info.stored() ? "PersistentVars" : "GlobalVars";
         String keyExpr = "\"" + info.className() + "." + name + ".\" + " + scopeRef.objectType().keyExpression(scopeRef.java());
@@ -198,8 +206,13 @@ public final class VarDeclarationForm {
         LumenDiagnostic diag = TypeChecker.checkAssignment(varType, resolved.type, name, ctx.line(), ctx.raw(), colStart, colEnd);
         if (diag != null) throw new DiagnosticException(diag);
         ctx.out().line(ref.java() + " = " + resolved.java + ";");
+        env.recordDeclaration(name, ctx.line(), ctx.raw());
         if (varType instanceof NullableType) {
-            env.markNullState(name, TypeEnv.NullState.NON_NULL, ctx.line(), ctx.raw());
+            if (resolved.type instanceof NullableType) {
+                env.clearNonNull(name);
+            } else {
+                env.markNullState(name, TypeEnv.NullState.NON_NULL, ctx.line(), ctx.raw());
+            }
         }
         if (env.isStored(name)) {
             ctx.out().line(env.storedClassName(name) + ".set(" + env.getStoredKey(name) + ", " + ref.java() + ");");
@@ -323,6 +336,13 @@ public final class VarDeclarationForm {
         ctx.out().line(typeDecl + " " + name + " = " + java + ";");
         VarRef varRef = new VarRef(resolvedLumenType, name, resolvedMetadata);
         env.defineVar(name, varRef);
+        env.recordDeclaration(name, ctx.line(), ctx.raw());
+        if (resolvedLumenType instanceof NullableType) {
+            env.recordNullableVarInfo(name, new TypeEnv.NullableVarInfo(ctx.line(), ctx.raw()));
+            if (!(exprLumenType instanceof NullableType)) {
+                env.markNullState(name, TypeEnv.NullState.NON_NULL, ctx.line(), ctx.raw());
+            }
+        }
         if (env.blockContext().parent() != null) {
             env.blockContext().parent().defineVar(name, varRef);
         }
@@ -352,6 +372,7 @@ public final class VarDeclarationForm {
         Map<String, Object> metadata = parsed.dataSchemaName() != null ? Map.of("data_type", parsed.dataSchemaName()) : Map.of();
         VarRef varRef = new VarRef(nullableType, name, metadata);
         env.defineVar(name, varRef);
+        env.recordDeclaration(name, ctx.line(), ctx.raw());
         env.recordNullableVarInfo(name, new TypeEnv.NullableVarInfo(ctx.line(), ctx.raw()));
         env.markNullState(name, nullState, ctx.line(), ctx.raw());
         if (env.blockContext().parent() != null) {
@@ -400,7 +421,7 @@ public final class VarDeclarationForm {
         }
         try {
             BlockContext block = env.blockContext();
-            HandlerContextImpl hctx = new HandlerContextImpl(match.match(), env, ctx.codegenContext(), block, null, 0, "");
+            HandlerContextImpl hctx = new HandlerContextImpl(match.match(), env, ctx.codegenContext(), block, null, ctx.line(), ctx.raw());
             return match.reg().handler().handle(hctx);
         } catch (DiagnosticException e) {
             throw e;
@@ -429,7 +450,12 @@ public final class VarDeclarationForm {
         }
         if (e instanceof Expr.RefExpr r) {
             VarRef varRef = env.lookupVar(r.name());
-            return varRef != null ? new TypedExpression(varRef.java(), varRef.type()) : null;
+            if (varRef == null) return null;
+            LumenType type = varRef.type();
+            if (type instanceof NullableType nt && env.nullState(varRef.java()) == TypeEnv.NullState.NON_NULL) {
+                type = nt.inner();
+            }
+            return new TypedExpression(varRef.java(), type);
         }
         if (e instanceof Expr.MathExpr m) return new TypedExpression(m.java(), m.resolvedType());
         Expr.RawExpr raw = (Expr.RawExpr) e;
@@ -444,7 +470,12 @@ public final class VarDeclarationForm {
         if (single.kind() == TokenKind.IDENT) {
             if (isNullKeyword(single.text())) return new TypedExpression("null", PrimitiveType.STRING);
             VarRef varRef = env.lookupVar(single.text());
-            return varRef != null ? new TypedExpression(varRef.java(), varRef.type()) : null;
+            if (varRef == null) return null;
+            LumenType type = varRef.type();
+            if (type instanceof NullableType nt && env.nullState(varRef.java()) == TypeEnv.NullState.NON_NULL) {
+                type = nt.inner();
+            }
+            return new TypedExpression(varRef.java(), type);
         }
         return new TypedExpression(ExprResolver.joinTokens(raw.tokens()), PrimitiveType.STRING);
     }
@@ -455,8 +486,8 @@ public final class VarDeclarationForm {
     private static @NotNull LumenDiagnostic buildExpressionDiagnostic(@NotNull List<Token> tokens, int line, @NotNull String raw, @NotNull TypeEnv env) {
         List<PatternSimulator.Suggestion> suggestions = PatternSimulator.suggestExpressions(tokens, PatternRegistry.instance(), env);
         if (!suggestions.isEmpty()) {
-            return SuggestionDiagnostics.build("E502", "Cannot resolve expression", line, raw, tokens, suggestions);
+            return SuggestionDiagnostics.build("E502", "Cannot resolve expression", line, raw, tokens, suggestions, env);
         }
-        return SuggestionDiagnostics.buildNoSuggestion("E502", "Cannot resolve expression", line, raw, tokens);
+        return SuggestionDiagnostics.buildNoSuggestion("E502", "Cannot resolve expression", line, raw, tokens, env);
     }
 }

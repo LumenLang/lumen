@@ -227,6 +227,7 @@ public final class PatternRegistry {
         Pattern compiled = PatternCompiler.compile(pattern);
         validateTypes(compiled);
         statements.add(new RegisteredPattern(compiled, h));
+        statementIndex = null;
     }
 
     /**
@@ -246,6 +247,7 @@ public final class PatternRegistry {
             validateTypes(compiled);
             statements.add(new RegisteredPattern(compiled, h));
         }
+        statementIndex = null;
     }
 
     /**
@@ -286,6 +288,7 @@ public final class PatternRegistry {
         Pattern compiled = PatternCompiler.compile(pattern);
         validateTypes(compiled);
         expressions.add(new RegisteredExpression(compiled, handler));
+        expressionIndex = null;
     }
 
     /**
@@ -304,6 +307,7 @@ public final class PatternRegistry {
             validateTypes(compiled);
             expressions.add(new RegisteredExpression(compiled, handler));
         }
+        expressionIndex = null;
     }
 
     /**
@@ -328,6 +332,7 @@ public final class PatternRegistry {
             validateTypes(compiled);
             statements.add(new RegisteredPattern(compiled, handler, meta));
         }
+        statementIndex = null;
     }
 
     /**
@@ -394,6 +399,7 @@ public final class PatternRegistry {
             validateTypes(compiled);
             expressions.add(new RegisteredExpression(compiled, handler, meta));
         }
+        expressionIndex = null;
     }
 
     public void loop(@NotNull String pattern, @NotNull LoopHandler handler) {

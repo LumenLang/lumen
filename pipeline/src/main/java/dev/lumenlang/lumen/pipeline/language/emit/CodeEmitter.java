@@ -138,6 +138,10 @@ public final class CodeEmitter {
             }
             throw new LumenScriptException(errors.get(0).line(), null, sb.toString());
         }
+
+        for (LumenDiagnostic warning : env.warnings()) {
+            LumenLogger.warning(warning.format());
+        }
     }
 
     /**
@@ -263,7 +267,7 @@ public final class CodeEmitter {
                     Node node = children.get(blockIndex);
                     blockErrors.add(new LumenScriptException(node.line(), node.raw(), e.getMessage(), e));
                 }
-                return new BlockResult(blockOut, blockErrors);
+                return new BlockResult(blockOut, blockErrors, forkedEnv.warnings());
             }));
         }
 
@@ -272,13 +276,17 @@ public final class CodeEmitter {
                 BlockResult result = future.get();
                 out.merge(result.output);
                 errors.addAll(result.errors);
+                for (LumenDiagnostic w : result.warnings) {
+                    env.addWarning(w);
+                }
             } catch (Exception e) {
                 errors.add(new LumenScriptException(0, "", "Parallel block emission failed: " + e.getMessage()));
             }
         }
     }
 
-    private record BlockResult(@NotNull JavaBuilder output, @NotNull List<LumenScriptException> errors) {
+    private record BlockResult(@NotNull JavaBuilder output, @NotNull List<LumenScriptException> errors,
+                               @NotNull List<LumenDiagnostic> warnings) {
     }
 
     /**

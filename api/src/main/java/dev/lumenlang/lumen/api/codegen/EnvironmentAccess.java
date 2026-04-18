@@ -69,9 +69,9 @@ public interface EnvironmentAccess {
      * <p>Use this to pass data from a block handler's {@code begin} to its {@code end}.
      *
      * @param key   the key
-     * @param value the value to store
+     * @param value the value to store, or {@code null} to clear
      */
-    void put(@NotNull String key, @NotNull Object value);
+    void put(@NotNull String key, @Nullable Object value);
 
     /**
      * Retrieves a previously stored global value.
@@ -264,6 +264,21 @@ public interface EnvironmentAccess {
      * @return the block access for the current scope
      */
     @Nullable BlockAccess block();
+
+    /**
+     * Marks a variable as definitively non-null at this point in the code.
+     * Used by smart-cast narrowing after null checks (e.g. "if x is set:").
+     *
+     * @param javaName the Java variable name
+     */
+    void markNonNull(@NotNull String javaName);
+
+    /**
+     * Restores a variable's null state to its previous value after leaving a narrowing scope.
+     *
+     * @param javaName the Java variable name
+     */
+    void clearNonNull(@NotNull String javaName);
 
     /**
      * A compile-time descriptor for a named variable that is in scope.

@@ -11,6 +11,9 @@ import dev.lumenlang.lumen.api.handler.BlockHandler;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static dev.lumenlang.lumen.api.pattern.LumaExample.of;
 import static dev.lumenlang.lumen.api.pattern.LumaExample.secondly;
 import static dev.lumenlang.lumen.api.pattern.LumaExample.thirdly;
@@ -45,10 +48,43 @@ public final class ControlBlocks {
                             ctx.out().line("public void __lumen_if_" + methodId + "() {");
                         }
                         ctx.out().line("if (" + ctx.parseCondition("cond") + ") {");
+                        String narrowVar = ctx.env().get("__null_narrowing_var");
+                        if (narrowVar != null) {
+                            Boolean negated = ctx.env().get("__null_narrowing_negated");
+                            ctx.env().put("__null_narrowing_var", null);
+                            ctx.env().put("__null_narrowing_negated", null);
+                            boolean isNegated = Boolean.TRUE.equals(negated);
+                            List<String> narrowed = ctx.env().get("__if_narrowed_vars");
+                            if (narrowed == null) {
+                                narrowed = new ArrayList<>();
+                                ctx.env().put("__if_narrowed_vars", narrowed);
+                            }
+                            narrowed.add(narrowVar);
+                            List<Boolean> negatedFlags = ctx.env().get("__if_narrowed_negated");
+                            if (negatedFlags == null) {
+                                negatedFlags = new ArrayList<>();
+                                ctx.env().put("__if_narrowed_negated", negatedFlags);
+                            }
+                            negatedFlags.add(isNegated);
+                            if (!isNegated) {
+                                ctx.env().markNonNull(narrowVar);
+                            }
+                        }
                     }
 
                     @Override
                     public void end(@NotNull HandlerContext ctx) {
+                        List<String> narrowed = ctx.env().get("__if_narrowed_vars");
+                        List<Boolean> negatedFlags = ctx.env().get("__if_narrowed_negated");
+                        if (narrowed != null) {
+                            for (String var : narrowed) {
+                                ctx.env().clearNonNull(var);
+                            }
+                            ctx.env().put("__else_narrowing_vars", narrowed);
+                            ctx.env().put("__else_narrowing_negated", negatedFlags);
+                            ctx.env().put("__if_narrowed_vars", null);
+                            ctx.env().put("__if_narrowed_negated", null);
+                        }
                         ctx.out().line("}");
                         if (ctx.block().isRoot()) {
                             ctx.out().line("}");
@@ -98,10 +134,34 @@ public final class ControlBlocks {
                     public void begin(@NotNull HandlerContext ctx) {
                         validateElseBranch(ctx, "else");
                         ctx.out().line("else {");
+                        List<String> vars = ctx.env().get("__else_narrowing_vars");
+                        List<Boolean> negatedFlags = ctx.env().get("__else_narrowing_negated");
+                        if (vars != null && negatedFlags != null) {
+                            ctx.env().put("__else_narrowing_vars", null);
+                            ctx.env().put("__else_narrowing_negated", null);
+                            List<String> elseNarrowed = new ArrayList<>();
+                            for (int i = 0; i < vars.size(); i++) {
+                                boolean wasNegated = negatedFlags.get(i);
+                                if (wasNegated) {
+                                    ctx.env().markNonNull(vars.get(i));
+                                    elseNarrowed.add(vars.get(i));
+                                }
+                            }
+                            if (!elseNarrowed.isEmpty()) {
+                                ctx.env().put("__else_block_narrowed_vars", elseNarrowed);
+                            }
+                        }
                     }
 
                     @Override
                     public void end(@NotNull HandlerContext ctx) {
+                        List<String> elseNarrowed = ctx.env().get("__else_block_narrowed_vars");
+                        if (elseNarrowed != null) {
+                            for (String var : elseNarrowed) {
+                                ctx.env().clearNonNull(var);
+                            }
+                            ctx.env().put("__else_block_narrowed_vars", null);
+                        }
                         ctx.out().line("}");
                     }
                 }));

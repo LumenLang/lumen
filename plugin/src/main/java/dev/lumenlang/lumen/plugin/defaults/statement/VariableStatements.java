@@ -6,22 +6,20 @@ import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.codegen.BlockAccess;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.codegen.HandlerContext;
+import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
+import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.type.NullableType;
 import dev.lumenlang.lumen.api.type.ObjectType;
+import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.pipeline.persist.GlobalVars;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Registers built-in variable manipulation statements.
- *
- * <p>Each math/set operation has two variants:
- * <ul>
- *   <li>Unscoped: operates on the variable in the current scope (e.g. {@code add 5 to score})</li>
- *   <li>Scoped: operates on a global variable for a specific entity (e.g. {@code add 1 to streak for killer})</li>
- * </ul>
  */
 @Registration
 @SuppressWarnings("unused")
@@ -50,13 +48,32 @@ public final class VariableStatements {
         }
     }
 
-    private static @NotNull String buildScopedKey(@NotNull EnvironmentAccess env, @NotNull String varName, @NotNull String scopeVarName, @NotNull EnvironmentAccess.GlobalInfo info) {
+    private static @NotNull String buildScopedKey(@NotNull HandlerContext ctx, @NotNull String varName, @NotNull String scopeVarName, @NotNull EnvironmentAccess.GlobalInfo info) {
+        EnvironmentAccess env = ctx.env();
         EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
         if (scopeRef == null) {
             throw new RuntimeException("Scope variable not found: " + scopeVarName);
         }
         LumenType scopeType = scopeRef.type();
-        String scopeKeyPart = ((ObjectType) scopeType).keyExpression(scopeRef.java());
+        if (scopeType instanceof NullableType nt) {
+            TypeEnv tenv = (TypeEnv) env;
+            if (tenv.nullState(scopeRef.java()) != TypeEnv.NullState.NON_NULL) {
+                tenv.addWarning(LumenDiagnostic.warning("W301", "Nullable scope used for scoped global access")
+                        .at(ctx.line(), ctx.raw())
+                        .label("'" + scopeVarName + "' is " + scopeType.displayName() + " and may be null at runtime")
+                        .help("narrow first with 'if " + scopeVarName + " is set:' to avoid a possible NullPointerException")
+                        .build());
+            }
+            scopeType = nt.inner();
+        }
+        if (!(scopeType instanceof ObjectType obj)) {
+            throw new DiagnosticException(LumenDiagnostic.error("E301", "Invalid scope variable type")
+                    .at(ctx.line(), ctx.raw())
+                    .label("'" + scopeVarName + "' has type " + scopeType.displayName() + " which cannot be used as a scope")
+                    .help("scoped globals require an entity, player, or other object reference")
+                    .build());
+        }
+        String scopeKeyPart = obj.keyExpression(scopeRef.java());
         return "\"" + info.className() + "." + varName + ".\" + " + scopeKeyPart;
     }
 
@@ -76,7 +93,7 @@ public final class VariableStatements {
                     + "' is not a scoped global. Declare it with 'global scoped " + varName + "' to use per-entity access.");
         }
         String storageClass = resolveStorageClass(info);
-        String keyExpr = buildScopedKey(env, varName, scopeVarName, info);
+        String keyExpr = buildScopedKey(ctx, varName, scopeVarName, info);
         ctx.out().line("{");
         ctx.out().line("    int __sv = ((Number) " + storageClass + ".get(" + keyExpr + ", " + info.defaultJava() + ")).intValue();");
         ctx.out().line("    __sv " + op + " " + operand + ";");
@@ -97,7 +114,7 @@ public final class VariableStatements {
         }
         String storageClass = resolveStorageClass(info);
         if (scopeVarName != null) {
-            String keyExpr = buildScopedKey(env, varName, scopeVarName, info);
+            String keyExpr = buildScopedKey(ctx, varName, scopeVarName, info);
             ctx.out().line(storageClass + ".delete(" + keyExpr + ");");
         } else {
             String baseKey = "\"" + info.className() + "." + varName + ".\"";
@@ -282,7 +299,7 @@ public final class VariableStatements {
                         throw new RuntimeException("'" + varName + "' is not a scoped global. Declare it with 'global scoped " + varName + "' to use per-entity access.");
                     }
                     String storageClass = resolveStorageClass(info);
-                    String keyExpr = buildScopedKey(env, varName, ctx.java("scope"), info);
+                    String keyExpr = buildScopedKey(ctx, varName, ctx.java("scope"), info);
                     return new ExpressionResult(storageClass + ".get(" + keyExpr + ", " + info.defaultJava() + ")", info.type());
                 }));
     }

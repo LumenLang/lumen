@@ -13,7 +13,6 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -85,7 +84,7 @@ public final class FilePersistentStorage implements PersistentStorage {
 
     @Override
     public @NotNull Set<String> keys() {
-        return Collections.unmodifiableSet(data.keySet());
+        return Set.copyOf(data.keySet());
     }
 
     private void scheduleFlush() {

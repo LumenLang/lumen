@@ -32,6 +32,7 @@ public final class NullSafetyValidator implements StatementValidator {
     @Override
     public void validate(@NotNull List<? extends ScriptToken> tokens, @NotNull HandlerContext ctx) {
         TypeEnv env = (TypeEnv) ctx.env();
+        boolean isSetStatement = isSetStatement(tokens);
         for (ScriptToken t : tokens) {
             if (t.tokenType() != ScriptToken.TokenType.IDENT) continue;
             VarRef ref = env.lookupVar(t.text());
@@ -40,6 +41,7 @@ public final class NullSafetyValidator implements StatementValidator {
             if (!(type instanceof NullableType)) continue;
             TypeEnv.NullState state = env.nullState(t.text());
             if (state != TypeEnv.NullState.NULL) continue;
+            if (isSetStatement && isAssignmentTarget(tokens, t)) continue;
             TypeEnv.NullableVarInfo info = env.nullableVarInfo(t.text());
             TypeEnv.NullAssignmentInfo nullInfo = env.nullAssignmentInfo(t.text());
             int declLine = info != null ? info.declarationLine() : -1;
@@ -49,5 +51,32 @@ public final class NullSafetyValidator implements StatementValidator {
             LumenDiagnostic diag = TypeChecker.checkNullSafety(type, t.text(), false, ctx.line(), ctx.raw(), t.start(), t.end(), declLine, declRaw, nullLine, nullRaw);
             if (diag != null) throw new DiagnosticException(diag);
         }
+    }
+
+    private static boolean isSetStatement(@NotNull List<? extends ScriptToken> tokens) {
+        for (ScriptToken t : tokens) {
+            if (t.tokenType() == ScriptToken.TokenType.IDENT && t.text().equalsIgnoreCase("set")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean isAssignmentTarget(@NotNull List<? extends ScriptToken> tokens, @NotNull ScriptToken target) {
+        int targetIdx = -1;
+        for (int i = 0; i < tokens.size(); i++) {
+            if (tokens.get(i) == target) {
+                targetIdx = i;
+                break;
+            }
+        }
+        if (targetIdx < 0) return false;
+        for (int i = targetIdx + 1; i < tokens.size(); i++) {
+            ScriptToken t = tokens.get(i);
+            if (t.tokenType() == ScriptToken.TokenType.IDENT && t.text().equalsIgnoreCase("to")) {
+                return true;
+            }
+        }
+        return false;
     }
 }

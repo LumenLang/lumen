@@ -79,7 +79,7 @@ public final class PatternMatcher {
             @NotNull TypeRegistry types,
             @NotNull TypeEnv env,
             @Nullable InlineExprValidator validator) {
-        if (LumenLogger.fullDebug) {
+        if (LumenLogger.isFullDebug()) {
             LumenLogger.debug("PatternMatcher.match", "Matching pattern: '" + p.raw() + "'");
             LumenLogger.debug("PatternMatcher.match", "Input tokens (" + tokens.size() + "): " + tokens.stream().map(t -> "'" + t.text() + "'").reduce((a, b) -> a + " " + b).orElse(""));
             StringBuilder partsDesc = new StringBuilder();
@@ -171,11 +171,12 @@ public final class PatternMatcher {
                 if (progress != null) progress.recordFailure(ti, lit, null, List.of());
                 return -1;
             }
-            if (!tokens.get(ti).text().equalsIgnoreCase(lit.text())) {
+            int merged = tryMergeTokens(tokens, ti, lit.text());
+            if (merged < 0) {
                 if (progress != null) progress.recordFailure(ti, lit, null, List.of(tokens.get(ti)));
                 return -1;
             }
-            ti++;
+            ti += merged;
             pi++;
             continue;
         }
@@ -185,19 +186,16 @@ public final class PatternMatcher {
                 if (progress != null) progress.recordFailure(ti, flex, null, List.of());
                 return -1;
             }
-            String tokText = tokens.get(ti).text();
-            boolean matched = false;
+            int bestConsumed = -1;
             for (String form : flex.forms()) {
-                if (form.equalsIgnoreCase(tokText)) {
-                    matched = true;
-                    break;
-                }
+                int merged = tryMergeTokens(tokens, ti, form);
+                if (merged > 0 && merged > bestConsumed) bestConsumed = merged;
             }
-            if (!matched) {
+            if (bestConsumed < 0) {
                 if (progress != null) progress.recordFailure(ti, flex, null, List.of(tokens.get(ti)));
                 return -1;
             }
-            ti++;
+            ti += bestConsumed;
             pi++;
             continue;
         }
@@ -458,8 +456,9 @@ public final class PatternMatcher {
             PatternPart part = parts.get(p);
             if (part instanceof PatternPart.Literal lit) {
                 if (ti < tokens.size()) {
-                    if (tokens.get(ti).text().equalsIgnoreCase(lit.text())) {
-                        ti++;
+                    int merged = tryMergeTokens(tokens, ti, lit.text());
+                    if (merged > 0) {
+                        ti += merged;
                     } else if (isLiteralTypo(tokens.get(ti).text(), lit.text())) {
                         progress.recordLiteralTypo(tokens.get(ti), lit.text());
                         ti++;
@@ -467,9 +466,13 @@ public final class PatternMatcher {
                 }
             } else if (part instanceof PatternPart.FlexLiteral flex) {
                 if (ti < tokens.size()) {
-                    String lower = tokens.get(ti).text().toLowerCase(Locale.ROOT);
-                    if (flex.forms().contains(lower)) {
-                        ti++;
+                    int bestConsumed = -1;
+                    for (String form : flex.forms()) {
+                        int merged = tryMergeTokens(tokens, ti, form);
+                        if (merged > 0 && merged > bestConsumed) bestConsumed = merged;
+                    }
+                    if (bestConsumed > 0) {
+                        ti += bestConsumed;
                     } else {
                         String tokenText = tokens.get(ti).text();
                         String matchedForm = null;
@@ -539,5 +542,24 @@ public final class PatternMatcher {
         int threshold = Math.max(1, Math.min(3, (int) (Math.min(tokenText.length(), literalText.length()) * 0.4)));
         if (tokenText.length() <= 2 || literalText.length() <= 2) return false;
         return FuzzyMatch.prefixAwareDistance(tokenText, literalText) <= threshold;
+    }
+
+    /**
+     * Tries to match a literal string against one or more adjacent tokens that form a single word
+     * (no whitespace gap between consecutive tokens). Returns the number of tokens consumed, or -1
+     * if no match.
+     */
+    private static int tryMergeTokens(@NotNull List<Token> tokens, int start, @NotNull String literal) {
+        if (tokens.get(start).text().equalsIgnoreCase(literal)) return 1;
+        StringBuilder merged = new StringBuilder(tokens.get(start).text());
+        for (int i = start + 1; i < tokens.size(); i++) {
+            Token prev = tokens.get(i - 1);
+            Token curr = tokens.get(i);
+            if (curr.start() != prev.end()) break;
+            merged.append(curr.text());
+            if (merged.toString().equalsIgnoreCase(literal)) return i - start + 1;
+            if (merged.length() > literal.length()) break;
+        }
+        return -1;
     }
 }

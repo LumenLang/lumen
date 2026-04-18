@@ -1,4 +1,4 @@
-package dev.lumenlang.lumen.plugin.commands.luma;
+package dev.lumenlang.lumen.plugin.commands.lumen;
 
 import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
 import dev.lumenlang.lumen.pipeline.persist.PersistentVars;
@@ -22,19 +22,15 @@ import java.util.Set;
 
 /**
  * Command executor for the /lumen command, which provides subcommands for
- * managing Lumen scripts and configuration.
- *
- * <p>
- * The primary command name is {@code /lumen}, with {@code /luma} available as
- * an alias.
+ * managing Lumen scripts.
  */
-public final class LumaCommand implements CommandExecutor, TabCompleter {
+public final class LumenCommand implements CommandExecutor, TabCompleter {
 
     private static final String RED = "<#ff4a7a>";
     private static final String OK = "<#a3bdff>";
 
     public static void register() {
-        LumaCommand cmd = new LumaCommand();
+        LumenCommand cmd = new LumenCommand();
         CommandRegistry.registerPluginCommand("lumen", List.of("luma"), cmd, cmd);
     }
 

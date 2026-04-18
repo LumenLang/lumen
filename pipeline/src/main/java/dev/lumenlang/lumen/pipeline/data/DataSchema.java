@@ -44,7 +44,7 @@ public record DataSchema(@NotNull String name, @NotNull Map<String, LumenType> f
                 case LONG -> "((Number) " + expr + ").longValue()";
                 case DOUBLE -> "((Number) " + expr + ").doubleValue()";
                 case FLOAT -> "((Number) " + expr + ").floatValue()";
-                case BOOLEAN -> "(boolean) " + expr;
+                case BOOLEAN -> "(Boolean) " + expr;
                 case STRING -> "(String) " + expr;
             };
         }

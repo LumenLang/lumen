@@ -2,6 +2,7 @@ package dev.lumenlang.lumen.pipeline.language.match;
 
 import dev.lumenlang.lumen.api.codegen.CodegenAccess;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
+import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.pipeline.codegen.CodegenContext;
@@ -46,22 +47,19 @@ public record Match(
             String inlined = ExprResolver.resolve(be.innerTokens(), ctx, env);
             if (inlined != null) return inlined;
             throw new TokenCarryingException(
-                    "Could not resolve braced expression: '{"
-                            + ExprResolver.joinTokens(be.innerTokens()) + "}'",
+                    "Could not resolve braced expression: '{" + ExprResolver.joinTokens(be.innerTokens()) + "}'",
                     bv.tokens());
         }
         if (bv.value() instanceof InlineExpr ie) {
             ExpressionResult result = ExprResolver.resolveWithType(ie.tokens(), ctx, env);
             if (result != null) {
                 if (!bv.binding().id().equals("EXPR")) {
-                    return bv.binding().toJava(
-                            new InlineVarRef(result.java(), result.type(), result.metadata()), ctx, env);
+                    return bv.binding().toJava(new InlineVarRef(result.java(), result.type(), result.metadata()), ctx, env);
                 }
                 return result.java();
             }
             throw new TokenCarryingException(
-                    "Could not resolve inline expression: '"
-                            + ExprResolver.joinTokens(ie.tokens()) + "'",
+                    "Could not resolve inline expression: '" + ExprResolver.joinTokens(ie.tokens()) + "'",
                     bv.tokens());
         }
         if (bv.binding().id().equals("EXPR")) {
@@ -69,8 +67,7 @@ public record Match(
             if (inlined != null) return inlined;
             if (bv.tokens().size() > 1) {
                 throw new TokenCarryingException(
-                        "Expression not recognized: '" + ExprResolver.joinTokens(bv.tokens())
-                                + "'. Check spelling of variables and expression patterns.",
+                        "Expression not recognized: '" + ExprResolver.joinTokens(bv.tokens()) + "'. Check spelling of variables and expression patterns.",
                         bv.tokens());
             }
         }
@@ -136,6 +133,7 @@ public record Match(
      */
     public @NotNull String java(@NotNull String name, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
         BoundValue bv = values.get(name);
+        checkNullableBinding(bv, env);
         return resolveBinding(bv, ctx, env);
     }
 
@@ -162,8 +160,7 @@ public record Match(
                 return bv;
             i++;
         }
-        throw new IndexOutOfBoundsException(
-                "Index " + index + " out of range for match with " + values.size() + " parameters");
+        throw new IndexOutOfBoundsException("Index " + index + " out of range for match with " + values.size() + " parameters");
     }
 
     /**
@@ -201,9 +198,7 @@ public record Match(
         return resolveBinding(bv, ctx, env);
     }
 
-    public @NotNull String java(@NotNull String name,
-                                @NotNull CodegenAccess ctx,
-                                @NotNull EnvironmentAccess env) {
+    public @NotNull String java(@NotNull String name, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
         return java(name, (CodegenContext) ctx, (TypeEnv) env);
     }
 
@@ -215,9 +210,7 @@ public record Match(
         return refAt(index);
     }
 
-    public @NotNull String java(int index,
-                                @NotNull CodegenAccess ctx,
-                                @NotNull EnvironmentAccess env) {
+    public @NotNull String java(int index, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
         return javaAt(index, (CodegenContext) ctx, (TypeEnv) env);
     }
 
@@ -227,6 +220,22 @@ public record Match(
      * coercion logic (such as {@code Material.valueOf(...)}) when the slot was filled by
      * an inline expression rather than a direct variable reference.
      */
+    private static void checkNullableBinding(@NotNull BoundValue bv, @NotNull TypeEnv env) {
+        if (bv.ph().nullable()) return;
+        if (!(bv.value() instanceof VarRef ref)) return;
+        if (!ref.type().nullable()) return;
+        TypeEnv.NullState state = env.nullState(ref.java());
+        if (state == TypeEnv.NullState.NON_NULL) return;
+        String varName = bv.tokens().isEmpty() ? "?" : bv.tokens().get(0).text();
+        LumenDiagnostic diag = LumenDiagnostic.warning("W301", "Nullable variable used without null check")
+                .at(bv.tokens().get(0).line(), varName)
+                .highlight(bv.tokens().get(0).start(), bv.tokens().get(0).end())
+                .label("'" + varName + "' may be null")
+                .help("prove it with 'if " + varName + " is set:' or use 'require " + varName + " or fail'")
+                .build();
+        env.addWarning(diag);
+    }
+
     private record InlineVarRef(
             @NotNull String javaExpr,
             @NotNull LumenType lumenType,

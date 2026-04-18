@@ -190,7 +190,8 @@ public final class PlaceholderExpander {
             return null;
         }
 
-        ObjectType type = ref.objectType();        if (type == null) {
+        ObjectType type = ref.objectType();
+        if (type == null) {
             return null;
         }
 

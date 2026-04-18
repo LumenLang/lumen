@@ -33,7 +33,6 @@ public final class PatternIndex<T> {
     private final List<T> all;
     private final List<Set<String>> requiredLiterals;
     private final int[] minTokenCounts;
-    private final int[] maxTokenCounts;
     private final Map<String, List<Integer>> firstTokenMap;
     private final List<Integer> wildcardIndices;
 
@@ -47,7 +46,6 @@ public final class PatternIndex<T> {
         this.all = List.copyOf(sortedItems);
         this.requiredLiterals = new ArrayList<>(sortedItems.size());
         this.minTokenCounts = new int[sortedItems.size()];
-        this.maxTokenCounts = new int[sortedItems.size()];
         this.firstTokenMap = new HashMap<>();
         this.wildcardIndices = new ArrayList<>();
 
@@ -57,7 +55,6 @@ public final class PatternIndex<T> {
             collectRequiredLiterals(pattern.parts(), literals);
             requiredLiterals.add(literals);
             minTokenCounts[i] = pattern.minTokens();
-            maxTokenCounts[i] = pattern.maxTokens();
 
             String firstLiteral = firstLiteral(pattern.parts());
             if (firstLiteral != null) {
@@ -88,7 +85,7 @@ public final class PatternIndex<T> {
         List<T> result = new ArrayList<>();
         if (firstMatches != null) {
             for (int idx : firstMatches) {
-                if (minTokenCounts[idx] > tokenCount || maxTokenCounts[idx] < tokenCount) continue;
+                if (minTokenCounts[idx] > tokenCount) continue;
                 Set<String> needed = requiredLiterals.get(idx);
                 if (needed.size() <= 1) {
                     result.add(all.get(idx));
@@ -100,7 +97,7 @@ public final class PatternIndex<T> {
         }
 
         for (int idx : wildcardIndices) {
-            if (minTokenCounts[idx] > tokenCount || maxTokenCounts[idx] < tokenCount) continue;
+            if (minTokenCounts[idx] > tokenCount) continue;
             Set<String> needed = requiredLiterals.get(idx);
             if (needed.isEmpty()) {
                 result.add(all.get(idx));

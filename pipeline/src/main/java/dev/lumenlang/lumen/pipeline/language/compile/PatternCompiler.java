@@ -52,7 +52,9 @@ public final class PatternCompiler {
                 int colon = inner.indexOf(':');
                 String name = colon < 0 ? inner : inner.substring(0, colon);
                 String type = colon < 0 ? "EXPR" : inner.substring(colon + 1);
-                parts.add(new PatternPart.PlaceholderPart(new Placeholder(name, type)));
+                boolean nullable = type.startsWith("NULLABLE_");
+                if (nullable) type = type.substring("NULLABLE_".length());
+                parts.add(new PatternPart.PlaceholderPart(new Placeholder(name, type, nullable)));
 
                 if (i < len && raw.charAt(i) != ' ' && raw.charAt(i) != '%' && raw.charAt(i) != '(' && raw.charAt(i) != ')') {
                     int wordEnd = readWordEnd(raw, i);

@@ -11,9 +11,18 @@ import java.util.logging.Logger;
 @SuppressWarnings("unused")
 public final class LumenLogger {
     private static Logger logger;
-    public static boolean fullDebug = false;
+    private static boolean fullDebug = false;
     private static boolean logInfo = true;
     private static boolean logWarnings = true;
+
+    /**
+     * Returns whether full debug logging is enabled.
+     *
+     * @return true if full debug mode is active
+     */
+    public static boolean isFullDebug() {
+        return fullDebug;
+    }
 
     /**
      * Initializes the logger with the plugin's logger instance.

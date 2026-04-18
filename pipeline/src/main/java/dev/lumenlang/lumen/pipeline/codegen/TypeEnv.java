@@ -1,6 +1,7 @@
 package dev.lumenlang.lumen.pipeline.codegen;
 
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
+import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.pipeline.data.DataSchema;
@@ -55,6 +56,8 @@ public final class TypeEnv implements EnvironmentAccess {
     private final Map<String, NullState> nullStates = new HashMap<>();
     private final Map<String, NullableVarInfo> nullableVarInfos = new HashMap<>();
     private final Map<String, NullAssignmentInfo> nullAssignments = new HashMap<>();
+    private final Map<String, DeclarationInfo> declarationInfos = new HashMap<>();
+    private final List<LumenDiagnostic> warnings = new ArrayList<>();
     private BlockContext currentBlock;
 
     /**
@@ -85,6 +88,17 @@ public final class TypeEnv implements EnvironmentAccess {
      * @param raw  the raw source text of that line
      */
     public record NullAssignmentInfo(int line, @NotNull String raw) {
+    }
+
+    /**
+     * Records where a variable was first declared and last reassigned.
+     *
+     * @param firstLine the line number of the first declaration
+     * @param firstRaw  the raw source text of the first declaration
+     * @param lastLine  the line number of the most recent assignment
+     * @param lastRaw   the raw source text of the most recent assignment
+     */
+    public record DeclarationInfo(int firstLine, @NotNull String firstRaw, int lastLine, @NotNull String lastRaw) {
     }
 
     /**
@@ -155,6 +169,57 @@ public final class TypeEnv implements EnvironmentAccess {
     }
 
     /**
+     * Records or updates the declaration site for a variable.
+     * On first call for a given name, sets both first and last to the same values.
+     * On subsequent calls, updates only the last declaration.
+     *
+     * @param name the variable name
+     * @param line the line number of the declaration or reassignment
+     * @param raw  the raw source text
+     */
+    public void recordDeclaration(@NotNull String name, int line, @NotNull String raw) {
+        DeclarationInfo existing = declarationInfos.get(name);
+        if (existing == null) {
+            declarationInfos.put(name, new DeclarationInfo(line, raw, line, raw));
+        } else {
+            declarationInfos.put(name, new DeclarationInfo(existing.firstLine(), existing.firstRaw(), line, raw));
+        }
+    }
+
+    /**
+     * Returns the declaration info for a variable, or {@code null} if not recorded.
+     *
+     * @param name the variable name
+     * @return the declaration info, or {@code null}
+     */
+    public @Nullable DeclarationInfo declarationInfo(@NotNull String name) {
+        return declarationInfos.get(name);
+    }
+
+    /**
+     * Records a warning diagnostic to be displayed after compilation.
+     * Only diagnostics with {@link LumenDiagnostic.Severity#WARNING} are accepted.
+     *
+     * @param diagnostic the warning diagnostic
+     * @throws IllegalArgumentException if the diagnostic severity is not WARNING
+     */
+    public void addWarning(@NotNull LumenDiagnostic diagnostic) {
+        if (diagnostic.severity() != LumenDiagnostic.Severity.WARNING) {
+            throw new IllegalArgumentException("Only WARNING diagnostics can be added as warnings, got " + diagnostic.severity());
+        }
+        warnings.add(diagnostic);
+    }
+
+    /**
+     * Returns all accumulated warning diagnostics.
+     *
+     * @return unmodifiable list of warning diagnostics
+     */
+    public @NotNull List<LumenDiagnostic> warnings() {
+        return Collections.unmodifiableList(warnings);
+    }
+
+    /**
      * Returns all variable names visible from the current scope.
      *
      * <p>Walks the scope stack from innermost to outermost, then includes root variables.
@@ -200,6 +265,16 @@ public final class TypeEnv implements EnvironmentAccess {
     @Override
     public BlockContext block() {
         return currentBlock;
+    }
+
+    @Override
+    public void markNonNull(@NotNull String javaName) {
+        nullStates.put(javaName, NullState.NON_NULL);
+    }
+
+    @Override
+    public void clearNonNull(@NotNull String javaName) {
+        nullStates.remove(javaName);
     }
 
     /**
@@ -293,7 +368,7 @@ public final class TypeEnv implements EnvironmentAccess {
      * @param value the value to store
      */
     @Override
-    public void put(@NotNull String key, @NotNull Object value) {
+    public void put(@NotNull String key, @Nullable Object value) {
         globals.put(key, value);
     }
 

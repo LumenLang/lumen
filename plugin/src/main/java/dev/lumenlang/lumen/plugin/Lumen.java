@@ -24,7 +24,7 @@ import dev.lumenlang.lumen.pipeline.persist.PersistentVars;
 import dev.lumenlang.lumen.pipeline.persist.impl.FilePersistentStorage;
 import dev.lumenlang.lumen.pipeline.typebinding.TypeRegistry;
 import dev.lumenlang.lumen.plugin.commands.CommandRegistry;
-import dev.lumenlang.lumen.plugin.commands.luma.LumaCommand;
+import dev.lumenlang.lumen.plugin.commands.lumen.LumenCommand;
 import dev.lumenlang.lumen.plugin.configuration.LumenConfiguration;
 import dev.lumenlang.lumen.plugin.defaults.type.BuiltinTypeBindings;
 import dev.lumenlang.lumen.plugin.documentation.DocumentationDumper;
@@ -101,7 +101,7 @@ public final class Lumen extends JavaPlugin {
         addonManager.enableAll(lumenApi);
         ExampleCopier.copyExamples(ScriptSourceLoader.scriptsDir());
         setupSystemCompiler();
-        LumaCommand.register();
+        LumenCommand.register();
         if (LumenConfiguration.SCRIPTS.ENABLE_ALL_SCRIPTS_IMMEDIATELY_ON_STARTUP) {
             loadScripts();
             scriptWatcher = new ScriptWatcher();
@@ -134,7 +134,7 @@ public final class Lumen extends JavaPlugin {
         if (addonManager != null) {
             addonManager.disableAll();
         }
-        LumaCommand.unregister();
+        LumenCommand.unregister();
         CommandRegistry.unregisterAll();
         ScriptScheduler.cancelAllGlobal();
         PersistentVars.shutdown();

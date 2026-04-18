@@ -53,6 +53,8 @@ public final class GenericConditions {
                     String java = ctx.java("v");
                     validateExprIdentifier(java, ctx.env());
                     boolean negated = ctx.choice(0).equals("is not");
+                    ctx.env().put("__null_narrowing_var", java);
+                    ctx.env().put("__null_narrowing_negated", negated);
                     return java + (negated ? " == null" : " != null");
                 }));
 

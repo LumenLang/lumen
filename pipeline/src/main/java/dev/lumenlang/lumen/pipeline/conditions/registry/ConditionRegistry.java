@@ -79,6 +79,7 @@ public class ConditionRegistry {
         Pattern compiled = PatternCompiler.compile(pattern);
         validateTypes(compiled);
         conditions.add(new RegisteredCondition(compiled, handler, meta));
+        conditionIndex = null;
     }
 
     private void validateTypes(@NotNull Pattern pattern) {

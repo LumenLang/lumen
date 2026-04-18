@@ -34,9 +34,9 @@ public final class CommandMetaStatements {
     public void register(@NotNull LumenAPI api) {
         api.patterns().statement(b -> b
                 .by("Lumen")
-                .pattern("description %d:STRING%")
+                .pattern("description[:] %d:STRING%")
                 .description("Sets the description of a command.")
-                .example("description \"Teleports the player home\"")
+                .example("description: \"Teleports the player home\"")
                 .since("1.0.0")
                 .category(Categories.COMMAND)
                 .handler(ctx -> {
@@ -46,9 +46,9 @@ public final class CommandMetaStatements {
 
         api.patterns().statement(b -> b
                 .by("Lumen")
-                .pattern("name %n:QSTRING%")
+                .pattern("name[:] %n:STRING%")
                 .description("Sets the primary name of a command, useful if you need to have the command name based on a variable or expression.")
-                .example("name tp")
+                .example("name: tp")
                 .since("1.0.0")
                 .category(Categories.COMMAND)
                 .handler(ctx -> {
@@ -58,9 +58,9 @@ public final class CommandMetaStatements {
 
         api.patterns().statement(b -> b
                 .by("Lumen")
-                .pattern("aliases %list:LITERAL_LIST%")
+                .pattern("aliases[:] %list:LITERAL_LIST%")
                 .description("Adds comma-separated aliases to a command.")
-                .example("aliases tp, teleport, goto")
+                .example("aliases: tp, teleport, goto")
                 .since("1.0.0")
                 .category(Categories.COMMAND)
                 .handler(ctx -> {
@@ -80,9 +80,9 @@ public final class CommandMetaStatements {
 
         api.patterns().statement(b -> b
                 .by("Lumen")
-                .pattern("namespace %ns:QSTRING%")
+                .pattern("namespace[:] %ns:STRING%")
                 .description("Sets the namespace of a command.")
-                .example("namespace myplugin")
+                .example("namespace: myplugin")
                 .since("1.0.0")
                 .category(Categories.COMMAND)
                 .handler(ctx -> {
@@ -92,9 +92,9 @@ public final class CommandMetaStatements {
 
         api.patterns().statement(b -> b
                 .by("Lumen")
-                .pattern("permission %perm:QSTRING%")
+                .pattern("permission[:] %perm:STRING%")
                 .description("Sets the required permission for a command.")
-                .example("permission \"myplugin.admin\"")
+                .example("permission: \"myplugin.admin\"")
                 .since("1.0.0")
                 .category(Categories.COMMAND)
                 .handler(ctx -> {

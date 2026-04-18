@@ -1,7 +1,10 @@
 package dev.lumenlang.lumen.pipeline.language.resolve;
 
+import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.emit.ScriptToken;
+import dev.lumenlang.lumen.api.type.NullableType;
+import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.pipeline.language.match.MatchProgress;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.language.tokenization.TokenKind;
@@ -13,9 +16,6 @@ import java.util.List;
 
 /**
  * Shared utility for building diagnostics from {@link PatternSimulator.Suggestion} results.
- *
- * <p>Consolidates the diagnostic building logic previously duplicated in CodeEmitter,
- * VarDeclarationForm, and GlobalDeclarationForm into a single location.
  */
 public final class SuggestionDiagnostics {
 
@@ -34,7 +34,23 @@ public final class SuggestionDiagnostics {
      * @return a fully constructed diagnostic
      */
     public static @NotNull LumenDiagnostic build(@NotNull String errorCode, @NotNull String title, int line, @NotNull String raw, @NotNull List<Token> tokens, @NotNull List<PatternSimulator.Suggestion> suggestions) {
-        return build(errorCode, title, line, raw, tokens, suggestions.get(0), suggestions.size() > 1 ? suggestions.get(1) : null);
+        return build(errorCode, title, line, raw, tokens, suggestions.get(0), suggestions.size() > 1 ? suggestions.get(1) : null, null);
+    }
+
+    /**
+     * Builds a diagnostic from suggestions with nullable variable awareness.
+     *
+     * @param errorCode   the diagnostic error code
+     * @param title       the diagnostic title
+     * @param line        the source line number
+     * @param raw         the raw source text
+     * @param tokens      the input tokens that failed matching
+     * @param suggestions all ranked suggestions from the simulator
+     * @param env         the type environment for nullable variable detection
+     * @return a fully constructed diagnostic with nullable hints if applicable
+     */
+    public static @NotNull LumenDiagnostic build(@NotNull String errorCode, @NotNull String title, int line, @NotNull String raw, @NotNull List<Token> tokens, @NotNull List<PatternSimulator.Suggestion> suggestions, @Nullable TypeEnv env) {
+        return build(errorCode, title, line, raw, tokens, suggestions.get(0), suggestions.size() > 1 ? suggestions.get(1) : null, env);
     }
 
     /**
@@ -49,10 +65,10 @@ public final class SuggestionDiagnostics {
      * @return a fully constructed diagnostic
      */
     public static @NotNull LumenDiagnostic build(@NotNull String errorCode, @NotNull String title, int line, @NotNull String raw, @NotNull List<Token> tokens, @NotNull PatternSimulator.Suggestion top) {
-        return build(errorCode, title, line, raw, tokens, top, null);
+        return build(errorCode, title, line, raw, tokens, top, null, null);
     }
 
-    private static @NotNull LumenDiagnostic build(@NotNull String errorCode, @NotNull String title, int line, @NotNull String raw, @NotNull List<Token> tokens, @NotNull PatternSimulator.Suggestion top, @Nullable PatternSimulator.Suggestion second) {
+    private static @NotNull LumenDiagnostic build(@NotNull String errorCode, @NotNull String title, int line, @NotNull String raw, @NotNull List<Token> tokens, @NotNull PatternSimulator.Suggestion top, @Nullable PatternSimulator.Suggestion second, @Nullable TypeEnv env) {
         LumenDiagnostic unsupported = detectUnsupportedSyntax(line, raw, tokens);
         if (unsupported != null) return unsupported;
         LumenDiagnostic.Builder builder = LumenDiagnostic.error(errorCode, title).at(line, raw);
@@ -101,6 +117,7 @@ public final class SuggestionDiagnostics {
                 builder.label("no matching pattern was found");
             }
         }
+        appendNullableHints(builder, tokens, env);
         builder.note("confidence: " + confidenceTier(top.confidence()));
         builder.help("closest pattern: " + top.pattern().raw());
         if (second != null && !second.pattern().raw().equals(top.pattern().raw())) {
@@ -120,14 +137,57 @@ public final class SuggestionDiagnostics {
      * @return a fully constructed diagnostic
      */
     public static @NotNull LumenDiagnostic buildNoSuggestion(@NotNull String errorCode, @NotNull String title, int line, @NotNull String raw, @NotNull List<Token> tokens) {
+        return buildNoSuggestion(errorCode, title, line, raw, tokens, null);
+    }
+
+    /**
+     * Builds a diagnostic when no suggestion was found, with nullable variable awareness.
+     *
+     * @param errorCode the diagnostic error code
+     * @param title     the diagnostic title
+     * @param line      the source line number
+     * @param raw       the raw source text
+     * @param tokens    the input tokens
+     * @param env       the type environment for nullable variable detection
+     * @return a fully constructed diagnostic with nullable hints if applicable
+     */
+    public static @NotNull LumenDiagnostic buildNoSuggestion(@NotNull String errorCode, @NotNull String title, int line, @NotNull String raw, @NotNull List<Token> tokens, @Nullable TypeEnv env) {
         LumenDiagnostic unsupported = detectUnsupportedSyntax(line, raw, tokens);
         if (unsupported != null) return unsupported;
         LumenDiagnostic.Builder builder = LumenDiagnostic.error(errorCode, title).at(line, raw);
         if (!tokens.isEmpty()) {
             builder.highlight(tokens.get(0).start(), tokens.get(tokens.size() - 1).end()).label("not recognized");
         }
+        appendNullableHints(builder, tokens, env);
         builder.help("check spelling or ensure the pattern is defined");
         return builder.build();
+    }
+
+    private static void appendNullableHints(@NotNull LumenDiagnostic.Builder builder, @NotNull List<Token> tokens, @Nullable TypeEnv env) {
+        if (env == null) return;
+        for (Token t : tokens) {
+            if (t.kind() != TokenKind.IDENT) continue;
+            EnvironmentAccess.VarHandle ref = env.lookupVar(t.text());
+            if (ref == null) continue;
+            if (!(ref.type() instanceof NullableType)) continue;
+            TypeEnv.NullState state = env.nullState(ref.java());
+            if (state == TypeEnv.NullState.NON_NULL) {
+                builder.note("'" + t.text() + "' has type '" + ref.type().displayName() + "' but is narrowed to non-null in this scope");
+                continue;
+            }
+            builder.note("'" + t.text() + "' has nullable type '" + ref.type().displayName() + "' and may be null");
+            TypeEnv.DeclarationInfo declInfo = env.declarationInfo(t.text());
+            if (declInfo != null) {
+                builder.note("'" + t.text() + "' was declared on line " + declInfo.firstLine() + ": " + declInfo.firstRaw().strip());
+                if (declInfo.lastLine() != declInfo.firstLine()) {
+                    builder.note("'" + t.text() + "' was last assigned on line " + declInfo.lastLine() + ": " + declInfo.lastRaw().strip());
+                }
+            }
+            builder.help("use 'if " + t.text() + " is set:' to check for null before using it");
+            builder.help("or use 'if " + t.text() + " is not set:' and put the null case in the if-block, leaving the else-block with a narrowed variable");
+            builder.help("inside the else block after 'if " + t.text() + " is not set:', '" + t.text() + "' is automatically narrowed to non-null");
+            return;
+        }
     }
 
     private static @Nullable LumenDiagnostic detectUnsupportedSyntax(int line, @NotNull String raw, @NotNull List<Token> tokens) {
@@ -293,6 +353,7 @@ public final class SuggestionDiagnostics {
         return switch (mismatch.bindingId()) {
             case "INVENTORY" -> "'" + token + "' is not a known inventory variable";
             case "PLAYER" -> "'" + token + "' is not a known player variable";
+            case "PLAYER_POSSESSIVE" -> "'" + token + "' must use possessive form (e.g. player's)";
             case "ENTITY" -> "'" + token + "' is not a known entity variable";
             case "ENTITY_POSSESSIVE" -> "'" + token + "' must use possessive form (e.g. entity's)";
             case "ITEMSTACK" -> "'" + token + "' is not a known item variable";
@@ -312,6 +373,7 @@ public final class SuggestionDiagnostics {
     private static @NotNull String bindingDescription(@NotNull String bindingId) {
         return switch (bindingId) {
             case "PLAYER" -> "a player variable";
+            case "PLAYER_POSSESSIVE" -> "a player variable (possessive form, e.g. player's)";
             case "ENTITY" -> "an entity variable";
             case "ENTITY_POSSESSIVE" -> "a possessive entity reference (e.g. entity's)";
             case "ITEMSTACK" -> "an item variable";

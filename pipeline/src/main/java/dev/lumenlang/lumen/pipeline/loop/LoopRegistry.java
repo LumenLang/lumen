@@ -68,6 +68,7 @@ public class LoopRegistry {
         Pattern compiled = PatternCompiler.compile(pattern);
         validateTypes(compiled);
         loops.add(new RegisteredLoop(compiled, handler, meta));
+        loopIndex = null;
     }
 
     /**

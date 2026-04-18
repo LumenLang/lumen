@@ -43,7 +43,7 @@ public final class GenericComparisonCondition {
                     validateExprIdentifier(bVal, ctx.env());
                     String op = ctx.java("op");
                     if (op.equals("<") || op.equals(">") || op.equals("<=") || op.equals(">=")) {
-                        return "((double) " + aVal + ") " + op + " ((double) " + bVal + ")";
+                        return "((Number) " + aVal + ").doubleValue() " + op + " ((Number) " + bVal + ").doubleValue()";
                     }
                     return aVal + " " + op + " " + bVal;
                 }));

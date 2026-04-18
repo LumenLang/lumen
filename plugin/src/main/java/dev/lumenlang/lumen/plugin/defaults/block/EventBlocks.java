@@ -91,8 +91,7 @@ public final class EventBlocks {
                         EventDefinition def = api.events().lookup(eventName);
                         if (def == null) {
                             HandlerContextImpl hctx = (HandlerContextImpl) ctx;
-                            throw new TokenCarryingException(
-                                    "Unknown event: " + eventName, hctx.bound("def").tokens());
+                            throw new TokenCarryingException("Unknown event: " + eventName, hctx.bound("def").tokens());
                         }
 
                         ctx.block().putEnv("__event_cancellable", def.cancellable());
