@@ -68,6 +68,44 @@ Chain after `addVar` to attach information to the most recently added variable:
 
 Metadata is the common way to signal per-event nuances like nullability without inventing new types.
 
+### Multi-line Expressions
+
+`expr` can be a multi-line Java text block when simple assignment isn't enough. The variable name is already declared as
+a local before the block runs, so you assign to it directly:
+
+```java
+.addVar("killer",MinecraftTypes.PLAYER,
+    """
+    if (event.getEntity().getKiller() != null) {
+        killer = event.getEntity().getKiller();
+    } else {
+        killer = null;
+    }""")
+.
+
+withMeta("nullable",true)
+.
+
+varDescription("The player who killed the entity, or null if not killed by a player")
+```
+
+The same pattern works for `instanceof` casts:
+
+```java
+.addVar("player",MinecraftTypes.PLAYER,
+    """
+    if (event.getEntity() instanceof Player __p) {
+        player = __p;
+    } else {
+        player = null;
+    }""")
+.
+
+varDescription("The damaged player, or null if the entity is not a player")
+```
+
+Use a temp variable with a `__` prefix (like `__p`) to avoid colliding with the declared local.
+
 ## Advanced Events
 
 When the event isn't backed by a Bukkit event, provide a `BlockHandler` that emits the whole method itself. This is how
