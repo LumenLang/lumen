@@ -1,0 +1,47 @@
+# Combat Tag
+# Prevents players from logging out during PvP.
+# If a tagged player disconnects, they die.
+
+config:
+    ct_prefix: "&8[&4Combat&8]&r"
+    tag_duration: 200  # 10 seconds in ticks
+
+global scoped tagged with default 0
+
+on entity_damage_by_entity:
+    # Only care about player vs player
+    # player = victim (null if not a player), damagerPlayer = attacker (null if not a player)
+    if player is set:
+        if damagerPlayer is set:
+            # Tag both players
+            set tagged to 1 for player
+            set tagged to 1 for damagerPlayer
+            
+            send actionbar "&c&lYou are now in combat!" to player
+            send actionbar "&c&lYou are now in combat!" to damagerPlayer
+            
+            # Reset tag after duration
+            wait tag_duration ticks:
+                set tagged to 0 for player
+                send actionbar "&a&lYou are no longer in combat." to player
+            
+            wait tag_duration ticks:
+                set tagged to 0 for damagerPlayer
+                send actionbar "&a&lYou are no longer in combat." to damagerPlayer
+
+on quit:
+    set is_tagged to get tagged for player
+    if is_tagged == 1:
+        # Kill the player for combat logging
+        kill player
+        broadcast "{ct_prefix} &c{player_name} logged out during combat!"
+        set tagged to 0 for player
+
+# Prevent using certain commands while tagged
+command enderpearl:
+    description "Disabled during combat"
+    set is_tagged to get tagged for player
+    if is_tagged == 1:
+        message player "{ct_prefix} &cYou can't use this while in combat!"
+    else:
+        message player "&7This command does nothing outside of combat."

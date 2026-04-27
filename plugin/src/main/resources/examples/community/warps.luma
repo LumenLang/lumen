@@ -1,0 +1,102 @@
+# Warp System
+# Server-wide warps that admins can create and anyone can use.
+# Uses data classes and stored lists for persistence.
+
+data warp_point:
+    name text
+    x number
+    y number
+    z number
+    world_name text
+
+global stored warps with default new list of warp_point
+
+config:
+    warp_prefix: "&8[&6Warps&8]&r"
+
+command setwarp:
+    permission "lumen.warp.set"
+    description "Create a new warp point"
+    
+    if args size < 1:
+        message player "{warp_prefix} &cUsage: /setwarp <name>"
+    else:
+        set warp_name to get args at index 0
+        
+        # Check if warp already exists
+        loop entry in warps:
+            set n to get field "name" of entry
+            if n is warp_name:
+                remove entry from warps
+        
+        set loc to get player's location
+        set px to get x of loc
+        set py to get y of loc
+        set pz to get z of loc
+        set w to get world of loc
+        set wn to get name of w
+        
+        set wp to new warp_point with name warp_name x px y py z pz world_name wn
+        add wp to warps
+        message player "{warp_prefix} &aWarp '&f{warp_name}&a' set!"
+
+command warp:
+    description "Teleport to a warp"
+    
+    if args size < 1:
+        message player "{warp_prefix} &cUsage: /warp <name>"
+    else:
+        set target_name to get args at index 0
+        set found to 0
+        
+        loop entry in warps:
+            set n to get field "name" of entry
+            if n is target_name:
+                set wx to get field "x" of entry
+                set wy to get field "y" of entry
+                set wz to get field "z" of entry
+                set wn to get field "world_name" of entry
+                
+                set w to get world wn
+                if w is set:
+                    set dest to new location in w at wx wy wz
+                    teleport player to dest
+                    message player "{warp_prefix} &aTeleported to '&f{target_name}&a'!"
+                else:
+                    message player "{warp_prefix} &cWorld '{wn}' is not loaded."
+                
+                set found to 1
+        
+        if found == 0:
+            message player "{warp_prefix} &cWarp '{target_name}' not found."
+
+command delwarp:
+    permission "lumen.warp.set"
+    description "Delete a warp"
+    
+    if args size < 1:
+        message player "{warp_prefix} &cUsage: /delwarp <name>"
+    else:
+        set target_name to get args at index 0
+        set found to 0
+        
+        loop entry in warps:
+            set n to get field "name" of entry
+            if n is target_name:
+                remove entry from warps
+                set found to 1
+                message player "{warp_prefix} &aDeleted warp '&f{target_name}&a'."
+        
+        if found == 0:
+            message player "{warp_prefix} &cWarp '{target_name}' not found."
+
+command warps:
+    description "List all warps"
+    
+    if warps is empty:
+        message player "{warp_prefix} &7No warps set."
+    else:
+        message player "{warp_prefix} &eAvailable warps:"
+        loop entry in warps:
+            set n to get field "name" of entry
+            message player "  &8- &f{n}"

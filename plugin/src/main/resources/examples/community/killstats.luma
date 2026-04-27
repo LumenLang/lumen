@@ -1,0 +1,72 @@
+# Kill Stats & Leaderboard
+# Tracks kills, deaths, and killstreaks per player.
+# Includes a stats command and a killstreak announcement system.
+
+config:
+    stats_prefix: "&8[&eStats&8]&r"
+
+global stored scoped kills with default 0
+global stored scoped deaths with default 0
+global stored scoped current_streak with default 0
+global stored scoped best_streak with default 0
+
+on player_death:
+    # Increment victim's deaths and reset their streak
+    add 1 to deaths for player
+    set current_streak to 0 for player
+    
+    if killer is set:
+        # Increment killer's kills and streak
+        add 1 to kills for killer
+        add 1 to current_streak for killer
+        
+        set streak to get current_streak for killer
+        set best to get best_streak for killer
+        
+        if streak > best:
+            set best_streak to streak for killer
+        
+        # Announce killstreaks at milestones
+        if streak == 5:
+            broadcast "&c&l{killer} &fis on a &c5 kill streak!"
+        else if streak == 10:
+            broadcast "&4&l{killer} &fis on a &4&l10 KILL STREAK!"
+        else if streak == 20:
+            broadcast "&4&l&k!!&r &4&l{killer} &fis &4&lUNSTOPPABLE &f(&420 kills&f) &4&l&k!!"
+        
+        # Show kill message to the killer
+        send actionbar "&a+1 Kill &7({streak} streak)" to killer
+
+command stats:
+    description "View your PvP stats"
+    
+    set argc to args size
+    if argc == 0:
+        # Show own stats
+        set k to get kills for player
+        set d to get deaths for player
+        set cs to get current_streak for player
+        set bs to get best_streak for player
+        
+        message player "{stats_prefix} &eYour Stats:"
+        message player "  &fKills: &a{k}"
+        message player "  &fDeaths: &c{d}"
+        message player "  &fCurrent Streak: &e{cs}"
+        message player "  &fBest Streak: &6{bs}"
+    else:
+        # Show another player's stats
+        set target_name to get args at index 0
+        set target to get player by name target_name
+        if target is not set:
+            message player "{stats_prefix} &cPlayer not found or not online."
+        else:
+            set k to get kills for target
+            set d to get deaths for target
+            set cs to get current_streak for target
+            set bs to get best_streak for target
+            
+            message player "{stats_prefix} &e{target_name}'s Stats:"
+            message player "  &fKills: &a{k}"
+            message player "  &fDeaths: &c{d}"
+            message player "  &fCurrent Streak: &e{cs}"
+            message player "  &fBest Streak: &6{bs}"
