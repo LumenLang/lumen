@@ -1,3 +1,7 @@
+---
+description: "A practical guide for Skript users moving to Lumen, covering the architectural and syntactic differences, the migration mindset, and why Lumen is built the way it is."
+---
+
 # The Skript to Lumen Migration Guide
 
 If you're coming from Skript, the surface of Lumen will look familiar. `on join:`, `command heal:`, `set x to 5`,
@@ -16,37 +20,47 @@ That changes a lot, and most of it is for the better. Here are the parts that ma
 
 ## What's Actually Different
 
-**Static typing is the foundation, not a stylistic choice.** Every variable, parameter, and field has a known type at
-compile time. `int`, `string`, `player`, `list of string`, `nullable item`. The compiler checks every assignment,
-comparison, and pattern match against those types before the script ever runs. This is why Lumen can't be "Skript but
-faster": the entire architecture is built around knowing the type of every value at compile time.
+### Static typing is the foundation
 
-**Null is part of the type system.** In Skript, when something is unset (an offline player, a missing variable, an empty
-slot), the line involving it tends to silently no-op or produce odd results, often without a warning. In Lumen, a value
-is either non-null and guaranteed present, or it's marked `nullable` and the compiler refuses to let you use it without
-checking first. `if x is set:` narrows the type inside the branch so you can use the value safely. There is no silent
-failure path.
+Every variable, parameter, and field has a known type at compile time. `int`, `string`, `player`, `list of string`,
+`nullable item`. The compiler checks every assignment, comparison, and pattern match against those types before the
+script ever runs. This is why Lumen can't be "Skript but faster": the entire architecture is built around knowing the
+type of every value at compile time.
 
-**The tooling is genuine, because the language was built for it.** Skript's editor tooling (LSP servers, completions,
-hover docs) generally requires either a running Minecraft server, a special server fork, or an additional plugin to feed
-structural information out to the editor. Even then it's approximate, because the runtime is the source of truth and the
-editor is guessing. Lumen flips this. The compiler itself is the source of truth, and it runs the same way in your
-editor as it does on the server. Every diagnostic, every completion, every hover, every "go to definition", everything
-you see in the editor is the real compiler reporting real results. If the editor says your script will compile, it will
-compile. If it flags an error, that error is real. There is no approximation layer, because the language was
-architecturally designed around making this possible.
+### Null is part of the type system
 
-**Almost everything is a pattern.** Skript hardcodes effects, conditions, and expressions inside the runtime. In Lumen,
-the syntax you write is matched against patterns that resolve at compile time to a specific Java handler. Addons add new
-patterns. The compiler has full visibility into all of them, which is why it can suggest fixes when you typo something,
-validate argument types, and generate accurate completions. If no pattern matches your line, you get a real error with
-suggestions, not a silent skip.
+In Skript, when something is unset (an offline player, a missing variable, an empty slot), the line involving it tends
+to silently no-op or produce odd results, often without a warning. In Lumen, a value is either non-null and guaranteed
+present, or it's marked `nullable` and the compiler refuses to let you use it without checking first. `if x is set:`
+narrows the type inside the branch so you can use the value safely. There is no silent failure path.
 
-**No implicit arguments or conversions.** Skript will happily turn a player into a string, a string into a number, a
-name into a player, and so on, behind your back. Lumen doesn't. Every conversion is explicit, every argument has the
-type the pattern declares, and there are no surprise coercions sliding into your script. This is what makes the rest of
-the language possible: tooling, diagnostics, and AI assistants can only be precise if the meaning of every token is
-unambiguous.
+### Tooling is genuine, because the language was built for it
+
+Skript's editor tooling (LSP servers, completions, hover docs) generally requires either a running Minecraft server, a
+special server fork, or an additional plugin to feed structural information out to the editor. Even then it's
+approximate, because the runtime is the source of truth and the editor is guessing.
+
+Lumen flips this. The compiler itself is the source of truth, and it runs the same way in your editor as it does on the
+server. Every diagnostic, every completion, every hover, every "go to definition" is the real compiler reporting real
+results. If the editor says your script will compile, it will compile. If it flags an error, that error is real. There
+is no approximation layer, because the language was architecturally designed around making this possible.
+
+### Almost everything is a pattern
+
+Skript hardcodes effects, conditions, and expressions inside the runtime. In Lumen, the syntax you write is matched
+against patterns that resolve at compile time to a specific Java handler. Addons add new patterns. The compiler has full
+visibility into all of them, which is why it can suggest fixes when you typo something, validate argument types, and
+generate accurate completions. If no pattern matches your line, you get a real error with suggestions, not a silent
+skip.
+
+### No implicit arguments or conversions
+
+Skript will happily turn a player into a string, a string into a number, a name into a player, and so on, behind your
+back. Lumen doesn't. Every conversion is explicit, every argument has the type the pattern declares, and there are no
+surprise coercions sliding into your script. This is what makes the rest of the language possible: tooling, diagnostics,
+and AI assistants can only be precise if the meaning of every token is unambiguous.
+
+---
 
 So while the syntax often looks similar, treat Lumen as its own language with its own rules. The translations below will
 get you started, but expect to think differently once you're past the basics.
@@ -219,26 +233,34 @@ and [Inventories](../11-inventories/02-inventories.md).
 If you're reading this and thinking "this is a lot harder than Skript", you're right, and it's worth understanding
 *why*. Lumen is harder on purpose, and the reasons compound on each other.
 
-**Static typing is the foundation.** In Skript, the language has no idea whether a variable is a player, a number, or a
-string until the script actually runs. That's dynamic typing, and it's why Skript is forgiving for beginners but
-unpredictable in practice. Lumen knows the type of every value before execution. That's stricter for beginners, but once
-you're actually building real things, you get far fewer runtime surprises, and the bugs that do appear are much easier
-to debug.
+### Static typing comes first
 
-**No coercion.** Skript silently changes one type into another to make a line "work": a player turns into the player's
-name when something expects a string, a string turns into a number when something expects a number, a world becomes its
-name, and so on. It feels helpful, but it's also one of the biggest sources of bugs in Skript scripts, because the
-script never errors, it just behaves wrong, and the failure can be wildly far from the line that caused it. Lumen has no
-coercion at all. If a pattern wants a string, you give it a string. If it wants a player, you give it a player. The
-compiler refuses anything else, loudly, at compile time. Lumen does have **widening** (e.g. an `int` is accepted where a
-`double` is expected, since it fits), but that's a different concept: widening is safe and lossless, coercion is a
-guess.
+In Skript, the language has no idea whether a variable is a player, a number, or a string until the script actually
+runs. That's dynamic typing, and it's why Skript is forgiving for beginners but unpredictable in practice. Lumen knows
+the type of every value before execution. That's stricter for beginners, but once you're actually building real things,
+you get far fewer runtime surprises, and the bugs that do appear are much easier to debug.
 
-**Variables don't change type.** In Skript you can assign a variable to a string, then later to a player, then to a
-number, and the language plays along. In Lumen, once a variable has a type, that's its type. You can't reassign it to
-something incompatible. This eliminates an entire class of bugs that you don't even know you have until you've spent a
-week debugging one.
+### No coercion
 
-The summary: Lumen is harder upfront because the things that make Skript easy upfront are also what make Skript scripts
-break in mysterious ways later. The tradeoff is more discipline now, far fewer "why did this just stop working" moments
-later, and tooling that actually helps you while you write.
+Skript silently changes one type into another to make a line "work": a player turns into the player's name when
+something expects a string, a string turns into a number when something expects a number, a world becomes its name, and
+so on. It feels helpful, but it's also one of the biggest sources of bugs in Skript scripts, because the script never
+errors, it just behaves wrong, and the failure can be wildly far from the line that caused it.
+
+Lumen has no coercion at all. If a pattern wants a string, you give it a string. If it wants a player, you give it a
+player. The compiler refuses anything else, loudly, at compile time.
+
+Lumen does have **widening** (e.g. an `int` is accepted where a `double` is expected, since it fits), but that's a
+different concept: widening is safe and lossless, coercion is a guess.
+
+### Variables don't change type
+
+In Skript you can assign a variable to a string, then later to a player, then to a number, and the language plays along.
+In Lumen, once a variable has a type, that's its type. You can't reassign it to something incompatible. This eliminates
+an entire class of bugs that you don't even know you have until you've spent a week debugging one.
+
+---
+
+Lumen is harder upfront because the things that make Skript easy upfront are also what make Skript scripts break in
+mysterious ways later. The tradeoff is more discipline now, far fewer "why did this just stop working" moments later,
+and tooling that actually helps you while you write.
