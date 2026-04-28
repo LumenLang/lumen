@@ -39,12 +39,12 @@ command arena:
                 message player "&cUsage: /arena create <name> <x1> <y1> <z1> <x2> <y2> <z2>"
             else:
                 set name to get args at index 1
-                set x1 to get args at index 2
-                set y1 to get args at index 3
-                set z1 to get args at index 4
-                set x2 to get args at index 5
-                set y2 to get args at index 6
-                set z2 to get args at index 7
+                set x1 to get args at index 2 as integer
+                set y1 to get args at index 3 as integer
+                set z1 to get args at index 4 as integer
+                set x2 to get args at index 5 as integer
+                set y2 to get args at index 6 as integer
+                set z2 to get args at index 7 as integer
                 set entry to new arena with name name x1 x1 y1 y1 z1 z1 x2 x2 y2 y2 z2 z2
                 add entry to arenas
                 message player "&aArena &f{name} &acreated!"

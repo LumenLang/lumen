@@ -204,6 +204,7 @@ public final class DataExpressions {
         List<FieldIssue> issues = new ArrayList<>();
         List<DiagnosticException> resolutionFailures = new ArrayList<>();
         Set<String> assigned = new HashSet<>();
+        List<String> castHints = new ArrayList<>();
 
         int i = 0;
         while (i < tokens.size()) {
@@ -234,23 +235,25 @@ public final class DataExpressions {
                 break;
             }
 
-            int maxEnd = skipToNextFieldOrEnd(tokens, valueStart, schema);
-            if (valueStart >= maxEnd) {
-                issues.add(new FieldIssue(fieldToken.start(), fieldToken.end(), "missing value for '" + fieldName + "'"));
-                i = maxEnd;
-                continue;
-            }
-            ValueResolution attempt = resolveSmallestValue(hctxImpl, tokens, valueStart, maxEnd, env);
+            ValueResolution attempt = resolveSmallestValue(hctxImpl, tokens, valueStart, tokens.size(), env);
 
             if (attempt.resolved == null) {
-                List<? extends ScriptToken> spanTokens = tokens.subList(valueStart, maxEnd);
+                ScriptToken first = tokens.get(valueStart);
+                if (schema.fields().containsKey(first.text())) {
+                    issues.add(new FieldIssue(fieldToken.start(), fieldToken.end(), "missing value for '" + fieldName + "'"));
+                    i = valueStart;
+                    continue;
+                }
+                int spanEnd = skipToNextFieldOrEnd(tokens, valueStart, schema);
+                if (spanEnd <= valueStart) spanEnd = Math.min(valueStart + 1, tokens.size());
+                List<? extends ScriptToken> spanTokens = tokens.subList(valueStart, spanEnd);
                 List<Token> pipelineValueTokens = HandlerContextImpl.toPipelineTokens(spanTokens);
                 List<PatternSimulator.Suggestion> suggestions = PatternSimulator.suggestExpressions(pipelineValueTokens, PatternRegistry.instance(), env);
                 LumenDiagnostic diag = !suggestions.isEmpty()
                         ? SuggestionDiagnostics.build("Cannot resolve value for field '" + fieldName + "'", line, raw, pipelineValueTokens, suggestions, env)
                         : SuggestionDiagnostics.buildNoSuggestion("Cannot resolve value for field '" + fieldName + "'", line, raw, pipelineValueTokens, env);
                 resolutionFailures.add(new DiagnosticException(diag));
-                i = maxEnd;
+                i = spanEnd;
                 continue;
             }
 
@@ -263,6 +266,8 @@ public final class DataExpressions {
             LumenType expected = schema.fields().get(fieldName);
             if (!expected.assignableFrom(resolved.type())) {
                 issues.add(new FieldIssue(first.start(), last.end(), "field '" + fieldName + "' expects '" + expected.displayName() + "', got '" + resolved.type().displayName() + "'"));
+                String castHint = castHintFor(expected, resolved.type(), valueTokens);
+                if (castHint != null) castHints.add(castHint);
                 i = valueEnd;
                 continue;
             }
@@ -304,6 +309,7 @@ public final class DataExpressions {
                 diag.subHighlight(issue.start(), issue.end(), issue.label());
             }
             diag.help("known fields of '" + typeName + "': " + String.join(", ", schema.fields().keySet()));
+            for (String hint : castHints) diag.help(hint);
             if (!missing.isEmpty()) {
                 diag.note("also missing: " + String.join(", ", missing));
             }
@@ -374,6 +380,18 @@ public final class DataExpressions {
             if (ref != null) return new ResolvedValue(ref.java(), ref.type());
         }
         return null;
+    }
+
+    private static @Nullable String castHintFor(@NotNull LumenType expected, @NotNull LumenType actual, @NotNull List<? extends ScriptToken> valueTokens) {
+        if (actual.unwrap() != PrimitiveType.STRING) return null;
+        LumenType target = expected.unwrap();
+        String castWord;
+        if (target == PrimitiveType.INT || target == PrimitiveType.LONG) castWord = "as integer";
+        else if (target == PrimitiveType.DOUBLE || target == PrimitiveType.FLOAT) castWord = "as number";
+        else return null;
+        StringJoiner sj = new StringJoiner(" ");
+        for (ScriptToken t : valueTokens) sj.add(t.text());
+        return "convert string to " + target.displayName() + " with '" + sj + " " + castWord + "'";
     }
 
     private static @NotNull String escapeJavaString(@NotNull String s) {

@@ -38,7 +38,7 @@ command bounty:
                 message player "&cUsage: /bounty <player> <amount>"
             else:
                 set target to get args at index 0
-                set amount to get args at index 1
+                set amount to get args at index 1 as integer
                 set current_bounty to new bounty with target target reward amount placed_by "{player_name}"
                 broadcast "&c{player_name} &6placed a &e{amount} &6coin bounty on &c{target}!"
 

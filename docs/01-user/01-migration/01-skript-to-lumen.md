@@ -56,9 +56,10 @@ skip.
 ### No implicit arguments or conversions
 
 Skript will happily turn a player into a string, a string into a number, a name into a player, and so on, behind your
-back. Lumen doesn't. Every conversion is explicit, every argument has the type the pattern declares, and there are no
-surprise coercions sliding into your script. This is what makes the rest of the language possible: tooling, diagnostics,
-and AI assistants can only be precise if the meaning of every token is unambiguous.
+back. Lumen doesn't. Every argument has the type the pattern declares, and there are no surprise coercions sliding into
+your script. Conversions between types still exist, but you write them explicitly, so the conversion is part of your
+code instead of guesswork. This is what makes the rest of the language possible: tooling, diagnostics, and AI assistants
+can only be precise if the meaning of every token is unambiguous.
 
 ---
 
@@ -86,10 +87,6 @@ command /heal:
 command heal:
     heal the player
 ```
-
-For a deeper walk through script structure, blocks, and indentation rules,
-see [Scripts and Blocks](../02-basics/01-scripts.md). For the full set of statement, expression, and command syntax, see
-the rest of the [Basics](../02-basics/) section.
 
 ## 2. Variables and Scope
 
@@ -137,11 +134,6 @@ set coins to 100 for player
 set c to get coins for player
 ```
 
-For the full picture,
-see [Local Variables](../03-variables/01-local-variables.md), [Global Variables](../03-variables/02-global-variables.md),
-and [Stored Variables](../03-variables/03-stored-variables.md). Null handling is covered in detail
-in [Nullables](../05-nullables/01-nullables.md).
-
 ## 3. Lists and Maps (Dictionaries)
 
 Skript's `{items::*}` lists are gone. Lumen has typed `list` and `map` collections, and the type of the elements has to
@@ -168,9 +160,6 @@ set stats at key "kills" to 10
 set k to get stats at key "kills"
 ```
 
-For all the operations available on lists and maps (iteration, sorting, filtering, contains checks, etc.),
-see [Lists](../07-collections/01-lists.md) and [Maps](../07-collections/02-maps.md).
-
 ## 4. Custom Data Types (Data Classes)
 
 If you've ever stored complex objects in Skript with something like `{data::%uuid%::name}`, Lumen's `data` classes are a
@@ -190,9 +179,6 @@ command setwarp:
     set w to new warp with name "Spawn" x 0 y 64 z 0
     add w to warps
 ```
-
-You can store data classes inside lists, maps, or scoped globals like any other type.
-See [Data Classes](../10-data-classes/01-data-classes.md) for field syntax, construction, and access patterns.
 
 ## 5. GUIs / Inventories
 
@@ -219,13 +205,10 @@ command menu:
 
 The interesting part: when you save the script while a player has the inventory open, the inventory updates in place. Items get replaced, the title refreshes, click handlers are updated, and the player sees the changes live without
 the inventory closing or flickering. This is genuinely rare in the Minecraft scripting world and is worth trying once on
-a test server just to feel the difference in iteration speed.
+a test server just to feel the difference in iteration speed. Here's a preview you can see:
 
 :::video https://s3api.vansencool.net/vansen/inventory_reload.mp4
 :::
-
-For inventory and item syntax in detail, see [Items](../11-inventories/01-items.md)
-and [Inventories](../11-inventories/02-inventories.md).
 
 ## Why Lumen Is Like This
 
@@ -239,21 +222,72 @@ runs. That's dynamic typing, and it's why Skript is forgiving for beginners but 
 the type of every value before execution. That's stricter for beginners, but once you're actually building real things,
 you get far fewer runtime surprises, and the bugs that do appear are much easier to debug.
 
-### No coercion
+### No implicit coercion
 
 Skript silently changes one type into another to make a line "work": a player turns into the player's name when
 something expects a string, a string turns into a number when something expects a number, a world becomes its name, and
 so on. It feels helpful, but it's also one of the biggest sources of bugs in Skript scripts, because the script never
 errors, it just behaves wrong, and the failure can be wildly far from the line that caused it.
 
-Lumen has no coercion at all. If a pattern wants a string, you give it a string. If it wants a player, you give it a
-player. The compiler refuses anything else, loudly, at compile time.
+Lumen has no implicit coercion. If a pattern wants a string, you give it a string. If it wants a player, you give it a
+player. The compiler refuses anything else, loudly, at compile time. Conversions between types still exist, but you
+write them out yourself, so the conversion is part of the script, visible to you and to the compiler, instead of
+happening behind your back.
 
 ### Variables don't change type
 
 In Skript you can assign a variable to a string, then later to a player, then to a number, and the language plays along.
 In Lumen, once a variable has a type, that's its type. You can't reassign it to something incompatible. This eliminates
 an entire class of bugs that you don't even know you have until you've spent a week debugging one.
+
+### Diagnostics are a first-class goal
+
+The other big reason for static typing isn't the typing itself, it's the *errors*. Lumen's diagnostics are heavily inspired by Rust's: precise underlines on the exact tokens that are wrong, labels explaining what the compiler expected, sub-highlights for related parts of the line, fuzzy "did you mean" suggestions, and notes that point at *why* something is wrong rather than just *that* it is wrong.
+
+That kind of diagnostic is only possible when the compiler actually knows what every token means. With dynamic typing and silent coercions, an error message can't say much more than "this didn't work", because the compiler doesn't have the information to be specific. With Lumen's stricter rules, the compiler can point at the exact field, the exact mismatched type, the exact pattern that almost matched.
+
+Here's what that looks like in practice:
+
+```
+error: Unknown statement
+  -> line 95: broadcast "Hi" right now
+   |
+95 | broadcast "Hi" right now
+   |                ~~~~~~~~~ remove 2 extra tokens
+   |
+  = note: confidence: 84% (high)
+  = help: closest pattern: (broadcast|announce) %text:STRING%
+```
+
+Typo in the verb? It tells you what to replace it with:
+
+```
+error: Unknown statement
+  -> line 99: brooadcast "Hi" now
+   |
+99 | brooadcast "Hi" now
+   | ~~~~~~~~~~ replace with 'broadcast'
+   |                 ~~~ extra token
+   |
+  = note: confidence: 87% (high)
+```
+
+Multiple problems on one line? It points at all of them in a single error, with the right label on each:
+
+```
+error: Unknown statement
+  -> line 103: send title "<gold>Hi" with subtitl "<gray>Sub" to plays extra
+    |
+103 | send title "<gold>Hi" with subtitl "<gray>Sub" to plays extra
+    |                            ~~~~~~~ did you mean 'subtitle'?
+    |                                                   ~~~~~~ 'plays' does not exist in this scope
+    |                                                          ~~~~~ extra token
+    |
+  = note: confidence: 73% (high)
+  = help: closest pattern: send title %title:STRING% with subtitle %sub:STRING% to %who:PLAYER%
+```
+
+Rust's reputation for great error messages is a big part of why people enjoy writing it. Lumen aims for the same feeling on Minecraft scripts.
 
 ---
 
