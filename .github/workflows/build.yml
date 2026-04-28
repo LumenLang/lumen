@@ -19,11 +19,11 @@ jobs:
           distribution: 'temurin'
 
       - name: Build with Gradle
-        run: ./gradlew build
+        run: ./gradlew shadowJar --parallel --configuration-cache --build-cache --no-daemon
 
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
         with:
           name: lumen-jar
-          path: plugin/build/libs/lumen-*.jar
+          path: build/libs/lumen-*.jar
           retention-days: 15
