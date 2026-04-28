@@ -24,7 +24,7 @@ import java.util.List;
  *
  * <p>Parses field definitions from the block's children and registers a
  * {@link DataSchema} in the type environment. Each field line follows the syntax
- * {@code fieldName <type>} where {@code <type>} is any valid {@link LumenType}
+ * {@code fieldName[: ]<type>} where {@code <type>} is any valid {@link LumenType}
  * annotation (e.g. {@code text}, {@code number}, {@code nullable player}, {@code list of string}).
  */
 @Registration(order = -2000)
@@ -126,18 +126,33 @@ public final class DataBlockForm implements BlockFormHandler {
                         .at(child.lineNumber(), child.raw())
                         .highlight(tokens.get(0).start(), tokens.get(0).end())
                         .label("field '" + fieldName + "' has no type")
-                        .help("add a type after the field name (e.g. '" + fieldName + " text', '" + fieldName + " number')")
+                        .help("add a type after the field name (e.g. '" + fieldName + ": text', '" + fieldName + ": number')")
                         .build());
             }
 
-            TypeAnnotationParser.ParseResult result = TypeAnnotationParser.parseDetailed(tokens, 1, env::lookupDataSchema);
+            int typeStart = 1;
+            boolean usedColon = false;
+            if (tokens.get(1).text().equals(":")) {
+                usedColon = true;
+                typeStart = 2;
+                if (tokens.size() < 3) {
+                    throw new DiagnosticException(LumenDiagnostic.error("Missing type after ':' for field '" + fieldName + "'")
+                            .at(child.lineNumber(), child.raw())
+                            .highlight(tokens.get(1).start(), tokens.get(1).end())
+                            .label("field '" + fieldName + "' has no type after ':'")
+                            .help("add a type after the colon (e.g. '" + fieldName + ": text', '" + fieldName + ": number')")
+                            .build());
+                }
+            }
+
+            TypeAnnotationParser.ParseResult result = TypeAnnotationParser.parseDetailed(tokens, typeStart, env::lookupDataSchema);
             if (result instanceof TypeAnnotationParser.ParseResult.Failure f) {
                 throw new DiagnosticException(SuggestionDiagnostics.buildTypeFailure("Invalid field type in data class '" + typeName + "'", child.lineNumber(), child.raw(), tokens, f));
             }
 
             TypeAnnotationParser parsed = ((TypeAnnotationParser.ParseResult.Success) result).parser();
             LumenType fieldType = parsed.type();
-            int expectedTokens = 1 + parsed.tokensConsumed();
+            int expectedTokens = typeStart + parsed.tokensConsumed();
             if (tokens.size() != expectedTokens) {
                 ScriptToken extraToken = tokens.get(expectedTokens);
                 throw new DiagnosticException(LumenDiagnostic.error("Unexpected token after field type")

@@ -438,6 +438,24 @@ public final class CodeEmitter {
             @NotNull TypeEnv env,
             @NotNull CodegenContext ctx,
             @NotNull JavaBuilder out) {
+        EmitRegistry emitReg = EmitRegistry.instance();
+        List<Token> tokens = st.head();
+
+        TypedStatement ts = StatementClassifier.classify(st, reg, env);
+
+        if (ts instanceof TypedStatement.PatternStmt ps && ps.match().reg().meta().deprecated()) {
+            RegisteredPatternMatch sm = ps.match();
+            HandlerContextImpl hctx = new HandlerContextImpl(sm.match(), env, ctx, blockCtx, out, st.line(), st.raw());
+            try {
+                sm.reg().handler().handle(hctx);
+            } catch (LumenScriptException e) {
+                throw e;
+            } catch (RuntimeException e) {
+                throw wrapRuntimeException(st.line(), st.raw(), e);
+            }
+            return;
+        }
+
         if (blockCtx.isRoot()) {
             throw new DiagnosticException(LumenDiagnostic.error("Statements cannot be used at the top level of a script")
                     .at(st.line(), st.raw())
@@ -446,8 +464,6 @@ public final class CodeEmitter {
                     .help("wrap this in a block. See https://lumenlang.dev/blocks for the full list of available blocks")
                     .build());
         }
-        EmitRegistry emitReg = EmitRegistry.instance();
-        List<Token> tokens = st.head();
 
         HandlerContextImpl emitCtx = new HandlerContextImpl(null, env, ctx, blockCtx, out, st.line(), st.raw());
         for (StatementValidator validator : emitReg.statementValidators()) {
@@ -459,8 +475,6 @@ public final class CodeEmitter {
                 throw wrapRuntimeException(st.line(), st.raw(), e);
             }
         }
-
-        TypedStatement ts = StatementClassifier.classify(st, reg, env);
 
         if (ts instanceof TypedStatement.PatternStmt ps) {
             RegisteredPatternMatch sm = ps.match();

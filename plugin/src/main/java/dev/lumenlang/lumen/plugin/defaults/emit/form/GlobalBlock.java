@@ -65,9 +65,10 @@ public final class GlobalBlock implements BlockFormHandler {
 
     @Override
     public boolean matches(@NotNull List<? extends ScriptToken> headTokens) {
-        return headTokens.size() == 1
-                && headTokens.get(0).tokenType() == ScriptToken.TokenType.IDENT
-                && headTokens.get(0).text().equalsIgnoreCase("global");
+        if (headTokens.size() != 1) return false;
+        if (headTokens.get(0).tokenType() != ScriptToken.TokenType.IDENT) return false;
+        String text = headTokens.get(0).text();
+        return text.equalsIgnoreCase("global") || text.equalsIgnoreCase("globals");
     }
 
     @Override

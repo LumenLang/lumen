@@ -62,7 +62,7 @@ public final class PlayerStatements {
 
         api.patterns().statement(b -> b
                 .by("Lumen")
-                .pattern("(heal|restore) %who:PLAYER%")
+                .pattern("(heal|restore) [the] %who:PLAYER%")
                 .description("Fully heals a player to their maximum health.")
                 .example("heal player")
                 .since("1.0.0")

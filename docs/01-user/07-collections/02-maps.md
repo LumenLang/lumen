@@ -69,7 +69,7 @@ loop name nick in nicknames:
     message player "&e{name} &7-> &f{nick}"
 ```
 
-See [Loops](../01-basics/05-loops.md) for more on loop syntax.
+See [Loops](../02-basics/05-loops.md) for more on loop syntax.
 
 ## Scoped Maps
 

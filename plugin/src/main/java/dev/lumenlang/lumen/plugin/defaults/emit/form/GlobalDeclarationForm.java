@@ -66,7 +66,7 @@ public final class GlobalDeclarationForm {
             }
         }
 
-        StringBuilder migration = new StringBuilder("global:\n    ");
+        StringBuilder migration = new StringBuilder("globals:\n    ");
         if (stored) migration.append("stored ");
         if (scoped) migration.append("scoped to player ");
         migration.append(name).append(": <type>");

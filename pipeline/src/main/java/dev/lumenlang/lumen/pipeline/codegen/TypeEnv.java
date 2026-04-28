@@ -378,6 +378,15 @@ public final class TypeEnv implements EnvironmentAccess {
     }
 
     /**
+     * Returns the names of all registered data schemas.
+     *
+     * @return the schema names (lowercased)
+     */
+    public @NotNull Set<String> dataSchemaNames() {
+        return dataSchemas.keySet();
+    }
+
+    /**
      * Returns the first {@link VarRef} in scope whose type matches the given object type.
      *
      * <p>Walks the scope stack from innermost to outermost scope, examining all variables

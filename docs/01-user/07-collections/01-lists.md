@@ -78,7 +78,7 @@ loop fruit in fruits:
     message player "&e- {fruit}"
 ```
 
-See [Loops](../01-basics/05-loops.md) for more on loop syntax.
+See [Loops](../02-basics/05-loops.md) for more on loop syntax.
 
 ## Scoped Lists
 

@@ -65,6 +65,15 @@ public interface HandlerContext {
     @NotNull List<String> tokens(@NotNull String name);
 
     /**
+     * Returns the original {@link ScriptToken} objects consumed for the specified parameter,
+     * preserving source positions and token types for use in rich diagnostics.
+     *
+     * @param name the parameter name from the pattern
+     * @return the script tokens
+     */
+    @NotNull List<? extends ScriptToken> scriptTokens(@NotNull String name);
+
+    /**
      * Returns the type environment for variable and reference lookups.
      *
      * @return the environment access
@@ -148,6 +157,16 @@ public interface HandlerContext {
      * @throws IndexOutOfBoundsException if the index is out of range
      */
     @NotNull List<String> tokens(int index);
+
+    /**
+     * Returns the original {@link ScriptToken} objects consumed for the parameter at
+     * the given positional index, preserving source positions and token types.
+     *
+     * @param index the zero-based index
+     * @return the script tokens
+     * @throws IndexOutOfBoundsException if the index is out of range
+     */
+    @NotNull List<? extends ScriptToken> scriptTokens(int index);
 
     /**
      * Returns the number of bound parameters in this match.

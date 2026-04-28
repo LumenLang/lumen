@@ -1,5 +1,6 @@
 package dev.lumenlang.lumen.pipeline.language.resolve;
 
+import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.PrimitiveType;
@@ -126,6 +127,8 @@ public final class ExprResolver {
                     BlockContext block = env.blockContext();
                     HandlerContextImpl hctx = new HandlerContextImpl(match.match(), env, ctx, block, null, 0, "");
                     return match.reg().handler().handle(hctx);
+                } catch (DiagnosticException e) {
+                    throw e;
                 } catch (RuntimeException ignored) {
                 }
             }
@@ -168,6 +171,8 @@ public final class ExprResolver {
                     BlockContext block = env.blockContext();
                     HandlerContextImpl hctx = new HandlerContextImpl(subMatch.match(), env, ctx, block, null, 0, "");
                     subResult = subMatch.reg().handler().handle(hctx);
+                } catch (DiagnosticException e) {
+                    throw e;
                 } catch (RuntimeException e) {
                     continue;
                 }

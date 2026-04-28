@@ -149,6 +149,11 @@ public final class HandlerContextImpl implements HandlerContext {
     }
 
     @Override
+    public @NotNull List<? extends ScriptToken> scriptTokens(@NotNull String name) {
+        return bound(name).tokens();
+    }
+
+    @Override
     public @NotNull TypeEnv env() {
         return env;
     }
@@ -199,6 +204,11 @@ public final class HandlerContextImpl implements HandlerContext {
     public @NotNull List<String> tokens(int index) {
         BoundValue bv = requireMatch().boundAt(index);
         return bv.tokens().stream().map(Token::text).collect(Collectors.toList());
+    }
+
+    @Override
+    public @NotNull List<? extends ScriptToken> scriptTokens(int index) {
+        return requireMatch().boundAt(index).tokens();
     }
 
     @Override
