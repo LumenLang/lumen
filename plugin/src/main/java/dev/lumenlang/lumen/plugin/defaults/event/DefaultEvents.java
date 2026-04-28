@@ -3,11 +3,11 @@ package dev.lumenlang.lumen.plugin.defaults.event;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
-import dev.lumenlang.lumen.api.codegen.BindingAccess;
-import dev.lumenlang.lumen.api.codegen.JavaOutput;
+import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import dev.lumenlang.lumen.api.handler.BlockHandler;
 import dev.lumenlang.lumen.api.pattern.Categories;
-import dev.lumenlang.lumen.api.type.Types;
+import dev.lumenlang.lumen.api.type.MinecraftTypes;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.plugin.Lumen;
 import dev.lumenlang.lumen.plugin.util.LumenInventoryHolder;
 import org.bukkit.Material;
@@ -37,7 +37,6 @@ import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.player.PlayerToggleFlightEvent;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
 import org.bukkit.event.player.PlayerToggleSprintEvent;
-import org.bukkit.inventory.Inventory;
 import org.jetbrains.annotations.NotNull;
 
 import static dev.lumenlang.lumen.api.pattern.LumaExample.of;
@@ -61,7 +60,7 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .cancellable(false)
-                .addVar("player", Types.PLAYER, "event.getPlayer()")
+                .addVar("player", MinecraftTypes.PLAYER, "event.getPlayer()")
                 .varDescription("The player who joined the server")
                 .build());
         api.events().register(api.events().builder("respawn").by("Lumen")
@@ -71,9 +70,9 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .cancellable(false)
-                .addVar("player", Types.PLAYER, "event.getPlayer()")
+                .addVar("player", MinecraftTypes.PLAYER, "event.getPlayer()")
                 .varDescription("The player who respawned")
-                .addVar("respawnLocation", Types.LOCATION, "event.getRespawnLocation()")
+                .addVar("respawnLocation", MinecraftTypes.LOCATION, "event.getRespawnLocation()")
                 .varDescription("The location where the player will respawn")
                 .build());
         api.events().register(api.events().builder("teleport").by("Lumen")
@@ -83,11 +82,11 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .cancellable(true)
-                .addVar("player", Types.PLAYER, "event.getPlayer()")
+                .addVar("player", MinecraftTypes.PLAYER, "event.getPlayer()")
                 .varDescription("The player who teleported")
-                .addVar("from", Types.LOCATION, "event.getFrom()")
+                .addVar("from", MinecraftTypes.LOCATION, "event.getFrom()")
                 .varDescription("The location the player teleported from")
-                .addVar("to", Types.LOCATION, "event.getTo()")
+                .addVar("to", MinecraftTypes.LOCATION, "event.getTo()")
                 .varDescription("The location the player teleported to")
                 .build());
         api.events().register(api.events().builder("quit").by("Lumen")
@@ -97,7 +96,7 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .cancellable(false)
-                .addVar("player", Types.PLAYER, "event.getPlayer()")
+                .addVar("player", MinecraftTypes.PLAYER, "event.getPlayer()")
                 .varDescription("The player who left the server")
                 .build());
         api.events().register(api.events().builder("move").by("Lumen")
@@ -107,11 +106,11 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .cancellable(true)
-                .addVar("player", Types.PLAYER, "event.getPlayer()")
+                .addVar("player", MinecraftTypes.PLAYER, "event.getPlayer()")
                 .varDescription("The player who moved")
-                .addVar("from", Types.LOCATION, "event.getFrom()")
+                .addVar("from", MinecraftTypes.LOCATION, "event.getFrom()")
                 .varDescription("The location the player moved from")
-                .addVar("to", Types.LOCATION, "event.getTo()")
+                .addVar("to", MinecraftTypes.LOCATION, "event.getTo()")
                 .varDescription("The location the player moved to")
                 .build());
         api.events().register(api.events().builder("toggle_sneak").by("Lumen")
@@ -121,7 +120,7 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .cancellable(true)
-                .addVar("player", Types.PLAYER, "event.getPlayer()")
+                .addVar("player", MinecraftTypes.PLAYER, "event.getPlayer()")
                 .varDescription("The player who toggled sneaking")
                 .build());
         api.events().register(api.events().builder("toggle_sprint").by("Lumen")
@@ -131,7 +130,7 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .cancellable(true)
-                .addVar("player", Types.PLAYER, "event.getPlayer()")
+                .addVar("player", MinecraftTypes.PLAYER, "event.getPlayer()")
                 .varDescription("The player who toggled sprinting")
                 .build());
         api.events().register(api.events().builder("toggle_flight").by("Lumen")
@@ -141,9 +140,9 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .cancellable(true)
-                .addVar("player", Types.PLAYER, "event.getPlayer()")
+                .addVar("player", MinecraftTypes.PLAYER, "event.getPlayer()")
                 .varDescription("The player who toggled flight")
-                .addVar("flying", Types.BOOLEAN, "event.isFlying()")
+                .addVar("flying", PrimitiveType.BOOLEAN, "event.isFlying()")
                 .varDescription("Whether the player is now flying")
                 .build());
 
@@ -154,10 +153,10 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.ENTITY)
                 .cancellable(true)
-                .addVar("entity", Types.ENTITY, "event.getEntity()")
+                .addVar("entity", MinecraftTypes.ENTITY, "event.getEntity()")
                 .varDescription("The entity that spawned")
                 .withMeta("javaClass", LivingEntity.class.getName())
-                .addVar("location", Types.LOCATION, "event.getLocation()")
+                .addVar("location", MinecraftTypes.LOCATION, "event.getLocation()")
                 .varDescription("The location where the entity spawned")
                 .build());
         api.events().register(api.events().builder("entity_death").by("Lumen")
@@ -167,10 +166,10 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.ENTITY)
                 .cancellable(false)
-                .addVar("entity", Types.ENTITY, "event.getEntity()")
+                .addVar("entity", MinecraftTypes.ENTITY, "event.getEntity()")
                 .varDescription("The entity that died")
                 .withMeta("javaClass", LivingEntity.class.getName())
-                .addVar("killer", Types.PLAYER,
+                .addVar("killer", MinecraftTypes.PLAYER,
                         """
                                 if (event.getEntity().getKiller() != null) {
                                     killer = event.getEntity().getKiller();
@@ -187,9 +186,9 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.ENTITY)
                 .cancellable(true)
-                .addVar("entity", Types.ENTITY, "event.getEntity()")
+                .addVar("entity", MinecraftTypes.ENTITY, "event.getEntity()")
                 .varDescription("The entity that took damage")
-                .addVar("damage", Types.DOUBLE, "event.getDamage()")
+                .addVar("damage", PrimitiveType.DOUBLE, "event.getDamage()")
                 .varDescription("The amount of damage dealt")
                 .build());
         api.events().register(api.events().builder("entity_damage_by_entity").by("Lumen")
@@ -199,11 +198,19 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.ENTITY)
                 .cancellable(true)
-                .addVar("entity", Types.ENTITY, "event.getEntity()")
+                .addVar("entity", MinecraftTypes.ENTITY, "event.getEntity()")
                 .varDescription("The entity that took damage")
-                .addVar("damager", Types.ENTITY, "event.getDamager()")
+                .addVar("damager", MinecraftTypes.ENTITY, "event.getDamager()")
                 .varDescription("The entity that dealt the damage")
-                .addVar("damagerPlayer", Types.PLAYER,
+                .addVar("player", MinecraftTypes.PLAYER,
+                        """
+                                if (event.getEntity() instanceof Player __p) {
+                                    player = __p;
+                                } else {
+                                    player = null;
+                                }""")
+                .varDescription("The player that took damage, or null if the damaged entity is not a player")
+                .addVar("damagerPlayer", MinecraftTypes.PLAYER,
                         """
                                 if (event.getDamager() instanceof Player __dp) {
                                     damagerPlayer = __dp;
@@ -212,10 +219,10 @@ public final class DefaultEvents {
                                 }""")
                 .varDescription("The player who dealt the damage, or null if the damager is not a player")
                 .withMeta("nullable", true)
-                .addVar("damage", Types.DOUBLE, "event.getDamage()")
+                .addVar("damage", PrimitiveType.DOUBLE, "event.getDamage()")
                 .varDescription("The amount of damage dealt")
                 .addImport(Material.class.getName())
-                .addVar("item", Types.ITEMSTACK,
+                .addVar("item", MinecraftTypes.ITEMSTACK,
                         """
                                 if (event.getDamager() instanceof Player __dw && __dw.getInventory().getItemInMainHand().getType() != Material.AIR) {
                                     item = __dw.getInventory().getItemInMainHand();
@@ -232,12 +239,12 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.ENTITY)
                 .cancellable(true)
-                .addVar("player", Types.PLAYER, "event.getPlayer()")
+                .addVar("player", MinecraftTypes.PLAYER, "event.getPlayer()")
                 .varDescription("The player who right clicked the entity")
-                .addVar("entity", Types.ENTITY, "event.getRightClicked()")
+                .addVar("entity", MinecraftTypes.ENTITY, "event.getRightClicked()")
                 .varDescription("The entity that was right clicked")
                 .addImport(Material.class.getName())
-                .addVar("item", Types.ITEMSTACK,
+                .addVar("item", MinecraftTypes.ITEMSTACK,
                         """
                                 if (event.getPlayer().getInventory().getItemInMainHand().getType() != Material.AIR) {
                                     item = event.getPlayer().getInventory().getItemInMainHand();
@@ -255,9 +262,9 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .cancellable(false)
-                .addVar("player", Types.PLAYER, "event.getEntity()")
+                .addVar("player", MinecraftTypes.PLAYER, "event.getEntity()")
                 .varDescription("The player who died")
-                .addVar("killer", Types.PLAYER,
+                .addVar("killer", MinecraftTypes.PLAYER,
                         """
                                 if (event.getEntity().getKiller() != null) {
                                     killer = event.getEntity().getKiller();
@@ -276,11 +283,11 @@ public final class DefaultEvents {
                 .category(Categories.BLOCK)
                 .cancellable(true)
                 .addImport(Material.class.getName())
-                .addVar("player", Types.PLAYER, "event.getPlayer()")
+                .addVar("player", MinecraftTypes.PLAYER, "event.getPlayer()")
                 .varDescription("The player who broke the block")
-                .addVar("block", Types.BLOCK, "event.getBlock()")
+                .addVar("block", MinecraftTypes.BLOCK, "event.getBlock()")
                 .varDescription("The block that was broken")
-                .addVar("item", Types.ITEMSTACK,
+                .addVar("item", MinecraftTypes.ITEMSTACK,
                         """
                                 if (event.getPlayer().getInventory().getItemInMainHand().getType() != Material.AIR) {
                                     item = event.getPlayer().getInventory().getItemInMainHand();
@@ -298,11 +305,11 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.BLOCK)
                 .cancellable(true)
-                .addVar("player", Types.PLAYER, "event.getPlayer()")
+                .addVar("player", MinecraftTypes.PLAYER, "event.getPlayer()")
                 .varDescription("The player who placed the block")
-                .addVar("block", Types.BLOCK, "event.getBlock()")
+                .addVar("block", MinecraftTypes.BLOCK, "event.getBlock()")
                 .varDescription("The block that was placed")
-                .addVar("item", Types.ITEMSTACK, "event.getItemInHand()")
+                .addVar("item", MinecraftTypes.ITEMSTACK, "event.getItemInHand()")
                 .varDescription("The item that was used to place the block")
                 .build());
 
@@ -323,12 +330,12 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .cancellable(true)
-                .addVar("player", Types.PLAYER, "event.getPlayer()")
+                .addVar("player", MinecraftTypes.PLAYER, "event.getPlayer()")
                 .varDescription("The player who interacted")
-                .addVar("action", "String", "event.getAction().name()")
+                .addVar("action", PrimitiveType.STRING, "event.getAction().name()")
                 .varDescription("The action type: LEFT_CLICK_BLOCK, RIGHT_CLICK_BLOCK, LEFT_CLICK_AIR, RIGHT_CLICK_AIR, " +
                         "or PHYSICAL (triggering a block by stepping on or colliding with it, such as pressure plates or farmland).")
-                .addVar("block", Types.BLOCK,
+                .addVar("block", MinecraftTypes.BLOCK,
                         """
                                 if (event.getClickedBlock() != null) {
                                     block = event.getClickedBlock();
@@ -337,7 +344,7 @@ public final class DefaultEvents {
                                 }""")
                 .varDescription("The block involved in the interaction, or null if the action targets air")
                 .withMeta("nullable", true)
-                .addVar("item", Types.ITEMSTACK,
+                .addVar("item", MinecraftTypes.ITEMSTACK,
                         """
                                 if (event.getItem() != null) {
                                     item = event.getItem();
@@ -361,16 +368,16 @@ public final class DefaultEvents {
                 .cancellable(true)
                 .addImport(Material.class.getName())
                 .addImport(LumenInventoryHolder.class.getName())
-                .addVar("player", Types.PLAYER,
+                .addVar("player", MinecraftTypes.PLAYER,
                         """
                                 if (event.getWhoClicked() instanceof Player __inv_p) {
                                     player = __inv_p;
                                 }""")
                 .varDescription("The player who clicked")
                 .withMeta("nullable", false)
-                .addVar("inventory", Inventory.class.getName(), "event.getView().getTopInventory()")
+                .addVar("inventory", MinecraftTypes.INVENTORY, "event.getView().getTopInventory()")
                 .varDescription("The top inventory being viewed")
-                .addVar("name", Types.STRING,
+                .addVar("name", PrimitiveType.STRING,
                         """
                                 if (event.getView().getTopInventory().getHolder() instanceof LumenInventoryHolder __lh) {
                                     name = __lh.name();
@@ -379,17 +386,17 @@ public final class DefaultEvents {
                                 }""")
                 .varDescription("The Lumen inventory name, or empty if not a Lumen inventory")
                 .withMeta("nullable", false)
-                .addVar("slot", Types.INT, "event.getSlot()")
+                .addVar("slot", PrimitiveType.INT, "event.getSlot()")
                 .varDescription("The slot index that was clicked")
-                .addVar("rawSlot", Types.INT, "event.getRawSlot()")
+                .addVar("rawSlot", PrimitiveType.INT, "event.getRawSlot()")
                 .varDescription("The raw slot index including both top and bottom inventory")
-                .addVar("clickType", "String", "event.getClick().name()")
+                .addVar("clickType", PrimitiveType.STRING, "event.getClick().name()")
                 .varDescription("The click type: LEFT, RIGHT, SHIFT_LEFT, SHIFT_RIGHT, MIDDLE, etc.")
-                .addVar("action", "String", "event.getAction().name()")
+                .addVar("action", PrimitiveType.STRING, "event.getAction().name()")
                 .varDescription("The inventory action: PICKUP_ALL, PLACE_ALL, SWAP_WITH_CURSOR, etc.")
-                .addVar("title", "String", "event.getView().getTitle()")
+                .addVar("title", PrimitiveType.STRING, "event.getView().getTitle()")
                 .varDescription("The display title of the inventory")
-                .addVar("item", Types.ITEMSTACK,
+                .addVar("item", MinecraftTypes.ITEMSTACK,
                         """
                                 if (event.getCurrentItem() != null) {
                                     item = event.getCurrentItem();
@@ -398,7 +405,7 @@ public final class DefaultEvents {
                                 }""")
                 .varDescription("The item in the clicked slot, or null if the slot is empty")
                 .withMeta("nullable", true)
-                .addVar("cursor", Types.ITEMSTACK,
+                .addVar("cursor", MinecraftTypes.ITEMSTACK,
                         """
                                 if (event.getCursor() != null && event.getCursor().getType() != Material.AIR) {
                                     cursor = event.getCursor();
@@ -416,7 +423,7 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.INVENTORY)
                 .cancellable(false)
-                .addVar("player", Types.PLAYER,
+                .addVar("player", MinecraftTypes.PLAYER,
                         """
                                 if (event.getPlayer() instanceof Player __inv_p) {
                                     player = __inv_p;
@@ -426,9 +433,9 @@ public final class DefaultEvents {
                 .varDescription("The player who closed the inventory, or null if the viewer is not a player (unlikely)")
                 .withMeta("nullable", true)
                 .addImport(LumenInventoryHolder.class.getName())
-                .addVar("inventory", Inventory.class.getName(), "event.getView().getTopInventory()")
+                .addVar("inventory", MinecraftTypes.INVENTORY, "event.getView().getTopInventory()")
                 .varDescription("The top inventory that was closed")
-                .addVar("name", Types.STRING,
+                .addVar("name", PrimitiveType.STRING,
                         """
                                 if (event.getView().getTopInventory().getHolder() instanceof LumenInventoryHolder __lh) {
                                     name = __lh.name();
@@ -437,7 +444,7 @@ public final class DefaultEvents {
                                 }""")
                 .varDescription("The Lumen inventory name, or null if not a Lumen inventory")
                 .withMeta("nullable", true)
-                .addVar("title", "String", "event.getView().getTitle()")
+                .addVar("title", PrimitiveType.STRING, "event.getView().getTitle()")
                 .varDescription("The display title of the inventory")
                 .build());
 
@@ -448,7 +455,7 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.INVENTORY)
                 .cancellable(true)
-                .addVar("player", Types.PLAYER,
+                .addVar("player", MinecraftTypes.PLAYER,
                         """
                                 if (event.getPlayer() instanceof Player __inv_p) {
                                     player = __inv_p;
@@ -458,9 +465,9 @@ public final class DefaultEvents {
                 .varDescription("The player who opened the inventory, or null if the viewer is not a player (unlikely)")
                 .withMeta("nullable", true)
                 .addImport(LumenInventoryHolder.class.getName())
-                .addVar("inventory", Inventory.class.getName(), "event.getView().getTopInventory()")
+                .addVar("inventory", MinecraftTypes.INVENTORY, "event.getView().getTopInventory()")
                 .varDescription("The top inventory that was opened")
-                .addVar("name", Types.STRING,
+                .addVar("name", PrimitiveType.STRING,
                         """
                                 if (event.getView().getTopInventory().getHolder() instanceof LumenInventoryHolder __lh) {
                                     name = __lh.name();
@@ -469,7 +476,7 @@ public final class DefaultEvents {
                                 }""")
                 .varDescription("The Lumen inventory name, or null if not a Lumen inventory")
                 .withMeta("nullable", true)
-                .addVar("title", "String", "event.getView().getTitle()")
+                .addVar("title", PrimitiveType.STRING, "event.getView().getTitle()")
                 .varDescription("The display title of the inventory")
                 .build());
 
@@ -480,7 +487,7 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.INVENTORY)
                 .cancellable(true)
-                .addVar("player", Types.PLAYER,
+                .addVar("player", MinecraftTypes.PLAYER,
                         """
                                 if (event.getWhoClicked() instanceof Player __inv_p) {
                                     player = __inv_p;
@@ -490,9 +497,9 @@ public final class DefaultEvents {
                 .varDescription("The player who dragged items, or null if the dragger is not a player (unlikely)")
                 .withMeta("nullable", true)
                 .addImport(LumenInventoryHolder.class.getName())
-                .addVar("inventory", Inventory.class.getName(), "event.getView().getTopInventory()")
+                .addVar("inventory", MinecraftTypes.INVENTORY, "event.getView().getTopInventory()")
                 .varDescription("The top inventory being viewed")
-                .addVar("name", Types.STRING,
+                .addVar("name", PrimitiveType.STRING,
                         """
                                 if (event.getView().getTopInventory().getHolder() instanceof LumenInventoryHolder __lh) {
                                     name = __lh.name();
@@ -501,7 +508,7 @@ public final class DefaultEvents {
                                 }""")
                 .varDescription("The Lumen inventory name, or null if not a Lumen inventory")
                 .withMeta("nullable", true)
-                .addVar("title", "String", "event.getView().getTitle()")
+                .addVar("title", PrimitiveType.STRING, "event.getView().getTitle()")
                 .varDescription("The display title of the inventory")
                 .build());
 
@@ -515,28 +522,31 @@ public final class DefaultEvents {
                 .cancellable(true)
                 .addImport(AsyncPlayerChatEvent.class.getName())
                 .addImport(Lumen.class.getName())
-                .addVar("player", Types.PLAYER, "player")
+                .addVar("player", MinecraftTypes.PLAYER, "player")
                 .withMeta("nullable", false)
                 .varDescription("The player who sent the chat message")
-                .addVar("text", "String", "text")
+                .addVar("message", PrimitiveType.STRING, "message")
                 .withMeta("nullable", false)
                 .varDescription("The chat message content")
+                .addVar("text", PrimitiveType.STRING, "message")
+                .varDescription("The chat message content (alias for 'message')")
+                .withMeta("nullable", false)
                 .handler(new BlockHandler() {
                     @Override
-                    public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
-                        out.line("@LumenEvent(AsyncPlayerChatEvent.class)");
-                        out.line("public void __lumen_evt_chat_" + out.lineNum() + "(AsyncPlayerChatEvent event) {");
-                        out.line("final Player __chat_player = event.getPlayer();");
-                        out.line("final String __chat_text = event.getMessage();");
-                        out.line("Bukkit.getScheduler().runTask(Lumen.instance(), () -> {");
-                        out.line("Player player = __chat_player;");
-                        out.line("String text = __chat_text;");
+                    public void begin(@NotNull HandlerContext ctx) {
+                        ctx.out().line("@LumenEvent(AsyncPlayerChatEvent.class)");
+                        ctx.out().line("public void __lumen_evt_chat_" + ctx.codegen().nextMethodId() + "(AsyncPlayerChatEvent event) {");
+                        ctx.out().line("final Player __chat_player = event.getPlayer();");
+                        ctx.out().line("final String __chat_message = event.getMessage();");
+                        ctx.out().line("Bukkit.getScheduler().runTask(Lumen.instance(), () -> {");
+                        ctx.out().line("Player player = __chat_player;");
+                        ctx.out().line("String message = __chat_message;");
                     }
 
                     @Override
-                    public void end(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
-                        out.line("});");
-                        out.line("}");
+                    public void end(@NotNull HandlerContext ctx) {
+                        ctx.out().line("});");
+                        ctx.out().line("}");
                     }
                 }));
 
@@ -547,9 +557,9 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.PLAYER)
                 .cancellable(true)
-                .addVar("player", Types.PLAYER, "event.getPlayer()")
+                .addVar("player", MinecraftTypes.PLAYER, "event.getPlayer()")
                 .varDescription("The player who used the fishing rod")
-                .addVar("entity", Types.ENTITY,
+                .addVar("entity", MinecraftTypes.ENTITY,
                         """
                                 if (event.getCaught() != null) {
                                     entity = event.getCaught();
@@ -558,10 +568,10 @@ public final class DefaultEvents {
                                 }""")
                 .varDescription("The caught entity, or null if nothing was caught")
                 .withMeta("nullable", true)
-                .addVar("hook", Types.ENTITY, "event.getHook()")
+                .addVar("hook", MinecraftTypes.ENTITY, "event.getHook()")
                 .varDescription("The fishing hook entity")
                 .addImport(Material.class.getName())
-                .addVar("item", Types.ITEMSTACK,
+                .addVar("item", MinecraftTypes.ITEMSTACK,
                         """
                                 if (event.getPlayer().getInventory().getItemInMainHand().getType() != Material.AIR) {
                                     item = event.getPlayer().getInventory().getItemInMainHand();
@@ -570,7 +580,7 @@ public final class DefaultEvents {
                                 }""")
                 .varDescription("The fishing rod in the player's main hand, or null if empty")
                 .withMeta("nullable", true)
-                .addVar("state", "String", "event.getState().name()")
+                .addVar("state", PrimitiveType.STRING, "event.getState().name()")
                 .varDescription("The fishing state: FISHING, CAUGHT_FISH, CAUGHT_ENTITY, IN_GROUND, FAILED_ATTEMPT, REEL_IN, BITE, or LURED")
                 .build());
 
@@ -581,9 +591,9 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.ENTITY)
                 .cancellable(true)
-                .addVar("entity", Types.ENTITY, "event.getEntity()")
+                .addVar("entity", MinecraftTypes.ENTITY, "event.getEntity()")
                 .varDescription("The projectile entity that was launched")
-                .addVar("shooter", Types.PLAYER,
+                .addVar("shooter", MinecraftTypes.PLAYER,
                         """
                                 if (event.getEntity().getShooter() instanceof Player __sp) {
                                     shooter = __sp;
@@ -601,9 +611,9 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.ENTITY)
                 .cancellable(true)
-                .addVar("entity", Types.ENTITY, "event.getEntity()")
+                .addVar("entity", MinecraftTypes.ENTITY, "event.getEntity()")
                 .varDescription("The projectile entity")
-                .addVar("shooter", Types.PLAYER,
+                .addVar("shooter", MinecraftTypes.PLAYER,
                         """
                                 if (event.getEntity().getShooter() instanceof Player __sp) {
                                     shooter = __sp;
@@ -612,7 +622,7 @@ public final class DefaultEvents {
                                 }""")
                 .varDescription("The player who shot the projectile, or null if not shot by a player")
                 .withMeta("nullable", true)
-                .addVar("hit_entity", Types.ENTITY,
+                .addVar("hit_entity", MinecraftTypes.ENTITY,
                         """
                                 if (event.getHitEntity() != null) {
                                     hit_entity = event.getHitEntity();
@@ -621,7 +631,7 @@ public final class DefaultEvents {
                                 }""")
                 .varDescription("The entity that was hit, or null if a block was hit")
                 .withMeta("nullable", true)
-                .addVar("hit_block", Types.BLOCK,
+                .addVar("hit_block", MinecraftTypes.BLOCK,
                         """
                                 if (event.getHitBlock() != null) {
                                     hit_block = event.getHitBlock();

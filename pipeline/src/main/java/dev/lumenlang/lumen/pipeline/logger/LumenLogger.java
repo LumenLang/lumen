@@ -16,6 +16,15 @@ public final class LumenLogger {
     private static boolean logWarnings = true;
 
     /**
+     * Returns whether full debug logging is enabled.
+     *
+     * @return true if full debug mode is active
+     */
+    public static boolean isFullDebug() {
+        return fullDebug;
+    }
+
+    /**
      * Initializes the logger with the plugin's logger instance.
      *
      * @param pluginLogger the Bukkit plugin logger

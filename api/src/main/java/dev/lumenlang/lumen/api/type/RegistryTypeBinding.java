@@ -4,6 +4,7 @@ import dev.lumenlang.lumen.api.codegen.CodegenAccess;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess.VarHandle;
 import dev.lumenlang.lumen.api.exceptions.ParseFailureException;
+import dev.lumenlang.lumen.api.util.FuzzyMatch;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Field;
@@ -72,6 +73,7 @@ public final class RegistryTypeBinding {
             @Override
             public @NotNull TypeBindingMeta meta() {
                 return new TypeBindingMeta(
+                        "a valid " + typeId.toLowerCase(Locale.ROOT).replace('_', ' '),
                         "Resolves a single token to a " + fqcn + " constant.",
                         fqcn,
                         List.of(),
@@ -80,35 +82,19 @@ public final class RegistryTypeBinding {
             }
 
             @Override
-            public int consumeCount(@NotNull List<String> tokens,
-                                    @NotNull EnvironmentAccess env) {
-                if (tokens.isEmpty()) return 0;
-                String normalized = normalize(tokens.get(0));
-                if (frozen.contains(normalized)) return 1;
-                if (env.lookupVar(tokens.get(0)) != null) return 1;
-                throw new ParseFailureException(
-                        "Unknown " + typeId + " value: " + tokens.get(0));
-            }
-
-            @Override
-            public @NotNull Object parse(@NotNull List<String> tokens,
-                                         @NotNull EnvironmentAccess env) {
+            public @NotNull Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 String normalized = normalize(tokens.get(0));
                 if (frozen.contains(normalized)) return normalized;
                 VarHandle ref = env.lookupVar(tokens.get(0));
                 if (ref != null) return ref;
-                throw new ParseFailureException(
-                        "Unknown " + typeId + " value: " + tokens.get(0));
+                throw new ParseFailureException(rejectMessage(typeId, tokens.get(0), frozen));
             }
 
             @Override
-            public @NotNull String toJava(@NotNull Object value,
-                                          @NotNull CodegenAccess ctx,
-                                          @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(@NotNull Object value, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
                 if (value instanceof VarHandle ref) {
                     ctx.addImport(fqcn);
-                    return fqcn + ".valueOf(String.valueOf(" + ref.java()
-                            + ").toUpperCase().replace(' ', '_').replace('-', '_'))";
+                    return fqcn + ".valueOf(String.valueOf(" + ref.java() + ").toUpperCase().replace(' ', '_').replace('-', '_'))";
                 }
                 ctx.addImport(fqcn);
                 return simpleName + "." + value;
@@ -128,10 +114,7 @@ public final class RegistryTypeBinding {
      * @return a ready to register type binding
      * @throws IllegalArgumentException if no static constant fields are found
      */
-    public static @NotNull AddonTypeBinding fromStaticFields(
-            @NotNull String typeId,
-            @NotNull Class<?> clazz,
-            @NotNull String fqcn) {
+    public static @NotNull AddonTypeBinding fromStaticFields(@NotNull String typeId, @NotNull Class<?> clazz, @NotNull String fqcn) {
         Set<String> names = new HashSet<>();
         for (Field field : clazz.getDeclaredFields()) {
             int mods = field.getModifiers();
@@ -151,5 +134,11 @@ public final class RegistryTypeBinding {
         return token.toUpperCase(Locale.ROOT)
                 .replace(' ', '_')
                 .replace('-', '_');
+    }
+
+    private static @NotNull String rejectMessage(@NotNull String typeId, @NotNull String token, @NotNull Set<String> known) {
+        String closest = FuzzyMatch.closest(token.toUpperCase(Locale.ROOT).replace(' ', '_').replace('-', '_'), known);
+        if (closest != null) return "'" + token + "' is not a valid " + typeId.toLowerCase(Locale.ROOT).replace('_', ' ') + ", did you mean '" + closest.toLowerCase(Locale.ROOT) + "'?";
+        return "'" + token + "' is not a valid " + typeId.toLowerCase(Locale.ROOT).replace('_', ' ');
     }
 }

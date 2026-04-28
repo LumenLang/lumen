@@ -28,19 +28,19 @@ public final class AttributeConditions {
     public void register(@NotNull LumenAPI api) {
         api.patterns().condition(b -> b
                 .by("Lumen")
-                .pattern("%e:ENTITY_POSSESSIVE% %attr:ATTRIBUTE% [value] %op:OP% %val:EXPR%")
+                .pattern("%e:ENTITY_POSSESSIVE% %attr:ATTRIBUTE% [value] %op:OP% %val:DOUBLE%")
                 .description("Compares a living entity's attribute value against a number using a relational operator.")
                 .example("if mob's max_health > 20:")
                 .since("1.0.0")
                 .category(Categories.ATTRIBUTE)
-                .handler((match, env, ctx) -> {
-                    VarHandle h = match.ref("e");
+                .handler(ctx -> {
+                    VarHandle h = ctx.requireVarHandle("e");
                     boolean known = EntityValidation.requireSubtype(h, LIVING, "compare attribute");
-                    imports(ctx);
+                    imports(ctx.codegen());
                     String java = h.java();
-                    String attr = match.java("attr", ctx, env);
-                    String op = match.java("op", ctx, env);
-                    String val = match.java("val", ctx, env);
+                    String attr = ctx.java("attr");
+                    String op = ctx.java("op");
+                    String val = ctx.java("val");
                     if (known) {
                         String le = "((LivingEntity) " + java + ")";
                         return "(" + le + ".getAttribute(" + attr + ") != null"
@@ -58,12 +58,12 @@ public final class AttributeConditions {
                 .example("if mob has max_health:")
                 .since("1.0.0")
                 .category(Categories.ATTRIBUTE)
-                .handler((match, env, ctx) -> {
-                    VarHandle h = match.ref("e");
+                .handler(ctx -> {
+                    VarHandle h = ctx.requireVarHandle("e");
                     boolean known = EntityValidation.requireSubtype(h, LIVING, "has attribute");
-                    imports(ctx);
+                    imports(ctx.codegen());
                     String java = h.java();
-                    String attr = match.java("attr", ctx, env);
+                    String attr = ctx.java("attr");
                     if (known) {
                         return "(((LivingEntity) " + java + ").getAttribute(" + attr + ") != null)";
                     }
@@ -77,12 +77,12 @@ public final class AttributeConditions {
                 .example("if mob lacks attack_damage:")
                 .since("1.0.0")
                 .category(Categories.ATTRIBUTE)
-                .handler((match, env, ctx) -> {
-                    VarHandle h = match.ref("e");
+                .handler(ctx -> {
+                    VarHandle h = ctx.requireVarHandle("e");
                     boolean known = EntityValidation.requireSubtype(h, LIVING, "lacks attribute");
-                    imports(ctx);
+                    imports(ctx.codegen());
                     String java = h.java();
-                    String attr = match.java("attr", ctx, env);
+                    String attr = ctx.java("attr");
                     if (known) {
                         return "(((LivingEntity) " + java + ").getAttribute(" + attr + ") == null)";
                     }

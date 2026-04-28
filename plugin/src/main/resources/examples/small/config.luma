@@ -12,7 +12,8 @@ on join:
 
     set lv to get player's xp level
     if lv > maxLevel:
-        set player's xp level to maxLevel
+        set capped to maxLevel as integer
+        set player's xp level to capped
         message player "{prefix} &7Level capped to {maxLevel}."
 
 on quit:

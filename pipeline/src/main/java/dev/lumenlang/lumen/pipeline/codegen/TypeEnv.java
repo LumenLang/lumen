@@ -1,13 +1,14 @@
 package dev.lumenlang.lumen.pipeline.codegen;
 
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
-import dev.lumenlang.lumen.api.type.RefTypeHandle;
+import dev.lumenlang.lumen.api.codegen.NarrowingFact;
+import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
+import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.pipeline.data.DataSchema;
 import dev.lumenlang.lumen.pipeline.persist.GlobalVars;
 import dev.lumenlang.lumen.pipeline.persist.PersistentVars;
 import dev.lumenlang.lumen.pipeline.placeholder.PlaceholderExpander;
-import dev.lumenlang.lumen.pipeline.type.LumenType;
-import dev.lumenlang.lumen.pipeline.var.RefType;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,11 +50,191 @@ public final class TypeEnv implements EnvironmentAccess {
     private final Set<String> runtimeGlobals = new HashSet<>();
     private final Set<String> globalFields = new HashSet<>();
     private final Set<String> experimental = new HashSet<>();
-    private final List<GlobalVarInfo> globalVars = new ArrayList<>();
+    private final List<VarRef> globalVars = new ArrayList<>();
     private final List<ConfigEntry> configEntries = new ArrayList<>();
     private final Map<String, VarRef> rootVars = new HashMap<>();
     private final Map<String, DataSchema> dataSchemas = new HashMap<>();
+    private final Map<String, NullState> nullStates = new HashMap<>();
+    private final Map<String, NullableVarInfo> nullableVarInfos = new HashMap<>();
+    private final Map<String, NullAssignmentInfo> nullAssignments = new HashMap<>();
+    private final Map<String, DeclarationInfo> declarationInfos = new HashMap<>();
+    private final List<LumenDiagnostic> warnings = new ArrayList<>();
+    private final List<NarrowingFact> pendingNarrowings = new ArrayList<>();
     private BlockContext currentBlock;
+
+    /**
+     * Tracks whether a nullable variable is currently known to be null or non-null.
+     *
+     * <p>This is a definite state, not a probability. {@code NULL} means the variable
+     * is certainly null at this point in the code (declared without default, or last reassigned to none).
+     * {@code NON_NULL} means a concrete value was provided (default value or reassignment to a value).
+     */
+    public enum NullState {
+        NULL,
+        NON_NULL
+    }
+
+    /**
+     * Records the declaration site of a nullable variable for use in multi-line diagnostics.
+     *
+     * @param declarationLine the line where the variable was declared
+     * @param declarationRaw  the raw source text of the declaration line
+     */
+    public record NullableVarInfo(int declarationLine, @NotNull String declarationRaw) {
+    }
+
+    /**
+     * Records where a variable was last set to none, for use in value flow diagnostics.
+     *
+     * @param line the line number where the variable became null
+     * @param raw  the raw source text of that line
+     */
+    public record NullAssignmentInfo(int line, @NotNull String raw) {
+    }
+
+    /**
+     * Records where a variable was first declared and last reassigned.
+     *
+     * @param firstLine the line number of the first declaration
+     * @param firstRaw  the raw source text of the first declaration
+     * @param lastLine  the line number of the most recent assignment
+     * @param lastRaw   the raw source text of the most recent assignment
+     */
+    public record DeclarationInfo(int firstLine, @NotNull String firstRaw, int lastLine, @NotNull String lastRaw) {
+    }
+
+    /**
+     * Sets the current null state for a nullable variable.
+     *
+     * @param name  the variable name
+     * @param state the null state
+     */
+    public void markNullState(@NotNull String name, @NotNull NullState state) {
+        nullStates.put(name, state);
+    }
+
+    /**
+     * Sets the current null state for a nullable variable and records where the null assignment happened.
+     *
+     * @param name  the variable name
+     * @param state the null state
+     * @param line  the line number where the state changed
+     * @param raw   the raw source text of that line
+     */
+    public void markNullState(@NotNull String name, @NotNull NullState state, int line, @NotNull String raw) {
+        nullStates.put(name, state);
+        if (state == NullState.NULL) {
+            nullAssignments.put(name, new NullAssignmentInfo(line, raw));
+        } else {
+            nullAssignments.remove(name);
+        }
+    }
+
+    /**
+     * Returns the current null state of a variable, or {@code null} if not tracked.
+     *
+     * @param name the variable name
+     * @return the null state, or {@code null}
+     */
+    public @Nullable NullState nullState(@NotNull String name) {
+        return nullStates.get(name);
+    }
+
+    /**
+     * Records the declaration site of a nullable variable.
+     *
+     * @param name the variable name
+     * @param info the declaration info
+     */
+    public void recordNullableVarInfo(@NotNull String name, @NotNull NullableVarInfo info) {
+        nullableVarInfos.put(name, info);
+    }
+
+    /**
+     * Returns the declaration site info for a nullable variable, or {@code null} if not recorded.
+     *
+     * @param name the variable name
+     * @return the declaration info, or {@code null}
+     */
+    public @Nullable NullableVarInfo nullableVarInfo(@NotNull String name) {
+        return nullableVarInfos.get(name);
+    }
+
+    /**
+     * Returns info about where a variable was last set to none, or {@code null} if not tracked.
+     *
+     * @param name the variable name
+     * @return the null assignment info, or {@code null}
+     */
+    public @Nullable NullAssignmentInfo nullAssignmentInfo(@NotNull String name) {
+        return nullAssignments.get(name);
+    }
+
+    /**
+     * Records or updates the declaration site for a variable.
+     * On first call for a given name, sets both first and last to the same values.
+     * On subsequent calls, updates only the last declaration.
+     *
+     * @param name the variable name
+     * @param line the line number of the declaration or reassignment
+     * @param raw  the raw source text
+     */
+    public void recordDeclaration(@NotNull String name, int line, @NotNull String raw) {
+        DeclarationInfo existing = declarationInfos.get(name);
+        if (existing == null) {
+            declarationInfos.put(name, new DeclarationInfo(line, raw, line, raw));
+        } else {
+            declarationInfos.put(name, new DeclarationInfo(existing.firstLine(), existing.firstRaw(), line, raw));
+        }
+    }
+
+    /**
+     * Returns the declaration info for a variable, or {@code null} if not recorded.
+     *
+     * @param name the variable name
+     * @return the declaration info, or {@code null}
+     */
+    public @Nullable DeclarationInfo declarationInfo(@NotNull String name) {
+        return declarationInfos.get(name);
+    }
+
+    /**
+     * Records a warning diagnostic to be displayed after compilation.
+     * Only diagnostics with {@link LumenDiagnostic.Severity#WARNING} are accepted.
+     *
+     * @param diagnostic the warning diagnostic
+     * @throws IllegalArgumentException if the diagnostic severity is not WARNING
+     */
+    public void addWarning(@NotNull LumenDiagnostic diagnostic) {
+        if (diagnostic.severity() != LumenDiagnostic.Severity.WARNING) {
+            throw new IllegalArgumentException("Only WARNING diagnostics can be added as warnings, got " + diagnostic.severity());
+        }
+        warnings.add(diagnostic);
+    }
+
+    /**
+     * Returns all accumulated warning diagnostics.
+     *
+     * @return unmodifiable list of warning diagnostics
+     */
+    public @NotNull List<LumenDiagnostic> warnings() {
+        return Collections.unmodifiableList(warnings);
+    }
+
+    /**
+     * Returns all variable names visible from the current scope.
+     *
+     * <p>Walks the scope stack from innermost to outermost, then includes root variables.
+     *
+     * @return a set of all visible variable names
+     */
+    public @NotNull Set<String> allVisibleVarNames() {
+        Set<String> names = new HashSet<>(rootVars.keySet());
+        for (BlockContext c = currentBlock; c != null; c = c.parent()) {
+            names.addAll(c.varNames());
+        }
+        return names;
+    }
 
     /**
      * Pushes a new {@link BlockContext} onto the scope stack, making it the active scope.
@@ -88,6 +269,46 @@ public final class TypeEnv implements EnvironmentAccess {
         return currentBlock;
     }
 
+    @Override
+    public void markNonNull(@NotNull String javaName) {
+        nullStates.put(javaName, NullState.NON_NULL);
+    }
+
+    @Override
+    public void clearNonNull(@NotNull String javaName) {
+        nullStates.remove(javaName);
+    }
+
+    @Override
+    public void pushNarrowing(@NotNull NarrowingFact fact) {
+        pendingNarrowings.add(fact);
+    }
+
+    @Override
+    public @NotNull List<NarrowingFact> consumeNarrowings() {
+        if (pendingNarrowings.isEmpty()) return List.of();
+        List<NarrowingFact> drained = List.copyOf(pendingNarrowings);
+        pendingNarrowings.clear();
+        return drained;
+    }
+
+    @Override
+    public void applyNarrowings(@NotNull List<NarrowingFact> facts) {
+        for (NarrowingFact f : facts) {
+            switch (f.kind()) {
+                case NON_NULL -> nullStates.put(f.javaName(), NullState.NON_NULL);
+                case NULLABLE -> nullStates.put(f.javaName(), NullState.NULL);
+            }
+        }
+    }
+
+    @Override
+    public void clearNarrowings(@NotNull List<NarrowingFact> facts) {
+        for (NarrowingFact f : facts) {
+            nullStates.remove(f.javaName());
+        }
+    }
+
     /**
      * Defines a named {@link VarRef} in the current block scope.
      *
@@ -110,7 +331,16 @@ public final class TypeEnv implements EnvironmentAccess {
             VarRef v = c.getVarLocal(name);
             if (v != null) return v;
         }
-        return rootVars.get(name);
+        VarRef root = rootVars.get(name);
+        if (root != null) return root;
+        return findGlobal(name);
+    }
+
+    public boolean hasLocalBinding(@NotNull String name) {
+        for (BlockContext c = currentBlock; c != null; c = c.parent()) {
+            if (c.getVarLocal(name) != null) return true;
+        }
+        return rootVars.containsKey(name);
     }
 
     /**
@@ -148,15 +378,24 @@ public final class TypeEnv implements EnvironmentAccess {
     }
 
     /**
-     * Returns the first {@link VarRef} in scope whose {@link RefType} matches the given type.
+     * Returns the names of all registered data schemas.
+     *
+     * @return the schema names (lowercased)
+     */
+    public @NotNull Set<String> dataSchemaNames() {
+        return dataSchemas.keySet();
+    }
+
+    /**
+     * Returns the first {@link VarRef} in scope whose type matches the given object type.
      *
      * <p>Walks the scope stack from innermost to outermost scope, examining all variables
      * in each frame.
      *
-     * @param type the ref type to match against
+     * @param type the object type to match against
      * @return the first matching variable, or {@code null} if none found
      */
-    public @Nullable VarRef lookupVarByType(@NotNull RefType type) {
+    public @Nullable VarRef lookupVarByType(@NotNull ObjectType type) {
         for (BlockContext c = currentBlock; c != null; c = c.parent()) {
             VarRef found = c.findVarByType(type);
             if (found != null) return found;
@@ -165,10 +404,9 @@ public final class TypeEnv implements EnvironmentAccess {
     }
 
     @Override
-    public @Nullable VarRef lookupVarByType(@NotNull RefTypeHandle type) {
-        RefType internal = type instanceof RefType rt ? rt : RefType.byId(type.id());
-        if (internal == null) return null;
-        return lookupVarByType(internal);
+    public @Nullable VarRef lookupVarByType(@NotNull LumenType type) {
+        if (type instanceof ObjectType obj) return lookupVarByType(obj);
+        return null;
     }
 
     /**
@@ -180,7 +418,7 @@ public final class TypeEnv implements EnvironmentAccess {
      * @param value the value to store
      */
     @Override
-    public void put(@NotNull String key, @NotNull Object value) {
+    public void put(@NotNull String key, @Nullable Object value) {
         globals.put(key, value);
     }
 
@@ -312,7 +550,7 @@ public final class TypeEnv implements EnvironmentAccess {
      *
      * @return the global var declarations
      */
-    public @NotNull List<GlobalVarInfo> globalVars() {
+    public @NotNull List<VarRef> globalVars() {
         return Collections.unmodifiableList(globalVars);
     }
 
@@ -324,34 +562,31 @@ public final class TypeEnv implements EnvironmentAccess {
      */
     @Override
     public boolean isGlobal(@NotNull String name) {
-        for (GlobalVarInfo g : globalVars) {
-            if (g.name.equals(name)) return true;
+        for (VarRef g : globalVars) {
+            if (g.name().equals(name)) return true;
         }
         return false;
     }
 
     @Override
-    public @Nullable GlobalVarInfo getGlobalInfo(@NotNull String name) {
-        for (GlobalVarInfo g : globalVars) {
-            if (g.name.equals(name)) return g;
+    public @Nullable GlobalInfo getGlobalInfo(@NotNull String name) {
+        VarRef g = findGlobal(name);
+        return g != null ? g.globalInfo() : null;
+    }
+
+    public @Nullable VarRef findGlobal(@NotNull String name) {
+        for (VarRef g : globalVars) {
+            if (g.name().equals(name)) return g;
         }
         return null;
     }
 
-    @Override
-    public void registerGlobal(@NotNull GlobalInfo info) {
-        if (info instanceof GlobalVarInfo gvi) {
-            globalVars.add(gvi);
-        } else {
-            globalVars.add(new GlobalVarInfo(
-                    info.name(), info.defaultJava(), info.className(),
-                    info.scoped(), info.exprRefTypeId(), info.stored(),
-                    info.exprMetadata()));
-        }
+    public void registerGlobal(@NotNull VarRef global) {
+        globalVars.add(global);
     }
 
     @Override
-    public @NotNull List<GlobalVarInfo> allGlobals() {
+    public @NotNull List<VarRef> allGlobals() {
         return Collections.unmodifiableList(globalVars);
     }
 
@@ -401,9 +636,8 @@ public final class TypeEnv implements EnvironmentAccess {
     }
 
     @Override
-    public VarHandle defineRootVar(@NotNull String name, @Nullable RefTypeHandle refType, @NotNull String java) {
-        RefType internal = refType instanceof RefType rt ? rt : (refType != null ? RefType.byId(refType.id()) : null);
-        VarRef ref = new VarRef(internal, java);
+    public VarHandle defineRootVar(@NotNull String name, @NotNull LumenType type, @NotNull String java) {
+        VarRef ref = new VarRef(name, type, java);
         rootVars.put(name, ref);
         return ref;
     }
@@ -427,36 +661,17 @@ public final class TypeEnv implements EnvironmentAccess {
     }
 
     @Override
-    public VarHandle defineVar(@NotNull String name, @Nullable RefTypeHandle refType, @NotNull String java) {
-        RefType internal = refType instanceof RefType rt ? rt : (refType != null ? RefType.byId(refType.id()) : null);
-        VarRef ref = new VarRef(internal, java);
+    public VarHandle defineVar(@NotNull String name, @NotNull LumenType type, @NotNull String java) {
+        VarRef ref = new VarRef(name, type, java);
         defineVar(name, ref);
         return ref;
     }
 
     @Override
-    public VarHandle defineVar(@NotNull String name, @Nullable RefTypeHandle refType,
-                               @NotNull String java, @NotNull Map<String, Object> metadata) {
-        RefType internal = refType instanceof RefType rt ? rt : (refType != null ? RefType.byId(refType.id()) : null);
-        VarRef ref = new VarRef(internal, java, metadata);
+    public VarHandle defineVar(@NotNull String name, @NotNull LumenType type, @NotNull String java, @NotNull Map<String, Object> metadata) {
+        VarRef ref = new VarRef(name, type, java, metadata);
         defineVar(name, ref);
         return ref;
-    }
-
-    /**
-     * Defines a named variable in the current block scope with a full compile-time type.
-     *
-     * @param name      the variable name
-     * @param refType   the ref type for type checking, or {@code null}
-     * @param java      the Java variable name
-     * @param lumenType the full compile-time type, or {@code null}
-     * @param metadata  compile-time metadata entries
-     */
-    public void defineVar(@NotNull String name, @Nullable RefType refType,
-                          @NotNull String java, @Nullable LumenType lumenType,
-                          @NotNull Map<String, Object> metadata) {
-        VarRef ref = new VarRef(refType, java, lumenType, metadata);
-        defineVar(name, ref);
     }
 
     @Override
@@ -472,18 +687,19 @@ public final class TypeEnv implements EnvironmentAccess {
     /**
      * Information about a script-wide variable declared with {@code global}.
      *
-     * @param name          the variable name
-     * @param defaultJava   the Java expression for the default value
-     * @param className     the script class name at the time of declaration
-     * @param scoped        whether the global is scoped per entity rather than server-wide
-     * @param exprRefTypeId the optional expression ref type id
-     * @param stored        whether the variable is persisted to disk ({@code true}) or in-memory only ({@code false})
-     * @param exprMetadata  compile-time metadata from the default expression, or {@code null}
+     * @param name         the variable name
+     * @param defaultJava  the Java expression for the default value
+     * @param className    the script class name at the time of declaration
+     * @param scoped       whether the global is scoped per entity rather than server-wide
+     * @param stored       whether the variable is persisted to disk ({@code true}) or in-memory only ({@code false})
+     * @param exprMetadata compile-time metadata from the default expression, or {@code null}
+     * @param type         the declared compile-time type
+     * @param scopeType    the scope type for scoped globals, or {@code null} if not scoped
      */
-    public record GlobalVarInfo(@NotNull String name, @NotNull String defaultJava,
+    public record GlobalVarInfo(@NotNull String defaultJava,
                                 @NotNull String className, boolean scoped,
-                                @Nullable String exprRefTypeId, boolean stored,
-                                @Nullable Map<String, Object> exprMetadata)
+                                boolean stored,
+                                @Nullable LumenType scopeType)
             implements EnvironmentAccess.GlobalInfo {
     }
 
@@ -494,5 +710,32 @@ public final class TypeEnv implements EnvironmentAccess {
      * @param java the Java expression for the config value
      */
     public record ConfigEntry(@NotNull String name, @NotNull String java) {
+    }
+
+    /**
+     * Creates a lightweight copy of this environment for parallel block emission.
+     *
+     * <p>The forked environment shares all read-only state established by important blocks
+     * (root variables, global variable declarations, config entries, data schemas, stored
+     * variable metadata, runtime global markers, global fields, and experimental flags).
+     *
+     * <p>Mutable per-block state (scope stack, globals map, null states) starts fresh.
+     *
+     * @return a new TypeEnv suitable for independent block emission
+     */
+    public @NotNull TypeEnv fork() {
+        TypeEnv forked = new TypeEnv();
+        forked.rootVars.putAll(this.rootVars);
+        forked.globalVars.addAll(this.globalVars);
+        forked.globals.putAll(this.globals);
+        forked.configEntries.addAll(this.configEntries);
+        forked.dataSchemas.putAll(this.dataSchemas);
+        forked.storedKeys.putAll(this.storedKeys);
+        forked.storedBaseKeys.putAll(this.storedBaseKeys);
+        forked.storedScopeVars.putAll(this.storedScopeVars);
+        forked.runtimeGlobals.addAll(this.runtimeGlobals);
+        forked.globalFields.addAll(this.globalFields);
+        forked.experimental.addAll(this.experimental);
+        return forked;
     }
 }

@@ -3,8 +3,8 @@ package dev.lumenlang.lumen.pipeline.addon;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.LumenAddon;
 import dev.lumenlang.lumen.pipeline.documentation.LumenDoc;
+import dev.lumenlang.lumen.pipeline.java.compiler.CompilerClasspath;
 import dev.lumenlang.lumen.pipeline.java.compiler.ScriptClassLoader;
-import dev.lumenlang.lumen.pipeline.java.compiler.system.SystemCompiler;
 import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,7 +65,7 @@ public final class AddonManager {
                         getClass().getClassLoader()
                 );
                 loaders.add(loader);
-                SystemCompiler.addExtraClasspath(jar.getAbsolutePath());
+                CompilerClasspath.addEntry(jar.getAbsolutePath());
                 ScriptClassLoader.addExtraLoader(loader);
 
                 ServiceLoader<LumenAddon> sl = ServiceLoader.load(LumenAddon.class, loader);
@@ -113,7 +113,7 @@ public final class AddonManager {
         }
         for (URLClassLoader loader : loaders) {
             for (URL url : loader.getURLs()) {
-                SystemCompiler.removeExtraClasspath(new File(url.getPath()).getAbsolutePath());
+                CompilerClasspath.removeEntry(new File(url.getPath()).getAbsolutePath());
             }
             ScriptClassLoader.removeExtraLoader(loader);
             try {
@@ -122,7 +122,7 @@ public final class AddonManager {
             }
         }
         for (String path : registeredClasspaths) {
-            SystemCompiler.removeExtraClasspath(path);
+            CompilerClasspath.removeEntry(path);
         }
         addons.clear();
         loaders.clear();
@@ -166,7 +166,7 @@ public final class AddonManager {
             File jar = new File(addon.getClass().getProtectionDomain().getCodeSource().getLocation().toURI());
             if (jar.isFile()) {
                 String path = jar.getAbsolutePath();
-                SystemCompiler.addExtraClasspath(path);
+                CompilerClasspath.addEntry(path);
                 ScriptClassLoader.addExtraLoader(addon.getClass().getClassLoader());
                 registeredClasspaths.add(path);
             }

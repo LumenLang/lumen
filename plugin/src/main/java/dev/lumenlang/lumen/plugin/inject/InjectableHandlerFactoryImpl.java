@@ -11,7 +11,6 @@ import dev.lumenlang.lumen.plugin.inject.handler.InjectableConditionHandler;
 import dev.lumenlang.lumen.plugin.inject.handler.InjectableExpressionHandler;
 import dev.lumenlang.lumen.plugin.inject.handler.InjectableStatementHandler;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public final class InjectableHandlerFactoryImpl implements InjectableHandlers.Factory {
 
@@ -26,13 +25,13 @@ public final class InjectableHandlerFactoryImpl implements InjectableHandlers.Fa
     }
 
     @Override
-    public @NotNull ExpressionHandler expression(@NotNull InjectableExpression expression, @Nullable String refTypeId, @Nullable String javaType) {
-        return new InjectableExpressionHandler(expression, refTypeId, javaType);
+    public @NotNull ExpressionHandler expression(@NotNull InjectableExpression expression) {
+        return new InjectableExpressionHandler(expression);
     }
 
     @Override
-    public @NotNull ExpressionHandler expression(@NotNull Class<?> clazz, @NotNull String methodName, @Nullable String refTypeId, @Nullable String javaType) {
-        return new InjectableExpressionHandler(clazz, methodName, refTypeId, javaType);
+    public @NotNull ExpressionHandler expression(@NotNull Class<?> clazz, @NotNull String methodName) {
+        return new InjectableExpressionHandler(clazz, methodName);
     }
 
     @Override

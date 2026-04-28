@@ -25,7 +25,7 @@ import java.util.UUID;
  * structures (e.g. a List of Maps). The recursive design makes it reusable for
  * any storage backend that works with {@code byte[]}.
  */
-// TODO: Better approach for handling Bukkit Locations and other Bukkit types
+// TODO: Completely remove this and replace it.
 public final class LumenSerializer implements ValueSerializer {
 
     public static final byte TAG_UUID = 0x01;

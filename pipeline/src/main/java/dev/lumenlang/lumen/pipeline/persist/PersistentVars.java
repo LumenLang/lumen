@@ -1,10 +1,10 @@
 package dev.lumenlang.lumen.pipeline.persist;
 
-import dev.lumenlang.lumen.pipeline.java.compiled.Coerce;
 import dev.lumenlang.lumen.pipeline.persist.impl.FilePersistentStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Set;
 import java.util.function.Function;
 
 /**
@@ -89,7 +89,18 @@ public final class PersistentVars {
         }
         if (valueResolver != null) val = valueResolver.apply(val);
         if (defaultValue != null && !defaultValue.getClass().isInstance(val)) {
-            val = Coerce.coerce(val, defaultValue);
+            val = matchType(val, defaultValue);
+        }
+        return (T) val;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> @NotNull T matchType(@NotNull Object val, @NotNull T defaultValue) {
+        if (defaultValue instanceof Number && val instanceof Number num) {
+            if (defaultValue instanceof Integer) return (T) Integer.valueOf(num.intValue());
+            if (defaultValue instanceof Long) return (T) Long.valueOf(num.longValue());
+            if (defaultValue instanceof Double) return (T) Double.valueOf(num.doubleValue());
+            if (defaultValue instanceof Float) return (T) Float.valueOf(num.floatValue());
         }
         return (T) val;
     }
@@ -132,6 +143,16 @@ public final class PersistentVars {
     public static void deleteByPrefix(@NotNull String prefix) {
         if (storage == null) return;
         storage.deleteByPrefix(prefix);
+    }
+
+    /**
+     * Returns an unmodifiable snapshot of all stored keys.
+     *
+     * @return the set of all keys, or an empty set if not initialized
+     */
+    public static @NotNull Set<String> keys() {
+        if (storage == null) return Set.of();
+        return storage.keys();
     }
 
     /**

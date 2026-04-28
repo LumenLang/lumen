@@ -27,14 +27,14 @@ public final class DataStatements {
     private void registerFieldSet(@NotNull LumenAPI api) {
         api.patterns().statement(b -> b
                 .by("Lumen")
-                .pattern("set field %field:STRING% (of|from) %obj:EXPR% to %val:EXPR%")
+                .pattern("set field %field:STRING% (of|from) %obj:DATA% to %val:EXPR%")
                 .description("Sets a field of a data instance to a new value.")
                 .example("set field \"name\" of myArena to \"NewName\"")
                 .since("1.0.0")
                 .category(Categories.DATA)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     ctx.codegen().addImport(DataInstance.class.getName());
-                    out.line("((DataInstance) " + ctx.java("obj") + ").set(" + ctx.java("field") + ", " + ctx.java("val") + ");");
+                    ctx.out().line("((DataInstance) " + ctx.java("obj") + ").set(" + ctx.java("field") + ", " + ctx.java("val") + ");");
                 }));
     }
 }

@@ -3,6 +3,7 @@ package dev.lumenlang.lumen.pipeline.language.typed;
 import dev.lumenlang.lumen.pipeline.language.nodes.StatementNode;
 import dev.lumenlang.lumen.pipeline.language.pattern.registered.RegisteredExpressionMatch;
 import dev.lumenlang.lumen.pipeline.language.pattern.registered.RegisteredPatternMatch;
+import dev.lumenlang.lumen.pipeline.language.resolve.PatternSimulator;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,8 +63,8 @@ public sealed interface TypedStatement permits TypedStatement.PatternStmt, Typed
      * @param raw         the original statement node
      * @param message     the human-readable error description
      * @param errorTokens the tokens responsible for the error, or {@code null} if the entire line is at fault
+     * @param suggestions simulation results from the pattern simulator, empty if no close matches were found
      */
-    record ErrorStmt(@NotNull StatementNode raw, @NotNull String message,
-                     @Nullable List<Token> errorTokens) implements TypedStatement {
+    record ErrorStmt(@NotNull StatementNode raw, @NotNull String message, @Nullable List<Token> errorTokens, @NotNull List<PatternSimulator.Suggestion> suggestions) implements TypedStatement {
     }
 }

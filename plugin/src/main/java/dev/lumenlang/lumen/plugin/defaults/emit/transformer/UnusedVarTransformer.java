@@ -110,8 +110,9 @@ public final class UnusedVarTransformer implements CodeTransformer {
 
         for (int i = 0; i < lines.size(); i++) {
             String code = lines.get(i).code().trim();
-            int opens = countBraces(code, '{');
-            int closes = countBraces(code, '}');
+            int[] counts = countBracePair(code);
+            int opens = counts[0];
+            int closes = counts[1];
 
             if (depth == 0 && opens > 0) {
                 methodStart = i;
@@ -158,9 +159,10 @@ public final class UnusedVarTransformer implements CodeTransformer {
         return false;
     }
 
-    private static int countBraces(@NotNull String line, char brace) {
-        if (line.startsWith("//")) return 0;
-        int count = 0;
+    private static int @NotNull [] countBracePair(@NotNull String line) {
+        if (line.startsWith("//")) return new int[]{0, 0};
+        int opens = 0;
+        int closes = 0;
         boolean inString = false;
         boolean inChar = false;
         for (int i = 0; i < line.length(); i++) {
@@ -171,9 +173,12 @@ public final class UnusedVarTransformer implements CodeTransformer {
             }
             if (c == '"' && !inChar) inString = !inString;
             else if (c == '\'' && !inString) inChar = !inChar;
-            else if (!inString && !inChar && c == brace) count++;
+            else if (!inString && !inChar) {
+                if (c == '{') opens++;
+                else if (c == '}') closes++;
+            }
         }
-        return count;
+        return new int[]{opens, closes};
     }
 
     private static boolean containsIdentifier(@NotNull String code, @NotNull String name) {

@@ -168,4 +168,23 @@ public class JavaBuilder implements JavaOutput {
      */
     public record ScriptLineInfo(int line, @NotNull String source) {
     }
+
+    /**
+     * Appends all lines, script-line markers, and tags from another builder into this one.
+     *
+     * <p>Indices from the other builder are shifted by the current line count so that
+     * markers and tags remain accurate after merging.
+     *
+     * @param other the builder whose contents should be appended
+     */
+    public void merge(@NotNull JavaBuilder other) {
+        int offset = out.size();
+        out.addAll(other.out);
+        for (var entry : other.lineMap.entrySet()) {
+            lineMap.put(entry.getKey() + offset, entry.getValue());
+        }
+        for (var entry : other.tagMap.entrySet()) {
+            tagMap.put(entry.getKey() + offset, entry.getValue());
+        }
+    }
 }

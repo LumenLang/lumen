@@ -1,5 +1,6 @@
 package dev.lumenlang.lumen.api.event;
 
+import dev.lumenlang.lumen.api.type.LumenType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -159,29 +160,21 @@ public final class EventDefinition {
     /**
      * A variable entry in an event definition.
      *
-     * @param refTypeId   the ref type id for type checking, or {@code null} for plain variables
-     * @param javaType    the Java type name (primitive name or fully qualified class name)
+     * @param type        the compile-time type for type checking and code generation
      * @param expr        the initialiser expression
      * @param metadata    compile-time metadata entries propagated to the resulting VarHandle
      * @param description a human readable description of this variable, or {@code null}
      */
-    public record VarEntry(@Nullable String refTypeId,
-                           @NotNull String javaType,
-                           @NotNull String expr,
-                           @NotNull Map<String, Object> metadata,
-                           @Nullable String description) {
+    public record VarEntry(@NotNull LumenType type, @NotNull String expr, @NotNull Map<String, Object> metadata, @Nullable String description) {
 
         /**
          * Creates a VarEntry with no metadata and no description.
          *
-         * @param refTypeId the ref type id, or {@code null}
-         * @param javaType  the Java type name (primitive name or fully qualified class name)
-         * @param expr      the initialiser expression
+         * @param type the compile-time type
+         * @param expr the initialiser expression
          */
-        public VarEntry(@Nullable String refTypeId,
-                        @NotNull String javaType,
-                        @NotNull String expr) {
-            this(refTypeId, javaType, expr, Map.of(), null);
+        public VarEntry(@NotNull LumenType type, @NotNull String expr) {
+            this(type, expr, Map.of(), null);
         }
     }
 }

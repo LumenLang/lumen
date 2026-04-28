@@ -27,7 +27,7 @@ import java.util.function.Consumer;
  *         .example("if player is sneaking:")
  *         .since("1.0.0")
  *         .category(Categories.PLAYER)
- *         .handler((match, env, ctx) -> match.ref("p").java() + ".isSneaking()"));
+ *         .handler(ctx -> ctx.requireVarHandle("p").java() + ".isSneaking()"));
  * }</pre>
  *
  * @see PatternRegistrar#condition(Consumer)

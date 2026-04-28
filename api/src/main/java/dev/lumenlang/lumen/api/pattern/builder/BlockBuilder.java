@@ -5,7 +5,7 @@ import dev.lumenlang.lumen.api.pattern.BlockVarInfo;
 import dev.lumenlang.lumen.api.pattern.Category;
 import dev.lumenlang.lumen.api.pattern.PatternMeta;
 import dev.lumenlang.lumen.api.pattern.PatternRegistrar;
-import dev.lumenlang.lumen.api.type.RefTypeHandle;
+import dev.lumenlang.lumen.api.type.LumenType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,12 +31,12 @@ import java.util.function.Consumer;
  *         .since("1.0.0")
  *         .category(Categories.CONTROL_FLOW)
  *         .handler(new BlockHandler() {
- *             public void begin(BindingAccess ctx, JavaOutput out) {
- *                 out.line("if (" + ctx.parseCondition("cond") + ") {");
+ *             public void begin(HandlerContext ctx) {
+ *                 ctx.out().line("if (" + ctx.parseCondition("cond") + ") {");
  *             }
  *
- *             public void end(BindingAccess ctx, JavaOutput out) {
- *                 out.line("}");
+ *             public void end(HandlerContext ctx) {
+ *                 ctx.out().line("}");
  *             }
  *         }));
  * }</pre>
@@ -201,31 +201,18 @@ public final class BlockBuilder {
     }
 
     /**
-     * Adds a variable that this block provides to its child statements.
-     *
-     * @param name the variable name accessible in script child statements
-     * @param type a human readable type string for documentation (e.g. "Player", "World")
-     * @return this builder
-     */
-    public @NotNull BlockBuilder addVar(@NotNull String name, @NotNull String type) {
-        variables.put(name, new BlockVarInfo(name, type));
-        this.lastVarName = name;
-        return this;
-    }
-
-    /**
      * Adds a typed variable that this block provides to its child statements.
      *
-     * <p>The human readable type string is derived from the ref type's Java class
-     * simple name. The {@link RefTypeHandle} is stored so that any tool
-     * can resolve the actual compile time type of this variable.
+     * <p>The human readable type string is derived from the type's display name.
+     * The {@link LumenType} is stored so that any tool can resolve the actual
+     * compile-time type of this variable.
      *
-     * @param name    the variable name accessible in script child statements
-     * @param refType the typed reference handle (e.g. {@code Types.PLAYER})
+     * @param name the variable name accessible in script child statements
+     * @param type the compile-time type (e.g. {@code MinecraftTypes.PLAYER})
      * @return this builder
      */
-    public @NotNull BlockBuilder addVar(@NotNull String name, @NotNull RefTypeHandle refType) {
-        variables.put(name, new BlockVarInfo(name, refType));
+    public @NotNull BlockBuilder addVar(@NotNull String name, @NotNull LumenType type) {
+        variables.put(name, new BlockVarInfo(name, type));
         this.lastVarName = name;
         return this;
     }
@@ -249,7 +236,7 @@ public final class BlockBuilder {
         Map<String, Object> newMeta = new HashMap<>(existing.metadata());
         newMeta.put(key, value);
         variables.put(lastVarName, new BlockVarInfo(
-                existing.name(), existing.type(), existing.refType(),
+                existing.name(), existing.type(), existing.lumenType(),
                 Collections.unmodifiableMap(newMeta), existing.description()));
         return this;
     }
@@ -270,7 +257,7 @@ public final class BlockBuilder {
         }
         BlockVarInfo existing = variables.get(lastVarName);
         variables.put(lastVarName, new BlockVarInfo(
-                existing.name(), existing.type(), existing.refType(),
+                existing.name(), existing.type(), existing.lumenType(),
                 existing.metadata(), description));
         return this;
     }

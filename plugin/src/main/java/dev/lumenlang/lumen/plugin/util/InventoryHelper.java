@@ -7,7 +7,6 @@ import dev.lumenlang.lumen.api.handler.ExpressionHandler;
 import dev.lumenlang.lumen.api.handler.StatementHandler;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -19,13 +18,13 @@ import java.util.Objects;
  * <pre>{@code
  * InventoryHelper.create()
  *     .statement(
- *         "set slot %slot:INT% of %inv:EXPR% to %item:ITEMSTACK%",
+ *         "set slot %slot:INT% of %inv:INVENTORY% to %item:ITEMSTACK%",
  *         "Sets an item in a specific slot of an inventory.",
  *         "set slot 0 of inv to sword",
  *         (line, ctx, out) -> { ... }
  *     )
  *     .expression(
- *         "[get] item in slot %slot:INT% of %inv:EXPR%",
+ *         "[get] item in slot %slot:INT% of %inv:INVENTORY%",
  *         "Returns the item in the given slot.",
  *         "set item to get item in slot 0 of inv",
  *         ctx -> { ... }
@@ -164,44 +163,6 @@ public final class InventoryHelper {
                                                @NotNull String description,
                                                @NotNull String example,
                                                @NotNull ExpressionHandler handler) {
-        return expression(pattern, description, example, null, null, handler);
-    }
-
-    /**
-     * Registers an expression pattern with a static return ref type.
-     *
-     * @param pattern         the pattern string
-     * @param description     human-readable description
-     * @param example         usage example
-     * @param returnRefTypeId the static return ref type id for tooling, or null
-     * @param handler         the expression handler
-     * @return this builder
-     */
-    public @NotNull InventoryHelper expression(@NotNull String pattern,
-                                               @NotNull String description,
-                                               @NotNull String example,
-                                               @Nullable String returnRefTypeId,
-                                               @NotNull ExpressionHandler handler) {
-        return expression(pattern, description, example, returnRefTypeId, null, handler);
-    }
-
-    /**
-     * Registers an expression pattern with a static return ref type and Java type.
-     *
-     * @param pattern         the pattern string
-     * @param description     human-readable description
-     * @param example         usage example
-     * @param returnRefTypeId the static return ref type id for tooling, or null
-     * @param returnJavaType  the Java type for tooling (e.g. "int", "String"), or null
-     * @param handler         the expression handler
-     * @return this builder
-     */
-    public @NotNull InventoryHelper expression(@NotNull String pattern,
-                                               @NotNull String description,
-                                               @NotNull String example,
-                                               @Nullable String returnRefTypeId,
-                                               @Nullable String returnJavaType,
-                                               @NotNull ExpressionHandler handler) {
         api.patterns().expression(b -> b
                 .by("Lumen")
                 .pattern(pattern)
@@ -209,8 +170,6 @@ public final class InventoryHelper {
                 .example(example)
                 .since("1.0.0")
                 .category(Categories.INVENTORY)
-                .returnRefTypeId(returnRefTypeId)
-                .returnJavaType(returnJavaType)
                 .handler(handler));
         return this;
     }

@@ -18,12 +18,12 @@ public final class ServerStatements {
     public void register(@NotNull LumenAPI api) {
         api.patterns().statement(b -> b
                 .by("Lumen")
-                .pattern("(use|import) %clazz:EXPR%")
+                .pattern("(use|import) %clazz:STRING%")
                 .description("Adds a Java import to the compiled script.")
                 .example("use org.bukkit.Material")
                 .since("1.0.0")
                 .category(Categories.SERVER)
-                .handler((line, ctx, out) -> ctx.codegen().addImport(ctx.java("clazz"))));
+                .handler(ctx -> ctx.codegen().addImport(ctx.java("clazz"))));
 
         api.patterns().statement(b -> b
                 .by("Lumen")
@@ -32,20 +32,8 @@ public final class ServerStatements {
                 .example("spawn zombie at loc")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler((line, ctx, out) -> out.line(ctx.java("loc") + ".getWorld().spawnEntity("
+                .handler(ctx -> ctx.out().line(ctx.java("loc") + ".getWorld().spawnEntity("
                         + ctx.java("loc") + ", " + ctx.java("type") + ");")));
-
-        api.patterns().statement(b -> b
-                .by("Lumen")
-                .pattern("spawn %type:ENTITY_TYPE% at %loc:EXPR%")
-                .description("Spawns an entity of the given type at an expression that resolves to a location.")
-                .example("spawn zombie at get player's location")
-                .since("1.0.0")
-                .category(Categories.ENTITY)
-                .handler((line, ctx, out) -> {
-                    String locJava = ctx.java("loc");
-                    out.line(locJava + ".getWorld().spawnEntity(" + locJava + ", " + ctx.java("type") + ");");
-                }));
 
         api.patterns().statement(b -> b
                 .by("Lumen")
@@ -54,16 +42,16 @@ public final class ServerStatements {
                 .example("broadcast \"Server restarting in 5 minutes!\"")
                 .since("1.0.0")
                 .category(Categories.SERVER)
-                .handler((line, ctx, out) -> out.line("LumenText.broadcast(" + ctx.java("text") + ");")));
+                .handler(ctx -> ctx.out().line("LumenText.broadcast(" + ctx.java("text") + ");")));
 
         api.patterns().statement(b -> b
                 .by("Lumen")
-                .pattern("set time [of] %w:EXPR% [to] %val:INT%")
+                .pattern("set time [of] %w:WORLD% [to] %val:INT%")
                 .description("Sets the time of a world.")
                 .example("set time of world to 6000")
                 .since("1.0.0")
                 .category(Categories.WORLD)
-                .handler((line, ctx, out) -> out
+                .handler(ctx -> ctx.out()
                         .line(ctx.java("w") + ".setTime(" + ctx.java("val") + ");")));
 
         api.patterns().statement(b -> b
@@ -73,7 +61,7 @@ public final class ServerStatements {
                 .example("execute \"give @s diamond\" as player")
                 .since("1.0.0")
                 .category(Categories.SERVER)
-                .handler((line, ctx, out) -> out.line("Bukkit.dispatchCommand("
+                .handler(ctx -> ctx.out().line("Bukkit.dispatchCommand("
                         + ctx.java("who") + ", " + ctx.java("cmd") + ");")));
 
         api.patterns().statement(b -> b
@@ -83,7 +71,7 @@ public final class ServerStatements {
                 .example("execute console \"say Hello\"")
                 .since("1.0.0")
                 .category(Categories.SERVER)
-                .handler((line, ctx, out) -> out.line("Bukkit.dispatchCommand(Bukkit.getConsoleSender(), " + ctx.java("cmd") + ");")));
+                .handler(ctx -> ctx.out().line("Bukkit.dispatchCommand(Bukkit.getConsoleSender(), " + ctx.java("cmd") + ");")));
 
         api.patterns().statement(b -> b
                 .by("Lumen")
@@ -92,9 +80,9 @@ public final class ServerStatements {
                 .example("play sound \"entity_experience_orb_pickup\" to player")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     ctx.codegen().addImport(SoundHelper.class.getName());
-                    out.line(SoundHelper.class.getSimpleName() + ".playSound(" + ctx.java("who") + ", " + ctx.java("sound") + ");");
+                    ctx.out().line(SoundHelper.class.getSimpleName() + ".playSound(" + ctx.java("who") + ", " + ctx.java("sound") + ");");
                 }));
     }
 }

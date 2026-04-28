@@ -6,8 +6,8 @@ import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.codegen.CodegenAccess;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.pattern.Categories;
-import dev.lumenlang.lumen.api.type.RefTypeHandle;
-import dev.lumenlang.lumen.pipeline.java.compiled.Coerce;
+import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.pipeline.persist.GlobalVars;
 import dev.lumenlang.lumen.pipeline.persist.PersistentVars;
 import org.jetbrains.annotations.NotNull;
@@ -42,18 +42,14 @@ public final class ScopedVariableConditions {
         }
         if (!info.scoped()) {
             throw new RuntimeException("Variable '" + varName
-                    + "' is not a scoped global. Declare it with 'global scoped " + varName + "' to use per-entity access.");
+                    + "' is not a scoped global. Declare it inside a 'global:' block with 'scoped to <type> " + varName + ": <type>' for per-entity access.");
         }
         EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
         if (scopeRef == null) {
             throw new RuntimeException("Scope variable not found: " + scopeVarName);
         }
-        RefTypeHandle refType = scopeRef.type();
-        if (refType == null) {
-            throw new RuntimeException("Scope variable '" + scopeVarName
-                    + "' has no ref type. Expected a typed variable like a player or entity.");
-        }
-        String scopeKeyPart = refType.keyExpression(scopeRef.java());
+        LumenType scopeType = scopeRef.type();
+        String scopeKeyPart = ((ObjectType) scopeType).keyExpression(scopeRef.java());
         String keyExpr = "\"" + info.className() + "." + varName + ".\" + " + scopeKeyPart;
         if (info.stored()) {
             ctx.addImport(PersistentVars.class.getName());
@@ -68,82 +64,81 @@ public final class ScopedVariableConditions {
     public void register(@NotNull LumenAPI api) {
         api.patterns().condition(b -> b
                 .by("Lumen")
-                .pattern("%a:EXPR% %op:OP% %b:EXPR% for %scope:EXPR%")
+                .pattern("%a:EXPR% %op:OP% %b:EXPR% for %scope:VAR%")
                 .description("Compares a scoped global variable against a value using a comparison operator. "
                         + "The 'for' clause specifies which entity's stored value to read.")
                 .example("if tp_toggle == 1 for target:")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
-                .handler((match, env, ctx) -> {
-                    String varName = match.java("a", ctx, env);
-                    String bVal = match.java("b", ctx, env);
-                    String scopeVarName = match.java("scope", ctx, env);
-                    String op = match.java("op", ctx, env);
-                    String readExpr = buildScopedRead(env, ctx, varName, scopeVarName);
+                .handler(ctx -> {
+                    String varName = ctx.java("a");
+                    String bVal = ctx.java("b");
+                    String scopeVarName = ctx.java("scope");
+                    String op = ctx.java("op");
+                    String readExpr = buildScopedRead(ctx.env(), ctx.codegen(), varName, scopeVarName);
                     if (op.equals("<") || op.equals(">") || op.equals("<=") || op.equals(">=")) {
-                        ctx.addImport(Coerce.class.getName());
-                        return "Coerce.toDouble(" + readExpr + ") " + op + " Coerce.toDouble(" + bVal + ")";
+                        return "((double) " + readExpr + ") " + op + " ((double) " + bVal + ")";
                     }
                     return readExpr + " " + op + " " + bVal;
                 }));
 
         api.patterns().condition(b -> b
                 .by("Lumen")
-                .pattern("%a:EXPR% (is|equals) %b:QSTRING% for %scope:EXPR%")
+                .pattern("%a:EXPR% (is|equals) %b:QSTRING% for %scope:VAR%")
                 .description("Checks if a scoped global variable equals a string value (case-insensitive). "
                         + "The 'for' clause specifies which entity's stored value to read.")
                 .example("if tpa_requester is \"none\" for target:")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
-                .handler((match, env, ctx) -> {
-                    String varName = match.java("a", ctx, env);
-                    String bVal = match.java("b", ctx, env);
-                    String scopeVarName = match.java("scope", ctx, env);
-                    String readExpr = buildScopedRead(env, ctx, varName, scopeVarName);
+                .handler(ctx -> {
+                    String varName = ctx.java("a");
+                    String bVal = ctx.java("b");
+                    String scopeVarName = ctx.java("scope");
+                    String readExpr = buildScopedRead(ctx.env(), ctx.codegen(), varName, scopeVarName);
                     return "String.valueOf(" + readExpr + ").equalsIgnoreCase(String.valueOf(" + bVal + "))";
                 }));
 
         api.patterns().condition(b -> b
                 .by("Lumen")
-                .pattern("%a:EXPR% (is not|does not equal) %b:QSTRING% for %scope:EXPR%")
+                .pattern("%a:EXPR% (is not|does not equal) %b:QSTRING% for %scope:VAR%")
                 .description("Checks if a scoped global variable does not equal a string value (case-insensitive). "
                         + "The 'for' clause specifies which entity's stored value to read.")
                 .example("if tpa_requester is not \"none\" for target:")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
-                .handler((match, env, ctx) -> {
-                    String varName = match.java("a", ctx, env);
-                    String bVal = match.java("b", ctx, env);
-                    String scopeVarName = match.java("scope", ctx, env);
-                    String readExpr = buildScopedRead(env, ctx, varName, scopeVarName);
+                .handler(ctx -> {
+                    String varName = ctx.java("a");
+                    String bVal = ctx.java("b");
+                    String scopeVarName = ctx.java("scope");
+                    String readExpr = buildScopedRead(ctx.env(), ctx.codegen(), varName, scopeVarName);
                     return "!String.valueOf(" + readExpr + ").equalsIgnoreCase(String.valueOf(" + bVal + "))";
                 }));
 
         api.patterns().condition(b -> b
                 .by("Lumen")
-                .pattern("%a:EXPR% is set for %scope:EXPR%")
+                .pattern("%a:EXPR% is set for %scope:VAR%")
                 .description("Checks if a scoped global variable is not null for the given entity.")
                 .example("if tpa_requester is set for target:")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
-                .handler((match, env, ctx) -> {
-                    String varName = match.java("a", ctx, env);
-                    String scopeVarName = match.java("scope", ctx, env);
-                    String readExpr = buildScopedRead(env, ctx, varName, scopeVarName);
+                .handler(ctx -> {
+                    String varName = ctx.java("a");
+                    String scopeVarName = ctx.java("scope");
+                    String readExpr = buildScopedRead(ctx.env(), ctx.codegen(), varName, scopeVarName);
                     return readExpr + " != null";
                 }));
 
         api.patterns().condition(b -> b
                 .by("Lumen")
-                .pattern("%a:EXPR% is not set for %scope:EXPR%")
+                .pattern("%a:EXPR% is not set for %scope:VAR%")
                 .description("Checks if a scoped global variable is null for the given entity.")
                 .example("if tpa_requester is not set for target:")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
-                .handler((match, env, ctx) -> {
-                    String varName = match.java("a", ctx, env);
-                    String scopeVarName = match.java("scope", ctx, env);
-                    String readExpr = buildScopedRead(env, ctx, varName, scopeVarName);
+                .handler(ctx -> {
+                    String varName = ctx.java("a");
+                    String scopeVarName = ctx.java("scope");
+                    String readExpr = buildScopedRead(ctx.env(), ctx.codegen(), varName, scopeVarName);
                     return readExpr + " == null";
                 }));
     }

@@ -3,13 +3,17 @@ package dev.lumenlang.lumen.plugin.defaults.block;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
-import dev.lumenlang.lumen.api.codegen.BindingAccess;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
-import dev.lumenlang.lumen.api.codegen.JavaOutput;
+import dev.lumenlang.lumen.api.codegen.HandlerContext;
+import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
+import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.handler.BlockHandler;
 import dev.lumenlang.lumen.api.pattern.Categories;
-import dev.lumenlang.lumen.api.type.RefTypeHandle;
-import dev.lumenlang.lumen.api.type.Types;
+import dev.lumenlang.lumen.api.type.CollectionType;
+import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.type.ObjectType;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
+import dev.lumenlang.lumen.api.type.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,30 +33,19 @@ import static dev.lumenlang.lumen.api.pattern.LumaExample.top;
  * (such as field access) can resolve it without requiring explicit type annotations.
  */
 @Registration
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "DataFlowIssue"})
 public class ListBlocks {
 
     /**
-     * Resolves the element ref type from the list variable's {@code element_type} metadata.
-     *
-     * <p>If the list was declared with {@code new list of <type>} and that type corresponds
-     * to a registered data schema, the returned handle will be the DATA ref type. Otherwise,
-     * returns {@code null} so the loop variable remains untyped.
+     * Resolves the element type from the list variable's {@link CollectionType}.
      *
      * @param ctx the binding access for the current pattern match
-     * @return the element ref type, or {@code null} if unknown
+     * @return the element type from the list's type arguments
      */
-    private static @Nullable RefTypeHandle resolveElementType(@NotNull BindingAccess ctx) {
-        Object listValue = ctx.value("list");
-        if (!(listValue instanceof EnvironmentAccess.VarHandle listRef)) return null;
-        if (!listRef.hasMeta("element_type")) return null;
-
-        String elementType = String.valueOf(listRef.meta("element_type"));
-        Object schema = ctx.env().get("data_schema_" + elementType);
-        if (schema != null) {
-            return Types.DATA;
-        }
-        return null;
+    private static @NotNull LumenType resolveElementType(@NotNull HandlerContext ctx) {
+        EnvironmentAccess.VarHandle listRef = (EnvironmentAccess.VarHandle) ctx.value("list");
+        CollectionType listType = TypeUtils.asCollection(listRef.type());
+        return listType.typeArguments().get(0);
     }
 
     /**
@@ -61,7 +54,7 @@ public class ListBlocks {
      * @param ctx the binding access for the current pattern match
      * @return metadata map containing the {@code data_type} key, or {@code null} if not applicable
      */
-    private static @Nullable Map<String, Object> resolveElementMetadata(@NotNull BindingAccess ctx) {
+    private static @Nullable Map<String, Object> resolveElementMetadata(@NotNull HandlerContext ctx) {
         Object listValue = ctx.value("list");
         if (!(listValue instanceof EnvironmentAccess.VarHandle listRef)) return null;
         if (!listRef.hasMeta("element_type")) return null;
@@ -85,24 +78,31 @@ public class ListBlocks {
                         secondly("broadcast item")))
                 .since("1.0.0")
                 .category(Categories.LIST)
-                .addVar("var", "Object")
-                    .varDescription("The current element in the list, named by the user (e.g. 'item' in 'loop item in myList'). Inherits the element type for typed lists.")
+                .addVar("var", PrimitiveType.STRING)
+                    .varDescription("The current element in the list, named by the user (e.g. 'item' in 'loop item in myList'). The type depends on the list being looped over and is accurate at runtime.")
                 .handler(new BlockHandler() {
                     @Override
-                    public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
+                    public void begin(@NotNull HandlerContext ctx) {
                         if (ctx.block().isRoot()) {
-                            throw new RuntimeException("A 'loop' block cannot be top-level");
+                            throw new DiagnosticException(LumenDiagnostic.error("A 'loop' block cannot be top level")
+                                    .at(ctx.block().line(), ctx.block().raw())
+                                    .label("top level loop not allowed")
+                                    .help("place 'loop' inside an event, command, or other block")
+                                    .build());
                         }
                         ctx.codegen().addImport(List.class.getName());
                         String varName = ctx.java("var");
                         if (ctx.env().lookupVar(varName) != null) {
-                            throw new RuntimeException(
-                                    "Loop variable '" + varName + "' is already defined in this scope.");
+                            throw new DiagnosticException(LumenDiagnostic.error("Loop variable '" + varName + "' is already defined")
+                                    .at(ctx.block().line(), ctx.block().raw())
+                                    .label("'" + varName + "' already exists in this scope")
+                                    .help("use a different variable name")
+                                    .build());
                         }
                         String listJava = ctx.java("list");
-                        out.line("for (var " + varName + " : (List<?>) " + listJava + ") {");
+                        LumenType elementType = resolveElementType(ctx);
+                        ctx.out().line("for (" + elementType.javaTypeName() + " " + varName + " : (List<" + elementType.javaTypeName() + ">) " + listJava + ") {");
 
-                        RefTypeHandle elementType = resolveElementType(ctx);
                         Map<String, Object> metadata = resolveElementMetadata(ctx);
                         if (metadata != null) {
                             ctx.env().defineVar(varName, elementType, varName, metadata);
@@ -112,49 +112,78 @@ public class ListBlocks {
                     }
 
                     @Override
-                    public void end(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
-                        out.line("}");
+                    public void end(@NotNull HandlerContext ctx) {
+                        ctx.out().line("}");
                     }
                 }));
 
         api.patterns().block(b -> b
                 .by("Lumen")
-                .pattern("loop %var:EXPR% in %list:LIST% for %scope:EXPR%")
+                .pattern("loop %var:EXPR% in %list:LIST% for %scope:VAR%")
                 .description("Iterates over each element of a scoped global list for a specific scope reference.")
                 .example("loop item in todos for player:")
                 .since("1.0.0")
                 .category(Categories.LIST)
-                .addVar("var", "Object")
+                .addVar("var", PrimitiveType.STRING)
                     .varDescription("The current element in the list")
                 .handler(new BlockHandler() {
                     @Override
-                    public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
+                    public void begin(@NotNull HandlerContext ctx) {
                         if (ctx.block().isRoot()) {
-                            throw new RuntimeException("A 'loop' block cannot be top-level");
+                            throw new DiagnosticException(LumenDiagnostic.error("A 'loop' block cannot be top level")
+                                    .at(ctx.block().line(), ctx.block().raw())
+                                    .label("top level loop not allowed")
+                                    .help("place 'loop' inside an event, command, or other block")
+                                    .build());
                         }
                         EnvironmentAccess env = ctx.env();
                         String varName = ctx.java("var");
-                        if (env.lookupVar(varName) != null) throw new RuntimeException("Loop variable '" + varName + "' is already defined in this scope.");
+                        if (env.lookupVar(varName) != null) {
+                            throw new DiagnosticException(LumenDiagnostic.error("Loop variable '" + varName + "' is already defined")
+                                    .at(ctx.block().line(), ctx.block().raw())
+                                    .label("'" + varName + "' already exists in this scope")
+                                    .help("use a different variable name")
+                                    .build());
+                        }
 
                         String listVarName = ctx.tokens("list").get(0);
                         String scopeVarName = ctx.java("scope");
                         EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(listVarName);
-                        if (info == null) throw new RuntimeException("'" + listVarName + "' is not a global variable.");
-                        if (!info.scoped()) throw new RuntimeException("'" + listVarName + "' is not a scoped global. Declare it with 'global scoped " + listVarName + "' to use per-entity access.");
+                        if (info == null) {
+                            throw new DiagnosticException(LumenDiagnostic.error("'" + listVarName + "' is not a global variable")
+                                    .at(ctx.block().line(), ctx.block().raw())
+                                    .label("not a global")
+                                    .help("declare it inside a 'global:' block as '" + listVarName + ": list of <type>'")
+                                    .build());
+                        }
+                        if (!info.scoped()) {
+                            throw new DiagnosticException(LumenDiagnostic.error("'" + listVarName + "' is not a scoped global")
+                                    .at(ctx.block().line(), ctx.block().raw())
+                                    .label("not scoped")
+                                    .help("declare it inside a 'global:' block with 'scoped to <type> " + listVarName + ": list of <type>' for per-entity access")
+                                    .build());
+                        }
                         EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
-                        if (scopeRef == null) throw new RuntimeException("Scope variable not found: " + scopeVarName);
-                        RefTypeHandle refType = scopeRef.type();
-                        if (refType == null) throw new RuntimeException("Scope variable '" + scopeVarName + "' has no ref type.");
-
+                        if (scopeRef == null) {
+                            throw new DiagnosticException(LumenDiagnostic.error("Scope variable '" + scopeVarName + "' not found")
+                                    .at(ctx.block().line(), ctx.block().raw())
+                                    .label("undefined variable")
+                                    .help("make sure the variable is defined before using it")
+                                    .build());
+                        }
+                        LumenType scopeType = scopeRef.type();
+                        EnvironmentAccess.VarHandle listRef = env.lookupVar(listVarName);
+                        CollectionType listType = TypeUtils.asCollection(listRef.type());
+                        LumenType elementType = listType.typeArguments().get(0);
                         ctx.codegen().addImport(List.class.getName());
                         ctx.codegen().addImport(ArrayList.class.getName());
-                        out.line("for (var " + varName + " : (List<?>) " + (info.stored() ? "PersistentVars" : "GlobalVars") + ".get(" + "\"" + info.className() + "." + listVarName + ".\" + " + refType.keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")) {");
-                        env.defineVar(varName, null, varName);
+                        ctx.out().line("for (var " + varName + " : (List<" + elementType.javaTypeName() + ">) " + (info.stored() ? "PersistentVars" : "GlobalVars") + ".get(" + "\"" + info.className() + "." + listVarName + ".\" + " + ((ObjectType) scopeType).keyExpression(scopeRef.java()) + ", " + info.defaultJava() + ")) {");
+                        env.defineVar(varName, elementType, varName);
                     }
 
                     @Override
-                    public void end(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
-                        out.line("}");
+                    public void end(@NotNull HandlerContext ctx) {
+                        ctx.out().line("}");
                     }
                 }));
     }

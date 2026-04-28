@@ -1,7 +1,7 @@
 package dev.lumenlang.lumen.pipeline.language.typed;
 
+import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
-import dev.lumenlang.lumen.pipeline.type.LumenType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,11 +17,11 @@ import java.util.List;
 public sealed interface Expr permits Expr.Literal, Expr.RefExpr, Expr.MathExpr, Expr.RawExpr {
 
     /**
-     * Returns the compile-time type of this expression, or {@code null} if unknown.
+     * Returns the compile-time type of this expression.
      *
-     * @return the resolved type, or {@code null}
+     * @return the resolved type
      */
-    @Nullable LumenType resolvedType();
+    @NotNull LumenType resolvedType();
 
     /**
      * A constant literal value such as a number or a quoted string.
@@ -36,7 +36,7 @@ public sealed interface Expr permits Expr.Literal, Expr.RefExpr, Expr.MathExpr, 
      *                     null literal
      * @param resolvedType the compile-time type inferred from the literal value
      */
-    record Literal(@Nullable Object value, @Nullable LumenType resolvedType) implements Expr {
+    record Literal(@Nullable Object value, @NotNull LumenType resolvedType) implements Expr {
     }
 
     /**
@@ -50,7 +50,7 @@ public sealed interface Expr permits Expr.Literal, Expr.RefExpr, Expr.MathExpr, 
      * @param name         the variable name as it appears in the script
      * @param resolvedType the compile-time type from the variable's definition
      */
-    record RefExpr(@NotNull String name, @Nullable LumenType resolvedType) implements Expr {
+    record RefExpr(@NotNull String name, @NotNull LumenType resolvedType) implements Expr {
     }
 
     /**
@@ -60,7 +60,7 @@ public sealed interface Expr permits Expr.Literal, Expr.RefExpr, Expr.MathExpr, 
      * @param java         the Java expression source code
      * @param resolvedType the compile-time numeric result type
      */
-    record MathExpr(@NotNull String java, @Nullable LumenType resolvedType) implements Expr {
+    record MathExpr(@NotNull String java, @NotNull LumenType resolvedType) implements Expr {
     }
 
     /**
@@ -71,17 +71,8 @@ public sealed interface Expr permits Expr.Literal, Expr.RefExpr, Expr.MathExpr, 
      * The code generator handles raw expressions by delegating to the type binding system.
      *
      * @param tokens       the unprocessed tokens forming this expression
-     * @param resolvedType the compile-time type if it could be determined, or {@code null}
+     * @param resolvedType the compile-time type if it could be determined
      */
-    record RawExpr(@NotNull List<Token> tokens, @Nullable LumenType resolvedType) implements Expr {
-
-        /**
-         * Creates a raw expression without type information.
-         *
-         * @param tokens the token list
-         */
-        public RawExpr(@NotNull List<Token> tokens) {
-            this(tokens, null);
-        }
+    record RawExpr(@NotNull List<Token> tokens, @NotNull LumenType resolvedType) implements Expr {
     }
 }

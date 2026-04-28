@@ -25,11 +25,11 @@ public final class TameableStatements {
                         "tame %e:ENTITY% [by] %who:PLAYER%",
                         "Tames an entity, assigning it to a player as owner.",
                         "tame mob by player",
-                        (line, ctx, out) -> {
+                        ctx -> {
                             VarHandle h = (VarHandle) ctx.value("e");
                             EntityValidation.requireSubtype(h, TAMEABLE, "tame");
                             ctx.codegen().addImport(TAMEABLE);
-                            out.line("if (" + ctx.java("e")
+                            ctx.out().line("if (" + ctx.java("e")
                                     + " instanceof Tameable _tm) { _tm.setTamed(true); _tm.setOwner("
                                     + ctx.java("who") + "); }");
                         })
@@ -37,11 +37,11 @@ public final class TameableStatements {
                         "untame %e:ENTITY%",
                         "Untames a tameable entity, removing its owner.",
                         "untame mob",
-                        (line, ctx, out) -> {
+                        ctx -> {
                             VarHandle h = (VarHandle) ctx.value("e");
                             EntityValidation.requireSubtype(h, TAMEABLE, "untame");
                             ctx.codegen().addImport(TAMEABLE);
-                            out.line("if (" + ctx.java("e")
+                            ctx.out().line("if (" + ctx.java("e")
                                     + " instanceof Tameable _tm) { _tm.setTamed(false); _tm.setOwner(null); }");
                         });
 

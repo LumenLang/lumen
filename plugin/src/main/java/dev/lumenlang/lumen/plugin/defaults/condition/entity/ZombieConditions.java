@@ -20,23 +20,20 @@ public final class ZombieConditions {
         EntityHelper.forType(FQCN)
                 .alias("_zb")
                 .conditionPair(
-                        "%e:ENTITY% can break doors",
-                        "%e:ENTITY% (can not|cannot) break doors",
+                        "%e:ENTITY% (can|can not|cannot) break doors",
+                        0, "can",
                         "canBreakDoors()",
-                        "Checks if a zombie can break doors.",
-                        "Checks if a zombie cannot break doors.",
-                        "if mob can break doors:",
-                        "if mob cannot break doors:")
+                        "Checks if a zombie can or cannot break doors.",
+                        "if mob can break doors:")
                 .condition(
                         "%e:ENTITY% is converting [to drowned]",
                         "Checks if a zombie is converting to a drowned.",
                         "if mob is converting to drowned:",
-                        (match, env, ctx) -> {
-                            VarHandle h = match.ref("e");
+                        (ctx) -> {
+                            VarHandle h = ctx.requireVarHandle("e");
                             EntityValidation.requireSubtype(h, FQCN, "is converting");
-                            ctx.addImport(FQCN);
-                            return "(" + h.java()
-                                    + " instanceof Zombie _zb && _zb.isConverting())";
+                            ctx.codegen().addImport(FQCN);
+                            return "(" + h.java() + " instanceof Zombie _zb && _zb.isConverting())";
                         });
     }
 }

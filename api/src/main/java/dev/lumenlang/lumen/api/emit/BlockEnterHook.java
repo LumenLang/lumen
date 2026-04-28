@@ -1,5 +1,6 @@
 package dev.lumenlang.lumen.api.emit;
 
+import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -24,7 +25,7 @@ public interface BlockEnterHook {
     /**
      * Called after a block's {@code begin} handler and before its children are emitted.
      *
-     * @param ctx the emit context providing environment, codegen, and output access
+     * @param ctx the handler context providing environment, codegen, and output access
      */
-    void onBlockEnter(@NotNull EmitContext ctx);
+    void onBlockEnter(@NotNull HandlerContext ctx);
 }

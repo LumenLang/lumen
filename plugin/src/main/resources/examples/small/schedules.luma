@@ -36,8 +36,9 @@ every 30 seconds as "temp_task" cancelling:
 
 # A named repeating task with default hot-reload behavior.
 # On reload, the code is swapped but the timer keeps its current phase.
-global heartbeat_count with default 0
-global countdown with default 5
+global:
+    heartbeat_count: int with default 0
+    countdown: int with default 5
 
 every 1 minute as "heartbeat":
     add 1 to heartbeat_count

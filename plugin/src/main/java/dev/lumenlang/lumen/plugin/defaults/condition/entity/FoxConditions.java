@@ -18,20 +18,16 @@ public final class FoxConditions {
         EntityHelper.forType(FQCN)
                 .alias("_fx")
                 .conditionPair(
-                        "%e:ENTITY% is sleeping",
-                        "%e:ENTITY% is not sleeping",
+                        "%e:ENTITY% (is|is not) sleeping",
+                        0, "is",
                         "isSleeping()",
-                        "Checks if a fox is sleeping.",
-                        "Checks if a fox is not sleeping.",
-                        "if mob is sleeping:",
-                        "if mob is not sleeping:")
+                        "Checks if a fox is or is not sleeping.",
+                        "if mob is sleeping:")
                 .conditionPair(
-                        "%e:ENTITY% is crouching",
-                        "%e:ENTITY% is not crouching",
+                        "%e:ENTITY% (is|is not) crouching",
+                        0, "is",
                         "isCrouching()",
-                        "Checks if a fox is crouching.",
-                        "Checks if a fox is not crouching.",
-                        "if mob is crouching:",
-                        "if mob is not crouching:");
+                        "Checks if a fox is or is not crouching.",
+                        "if mob is crouching:");
     }
 }

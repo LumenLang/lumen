@@ -11,32 +11,23 @@ import org.jetbrains.annotations.NotNull;
  * Registers built-in condition patterns for string comparison and inspection.
  */
 @Registration(order = 200)
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "DataFlowIssue"})
 public final class StringConditions {
 
     @Call
     public void register(@NotNull LumenAPI api) {
         api.patterns().condition(b -> b
                 .by("Lumen")
-                .pattern("%a:STRING% (is|equals) %b:QSTRING%")
-                .description("Checks if two strings are equal (case-insensitive).")
-                .example("if myVar is \"hello\":")
+                .pattern("%a:STRING% (is|equals|is not|does not equal) %b:QSTRING%")
+                .description("Checks if two strings are equal or not equal (case-insensitive).")
+                .examples("if myVar is \"hello\":", "if myVar is not \"hello\":")
                 .since("1.0.0")
                 .category(Categories.TEXT)
-                .handler((match, env, ctx) ->
-                        "String.valueOf(" + match.java("a", ctx, env) + ").equalsIgnoreCase(String.valueOf("
-                                + match.java("b", ctx, env) + "))"));
-
-        api.patterns().condition(b -> b
-                .by("Lumen")
-                .pattern("%a:STRING% (is not|does not equal) %b:QSTRING%")
-                .description("Checks if two strings are not equal (case-insensitive).")
-                .example("if myVar is not \"hello\":")
-                .since("1.0.0")
-                .category(Categories.TEXT)
-                .handler((match, env, ctx) ->
-                        "!String.valueOf(" + match.java("a", ctx, env) + ").equalsIgnoreCase(String.valueOf("
-                                + match.java("b", ctx, env) + "))"));
+                .handler(ctx -> {
+                    String choice = ctx.choice(0);
+                    boolean negated = choice.equals("is not") || choice.equals("does not equal");
+                    return (negated ? "!" : "") + "String.valueOf(" + ctx.java("a") + ").equalsIgnoreCase(String.valueOf(" + ctx.java("b") + "))";
+                }));
 
         api.patterns().condition(b -> b
                 .by("Lumen")
@@ -45,31 +36,21 @@ public final class StringConditions {
                 .example("if myVar is exactly \"Hello\":")
                 .since("1.0.0")
                 .category(Categories.TEXT)
-                .handler((match, env, ctx) ->
-                        "String.valueOf(" + match.java("a", ctx, env) + ").equals(String.valueOf("
-                                + match.java("b", ctx, env) + "))"));
+                .handler(ctx ->
+                        "String.valueOf(" + ctx.java("a") + ").equals(String.valueOf("
+                                + ctx.java("b") + "))"));
 
         api.patterns().condition(b -> b
                 .by("Lumen")
-                .pattern("%a:STRING% contains %b:QSTRING%")
-                .description("Checks if a string contains another string.")
-                .example("if myVar contains \"ell\":")
+                .pattern("%a:STRING% (contains|does not contain) %b:QSTRING%")
+                .description("Checks if a string contains or does not contain another string.")
+                .examples("if myVar contains \"ell\":", "if myVar does not contain \"bad\":")
                 .since("1.0.0")
                 .category(Categories.TEXT)
-                .handler((match, env, ctx) ->
-                        "String.valueOf(" + match.java("a", ctx, env) + ").contains(String.valueOf("
-                                + match.java("b", ctx, env) + "))"));
-
-        api.patterns().condition(b -> b
-                .by("Lumen")
-                .pattern("%a:STRING% does not contain %b:QSTRING%")
-                .description("Checks if a string does not contain another string.")
-                .example("if myVar does not contain \"bad\":")
-                .since("1.0.0")
-                .category(Categories.TEXT)
-                .handler((match, env, ctx) ->
-                        "!String.valueOf(" + match.java("a", ctx, env) + ").contains(String.valueOf("
-                                + match.java("b", ctx, env) + "))"));
+                .handler(ctx -> {
+                    boolean negated = ctx.choice(0).equals("does not contain");
+                    return (negated ? "!" : "") + "String.valueOf(" + ctx.java("a") + ").contains(String.valueOf(" + ctx.java("b") + "))";
+                }));
 
         api.patterns().condition(b -> b
                 .by("Lumen")
@@ -78,9 +59,9 @@ public final class StringConditions {
                 .example("if myVar starts with \"he\":")
                 .since("1.0.0")
                 .category(Categories.TEXT)
-                .handler((match, env, ctx) ->
-                        "String.valueOf(" + match.java("a", ctx, env) + ").startsWith(String.valueOf("
-                                + match.java("b", ctx, env) + "))"));
+                .handler(ctx ->
+                        "String.valueOf(" + ctx.java("a") + ").startsWith(String.valueOf("
+                                + ctx.java("b") + "))"));
 
         api.patterns().condition(b -> b
                 .by("Lumen")
@@ -89,29 +70,21 @@ public final class StringConditions {
                 .example("if myVar ends with \"lo\":")
                 .since("1.0.0")
                 .category(Categories.TEXT)
-                .handler((match, env, ctx) ->
-                        "String.valueOf(" + match.java("a", ctx, env) + ").endsWith(String.valueOf("
-                                + match.java("b", ctx, env) + "))"));
+                .handler(ctx ->
+                        "String.valueOf(" + ctx.java("a") + ").endsWith(String.valueOf("
+                                + ctx.java("b") + "))"));
 
         api.patterns().condition(b -> b
                 .by("Lumen")
-                .pattern("%s:STRING% is empty")
-                .description("Checks if a string is empty.")
-                .example("if myVar is empty:")
+                .pattern("%s:STRING% (is|is not) empty")
+                .description("Checks if a string is or is not empty.")
+                .examples("if myVar is empty:", "if myVar is not empty:")
                 .since("1.0.0")
                 .category(Categories.TEXT)
-                .handler((match, env, ctx) ->
-                        "String.valueOf(" + match.java("s", ctx, env) + ").isEmpty()"));
-
-        api.patterns().condition(b -> b
-                .by("Lumen")
-                .pattern("%s:STRING% is not empty")
-                .description("Checks if a string is not empty.")
-                .example("if myVar is not empty:")
-                .since("1.0.0")
-                .category(Categories.TEXT)
-                .handler((match, env, ctx) ->
-                        "!String.valueOf(" + match.java("s", ctx, env) + ").isEmpty()"));
+                .handler(ctx -> {
+                    boolean negated = ctx.choice(0).equals("is not");
+                    return (negated ? "!" : "") + "String.valueOf(" + ctx.java("s") + ").isEmpty()";
+                }));
 
         api.patterns().condition(b -> b
                 .by("Lumen")
@@ -120,9 +93,9 @@ public final class StringConditions {
                 .example("if length of myVar >= 5:")
                 .since("1.0.0")
                 .category(Categories.TEXT)
-                .handler((match, env, ctx) ->
-                        "String.valueOf(" + match.java("s", ctx, env) + ").length() "
-                                + match.java("op", ctx, env) + " " + match.java("n", ctx, env)));
+                .handler(ctx ->
+                        "String.valueOf(" + ctx.java("s") + ").length() "
+                                + ctx.java("op") + " " + ctx.java("n")));
 
         api.patterns().condition(b -> b
                 .by("Lumen")
@@ -131,9 +104,9 @@ public final class StringConditions {
                 .example("if myVar matches \"[0-9]+\":")
                 .since("1.0.0")
                 .category(Categories.TEXT)
-                .handler((match, env, ctx) ->
-                        "String.valueOf(" + match.java("a", ctx, env) + ").matches(String.valueOf("
-                                + match.java("b", ctx, env) + "))"));
+                .handler(ctx ->
+                        "String.valueOf(" + ctx.java("a") + ").matches(String.valueOf("
+                                + ctx.java("b") + "))"));
 
         api.patterns().condition(b -> b
                 .by("Lumen")
@@ -142,10 +115,10 @@ public final class StringConditions {
                 .example("if \"{enabled}\" is true:")
                 .since("1.0.0")
                 .category(Categories.TEXT)
-                .handler((match, env, ctx) -> {
-                    ctx.addImport(Truthiness.class.getName());
+                .handler(ctx -> {
+                    ctx.codegen().addImport(Truthiness.class.getName());
                     return "Truthiness.check("
-                            + match.java("a", ctx, env) + ")";
+                            + ctx.java("a") + ")";
                 }));
 
         api.patterns().condition(b -> b
@@ -155,10 +128,10 @@ public final class StringConditions {
                 .example("if \"{enabled}\" is false:")
                 .since("1.0.0")
                 .category(Categories.TEXT)
-                .handler((match, env, ctx) -> {
-                    ctx.addImport(Truthiness.class.getName());
+                .handler(ctx -> {
+                    ctx.codegen().addImport(Truthiness.class.getName());
                     return "!Truthiness.check("
-                            + match.java("a", ctx, env) + ")";
+                            + ctx.java("a") + ")";
                 }));
     }
 }

@@ -1,6 +1,6 @@
-# Todo List
-# A per-player todo list using list operations.
-# Shows how to add, remove, loop, and clear list entries.
+# Typed Todo List
+# A per player todo list using typed list operations.
+# Shows how to add, remove, loop, and clear typed list entries.
 #
 # Commands:
 #   /todo              View your todo list
@@ -8,19 +8,21 @@
 #   /todo done <N>     Complete a task by number
 #   /todo clear        Clear all tasks
 
-global stored scoped todos with default new list
+global:
+    stored scoped to player todos: list of string
 
 command todo:
     description "Manage your personal todo list"
     aliases task
 
     if args size < 1:
-        if todos is empty for player:
+        set my_todos to get todos for player
+        if my_todos is empty:
             message player "&7No tasks yet. Use /todo add <task>"
         else:
             message player "&6&lYour Todos:"
             set i to 1
-            loop item in todos for player:
+            loop item in my_todos:
                 message player "  &e{i}. &f{item}"
                 add 1 to i
     else:
@@ -31,8 +33,10 @@ command todo:
                 message player "&cUsage: /todo add <task>"
             else:
                 set text to get args at index 1
-                add text to todos for player
-                set count to todos size for player
+                set my_todos to get todos for player
+                add text to my_todos
+                set todos to my_todos for player
+                set count to my_todos size
                 message player "&aAdded! &7({count} tasks total)"
 
         else if action is "done":
@@ -42,9 +46,11 @@ command todo:
                 set num to get args at index 1
                 set idx to num as integer
                 subtract 1 from idx
-                remove index idx from todos for player
+                set my_todos to get todos for player
+                remove index idx from my_todos
+                set todos to my_todos for player
                 message player "&aDone! Removed task #{num}."
 
         else if action is "clear":
-            clear todos for player
+            delete stored todos for player
             message player "&eTodo list cleared!"

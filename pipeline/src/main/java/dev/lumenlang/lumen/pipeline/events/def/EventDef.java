@@ -23,7 +23,7 @@ import java.util.Map;
  * <pre>{@code
  * EventDef.builder("join")
  *     .className("org.bukkit.event.player.PlayerJoinEvent")
- *     .addVar("player", RefType.PLAYER,
+ *     .addVar("player", MinecraftTypes.PLAYER,
  *             "org.bukkit.entity.Player", "event.getPlayer()")
  *     .build();
  * }</pre>

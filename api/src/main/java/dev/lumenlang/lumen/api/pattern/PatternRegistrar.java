@@ -1,6 +1,5 @@
 package dev.lumenlang.lumen.api.pattern;
 
-import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.handler.BlockHandler;
 import dev.lumenlang.lumen.api.handler.ConditionHandler;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler;
@@ -15,7 +14,6 @@ import dev.lumenlang.lumen.api.pattern.builder.ExpressionBuilder;
 import dev.lumenlang.lumen.api.pattern.builder.LoopBuilder;
 import dev.lumenlang.lumen.api.pattern.builder.StatementBuilder;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -38,18 +36,16 @@ import java.util.function.Consumer;
  *     .example("if player is swimming:")
  *     .since("1.0.0")
  *     .category(Categories.PLAYER)
- *     .handler((match, env, ctx) -> match.ref("p").java() + ".isSwimming()")
+ *     .handler(ctx -> ctx.requireVarHandle("p").java() + ".isSwimming()")
  * );
  * }</pre>
  *
  * <h2>Simple Example</h2>
  * <pre>{@code
  * api.patterns().statement("explode %who:PLAYER%",
- *         (line, ctx, out) -> out.line(ctx.java("who") + ".getWorld().createExplosion(" +
+ *         ctx -> ctx.out().line(ctx.java("who") + ".getWorld().createExplosion(" +
  *                 ctx.java("who") + ".getLocation(), 4F);"));
  * }</pre>
- *
- * @see LumenAPI#patterns()
  */
 public interface PatternRegistrar {
 
@@ -211,28 +207,24 @@ public interface PatternRegistrar {
      * the compiled script class after compilation.
      *
      * <pre>{@code
-     * api.patterns().injectableExpression("location of %who:PLAYER%", Types.LOCATION.id(), null, () -> {
+     * api.patterns().injectableExpression("location of %who:PLAYER%", () -> {
      *     Player player = Fakes.fake("who");
      *     return player.getLocation();
      * });
      * }</pre>
      *
      * @param pattern the pattern string
-     * @param refTypeId the ref type id for the return value, or null
-     * @param javaType the Java type for primitive returns, or null
      * @param expression the injectable expression
      */
-    void injectableExpression(@NotNull String pattern, @Nullable String refTypeId, @Nullable String javaType, @NotNull InjectableExpression expression);
+    void injectableExpression(@NotNull String pattern, @NotNull InjectableExpression expression);
 
     /**
      * Registers multiple pattern strings that all map to the same injectable expression.
      *
      * @param patterns the list of pattern strings
-     * @param refTypeId the ref type id for the return value, or null
-     * @param javaType the Java type for primitive returns, or null
      * @param expression the injectable expression
      */
-    void injectableExpression(@NotNull List<String> patterns, @Nullable String refTypeId, @Nullable String javaType, @NotNull InjectableExpression expression);
+    void injectableExpression(@NotNull List<String> patterns, @NotNull InjectableExpression expression);
 
     /**
      * Registers a condition pattern with an injectable condition.

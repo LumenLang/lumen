@@ -3,17 +3,17 @@ package dev.lumenlang.lumen.plugin.defaults.block;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
-import dev.lumenlang.lumen.api.codegen.BindingAccess;
 import dev.lumenlang.lumen.api.codegen.CodegenAccess;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
-import dev.lumenlang.lumen.api.codegen.JavaOutput;
+import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import dev.lumenlang.lumen.api.event.AdvancedEventDefinition;
 import dev.lumenlang.lumen.api.event.EventDefinition;
 import dev.lumenlang.lumen.api.handler.BlockHandler;
 import dev.lumenlang.lumen.api.pattern.Categories;
-import dev.lumenlang.lumen.api.type.RefTypeHandle;
-import dev.lumenlang.lumen.api.type.Types;
-import dev.lumenlang.lumen.pipeline.codegen.BindingContext;
+import dev.lumenlang.lumen.api.type.BuiltinLumenTypes;
+import dev.lumenlang.lumen.api.type.MinecraftTypes;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
+import dev.lumenlang.lumen.pipeline.codegen.HandlerContextImpl;
 import dev.lumenlang.lumen.pipeline.events.EventDefRegistry;
 import dev.lumenlang.lumen.pipeline.language.exceptions.TokenCarryingException;
 import dev.lumenlang.lumen.plugin.commands.CommandMeta;
@@ -51,7 +51,7 @@ public final class EventBlocks {
                 .supportsBlock(false)
                 .handler(new BlockHandler() {
                     @Override
-                    public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
+                    public void begin(@NotNull HandlerContext ctx) {
                         EnvironmentAccess env = ctx.env();
                         CodegenAccess jctx = ctx.codegen();
 
@@ -81,21 +81,17 @@ public final class EventBlocks {
                             for (var entry : advDef.vars().entrySet()) {
                                 String name = entry.getKey();
                                 EventDefinition.VarEntry v = entry.getValue();
-                                RefTypeHandle refType = v.refTypeId() != null
-                                        ? api.refTypes().byId(v.refTypeId())
-                                        : null;
-                                env.defineVar(name, refType, v.expr());
+                                env.defineVar(name, v.type(), v.expr());
                             }
 
-                            advDef.handler().begin(ctx, out);
+                            advDef.handler().begin(ctx);
                             return;
                         }
 
                         EventDefinition def = api.events().lookup(eventName);
                         if (def == null) {
-                            BindingContext bc = (BindingContext) ctx;
-                            throw new TokenCarryingException(
-                                    "Unknown event: " + eventName, bc.bound("def").tokens());
+                            HandlerContextImpl hctx = (HandlerContextImpl) ctx;
+                            throw new TokenCarryingException("Unknown event: " + eventName, hctx.bound("def").tokens());
                         }
 
                         ctx.block().putEnv("__event_cancellable", def.cancellable());
@@ -108,9 +104,9 @@ public final class EventBlocks {
                         String simpleEventName = def.className().substring(def.className().lastIndexOf('.') + 1);
                         EventMeta eventMeta = new EventMeta();
                         ctx.block().putEnv("__event_meta", eventMeta);
-                        ctx.block().putEnv("__event_annotation_idx", out.lineNum());
+                        ctx.block().putEnv("__event_annotation_idx", ctx.out().lineNum());
                         ctx.block().putEnv("__event_simple_name", simpleEventName);
-                        out.line("public void __lumen_evt_" + eventName + "_" + out.lineNum() + "("
+                        ctx.out().line("public void __lumen_evt_" + eventName + "_" + ctx.codegen().nextMethodId() + "("
                                 + simpleEventName
                                 + " event) {");
 
@@ -119,7 +115,7 @@ public final class EventBlocks {
                             String name = entry.getKey();
                             EventDefinition.VarEntry v = entry.getValue();
 
-                            String fqcn = v.javaType();
+                            String fqcn = v.type().javaType();
                             if (fqcn.contains(".")) {
                                 jctx.addImport(fqcn);
                             }
@@ -128,30 +124,27 @@ public final class EventBlocks {
 
                             String expr = v.expr();
                             if (expr.contains("\n")) {
-                                out.line(simple + " " + name + ";");
+                                ctx.out().line(simple + " " + name + ";");
                                 for (String ln : expr.split("\n")) {
-                                    out.line(ln);
+                                    ctx.out().line(ln);
                                 }
                             } else {
-                                out.line(simple + " " + name + " = " + expr + ";");
+                                ctx.out().line(simple + " " + name + " = " + expr + ";");
                             }
 
-                            RefTypeHandle refType = v.refTypeId() != null
-                                    ? api.refTypes().byId(v.refTypeId())
-                                    : null;
                             if (v.metadata().isEmpty()) {
-                                env.defineVar(name, refType, name);
+                                env.defineVar(name, v.type(), name);
                             } else {
-                                env.defineVar(name, refType, name, v.metadata());
+                                env.defineVar(name, v.type(), name, v.metadata());
                             }
                         }
                     }
 
                     @Override
-                    public void end(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
+                    public void end(@NotNull HandlerContext ctx) {
                         BlockHandler advHandler = ctx.block().getEnv("__advanced_handler");
                         if (advHandler != null) {
-                            advHandler.end(ctx, out);
+                            advHandler.end(ctx);
                             return;
                         }
                         Integer annotationIdx = ctx.block().getEnv("__event_annotation_idx");
@@ -160,9 +153,9 @@ public final class EventBlocks {
                             EventMeta eventMeta = ctx.block().getEnv("__event_meta");
                             String priority = eventMeta != null ? eventMeta.priority() : "NORMAL";
                             boolean ignoreCancelled = eventMeta != null && eventMeta.ignoreCancelled();
-                            out.insertLine(annotationIdx, "@LumenEvent(value = " + simpleEventName + ".class, priority = \"" + priority + "\", ignoreCancelled = " + ignoreCancelled + ")");
+                            ctx.out().insertLine(annotationIdx, "@LumenEvent(value = " + simpleEventName + ".class, priority = \"" + priority + "\", ignoreCancelled = " + ignoreCancelled + ")");
                         }
-                        out.line("}");
+                        ctx.out().line("}");
                     }
                 }));
 
@@ -177,19 +170,19 @@ public final class EventBlocks {
                 .category(Categories.COMMAND)
                 .supportsRootLevel(true)
                 .supportsBlock(false)
-                .addVar("player", Types.PLAYER)
+                .addVar("player", MinecraftTypes.PLAYER)
                     .withMeta("nullable", true)
                     .varDescription("The player who executed the command, or null if the console ran it")
-                .addVar("sender", Types.SENDER)
+                .addVar("sender", MinecraftTypes.SENDER)
                     .varDescription("The command sender (player or console)")
-                .addVar("world", Types.WORLD)
+                .addVar("world", MinecraftTypes.WORLD)
                     .withMeta("nullable", true)
                     .varDescription("The world the player is in, or null if the console ran it")
-                .addVar("args", Types.LIST)
+                .addVar("args", BuiltinLumenTypes.listOf(PrimitiveType.STRING))
                     .varDescription("The command arguments as a mutable list of strings")
                 .handler(new BlockHandler() {
                     @Override
-                    public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
+                    public void begin(@NotNull HandlerContext ctx) {
                         if (!ctx.block().isRoot()) {
                             throw new RuntimeException(
                                     "Command blocks must be top-level (not nested inside other blocks)");
@@ -202,27 +195,27 @@ public final class EventBlocks {
 
                         ctx.block().putEnv("cmd_meta", meta);
                         ctx.block().putEnv("cmd_script", jctx.scriptName());
-                        ctx.block().putEnv("cmd_annotation_idx", out.lineNum());
+                        ctx.block().putEnv("cmd_annotation_idx", ctx.out().lineNum());
 
                         ctx.codegen().addImport(List.class.getName());
                         ctx.codegen().addImport(ArrayList.class.getName());
                         ctx.codegen().addImport(Arrays.class.getName());
                         ctx.codegen().addImport(World.class.getName());
-                        out.line("public void cmd_" + cmd + "(CommandSender __sender, String[] __args) {");
-                        out.line("List<String> args = new ArrayList<>(Arrays.asList(__args));");
-                        out.line("Player player = __sender instanceof Player ? (Player) __sender : null;");
-                        out.line("CommandSender sender = __sender;");
-                        out.line("World world = player != null ? player.getWorld() : null;");
+                        ctx.out().line("public void cmd_" + cmd + "(CommandSender __sender, String[] __args) {");
+                        ctx.out().line("List<String> args = new ArrayList<>(Arrays.asList(__args));");
+                        ctx.out().line("Player player = __sender instanceof Player ? (Player) __sender : null;");
+                        ctx.out().line("CommandSender sender = __sender;");
+                        ctx.out().line("World world = player != null ? player.getWorld() : null;");
 
-                        env.defineVar("player", Types.PLAYER, "player");
-                        env.defineVar("sender", Types.SENDER, "sender");
-                        env.defineVar("world", Types.WORLD, "world");
-                        env.defineVar("args", Types.LIST, "args");
+                        env.defineVar("player", MinecraftTypes.PLAYER, "player");
+                        env.defineVar("sender", MinecraftTypes.SENDER, "sender");
+                        env.defineVar("world", MinecraftTypes.WORLD, "world");
+                        env.defineVar("args", BuiltinLumenTypes.listOf(PrimitiveType.STRING), "args");
                     }
 
                     @Override
-                    public void end(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
-                        out.line("}");
+                    public void end(@NotNull HandlerContext ctx) {
+                        ctx.out().line("}");
 
                         CommandMeta meta = ctx.block().getEnv("cmd_meta");
                         if (meta == null) {
@@ -254,7 +247,7 @@ public final class EventBlocks {
                         }
                         ann.append(")");
 
-                        out.insertLine(idx, ann.toString());
+                        ctx.out().insertLine(idx, ann.toString());
                     }
                 }));
 
@@ -271,13 +264,13 @@ public final class EventBlocks {
                 .category(Categories.INVENTORY)
                 .supportsRootLevel(true)
                 .supportsBlock(false)
-                .addVar("player", Types.PLAYER)
+                .addVar("player", MinecraftTypes.PLAYER)
                     .varDescription("The target player who the inventory is being opened for")
-                .addVar("world", Types.WORLD)
+                .addVar("world", MinecraftTypes.WORLD)
                     .varDescription("The world the player is in")
                 .handler(new BlockHandler() {
                     @Override
-                    public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
+                    public void begin(@NotNull HandlerContext ctx) {
                         if (!ctx.block().isRoot()) {
                             throw new RuntimeException(
                                     "Inventory registration blocks must be top-level (not nested inside other blocks)");
@@ -288,23 +281,23 @@ public final class EventBlocks {
                         String name = ctx.java("name");
                         String safeName = name.replaceAll("[^a-zA-Z0-9_]", "_")
                                 .replaceAll("^\"|\"$", "");
-                        String methodName = "__lumen_inv_" + safeName + "_" + out.lineNum();
+                        String methodName = "__lumen_inv_" + safeName + "_" + ctx.codegen().nextMethodId();
 
                         ctx.block().putEnv("inv_name", name);
-                        ctx.block().putEnv("inv_annotation_idx", out.lineNum());
+                        ctx.block().putEnv("inv_annotation_idx", ctx.out().lineNum());
 
                         ctx.codegen().addImport(World.class.getName());
-                        out.line("@LumenInventory(" + name + ")");
-                        out.line("public void " + methodName + "(Player player) {");
-                        out.line("World world = player.getWorld();");
+                        ctx.out().line("@LumenInventory(" + name + ")");
+                        ctx.out().line("public void " + methodName + "(Player player) {");
+                        ctx.out().line("World world = player.getWorld();");
 
-                        env.defineVar("player", Types.PLAYER, "player");
-                        env.defineVar("world", Types.WORLD, "world");
+                        env.defineVar("player", MinecraftTypes.PLAYER, "player");
+                        env.defineVar("world", MinecraftTypes.WORLD, "world");
                     }
 
                     @Override
-                    public void end(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
-                        out.line("}");
+                    public void end(@NotNull HandlerContext ctx) {
+                        ctx.out().line("}");
                     }
                 }));
     }

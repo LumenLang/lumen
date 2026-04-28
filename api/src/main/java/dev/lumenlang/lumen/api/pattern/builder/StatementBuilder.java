@@ -27,7 +27,7 @@ import java.util.function.Consumer;
  *         .example("message player \"Hello!\"")
  *         .since("1.0.0")
  *         .category(Categories.PLAYER)
- *         .handler((line, ctx, out) -> out.line(ctx.java("who") + ".sendMessage(" + ctx.java("text") + ");")));
+ *         .handler(ctx -> ctx.out().line(ctx.java("who") + ".sendMessage(" + ctx.java("text") + ");")));
  * }</pre>
  *
  * @see PatternRegistrar#statement(Consumer)

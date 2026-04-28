@@ -2,7 +2,8 @@
 # Tracks consecutive kills per player, resets on death,
 # broadcasts milestones, and rewards effects at thresholds.
 
-global stored scoped streak with default 0
+global:
+    stored scoped to player streak: int with default 0
 
 on entity_death:
     if killer is set:

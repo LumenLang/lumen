@@ -3,13 +3,12 @@ package dev.lumenlang.lumen.plugin.defaults.block;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
-import dev.lumenlang.lumen.api.codegen.BindingAccess;
 import dev.lumenlang.lumen.api.codegen.CodegenAccess;
-import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
-import dev.lumenlang.lumen.api.codegen.JavaOutput;
+import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import dev.lumenlang.lumen.api.handler.BlockHandler;
 import dev.lumenlang.lumen.api.pattern.Categories;
-import dev.lumenlang.lumen.api.type.Types;
+import dev.lumenlang.lumen.api.type.MinecraftTypes;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.plugin.util.LumenInventoryHolder;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -65,57 +64,51 @@ public final class InventoryEventBlocks {
      * Emits a guard that returns early if the inventory is not a Lumen inventory
      * with the expected name.
      */
-    private static void emitNameGuard(@NotNull JavaOutput out, @NotNull String name) {
-        out.line("if (!(event.getView().getTopInventory().getHolder() instanceof LumenInventoryHolder __lh)"
+    private static void emitNameGuard(@NotNull HandlerContext ctx, @NotNull String name) {
+        ctx.out().line("if (!(event.getView().getTopInventory().getHolder() instanceof LumenInventoryHolder __lh)"
                 + " || !__lh.name().equals(" + name + ")) return;");
     }
 
     /**
      * Emits all standard click event variables and defines them in the environment.
      */
-    private static void emitClickVars(
-            @NotNull EnvironmentAccess env,
-            @NotNull BindingAccess ctx,
-            @NotNull JavaOutput out) {
-        out.line("if (!(event.getWhoClicked() instanceof Player player)) return;");
-        out.line("World world = player.getWorld();");
-        out.line("Inventory inventory = event.getView().getTopInventory();");
-        out.line("int slot = event.getRawSlot();");
-        out.line("String clickType = event.getClick().name();");
-        out.line("String action = event.getAction().name();");
-        out.line("String title = event.getView().getTitle();");
-        out.line("ItemStack item = event.getCurrentItem();");
-        out.line("ItemStack cursor = (event.getCursor() != null"
+    private static void emitClickVars(@NotNull HandlerContext ctx) {
+        ctx.out().line("if (!(event.getWhoClicked() instanceof Player player)) return;");
+        ctx.out().line("World world = player.getWorld();");
+        ctx.out().line("Inventory inventory = event.getView().getTopInventory();");
+        ctx.out().line("int slot = event.getRawSlot();");
+        ctx.out().line("String clickType = event.getClick().name();");
+        ctx.out().line("String action = event.getAction().name();");
+        ctx.out().line("String title = event.getView().getTitle();");
+        ctx.out().line("ItemStack item = event.getCurrentItem();");
+        ctx.out().line("ItemStack cursor = (event.getCursor() != null"
                 + " && event.getCursor().getType() != Material.AIR)"
                 + " ? event.getCursor() : null;");
 
-        env.defineVar("player", Types.PLAYER, "player");
-        env.defineVar("world", Types.WORLD, "world");
-        env.defineVar("inventory", Types.INVENTORY, "inventory");
-        env.defineVar("slot", null, "slot");
-        env.defineVar("clickType", null, "clickType");
-        env.defineVar("action", null, "action");
-        env.defineVar("title", null, "title");
-        env.defineVar("item", Types.ITEMSTACK, "item");
-        env.defineVar("cursor", Types.ITEMSTACK, "cursor");
+        ctx.env().defineVar("player", MinecraftTypes.PLAYER, "player");
+        ctx.env().defineVar("world", MinecraftTypes.WORLD, "world");
+        ctx.env().defineVar("inventory", MinecraftTypes.INVENTORY, "inventory");
+        ctx.env().defineVar("slot", PrimitiveType.INT, "slot");
+        ctx.env().defineVar("clickType", PrimitiveType.STRING, "clickType");
+        ctx.env().defineVar("action", PrimitiveType.STRING, "action");
+        ctx.env().defineVar("title", PrimitiveType.STRING, "title");
+        ctx.env().defineVar("item", MinecraftTypes.ITEMSTACK, "item");
+        ctx.env().defineVar("cursor", MinecraftTypes.ITEMSTACK, "cursor");
     }
 
     /**
      * Emits close/open event variables and defines them in the environment.
      */
-    private static void emitCloseOpenVars(
-            @NotNull EnvironmentAccess env,
-            @NotNull BindingAccess ctx,
-            @NotNull JavaOutput out) {
-        out.line("if (!(event.getPlayer() instanceof Player player)) return;");
-        out.line("World world = player.getWorld();");
-        out.line("Inventory inventory = event.getView().getTopInventory();");
-        out.line("String title = event.getView().getTitle();");
+    private static void emitCloseOpenVars(@NotNull HandlerContext ctx) {
+        ctx.out().line("if (!(event.getPlayer() instanceof Player player)) return;");
+        ctx.out().line("World world = player.getWorld();");
+        ctx.out().line("Inventory inventory = event.getView().getTopInventory();");
+        ctx.out().line("String title = event.getView().getTitle();");
 
-        env.defineVar("player", Types.PLAYER, "player");
-        env.defineVar("world", Types.WORLD, "world");
-        env.defineVar("inventory", Types.INVENTORY, "inventory");
-        env.defineVar("title", null, "title");
+        ctx.env().defineVar("player", MinecraftTypes.PLAYER, "player");
+        ctx.env().defineVar("world", MinecraftTypes.WORLD, "world");
+        ctx.env().defineVar("inventory", MinecraftTypes.INVENTORY, "inventory");
+        ctx.env().defineVar("title", PrimitiveType.STRING, "title");
     }
 
     @Call
@@ -129,7 +122,7 @@ public final class InventoryEventBlocks {
     private void registerSlotClick(@NotNull LumenAPI api) {
         api.patterns().block(b -> b
                 .by("Lumen")
-                .pattern("slot %slot:INT% click [in|of] %inv:EXPR%")
+                .pattern("slot %slot:INT% click [in|of] %inv:QSTRING%")
                 .description("Handles a click on a specific slot in a Lumen inventory. "
                         + "The event is automatically cancelled. "
                         + "Provides player, inventory, slot, item, cursor, clickType, action, "
@@ -141,30 +134,29 @@ public final class InventoryEventBlocks {
                 .category(Categories.INVENTORY)
                 .supportsRootLevel(true)
                 .supportsBlock(false)
-                .addVar("player", Types.PLAYER)
+                .addVar("player", MinecraftTypes.PLAYER)
                     .varDescription("The player who clicked")
-                .addVar("world", Types.WORLD)
+                .addVar("world", MinecraftTypes.WORLD)
                     .varDescription("The world the player is in")
-                .addVar("inventory", Types.INVENTORY)
+                .addVar("inventory", MinecraftTypes.INVENTORY)
                     .varDescription("The top inventory being interacted with")
-                .addVar("slot", Types.INT)
+                .addVar("slot", PrimitiveType.INT)
                     .varDescription("The raw slot index that was clicked")
-                .addVar("clickType", Types.STRING)
+                .addVar("clickType", PrimitiveType.STRING)
                     .varDescription("The type of click performed (e.g. LEFT, RIGHT, SHIFT_LEFT)")
-                .addVar("action", Types.STRING)
+                .addVar("action", PrimitiveType.STRING)
                     .varDescription("The inventory action triggered by the click")
-                .addVar("title", Types.STRING)
+                .addVar("title", PrimitiveType.STRING)
                     .varDescription("The title of the inventory view")
-                .addVar("item", Types.ITEMSTACK)
+                .addVar("item", MinecraftTypes.ITEMSTACK)
                     .withMeta("nullable", true)
                     .varDescription("The item in the clicked slot, or null if empty")
-                .addVar("cursor", Types.ITEMSTACK)
+                .addVar("cursor", MinecraftTypes.ITEMSTACK)
                     .withMeta("nullable", true)
                     .varDescription("The item on the cursor, or null if empty or air")
                 .handler(new BlockHandler() {
                     @Override
-                    public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
-                        EnvironmentAccess env = ctx.env();
+                    public void begin(@NotNull HandlerContext ctx) {
                         CodegenAccess jctx = ctx.codegen();
                         String inv = ctx.java("inv");
                         String slotJava = ctx.java("slot");
@@ -176,19 +168,19 @@ public final class InventoryEventBlocks {
                         ctx.block().putEnv("__event_block", true);
                         ctx.block().putEnv("__event_cancellable", true);
                         String safeName = sanitize(inv);
-                        String method = "__lumen_slot_click_" + safeName + "_" + out.lineNum();
+                        String method = "__lumen_slot_click_" + safeName + "_" + ctx.codegen().nextMethodId();
                         clickImports(jctx);
-                        out.line("@LumenEvent(InventoryClickEvent.class)");
-                        out.line("public void " + method + "(InventoryClickEvent event) {");
-                        emitNameGuard(out, inv);
-                        out.line("if (event.getRawSlot() != " + slotJava + ") return;");
-                        out.line("event.setCancelled(true);");
-                        emitClickVars(env, ctx, out);
+                        ctx.out().line("@LumenEvent(InventoryClickEvent.class)");
+                        ctx.out().line("public void " + method + "(InventoryClickEvent event) {");
+                        emitNameGuard(ctx, inv);
+                        ctx.out().line("if (event.getRawSlot() != " + slotJava + ") return;");
+                        ctx.out().line("event.setCancelled(true);");
+                        emitClickVars(ctx);
                     }
 
                     @Override
-                    public void end(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
-                        out.line("}");
+                    public void end(@NotNull HandlerContext ctx) {
+                        ctx.out().line("}");
                     }
                 }));
     }
@@ -196,7 +188,7 @@ public final class InventoryEventBlocks {
     private void registerClick(@NotNull LumenAPI api) {
         api.patterns().block(b -> b
                 .by("Lumen")
-                .pattern("click [in|of] %inv:EXPR%")
+                .pattern("click [in|of] %inv:QSTRING%")
                 .description("Handles any click in a Lumen inventory. "
                         + "The event is automatically cancelled. "
                         + "Provides player, inventory, slot, item, cursor, clickType, action, "
@@ -208,30 +200,29 @@ public final class InventoryEventBlocks {
                 .category(Categories.INVENTORY)
                 .supportsRootLevel(true)
                 .supportsBlock(false)
-                .addVar("player", Types.PLAYER)
+                .addVar("player", MinecraftTypes.PLAYER)
                     .varDescription("The player who clicked")
-                .addVar("world", Types.WORLD)
+                .addVar("world", MinecraftTypes.WORLD)
                     .varDescription("The world the player is in")
-                .addVar("inventory", Types.INVENTORY)
+                .addVar("inventory", MinecraftTypes.INVENTORY)
                     .varDescription("The top inventory being interacted with")
-                .addVar("slot", Types.INT)
+                .addVar("slot", PrimitiveType.INT)
                     .varDescription("The raw slot index that was clicked")
-                .addVar("clickType", Types.STRING)
+                .addVar("clickType", PrimitiveType.STRING)
                     .varDescription("The type of click performed (e.g. LEFT, RIGHT, SHIFT_LEFT)")
-                .addVar("action", Types.STRING)
+                .addVar("action", PrimitiveType.STRING)
                     .varDescription("The inventory action triggered by the click")
-                .addVar("title", Types.STRING)
+                .addVar("title", PrimitiveType.STRING)
                     .varDescription("The title of the inventory view")
-                .addVar("item", Types.ITEMSTACK)
+                .addVar("item", MinecraftTypes.ITEMSTACK)
                     .withMeta("nullable", true)
                     .varDescription("The item in the clicked slot, or null if empty")
-                .addVar("cursor", Types.ITEMSTACK)
+                .addVar("cursor", MinecraftTypes.ITEMSTACK)
                     .withMeta("nullable", true)
                     .varDescription("The item on the cursor, or null if empty or air")
                 .handler(new BlockHandler() {
                     @Override
-                    public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
-                        EnvironmentAccess env = ctx.env();
+                    public void begin(@NotNull HandlerContext ctx) {
                         CodegenAccess jctx = ctx.codegen();
                         String inv = ctx.java("inv");
 
@@ -242,18 +233,18 @@ public final class InventoryEventBlocks {
                         ctx.block().putEnv("__event_block", true);
                         ctx.block().putEnv("__event_cancellable", true);
                         String safeName = sanitize(inv);
-                        String method = "__lumen_click_" + safeName + "_" + out.lineNum();
+                        String method = "__lumen_click_" + safeName + "_" + ctx.codegen().nextMethodId();
                         clickImports(jctx);
-                        out.line("@LumenEvent(InventoryClickEvent.class)");
-                        out.line("public void " + method + "(InventoryClickEvent event) {");
-                        emitNameGuard(out, inv);
-                        out.line("event.setCancelled(true);");
-                        emitClickVars(env, ctx, out);
+                        ctx.out().line("@LumenEvent(InventoryClickEvent.class)");
+                        ctx.out().line("public void " + method + "(InventoryClickEvent event) {");
+                        emitNameGuard(ctx, inv);
+                        ctx.out().line("event.setCancelled(true);");
+                        emitClickVars(ctx);
                     }
 
                     @Override
-                    public void end(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
-                        out.line("}");
+                    public void end(@NotNull HandlerContext ctx) {
+                        ctx.out().line("}");
                     }
                 }));
     }
@@ -261,7 +252,7 @@ public final class InventoryEventBlocks {
     private void registerClose(@NotNull LumenAPI api) {
         api.patterns().block(b -> b
                 .by("Lumen")
-                .pattern("close [of] %inv:EXPR%")
+                .pattern("close [of] %inv:QSTRING%")
                 .description("Handles the close event of a Lumen inventory. "
                         + "Provides player, inventory, and title variables.")
                 .example(of(
@@ -271,18 +262,17 @@ public final class InventoryEventBlocks {
                 .category(Categories.INVENTORY)
                 .supportsRootLevel(true)
                 .supportsBlock(false)
-                .addVar("player", Types.PLAYER)
+                .addVar("player", MinecraftTypes.PLAYER)
                     .varDescription("The player who closed the inventory")
-                .addVar("world", Types.WORLD)
+                .addVar("world", MinecraftTypes.WORLD)
                     .varDescription("The world the player is in")
-                .addVar("inventory", Types.INVENTORY)
+                .addVar("inventory", MinecraftTypes.INVENTORY)
                     .varDescription("The top inventory that was closed")
-                .addVar("title", Types.STRING)
+                .addVar("title", PrimitiveType.STRING)
                     .varDescription("The title of the inventory view")
                 .handler(new BlockHandler() {
                     @Override
-                    public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
-                        EnvironmentAccess env = ctx.env();
+                    public void begin(@NotNull HandlerContext ctx) {
                         CodegenAccess jctx = ctx.codegen();
                         String inv = ctx.java("inv");
 
@@ -293,17 +283,17 @@ public final class InventoryEventBlocks {
                         ctx.block().putEnv("__event_block", true);
                         ctx.block().putEnv("__event_cancellable", false);
                         String safeName = sanitize(inv);
-                        String method = "__lumen_inv_close_" + safeName + "_" + out.lineNum();
+                        String method = "__lumen_inv_close_" + safeName + "_" + ctx.codegen().nextMethodId();
                         closeOpenImports(jctx, InventoryCloseEvent.class);
-                        out.line("@LumenEvent(InventoryCloseEvent.class)");
-                        out.line("public void " + method + "(InventoryCloseEvent event) {");
-                        emitNameGuard(out, inv);
-                        emitCloseOpenVars(env, ctx, out);
+                        ctx.out().line("@LumenEvent(InventoryCloseEvent.class)");
+                        ctx.out().line("public void " + method + "(InventoryCloseEvent event) {");
+                        emitNameGuard(ctx, inv);
+                        emitCloseOpenVars(ctx);
                     }
 
                     @Override
-                    public void end(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
-                        out.line("}");
+                    public void end(@NotNull HandlerContext ctx) {
+                        ctx.out().line("}");
                     }
                 }));
     }
@@ -311,7 +301,7 @@ public final class InventoryEventBlocks {
     private void registerOpen(@NotNull LumenAPI api) {
         api.patterns().block(b -> b
                 .by("Lumen")
-                .pattern("open [of] %inv:EXPR%")
+                .pattern("open [of] %inv:QSTRING%")
                 .description("Handles the open event of a Lumen inventory. "
                         + "Provides player, inventory, and title variables.")
                 .example(of(
@@ -321,18 +311,17 @@ public final class InventoryEventBlocks {
                 .category(Categories.INVENTORY)
                 .supportsRootLevel(true)
                 .supportsBlock(false)
-                .addVar("player", Types.PLAYER)
+                .addVar("player", MinecraftTypes.PLAYER)
                     .varDescription("The player who opened the inventory")
-                .addVar("world", Types.WORLD)
+                .addVar("world", MinecraftTypes.WORLD)
                     .varDescription("The world the player is in")
-                .addVar("inventory", Types.INVENTORY)
+                .addVar("inventory", MinecraftTypes.INVENTORY)
                     .varDescription("The top inventory that was opened")
-                .addVar("title", Types.STRING)
+                .addVar("title", PrimitiveType.STRING)
                     .varDescription("The title of the inventory view")
                 .handler(new BlockHandler() {
                     @Override
-                    public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
-                        EnvironmentAccess env = ctx.env();
+                    public void begin(@NotNull HandlerContext ctx) {
                         CodegenAccess jctx = ctx.codegen();
                         String inv = ctx.java("inv");
 
@@ -343,17 +332,17 @@ public final class InventoryEventBlocks {
                         ctx.block().putEnv("__event_block", true);
                         ctx.block().putEnv("__event_cancellable", true);
                         String safeName = sanitize(inv);
-                        String method = "__lumen_inv_open_" + safeName + "_" + out.lineNum();
+                        String method = "__lumen_inv_open_" + safeName + "_" + ctx.codegen().nextMethodId();
                         closeOpenImports(jctx, InventoryOpenEvent.class);
-                        out.line("@LumenEvent(InventoryOpenEvent.class)");
-                        out.line("public void " + method + "(InventoryOpenEvent event) {");
-                        emitNameGuard(out, inv);
-                        emitCloseOpenVars(env, ctx, out);
+                        ctx.out().line("@LumenEvent(InventoryOpenEvent.class)");
+                        ctx.out().line("public void " + method + "(InventoryOpenEvent event) {");
+                        emitNameGuard(ctx, inv);
+                        emitCloseOpenVars(ctx);
                     }
 
                     @Override
-                    public void end(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
-                        out.line("}");
+                    public void end(@NotNull HandlerContext ctx) {
+                        ctx.out().line("}");
                     }
                 }));
     }

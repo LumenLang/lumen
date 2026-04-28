@@ -14,25 +14,17 @@
   </a>
 </p>
 <p align="center">Lumen is a high-performance scripting platform for Minecraft servers that compiles your scripts directly into native Java code, with full hot reload and on-the-fly updates.</p>
-<details>
-<summary><strong>Upcoming Breaking Changes</strong></summary>
-<br/>
 
-Lumen is about to go through a phase with major breaking changes.
-
-A full type system overhaul is planned. This will introduce proper and consistent typing across the language, and will likely break most existing scripts. The goal of this change is to eliminate compile-time issues, improve validation, and make behavior more predictable.
-
-The scripting side will change heavily. Patterns and syntax will be reworked, and many existing patterns may be modified or removed as part of this transition.
-
-A lot of internal systems will also be updated to improve consistency, remove limitations, and better support future features such as advanced validation, debugging, and AI tooling.
-
-There are many incremental fixes planned, and the current TODO list is quite large. Changes will happen across multiple parts of the project over time, not just in one area.
-
-Because of this, things may break between versions for a while. This is expected during this phase.
-
-If you plan on using Lumen right now, it is recommended to mainly experiment with it or explore its capabilities.
-
-</details>
+> [!IMPORTANT]\
+> Lumen is undergoing a phase with major breaking changes.
+>
+> The scripting side will change heavily. Patterns and syntax will be reworked, and many existing patterns may be
+> modified or removed as part of this transition.
+>
+> A lot of internal systems will also be updated to improve consistency, remove limitations, and better support future
+> features such as advanced tooling for humans and AI.
+>
+> Because of this, things may break between versions for a while. This is expected during this phase.
 
 ---
 
@@ -99,11 +91,15 @@ We also appreciate any feedback on the syntax, features, or anything else relate
 
 Tradeoffs are inevitable with Lumen, as no scripting system is perfect.
 
-- **Smaller Ecosystem:**
+### **Smaller Ecosystem**
 Lumen is still a relatively new project. Compared to more established scripting systems, the ecosystem is still growing.
 
-- **Different Scripting Model:**
-While Lumen may feel somewhat familiar to users coming from systems like Skript, its design and usage are fundamentally different. Scripts follow Lumen's own pattern system and compilation model, which may require adjusting to a new workflow.
+### **Strictly Typed Language Model**
 
-- **Documentation Is Still Expanding:**
+Lumen is a fully statically typed scripting language. Every value has a known type at compile time, and type mismatches are reported immediately in the editor with precise diagnostics. There is no implicit coercion or “guessing” at runtime, what you write is exactly what gets executed.
+Skript is a dynamically typed language. Types are determined at runtime, and there is a lot of implicit coercion and guessing involved. This can lead to unexpected behavior, terribly unclear error messages, things just "not working" without any indication of why, and a generally frustrating experience.
+
+While Lumen may feel somewhat familiar to users coming from systems like Skript, its design is fundamentally different. Scripts are compiled with strict type checking, explicit nullability, and well-defined patterns. This results in more predictable behavior, clearer errors, and significantly fewer runtime issues.
+
+### **Documentation Is Still Expanding**
 Documentation is continuously improving. If you encounter missing information, unclear behavior, or patterns that are not properly documented, please report it through the project's issue tracker so it can be addressed.

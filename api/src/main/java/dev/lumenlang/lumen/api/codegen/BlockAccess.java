@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
  * <p>Handlers use this to inspect sibling blocks, check scope depth, and enforce structural
  * constraints (e.g. ensuring an {@code else} follows an {@code if}).
  *
- * @see BindingAccess#block()
+ * @see HandlerContext#block()
  */
 @SuppressWarnings("unused")
 public interface BlockAccess {
@@ -49,6 +49,22 @@ public interface BlockAccess {
      * @return {@code true} if the previous sibling's head matches exactly
      */
     boolean prevHeadExact(@NotNull String... tokens);
+
+    /**
+     * Returns the source line number of the preceding sibling node, or {@code -1} if
+     * this is the first sibling.
+     *
+     * @return the 1-based line number of the previous sibling, or {@code -1}
+     */
+    int prevLine();
+
+    /**
+     * Returns the raw source text of the preceding sibling node, or an empty string
+     * if this is the first sibling.
+     *
+     * @return the raw source of the previous sibling
+     */
+    @NotNull String prevRaw();
 
     /**
      * Returns the source line number of the AST node for this block.
@@ -133,4 +149,34 @@ public interface BlockAccess {
      * @return the raw source of the next sibling
      */
     @NotNull String nextRaw();
+
+    /**
+     * Searches all preceding sibling blocks for one whose first head token matches the given
+     * literal (case-insensitively). Returns a snapshot of the match, or {@code null} if none found.
+     *
+     * <p>Searches backwards from the sibling immediately before this block.
+     *
+     * @param literal the first token to match (e.g. {@code "if"})
+     * @return the matching sibling info, or {@code null}
+     */
+    @Nullable SiblingInfo findPrecedingBlock(@NotNull String literal);
+
+    /**
+     * Searches all sibling blocks (both before and after this block) for one whose first head
+     * token matches the given literal (case-insensitively). Returns a snapshot of the nearest
+     * match, or {@code null} if none found.
+     *
+     * @param literal the first token to match (e.g. {@code "if"})
+     * @return the matching sibling info, or {@code null}
+     */
+    @Nullable SiblingInfo findSiblingBlock(@NotNull String literal);
+
+    /**
+     * A snapshot of a sibling block's location and source text.
+     *
+     * @param line the 1-based source line number
+     * @param raw  the raw source text of the block header
+     */
+    record SiblingInfo(int line, @NotNull String raw) {
+    }
 }

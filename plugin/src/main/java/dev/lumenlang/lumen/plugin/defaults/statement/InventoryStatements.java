@@ -23,9 +23,9 @@ public final class InventoryStatements {
                 .example("give player diamond 64")
                 .since("1.0.0")
                 .category(Categories.INVENTORY)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     ctx.codegen().addImport(ItemStack.class.getName());
-                    out.line(ctx.java("who") + ".getInventory().addItem(new ItemStack("
+                    ctx.out().line(ctx.java("who") + ".getInventory().addItem(new ItemStack("
                             + ctx.java("item") + ", "
                             + ctx.java("amt") + "));");
                 }));
@@ -37,7 +37,7 @@ public final class InventoryStatements {
                 .example("give player sword")
                 .since("1.0.0")
                 .category(Categories.INVENTORY)
-                .handler((line, ctx, out) -> out.line(ctx.java("who") + ".getInventory().addItem("
+                .handler(ctx -> ctx.out().line(ctx.java("who") + ".getInventory().addItem("
                         + ctx.java("item") + ");")));
 
         api.patterns().statement(b -> b
@@ -47,14 +47,14 @@ public final class InventoryStatements {
                 .example("give player sword 3")
                 .since("1.0.0")
                 .category(Categories.INVENTORY)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     ctx.codegen().addImport(ItemStack.class.getName());
                     String itemJava = ctx.java("item");
-                    out.line("{");
-                    out.line("ItemStack __item = " + itemJava + ".clone();");
-                    out.line("__item.setAmount(" + ctx.java("amt") + ");");
-                    out.line(ctx.java("who") + ".getInventory().addItem(__item);");
-                    out.line("}");
+                    ctx.out().line("{");
+                    ctx.out().line("ItemStack __item = " + itemJava + ".clone();");
+                    ctx.out().line("__item.setAmount(" + ctx.java("amt") + ");");
+                    ctx.out().line(ctx.java("who") + ".getInventory().addItem(__item);");
+                    ctx.out().line("}");
                 }));
 
         api.patterns().statement(b -> b
@@ -64,7 +64,7 @@ public final class InventoryStatements {
                 .example("give player myItem")
                 .since("1.0.0")
                 .category(Categories.INVENTORY)
-                .handler((line, ctx, out) -> out.line(ctx.java("who") + ".getInventory().addItem(" + ctx.java("item") + ");")));
+                .handler(ctx -> ctx.out().line(ctx.java("who") + ".getInventory().addItem(" + ctx.java("item") + ");")));
 
         api.patterns().statement(b -> b
                 .by("Lumen")
@@ -73,13 +73,13 @@ public final class InventoryStatements {
                 .example("give player myItem 5")
                 .since("1.0.0")
                 .category(Categories.INVENTORY)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     ctx.codegen().addImport(ItemStack.class.getName());
-                    out.line("{");
-                    out.line("ItemStack __item = " + ctx.java("item") + ";");
-                    out.line("__item.setAmount(" + ctx.java("amt") + ");");
-                    out.line(ctx.java("who") + ".getInventory().addItem(__item);");
-                    out.line("}");
+                    ctx.out().line("{");
+                    ctx.out().line("ItemStack __item = " + ctx.java("item") + ";");
+                    ctx.out().line("__item.setAmount(" + ctx.java("amt") + ");");
+                    ctx.out().line(ctx.java("who") + ".getInventory().addItem(__item);");
+                    ctx.out().line("}");
                 }));
 
         api.patterns().statement(b -> b
@@ -89,7 +89,7 @@ public final class InventoryStatements {
                 .example("clear player's inventory")
                 .since("1.0.0")
                 .category(Categories.INVENTORY)
-                .handler((line, ctx, out) -> out.line(ctx.java("who") + ".getInventory().clear();")));
+                .handler(ctx -> ctx.out().line(ctx.java("who") + ".getInventory().clear();")));
 
         api.patterns().statement(b -> b
                 .by("Lumen")
@@ -98,6 +98,6 @@ public final class InventoryStatements {
                 .example("close player's inventory")
                 .since("1.0.0")
                 .category(Categories.INVENTORY)
-                .handler((line, ctx, out) -> out.line(ctx.java("who") + ".closeInventory();")));
+                .handler(ctx -> ctx.out().line(ctx.java("who") + ".closeInventory();")));
     }
 }

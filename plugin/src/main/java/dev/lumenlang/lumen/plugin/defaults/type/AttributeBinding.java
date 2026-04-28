@@ -8,6 +8,7 @@ import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.exceptions.ParseFailureException;
 import dev.lumenlang.lumen.api.type.AddonTypeBinding;
 import dev.lumenlang.lumen.api.type.TypeBindingMeta;
+import dev.lumenlang.lumen.api.util.FuzzyMatch;
 import dev.lumenlang.lumen.plugin.defaults.util.AttributeNames;
 import org.bukkit.attribute.Attribute;
 import org.jetbrains.annotations.NotNull;
@@ -32,6 +33,7 @@ public final class AttributeBinding {
             @Override
             public @NotNull TypeBindingMeta meta() {
                 return new TypeBindingMeta(
+                        "a valid attribute",
                         "Resolves an attribute name (e.g. max_health, attack_damage) into the correct "
                                 + "Bukkit Attribute enum constant for the current server version. "
                                 + "Handles the renames across versions automatically.",
@@ -63,14 +65,13 @@ public final class AttributeBinding {
                         return 3;
                 }
 
-                throw new ParseFailureException("Unknown attribute: " + candidate
-                        + ". Known attributes: " + String.join(", ", AttributeNames.knownNames()));
+                throw new ParseFailureException(fuzzyAttribute(candidate));
             }
 
             @Override
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 if (tokens.isEmpty())
-                    throw new ParseFailureException("Expected attribute name");
+                    throw new ParseFailureException("expected an attribute name here");
 
                 if (tokens.size() >= 3) {
                     String threeWord = tokens.get(0) + "_" + tokens.get(1) + "_" + tokens.get(2);
@@ -89,15 +90,20 @@ public final class AttributeBinding {
                 if (resolved != null)
                     return resolved;
 
-                throw new ParseFailureException("Unknown attribute: " + tokens.get(0));
+                throw new ParseFailureException(fuzzyAttribute(tokens.get(0)));
             }
 
             @Override
-            public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx,
-                                          @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
                 ctx.addImport(Attribute.class.getName());
                 return "Attribute." + value;
             }
         });
+    }
+
+    private static @NotNull String fuzzyAttribute(@NotNull String token) {
+        String closest = FuzzyMatch.closest(token.toLowerCase().replace(' ', '_').replace('-', '_'), AttributeNames.knownNames());
+        if (closest != null) return "'" + token + "' is not a valid attribute, did you mean '" + closest + "'?";
+        return "'" + token + "' is not a valid attribute";
     }
 }

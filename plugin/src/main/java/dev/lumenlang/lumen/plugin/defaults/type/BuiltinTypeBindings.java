@@ -36,23 +36,34 @@ public final class BuiltinTypeBindings {
         registerExpr(types);
         registerString(types);
         registerQString(types);
+        registerIdent(types);
 
         types.registerMeta("EXPR", new TypeBindingMeta(
+                "an expression",
                 "Captures all remaining tokens as a raw expression. Preserves string literal quoting and is used for arbitrary sub-expressions.",
                 "String",
                 List.of("set %var:EXPR% to %val:EXPR%"),
                 "1.0.0",
                 false));
         types.registerMeta("STRING", new TypeBindingMeta(
+                "a string value",
                 "Captures a single token as a string value. Resolves variable references and supports placeholders expansion.",
                 "String",
                 List.of("message player %text:STRING%"),
                 "1.0.0",
                 false));
         types.registerMeta("QSTRING", new TypeBindingMeta(
+                "a quoted string, variable, or placeholder",
                 "Captures a single quoted string literal, variable reference, or placeholder token. Rejects bare identifiers to prevent accidental matches with other patterns.",
                 "String",
                 List.of("%a:STRING% (is|equals) %b:QSTRING%"),
+                "1.0.0",
+                false));
+        types.registerMeta("IDENT", new TypeBindingMeta(
+                "an identifier",
+                "Captures a single identifier token. Only matches bare identifiers, rejecting string literals, numbers, and other token kinds.",
+                "String",
+                List.of("set %name:IDENT% to %val:EXPR%"),
                 "1.0.0",
                 false));
     }
@@ -67,7 +78,7 @@ public final class BuiltinTypeBindings {
             @Override
             public Object parse(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
                 if (tokens.isEmpty()) {
-                    throw new ParseFailureException("EXPR requires at least one token");
+                    throw new ParseFailureException("expected an expression here");
                 }
                 return new TokenList(List.copyOf(tokens));
             }
@@ -99,7 +110,7 @@ public final class BuiltinTypeBindings {
             @Override
             public int consumeCount(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
                 if (tokens.isEmpty())
-                    throw new ParseFailureException("STRING requires at least one token");
+                    throw new ParseFailureException("expected a string value here");
                 return 1;
             }
 
@@ -138,13 +149,12 @@ public final class BuiltinTypeBindings {
             @Override
             public int consumeCount(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
                 if (tokens.isEmpty())
-                    throw new ParseFailureException("QSTRING requires at least one token");
+                    throw new ParseFailureException("expected a quoted string value here");
                 Token first = tokens.get(0);
                 if (first.kind() == TokenKind.STRING) return 1;
                 if (env.lookupVar(first.text()) != null) return 1;
                 if (first.text().contains("{")) return 1;
-                throw new ParseFailureException(
-                        "QSTRING requires a quoted string, variable reference, or placeholder");
+                throw new ParseFailureException("expected a quoted string, variable, or placeholder");
             }
 
             @Override
@@ -178,6 +188,32 @@ public final class BuiltinTypeBindings {
                 .replace("\n", "\\n")
                 .replace("\r", "\\r")
                 .replace("\t", "\\t");
+    }
+
+    private static void registerIdent(@NotNull TypeRegistry types) {
+        types.register(new TypeBinding() {
+            @Override
+            public @NotNull String id() {
+                return "IDENT";
+            }
+
+            @Override
+            public int consumeCount(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
+                if (tokens.isEmpty()) throw new ParseFailureException("expected an identifier");
+                if (tokens.get(0).kind() != TokenKind.IDENT) throw new ParseFailureException("expected an identifier");
+                return 1;
+            }
+
+            @Override
+            public Object parse(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
+                return tokens.get(0).text();
+            }
+
+            @Override
+            public @NotNull String toJava(Object value, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
+                return (String) value;
+            }
+        });
     }
 
     /**

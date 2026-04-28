@@ -3,16 +3,15 @@ package dev.lumenlang.lumen.pipeline.java.compiled;
 import dev.lumenlang.lumen.pipeline.codegen.CodegenContext;
 import dev.lumenlang.lumen.pipeline.java.JavaBuilder;
 import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
-import dev.lumenlang.lumen.pipeline.persist.GlobalVars;
-import dev.lumenlang.lumen.pipeline.persist.PersistentVars;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.TreeMap;
-import java.util.stream.Collectors;
 
 /**
  * Builds the final class of a Lumen script.
@@ -27,20 +26,9 @@ public final class ClassBuilder {
 
         sb.append("package dev.lumenlang.lumen.java.compiled;\n\n");
 
-        ctx.addImport("org.bukkit.event.Listener");
-        ctx.addImport("org.bukkit.command.CommandSender");
-        ctx.addImport("org.bukkit.entity.Player");
-        ctx.addImport("org.bukkit.plugin.Plugin");
-        ctx.addImport("org.bukkit.Bukkit");
-        ctx.addImport(PersistentVars.class.getName());
-        ctx.addImport(GlobalVars.class.getName());
-        ctx.addImport("dev.lumenlang.lumen.plugin.text.LumenText");
-        ctx.addImport("dev.lumenlang.lumen.pipeline.java.compiled.Coerce");
-        ctx.addImport("dev.lumenlang.lumen.plugin.annotations.LumenEvent");
-        ctx.addImport("dev.lumenlang.lumen.plugin.annotations.LumenCmd");
-        ctx.addImport("dev.lumenlang.lumen.plugin.annotations.LumenInventory");
-        ctx.addImport("dev.lumenlang.lumen.api.annotations.LumenPreload");
-        ctx.addImport("dev.lumenlang.lumen.api.annotations.LumenLoad");
+        for (String defaultImport : DefaultImportRegistry.all()) {
+            ctx.addImport(defaultImport);
+        }
         writeFormattedImports(sb, ctx.importLines());
 
         StringBuilder classDecl = new StringBuilder();
@@ -153,8 +141,9 @@ public final class ClassBuilder {
     }
 
     private static void splitBraces(@NotNull String line, @NotNull List<RawLine> out) {
-        int opens = countBraces(line, '{');
-        int closes = countBraces(line, '}');
+        int[] counts = countBracePair(line);
+        int opens = counts[0];
+        int closes = counts[1];
 
         if (line.startsWith("{") && opens > closes) {
             String rest = line.substring(1).trim();
@@ -216,8 +205,9 @@ public final class ClassBuilder {
                 continue;
             }
 
-            int opens = countBraces(line, '{');
-            int closes = countBraces(line, '}');
+            int[] counts = countBracePair(line);
+            int opens = counts[0];
+            int closes = counts[1];
 
             boolean startsWithClose = line.startsWith("}");
             if (closes > 0 && (closes != opens || startsWithClose)) {
@@ -250,9 +240,10 @@ public final class ClassBuilder {
         return true;
     }
 
-    private static int countBraces(@NotNull String line, char brace) {
-        if (line.trim().startsWith("//")) return 0;
-        int count = 0;
+    private static int @NotNull [] countBracePair(@NotNull String line) {
+        if (line.trim().startsWith("//")) return new int[]{0, 0};
+        int opens = 0;
+        int closes = 0;
         boolean inString = false;
         boolean inChar = false;
         for (int i = 0; i < line.length(); i++) {
@@ -265,11 +256,12 @@ public final class ClassBuilder {
                 inString = !inString;
             } else if (c == '\'' && !inString) {
                 inChar = !inChar;
-            } else if (!inString && !inChar && c == brace) {
-                count++;
+            } else if (!inString && !inChar) {
+                if (c == '{') opens++;
+                else if (c == '}') closes++;
             }
         }
-        return count;
+        return new int[]{opens, closes};
     }
 
     private record RawLine(@NotNull String code, boolean comment) {
@@ -348,26 +340,34 @@ public final class ClassBuilder {
      * @param imports the collection of import statements to process and write
      */
     private static void writeFormattedImports(@NotNull StringBuilder sb, @NotNull Collection<String> imports) {
-        imports.stream()
-                .map(String::trim)
-                .filter(s -> !s.isEmpty())
-                .map(s -> s.startsWith("import ") ? s.substring(7) : s)
-                .map(s -> s.endsWith(";") ? s.substring(0, s.length() - 1) : s)
-                .distinct()
-                .sorted()
-                .collect(Collectors.groupingBy(s -> {
-                    if (s.startsWith("net.") || s.startsWith("dev."))
-                        return "0";
-                    if (s.startsWith("org."))
-                        return "1";
-                    if (s.startsWith("java."))
-                        return "2";
-                    return "3";
-                }, TreeMap::new, Collectors.toList()))
-                .forEach((k, group) -> {
-                    if ("2".equals(k) && !sb.isEmpty())
-                        sb.append("\n");
-                    group.forEach(s -> sb.append("import ").append(s).append(";\n"));
-                });
+        TreeMap<String, List<String>> groups = new TreeMap<>();
+        groups.put("0", new ArrayList<>());
+        groups.put("1", new ArrayList<>());
+        groups.put("2", new ArrayList<>());
+        groups.put("3", new ArrayList<>());
+
+        HashSet<String> seen = new HashSet<>();
+        for (String raw : imports) {
+            String s = raw.trim();
+            if (s.isEmpty()) continue;
+            if (s.startsWith("import ")) s = s.substring(7);
+            if (s.endsWith(";")) s = s.substring(0, s.length() - 1);
+            if (!seen.add(s)) continue;
+
+            String key;
+            if (s.startsWith("net.") || s.startsWith("dev.")) key = "0";
+            else if (s.startsWith("org.")) key = "1";
+            else if (s.startsWith("java.")) key = "2";
+            else key = "3";
+            groups.get(key).add(s);
+        }
+
+        for (var entry : groups.entrySet()) {
+            List<String> group = entry.getValue();
+            if (group.isEmpty()) continue;
+            Collections.sort(group);
+            if ("2".equals(entry.getKey()) && !sb.isEmpty()) sb.append("\n");
+            for (String s : group) sb.append("import ").append(s).append(";\n");
+        }
     }
 }

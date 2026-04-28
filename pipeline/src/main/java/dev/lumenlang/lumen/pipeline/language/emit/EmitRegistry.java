@@ -2,7 +2,7 @@ package dev.lumenlang.lumen.pipeline.language.emit;
 
 import dev.lumenlang.lumen.api.emit.BlockEnterHook;
 import dev.lumenlang.lumen.api.emit.BlockFormHandler;
-import dev.lumenlang.lumen.api.emit.StatementFormHandler;
+import dev.lumenlang.lumen.api.emit.StatementValidator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -10,7 +10,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Stores registered emit handlers (statement forms, block forms, and block enter hooks).
+ * Stores registered emit handlers (block forms and block enter hooks).
  *
  * <p>All built-in language features and addon-registered extensions are stored here.
  */
@@ -18,9 +18,9 @@ public final class EmitRegistry {
 
     private static EmitRegistry INSTANCE;
 
-    private final List<StatementFormHandler> statementForms = new ArrayList<>();
     private final List<BlockFormHandler> blockForms = new ArrayList<>();
     private final List<BlockEnterHook> blockEnterHooks = new ArrayList<>();
+    private final List<StatementValidator> statementValidators = new ArrayList<>();
 
     /**
      * Sets the global singleton instance.
@@ -45,15 +45,6 @@ public final class EmitRegistry {
     }
 
     /**
-     * Registers a statement form handler.
-     *
-     * @param handler the handler to register
-     */
-    public void addStatementForm(@NotNull StatementFormHandler handler) {
-        statementForms.add(handler);
-    }
-
-    /**
      * Registers a block form handler.
      *
      * @param handler the handler to register
@@ -72,12 +63,12 @@ public final class EmitRegistry {
     }
 
     /**
-     * Returns an unmodifiable view of all registered statement form handlers.
+     * Registers a statement validator.
      *
-     * @return the statement form handlers
+     * @param validator the validator to register
      */
-    public @NotNull List<StatementFormHandler> statementForms() {
-        return Collections.unmodifiableList(statementForms);
+    public void addStatementValidator(@NotNull StatementValidator validator) {
+        statementValidators.add(validator);
     }
 
     /**
@@ -96,5 +87,14 @@ public final class EmitRegistry {
      */
     public @NotNull List<BlockEnterHook> blockEnterHooks() {
         return Collections.unmodifiableList(blockEnterHooks);
+    }
+
+    /**
+     * Returns an unmodifiable view of all registered statement validators.
+     *
+     * @return the statement validators
+     */
+    public @NotNull List<StatementValidator> statementValidators() {
+        return Collections.unmodifiableList(statementValidators);
     }
 }

@@ -2,15 +2,16 @@ package dev.lumenlang.lumen.pipeline.language.match;
 
 import dev.lumenlang.lumen.api.codegen.CodegenAccess;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
-import dev.lumenlang.lumen.api.handler.ConditionHandler;
+import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
-import dev.lumenlang.lumen.api.type.RefTypeHandle;
+import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.pipeline.codegen.BlockContext;
 import dev.lumenlang.lumen.pipeline.codegen.CodegenContext;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.pipeline.language.exceptions.TokenCarryingException;
 import dev.lumenlang.lumen.pipeline.language.pattern.Pattern;
 import dev.lumenlang.lumen.pipeline.language.resolve.ExprResolver;
-import dev.lumenlang.lumen.pipeline.var.RefType;
+import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +30,7 @@ public record Match(
         @NotNull Pattern pattern,
         @NotNull Map<String, BoundValue> values,
         @NotNull List<String> choices
-) implements ConditionHandler.ConditionMatch {
+) {
 
     /**
      * Resolves a bound value to Java source code. For EXPR-typed bindings with
@@ -48,23 +49,19 @@ public record Match(
             String inlined = ExprResolver.resolve(be.innerTokens(), ctx, env);
             if (inlined != null) return inlined;
             throw new TokenCarryingException(
-                    "Could not resolve braced expression: '{"
-                            + ExprResolver.joinTokens(be.innerTokens()) + "}'",
+                    "Could not resolve braced expression: '{" + ExprResolver.joinTokens(be.innerTokens()) + "}'",
                     bv.tokens());
         }
         if (bv.value() instanceof InlineExpr ie) {
             ExpressionResult result = ExprResolver.resolveWithType(ie.tokens(), ctx, env);
             if (result != null) {
                 if (!bv.binding().id().equals("EXPR")) {
-                    RefType ref = result.refTypeId() != null ? RefType.byId(result.refTypeId()) : null;
-                    return bv.binding().toJava(
-                            new InlineVarRef(result.java(), ref, result.metadata()), ctx, env);
+                    return bv.binding().toJava(new InlineVarRef(result.java(), result.type(), result.metadata()), ctx, env);
                 }
                 return result.java();
             }
             throw new TokenCarryingException(
-                    "Could not resolve inline expression: '"
-                            + ExprResolver.joinTokens(ie.tokens()) + "'",
+                    "Could not resolve inline expression: '" + ExprResolver.joinTokens(ie.tokens()) + "'",
                     bv.tokens());
         }
         if (bv.binding().id().equals("EXPR")) {
@@ -72,12 +69,27 @@ public record Match(
             if (inlined != null) return inlined;
             if (bv.tokens().size() > 1) {
                 throw new TokenCarryingException(
-                        "Expression not recognized: '" + ExprResolver.joinTokens(bv.tokens())
-                                + "'. Check spelling of variables and expression patterns.",
+                        "Expression not recognized: '" + ExprResolver.joinTokens(bv.tokens()) + "'. Check spelling of variables and expression patterns.",
                         bv.tokens());
             }
         }
         return bv.binding().toJava(bv.value(), ctx, env);
+    }
+
+    /**
+     * Creates a synthetic {@link EnvironmentAccess.VarHandle} wrapping a resolved Java
+     * expression together with type and metadata from the original expression result.
+     *
+     * @param javaExpr the resolved Java expression
+     * @param type     the type of the expression
+     * @param metadata compile-time metadata from the expression result
+     * @return a VarHandle backed by the expression with full type info
+     */
+    public static EnvironmentAccess.@NotNull VarHandle syntheticHandle(
+            @NotNull String javaExpr,
+            @NotNull LumenType type,
+            @NotNull Map<String, Object> metadata) {
+        return new InlineVarRef(javaExpr, type, metadata);
     }
 
     /**
@@ -123,6 +135,7 @@ public record Match(
      */
     public @NotNull String java(@NotNull String name, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
         BoundValue bv = values.get(name);
+        checkNullableBinding(bv, env);
         return resolveBinding(bv, ctx, env);
     }
 
@@ -149,8 +162,7 @@ public record Match(
                 return bv;
             i++;
         }
-        throw new IndexOutOfBoundsException(
-                "Index " + index + " out of range for match with " + values.size() + " parameters");
+        throw new IndexOutOfBoundsException("Index " + index + " out of range for match with " + values.size() + " parameters");
     }
 
     /**
@@ -188,44 +200,20 @@ public record Match(
         return resolveBinding(bv, ctx, env);
     }
 
-    @Override
-    public @NotNull String java(@NotNull String name,
-                                @NotNull CodegenAccess ctx,
-                                @NotNull EnvironmentAccess env) {
+    public @NotNull String java(@NotNull String name, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
         return java(name, (CodegenContext) ctx, (TypeEnv) env);
     }
 
-    @Override
     public <T> @NotNull T value(int index) {
         return valueAt(index);
     }
 
-    @Override
     public EnvironmentAccess.@NotNull VarHandle ref(int index) {
         return refAt(index);
     }
 
-    @Override
-    public @NotNull String java(int index,
-                                @NotNull CodegenAccess ctx,
-                                @NotNull EnvironmentAccess env) {
+    public @NotNull String java(int index, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
         return javaAt(index, (CodegenContext) ctx, (TypeEnv) env);
-    }
-
-    /**
-     * Creates a synthetic {@link EnvironmentAccess.VarHandle} wrapping a resolved Java
-     * expression together with type and metadata from the original expression result.
-     *
-     * @param javaExpr  the resolved Java expression
-     * @param refType   the ref type of the expression, or {@code null}
-     * @param metadata  compile-time metadata from the expression result
-     * @return a VarHandle backed by the expression with full type info
-     */
-    public static EnvironmentAccess.@NotNull VarHandle syntheticHandle(
-            @NotNull String javaExpr,
-            @Nullable RefTypeHandle refType,
-            @NotNull Map<String, Object> metadata) {
-        return new InlineVarRef(javaExpr, refType, metadata);
     }
 
     /**
@@ -234,15 +222,41 @@ public record Match(
      * coercion logic (such as {@code Material.valueOf(...)}) when the slot was filled by
      * an inline expression rather than a direct variable reference.
      */
+    private static void checkNullableBinding(@NotNull BoundValue bv, @NotNull TypeEnv env) {
+        if (bv.ph().nullable()) return;
+        if (!(bv.value() instanceof VarRef ref)) return;
+        if (!ref.type().nullable()) return;
+        TypeEnv.NullState state = env.nullState(ref.java());
+        if (state == TypeEnv.NullState.NON_NULL) return;
+        Token tok = bv.tokens().get(0);
+        String varName = tok.text();
+        BlockContext block = env.blockContext();
+        String raw = block.raw();
+        int line = block.line();
+        LumenDiagnostic diag = LumenDiagnostic.warning("Nullable variable used without null check")
+                .at(line, raw)
+                .highlight(tok.start(), tok.end())
+                .label("'" + varName + "' may be null")
+                .help("prove it with 'if " + varName + " is set:' or use 'require " + varName + " or fail'")
+                .build();
+        env.addWarning(diag);
+        env.markNullState(ref.java(), TypeEnv.NullState.NON_NULL, line, raw);
+    }
+
     private record InlineVarRef(
             @NotNull String javaExpr,
-            @Nullable RefTypeHandle refType,
+            @NotNull LumenType lumenType,
             @NotNull Map<String, Object> meta
     ) implements EnvironmentAccess.VarHandle {
 
         @Override
-        public @Nullable RefTypeHandle type() {
-            return refType;
+        public @NotNull String name() {
+            return javaExpr;
+        }
+
+        @Override
+        public @NotNull LumenType type() {
+            return lumenType;
         }
 
         @Override

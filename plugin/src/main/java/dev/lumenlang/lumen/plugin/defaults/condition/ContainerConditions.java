@@ -21,28 +21,16 @@ public final class ContainerConditions {
     public void register(@NotNull LumenAPI api) {
         api.patterns().condition(b -> b
                 .by("Lumen")
-                .pattern("%b:BLOCK% inventory is empty")
-                .description("Checks if a container block's inventory is empty.")
-                .example("if block inventory is empty:")
+                .pattern("%b:BLOCK% inventory (is|is not) empty")
+                .description("Checks if a container block's inventory is or is not empty.")
+                .examples("if block inventory is empty:", "if block inventory is not empty:")
                 .since("1.0.0")
                 .category(Categories.INVENTORY)
-                .handler((match, env, ctx) -> {
-                    ctx.addImport(CONTAINER);
-                    String block = match.java("b", ctx, env);
-                    return "(" + block + ".getState() instanceof Container __ct && __ct.getInventory().isEmpty())";
-                }));
-
-        api.patterns().condition(b -> b
-                .by("Lumen")
-                .pattern("%b:BLOCK% inventory is not empty")
-                .description("Checks if a container block's inventory is not empty.")
-                .example("if block inventory is not empty:")
-                .since("1.0.0")
-                .category(Categories.INVENTORY)
-                .handler((match, env, ctx) -> {
-                    ctx.addImport(CONTAINER);
-                    String block = match.java("b", ctx, env);
-                    return "(" + block + ".getState() instanceof Container __ct && !__ct.getInventory().isEmpty())";
+                .handler(ctx -> {
+                    ctx.codegen().addImport(CONTAINER);
+                    String block = ctx.java("b");
+                    boolean negated = ctx.choice(0).equals("is not");
+                    return "(" + block + ".getState() instanceof Container __ct && " + (negated ? "!" : "") + "__ct.getInventory().isEmpty())";
                 }));
 
         api.patterns().condition(b -> b
@@ -52,9 +40,9 @@ public final class ContainerConditions {
                 .example("if block is a container:")
                 .since("1.0.0")
                 .category(Categories.INVENTORY)
-                .handler((match, env, ctx) -> {
-                    ctx.addImport(CONTAINER);
-                    String block = match.java("b", ctx, env);
+                .handler(ctx -> {
+                    ctx.codegen().addImport(CONTAINER);
+                    String block = ctx.java("b");
                     return block + ".getState() instanceof Container";
                 }));
     }

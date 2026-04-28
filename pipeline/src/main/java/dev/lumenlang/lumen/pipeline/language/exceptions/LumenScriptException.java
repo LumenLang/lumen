@@ -1,5 +1,7 @@
 package dev.lumenlang.lumen.pipeline.language.exceptions;
 
+import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
+import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.pipeline.language.emit.CodeEmitter;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import org.jetbrains.annotations.NotNull;
@@ -94,6 +96,19 @@ public final class LumenScriptException extends RuntimeException {
         this.rawLine = rawLine;
     }
 
+    /**
+     * Creates a script exception from a {@link DiagnosticException}.
+     *
+     * <p>The formatted diagnostic message is used directly without additional wrapping.
+     *
+     * @param diagnostic the diagnostic exception to wrap
+     */
+    public LumenScriptException(@NotNull DiagnosticException diagnostic) {
+        super(diagnostic.getMessage(), diagnostic);
+        this.line = diagnostic.diagnostic().line();
+        this.rawLine = null;
+    }
+
     private static @NotNull String formatMessage(int line, @Nullable String rawLine,
                                                  @NotNull String detail, int colStart, int colEnd) {
         StringBuilder sb = new StringBuilder();
@@ -127,5 +142,17 @@ public final class LumenScriptException extends RuntimeException {
      */
     public @Nullable String rawLine() {
         return rawLine;
+    }
+
+    /**
+     * Returns the underlying diagnostic if this exception wraps a {@link DiagnosticException}, or {@code null} otherwise.
+     *
+     * @return the diagnostic, or {@code null}
+     */
+    public @Nullable LumenDiagnostic diagnostic() {
+        if (getCause() instanceof DiagnosticException de) {
+            return de.diagnostic();
+        }
+        return null;
     }
 }

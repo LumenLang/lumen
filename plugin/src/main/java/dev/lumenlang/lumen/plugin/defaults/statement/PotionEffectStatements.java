@@ -43,14 +43,14 @@ public final class PotionEffectStatements {
                 .example("apply \"speed\" 2 to player for 200 ticks")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     potionImports(ctx.codegen());
                     String effect = ctx.java("effect");
                     String level = ctx.java("level");
                     String who = ctx.java("who");
                     String duration = ctx.java("duration");
-                    out.line("{ PotionEffectType __pt = PotionEffectType.getByName((" + effect + ").toUpperCase().replace(\" \", \"_\"));");
-                    out.line("if (__pt != null) " + who + ".addPotionEffect(new PotionEffect(__pt, " + duration + ", (" + level + ") - 1)); }");
+                    ctx.out().line("{ PotionEffectType __pt = PotionEffectType.getByName((" + effect + ").toUpperCase().replace(\" \", \"_\"));");
+                    ctx.out().line("if (__pt != null) " + who + ".addPotionEffect(new PotionEffect(__pt, " + duration + ", (" + level + ") - 1)); }");
                 }));
 
         api.patterns().statement(b -> b
@@ -60,14 +60,14 @@ public final class PotionEffectStatements {
                 .example("apply \"regeneration\" 1 to entity for 100 ticks")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     entityPotionImports(ctx.codegen());
                     String effect = ctx.java("effect");
                     String level = ctx.java("level");
                     String who = ctx.java("who");
                     String duration = ctx.java("duration");
-                    out.line("{ PotionEffectType __pt = PotionEffectType.getByName((" + effect + ").toUpperCase().replace(\" \", \"_\"));");
-                    out.line("if (__pt != null && " + who + " instanceof LivingEntity __le) __le.addPotionEffect(new PotionEffect(__pt, " + duration + ", (" + level + ") - 1)); }");
+                    ctx.out().line("{ PotionEffectType __pt = PotionEffectType.getByName((" + effect + ").toUpperCase().replace(\" \", \"_\"));");
+                    ctx.out().line("if (__pt != null && " + who + " instanceof LivingEntity __le) __le.addPotionEffect(new PotionEffect(__pt, " + duration + ", (" + level + ") - 1)); }");
                 }));
 
         api.patterns().statement(b -> b
@@ -77,12 +77,12 @@ public final class PotionEffectStatements {
                 .example("remove effect \"speed\" from player")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     ctx.codegen().addImport(POTION_EFFECT_TYPE);
                     String effect = ctx.java("effect");
                     String who = ctx.java("who");
-                    out.line("{ PotionEffectType __pt = PotionEffectType.getByName((" + effect + ").toUpperCase().replace(\" \", \"_\"));");
-                    out.line("if (__pt != null) " + who + ".removePotionEffect(__pt); }");
+                    ctx.out().line("{ PotionEffectType __pt = PotionEffectType.getByName((" + effect + ").toUpperCase().replace(\" \", \"_\"));");
+                    ctx.out().line("if (__pt != null) " + who + ".removePotionEffect(__pt); }");
                 }));
 
         api.patterns().statement(b -> b
@@ -92,12 +92,12 @@ public final class PotionEffectStatements {
                 .example("remove effect \"speed\" from entity")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     entityPotionImports(ctx.codegen());
                     String effect = ctx.java("effect");
                     String who = ctx.java("who");
-                    out.line("{ PotionEffectType __pt = PotionEffectType.getByName((" + effect + ").toUpperCase().replace(\" \", \"_\"));");
-                    out.line("if (__pt != null && " + who + " instanceof LivingEntity __le) __le.removePotionEffect(__pt); }");
+                    ctx.out().line("{ PotionEffectType __pt = PotionEffectType.getByName((" + effect + ").toUpperCase().replace(\" \", \"_\"));");
+                    ctx.out().line("if (__pt != null && " + who + " instanceof LivingEntity __le) __le.removePotionEffect(__pt); }");
                 }));
 
         api.patterns().statement(b -> b
@@ -107,11 +107,11 @@ public final class PotionEffectStatements {
                 .example("clear all effects from player")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     ctx.codegen().addImport(POTION_EFFECT);
                     ctx.codegen().addImport(ArrayList.class.getName());
                     String who = ctx.java("who");
-                    out.line("for (PotionEffect __pe : new ArrayList<>(" + who + ".getActivePotionEffects())) " + who + ".removePotionEffect(__pe.getType());");
+                    ctx.out().line("for (PotionEffect __pe : new ArrayList<>(" + who + ".getActivePotionEffects())) " + who + ".removePotionEffect(__pe.getType());");
                 }));
 
         api.patterns().statement(b -> b
@@ -121,11 +121,11 @@ public final class PotionEffectStatements {
                 .example("clear all effects from entity")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     entityPotionImports(ctx.codegen());
                     ctx.codegen().addImport(ArrayList.class.getName());
                     String who = ctx.java("who");
-                    out.line("if (" + who + " instanceof LivingEntity __le) for (PotionEffect __pe : new ArrayList<>(__le.getActivePotionEffects())) __le.removePotionEffect(__pe.getType());");
+                    ctx.out().line("if (" + who + " instanceof LivingEntity __le) for (PotionEffect __pe : new ArrayList<>(__le.getActivePotionEffects())) __le.removePotionEffect(__pe.getType());");
                 }));
     }
 }

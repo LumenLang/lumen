@@ -95,4 +95,17 @@ public interface LumenAddon {
     default @NotNull List<ConfigOverride> configOverrides() {
         return List.of();
     }
+
+    /**
+     * Returns a list of string configuration overrides this addon wants to apply on load.
+     *
+     * <p>The default implementation returns an empty list.
+     *
+     * @return the list of string config overrides, never null
+     * @see StringConfigOverride
+     * @see StringConfigOption
+     */
+    default @NotNull List<StringConfigOverride> stringConfigOverrides() {
+        return List.of();
+    }
 }

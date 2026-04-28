@@ -23,14 +23,14 @@ public final class SlimeConditions {
                         "%e:ENTITY% size %op:OP% %n:INT%",
                         "Checks if a slime's size satisfies a comparison.",
                         "if mob size >= 2:",
-                        (match, env, ctx) -> {
-                            VarHandle h = match.ref("e");
+                        (ctx) -> {
+                            VarHandle h = ctx.requireVarHandle("e");
                             EntityValidation.requireSubtype(h, FQCN, "slime size");
-                            ctx.addImport(FQCN);
+                            ctx.codegen().addImport(FQCN);
                             return "(" + h.java()
                                     + " instanceof Slime _sl && _sl.getSize() "
-                                    + match.java("op", ctx, env) + " "
-                                    + match.java("n", ctx, env) + ")";
+                                    + ctx.java("op") + " "
+                                    + ctx.java("n") + ")";
                         });
     }
 }

@@ -4,14 +4,14 @@ import dev.lumenlang.lumen.api.binder.ScriptBinderRegistrar;
 import dev.lumenlang.lumen.api.emit.EmitRegistrar;
 import dev.lumenlang.lumen.api.emit.transform.TransformerRegistrar;
 import dev.lumenlang.lumen.api.event.EventRegistrar;
+import dev.lumenlang.lumen.api.imports.ImportRegistrar;
 import dev.lumenlang.lumen.api.pattern.PatternRegistrar;
 import dev.lumenlang.lumen.api.placeholder.PlaceholderRegistrar;
-import dev.lumenlang.lumen.api.type.RefTypeRegistrar;
 import dev.lumenlang.lumen.api.type.TypeRegistrar;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Top-level API handle for extending Lumen with custom patterns, events, types, and ref types.
+ * Top-level API handle for extending Lumen with custom patterns, events, and types.
  *
  * <p>Addons receive this handle via {@link LumenAddon#onEnable(LumenAPI)}, or plugins can
  * access it via {@link LumenProvider#api()} after Lumen has enabled.
@@ -20,32 +20,28 @@ import org.jetbrains.annotations.NotNull;
  * <pre>{@code
  * // Via LumenAddon (jar-based or plugin-based):
  * public void onEnable(LumenAPI api) {
- *     api.patterns().statement("heal %who:PLAYER%", (line, ctx, out) ->
- *         out.line(ctx.java("who") + ".setHealth(20);")
+ *     api.patterns().statement("heal %who:PLAYER%", ctx ->
+ *         ctx.out().line(ctx.java("who") + ".setHealth(20);")
  *     );
  * }
  *
  * // Directly from a Bukkit plugin that depends on Lumen:
  * LumenAPI api = LumenProvider.api();
- * api.patterns().condition("%p:PLAYER% is swimming", (match, env, ctx) ->
- *     match.ref("p").java() + ".isSwimming()"
+ * api.patterns().condition("%p:PLAYER% is swimming", ctx ->
+ *     ctx.requireVarHandle("p").java() + ".isSwimming()"
  * );
  * }</pre>
  *
  * <p>Through this handle an addon can reach every registrar it needs:
  * <ul>
  *   <li>{@link #patterns()}  -  register statement, block, and condition patterns</li>
- *   <li>{@link #types()}  -  register custom type bindings (e.g. a new {@code ENTITY} type)</li>
+ *   <li>{@link #types()}  -  register custom type bindings (e.g. a new {@code PLAYER} type)</li>
  *   <li>{@link #events()}  -  register event definitions for {@code on <name>:} syntax</li>
- *   <li>{@link #refTypes()}  -  register new compile-time reference types</li>
- *   <li>{@link #placeholders()}  -  register placeholder properties for ref types</li>
+ *   <li>{@link #placeholders()}  -  register placeholder properties for types</li>
  *   <li>{@link #emitters()}  -  register custom emit handlers (statement forms, block forms, hooks)</li>
  *   <li>{@link #binders()}  -  register custom script annotation binders</li>
  *   <li>{@link #transformers()}  -  register code transformers (experimental)</li>
  * </ul>
- *
- * <p>Implementations of this interface are provided by Lumen's internal code. Addons should
- * never implement this interface themselves.
  *
  * @see LumenAddon
  */
@@ -73,14 +69,7 @@ public interface LumenAPI {
     @NotNull EventRegistrar events();
 
     /**
-     * Returns the ref type registrar for registering new compile-time reference types.
-     *
-     * @return the ref type registrar
-     */
-    @NotNull RefTypeRegistrar refTypes();
-
-    /**
-     * Returns the placeholder registrar for registering placeholder properties on ref types.
+     * Returns the placeholder registrar for registering placeholder properties on types.
      *
      * @return the placeholder registrar
      */
@@ -123,12 +112,19 @@ public interface LumenAPI {
     @NotNull TransformerRegistrar transformers();
 
     /**
-     * Adds an additional path to the script compilation classpath.
+     * Returns the import registrar for registering default imports added to every compiled script.
      *
-     * <p>Addons whose classes are referenced from generated Java code must register
-     * their JAR path here so the compiler can resolve them.
+     * @return the import registrar
+     */
+    @NotNull ImportRegistrar imports();
+
+    /**
+     * Adds a path to the classpath used during script compilation.
      *
-     * @param path the absolute file path to add
+     * <p>Use this if your addon provides classes referenced by generated Java code
+     * that are not loaded by its initial classloader (for example, when using separate classloaders for dependencies).
+     *
+     * @param path the file path to add
      */
     void addClasspath(@NotNull String path);
 

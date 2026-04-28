@@ -1,9 +1,9 @@
 package dev.lumenlang.lumen.pipeline.codegen;
 
 import dev.lumenlang.lumen.api.codegen.BlockAccess;
+import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.pipeline.language.nodes.BlockNode;
 import dev.lumenlang.lumen.pipeline.language.nodes.Node;
-import dev.lumenlang.lumen.pipeline.var.RefType;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Represents a single scope frame on the {@link TypeEnv} scope stack.
@@ -87,14 +88,23 @@ public final class BlockContext implements BlockAccess {
     }
 
     /**
-     * Returns the first variable in this frame whose ref type matches the given type.
+     * Returns all variable names defined in this scope frame (no parent walk).
      *
-     * @param type the ref type to search for
+     * @return a set of variable names in this frame
+     */
+    public @NotNull Set<String> varNames() {
+        return vars.keySet();
+    }
+
+    /**
+     * Returns the first variable in this frame whose object type matches the given type.
+     *
+     * @param type the object type to search for
      * @return the matching variable, or {@code null} if none found in this frame
      */
-    public @Nullable VarRef findVarByType(@NotNull RefType type) {
+    public @Nullable VarRef findVarByType(@NotNull ObjectType type) {
         for (VarRef ref : vars.values()) {
-            if (ref.refType() != null && ref.refType().id().equals(type.id())) {
+            if (ref.objectType() != null && ref.objectType().id().equals(type.id())) {
                 return ref;
             }
         }
@@ -157,6 +167,18 @@ public final class BlockContext implements BlockAccess {
     @Override
     public @NotNull String nextRaw() {
         Node n = next();
+        return n != null ? n.raw() : "";
+    }
+
+    @Override
+    public int prevLine() {
+        Node n = prev();
+        return n != null ? n.line() : -1;
+    }
+
+    @Override
+    public @NotNull String prevRaw() {
+        Node n = prev();
         return n != null ? n.raw() : "";
     }
 
@@ -227,6 +249,28 @@ public final class BlockContext implements BlockAccess {
             if (!b.head().get(i).text().equalsIgnoreCase(tokens[i])) return false;
         }
         return true;
+    }
+
+    @Override
+    public @Nullable SiblingInfo findPrecedingBlock(@NotNull String literal) {
+        for (int i = index - 1; i >= 0; i--) {
+            if (siblings.get(i) instanceof BlockNode b && !b.head().isEmpty() && b.head().get(0).text().equalsIgnoreCase(literal)) {
+                return new SiblingInfo(b.line(), b.raw());
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public @Nullable SiblingInfo findSiblingBlock(@NotNull String literal) {
+        SiblingInfo preceding = findPrecedingBlock(literal);
+        if (preceding != null) return preceding;
+        for (int i = index + 1; i < siblings.size(); i++) {
+            if (siblings.get(i) instanceof BlockNode b && !b.head().isEmpty() && b.head().get(0).text().equalsIgnoreCase(literal)) {
+                return new SiblingInfo(b.line(), b.raw());
+            }
+        }
+        return null;
     }
 
     /**

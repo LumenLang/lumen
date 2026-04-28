@@ -8,6 +8,7 @@ import dev.lumenlang.lumen.pipeline.language.match.InlineExprValidator;
 import dev.lumenlang.lumen.pipeline.language.match.Match;
 import dev.lumenlang.lumen.pipeline.language.match.PatternMatcher;
 import dev.lumenlang.lumen.pipeline.language.pattern.Pattern;
+import dev.lumenlang.lumen.pipeline.language.pattern.PatternIndex;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternPart;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
@@ -36,7 +37,7 @@ public class ConditionRegistry {
 
     private final List<RegisteredCondition> conditions = new ArrayList<>();
     private final TypeRegistry types;
-    private volatile boolean sorted;
+    private volatile PatternIndex<RegisteredCondition> conditionIndex;
     private @Nullable InlineExprValidator validator;
 
     /**
@@ -78,6 +79,7 @@ public class ConditionRegistry {
         Pattern compiled = PatternCompiler.compile(pattern);
         validateTypes(compiled);
         conditions.add(new RegisteredCondition(compiled, handler, meta));
+        conditionIndex = null;
     }
 
     private void validateTypes(@NotNull Pattern pattern) {
@@ -124,8 +126,7 @@ public class ConditionRegistry {
      * @return a {@link RegisteredConditionMatch} on success, or {@code null} if no pattern matched
      */
     public RegisteredConditionMatch match(List<Token> tokens, TypeEnv env) {
-        ensureSorted();
-        for (RegisteredCondition rc : conditions) {
+        for (RegisteredCondition rc : ensureIndex().candidates(tokens)) {
             Match m = PatternMatcher.match(tokens, rc.pattern(), types, env);
             if (m != null) return new RegisteredConditionMatch(rc, m);
         }
@@ -142,23 +143,31 @@ public class ConditionRegistry {
      */
     public @Nullable RegisteredConditionMatch matchSlow(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
         if (validator == null) return null;
-        ensureSorted();
-        for (RegisteredCondition rc : conditions) {
+        for (RegisteredCondition rc : ensureIndex().candidates(tokens)) {
             Match m = PatternMatcher.match(tokens, rc.pattern(), types, env, validator);
             if (m != null) return new RegisteredConditionMatch(rc, m);
         }
         return null;
     }
 
-    private void ensureSorted() {
-        if (!sorted) {
+    private @NotNull PatternIndex<RegisteredCondition> ensureIndex() {
+        if (conditionIndex == null) {
             synchronized (conditions) {
-                if (!sorted) {
-                    conditions.sort(Comparator.comparingInt(
-                            (RegisteredCondition rc) -> PatternRegistry.specificity(rc.pattern())).reversed());
-                    sorted = true;
+                if (conditionIndex == null) {
+                    List<RegisteredCondition> copy = new ArrayList<>(conditions);
+                    copy.sort(Comparator.comparingInt((RegisteredCondition rc) -> PatternRegistry.specificity(rc.pattern())).reversed());
+                    conditionIndex = new PatternIndex<>(copy, RegisteredCondition::pattern);
                 }
             }
         }
+        return conditionIndex;
+    }
+
+    /**
+     * Eagerly builds the internal pattern index so that the first match call
+     * does not pay the sorting and indexing cost.
+     */
+    public void warmup() {
+        ensureIndex();
     }
 }

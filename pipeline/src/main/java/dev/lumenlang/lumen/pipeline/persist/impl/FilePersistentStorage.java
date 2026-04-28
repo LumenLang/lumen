@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -79,6 +80,11 @@ public final class FilePersistentStorage implements PersistentStorage {
     public void deleteByPrefix(@NotNull String prefix) {
         data.keySet().removeIf(k -> k.startsWith(prefix));
         scheduleFlush();
+    }
+
+    @Override
+    public @NotNull Set<String> keys() {
+        return Set.copyOf(data.keySet());
     }
 
     private void scheduleFlush() {

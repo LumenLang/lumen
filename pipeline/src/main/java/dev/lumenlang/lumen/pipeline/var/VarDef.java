@@ -1,9 +1,9 @@
 package dev.lumenlang.lumen.pipeline.var;
 
+import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.pipeline.events.def.EventDef;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Describes a variable that will be injected as a local variable into a generated handler method.
@@ -17,10 +17,10 @@ import org.jetbrains.annotations.Nullable;
  *       type bindings can resolve it by name during pattern matching.</li>
  * </ol>
  *
- * @param refType  the logical type category for type checking, or {@code null} for plain variables
+ * @param type     the compile-time type
  * @param javaType the fully-qualified Java class name used in the generated declaration
  * @param expr     the Java initialiser expression (e.g. {@code "event.getPlayer()"})
  * @see VarRef
  */
-public record VarDef(@Nullable RefType refType, @NotNull String javaType, @NotNull String expr) {
+public record VarDef(@NotNull LumenType type, @NotNull String javaType, @NotNull String expr) {
 }

@@ -1,0 +1,18 @@
+name: Invalidate Docs Cache
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/**'
+
+jobs:
+  invalidate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Invalidate docs cache
+        run: |
+          curl -X POST "https://docsapi.vansencool.net/docs/github/invalidate?repo=LumenLang/lumen" \
+            -H "Authorization: Bearer ${{ secrets.DOCS_API_TOKEN }}"

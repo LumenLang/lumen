@@ -1,11 +1,11 @@
 package dev.lumenlang.lumen.pipeline.language.typed;
 
-import dev.lumenlang.lumen.api.emit.StatementFormHandler;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.pipeline.language.nodes.StatementNode;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.language.pattern.registered.RegisteredExpressionMatch;
 import dev.lumenlang.lumen.pipeline.language.pattern.registered.RegisteredPatternMatch;
+import dev.lumenlang.lumen.pipeline.language.resolve.PatternSimulator;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,9 +14,8 @@ import java.util.List;
 /**
  * Classifies a raw {@link StatementNode} into a specific {@link TypedStatement} variant.
  *
- * <p>Operates as a fallback after all registered {@link StatementFormHandler} implementations
- * have been tried. Variable declarations ({@code set}, {@code global}, {@code load}) are
- * handled by form handlers and are not classified here.
+ * <p>Classifies statement nodes into typed variants using pattern matching, expression
+ * matching, and fuzzy suggestions.
  *
  * @see TypedStatement
  */
@@ -55,6 +54,7 @@ public final class StatementClassifier {
         return new TypedStatement.ErrorStmt(
                 st,
                 "Unknown statement on line " + st.line() + ". No matching statement or expression pattern was found",
-                t);
+                t,
+                PatternSimulator.suggestStatementsAndExpressions(t, reg, env));
     }
 }

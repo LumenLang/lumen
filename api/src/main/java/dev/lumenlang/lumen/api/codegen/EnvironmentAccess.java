@@ -1,7 +1,6 @@
 package dev.lumenlang.lumen.api.codegen;
 
-import dev.lumenlang.lumen.api.type.RefTypeHandle;
-import dev.lumenlang.lumen.api.type.TypeHandle;
+import dev.lumenlang.lumen.api.type.LumenType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,7 +14,7 @@ import java.util.Map;
  * and inspect the current scope. This interface hides internal implementation details of the
  * scope stack.
  *
- * @see BindingAccess
+ * @see HandlerContext
  */
 @SuppressWarnings("unused")
 public interface EnvironmentAccess {
@@ -30,25 +29,25 @@ public interface EnvironmentAccess {
     @Nullable VarHandle lookupVar(@NotNull String name);
 
     /**
-     * Returns the first variable in scope whose ref type matches the given type.
+     * Returns the first variable in scope whose type matches the given type.
      *
      * <p>Walks the scope stack from innermost to outermost scope, examining all variables
      * in each frame.
      *
-     * @param type the ref type to match against
+     * @param type the type to match against
      * @return the first matching variable, or {@code null} if none found
      */
-    @Nullable VarHandle lookupVarByType(@NotNull RefTypeHandle type);
+    @Nullable VarHandle lookupVarByType(@NotNull LumenType type);
 
     /**
      * Defines a named variable in the current block scope.
      *
-     * @param name    the variable name to bind
-     * @param refType the ref type for type checking, or {@code null} for plain variables
-     * @param java    the Java variable name in generated code
+     * @param name the variable name to bind
+     * @param type the compile-time type for type checking
+     * @param java the Java variable name in generated code
      * @return a reference to the defined variable
      */
-    VarHandle defineVar(@NotNull String name, @Nullable RefTypeHandle refType, @NotNull String java);
+    VarHandle defineVar(@NotNull String name, @NotNull LumenType type, @NotNull String java);
 
     /**
      * Defines a named variable in the current block scope with compile-time metadata.
@@ -57,13 +56,12 @@ public interface EnvironmentAccess {
      * patterns can inspect it for parse-time validation.
      *
      * @param name     the variable name to bind
-     * @param refType  the ref type for type checking, or {@code null} for plain variables
+     * @param type     the compile-time type for type checking
      * @param java     the Java variable name in generated code
      * @param metadata compile-time metadata entries
      * @return a reference to the defined variable
      */
-    VarHandle defineVar(@NotNull String name, @Nullable RefTypeHandle refType,
-                        @NotNull String java, @NotNull Map<String, Object> metadata);
+    VarHandle defineVar(@NotNull String name, @NotNull LumenType type, @NotNull String java, @NotNull Map<String, Object> metadata);
 
     /**
      * Stores an arbitrary key-value pair in the global map.
@@ -71,9 +69,9 @@ public interface EnvironmentAccess {
      * <p>Use this to pass data from a block handler's {@code begin} to its {@code end}.
      *
      * @param key   the key
-     * @param value the value to store
+     * @param value the value to store, or {@code null} to clear
      */
-    void put(@NotNull String key, @NotNull Object value);
+    void put(@NotNull String key, @Nullable Object value);
 
     /**
      * Retrieves a previously stored global value.
@@ -169,21 +167,14 @@ public interface EnvironmentAccess {
     @Nullable GlobalInfo getGlobalInfo(@NotNull String name);
 
     /**
-     * Registers a script-wide global variable declaration.
+     * Returns an unmodifiable list of all registered global variables as handles.
      *
-     * <p>Global variables are loaded automatically at the start of every block body and
-     * are auto-saved on modification.
+     * <p>Each handle exposes the source name, declared type, metadata, and the
+     * {@link GlobalInfo} descriptor through {@link VarHandle#globalInfo()}.
      *
-     * @param info the global variable declaration information
+     * @return the global variable handles
      */
-    void registerGlobal(@NotNull GlobalInfo info);
-
-    /**
-     * Returns an unmodifiable list of all registered global variable declarations.
-     *
-     * @return the global variable declarations
-     */
-    @NotNull List<? extends GlobalInfo> allGlobals();
+    @NotNull List<? extends VarHandle> allGlobals();
 
     /**
      * Marks a variable as stored (persistent) with scope information.
@@ -253,12 +244,12 @@ public interface EnvironmentAccess {
     /**
      * Defines a variable at the root (class) scope, making it visible from all block contexts.
      *
-     * @param name    the variable name
-     * @param refType the ref type for type checking, or {@code null} for plain variables
-     * @param java    the Java variable name in generated code
+     * @param name the variable name
+     * @param type the compile-time type for type checking
+     * @param java the Java variable name in generated code
      * @return a reference to the defined variable
      */
-    VarHandle defineRootVar(@NotNull String name, @Nullable RefTypeHandle refType, @NotNull String java);
+    VarHandle defineRootVar(@NotNull String name, @NotNull LumenType type, @NotNull String java);
 
     /**
      * Returns the current block context, or {@code null} if not inside any block.
@@ -268,6 +259,54 @@ public interface EnvironmentAccess {
     @Nullable BlockAccess block();
 
     /**
+     * Marks a variable as definitively non-null at this point in the code.
+     * Used by smart-cast narrowing after null checks (e.g. "if x is set:").
+     *
+     * @param javaName the Java variable name
+     */
+    void markNonNull(@NotNull String javaName);
+
+    /**
+     * Restores a variable's null state to its previous value after leaving a narrowing scope.
+     *
+     * @param javaName the Java variable name
+     */
+    void clearNonNull(@NotNull String javaName);
+
+    /**
+     * Publishes a narrowing fact derived from the condition currently being evaluated.
+     *
+     * @param fact the narrowing fact produced by the condition
+     */
+    void pushNarrowing(@NotNull NarrowingFact fact);
+
+    /**
+     * Drains and returns all pending narrowing facts published since the last call.
+     * Block handlers call this at the start of their body to collect facts that should
+     * apply to the body, and again at the end to decide what the sibling {@code else}
+     * branch should invert.
+     *
+     * @return an immutable snapshot of the pending facts, possibly empty
+     */
+    @NotNull List<NarrowingFact> consumeNarrowings();
+
+    /**
+     * Applies the given facts to the current scope so that later uses of the referenced
+     * variables see the narrowed state. Callers must pair this with
+     * {@link #clearNarrowings} at the end of the scope.
+     *
+     * @param facts the facts to apply
+     */
+    void applyNarrowings(@NotNull List<NarrowingFact> facts);
+
+    /**
+     * Reverts narrowing state previously applied via {@link #applyNarrowings}.
+     *
+     * @param facts the facts to revert
+     */
+    void clearNarrowings(@NotNull List<NarrowingFact> facts);
+
+    /**
      * A compile-time descriptor for a named variable that is in scope.
      *
      * @see #lookupVar(String)
@@ -275,26 +314,25 @@ public interface EnvironmentAccess {
     interface VarHandle {
 
         /**
-         * Returns the ref type of this variable, or {@code null} for plain variables.
+         * Returns the script-level name of this variable as it appears in source.
          *
-         * @return the ref type, or {@code null}
+         * @return the source name
          */
-        @Nullable RefTypeHandle type();
+        @NotNull String name();
 
         /**
-         * Returns the full compile-time type of this variable, or {@code null} if unknown.
+         * Returns the compile-time type of this variable.
          *
-         * <p>This provides richer type information than {@link #type()}, covering
-         * primitives and generic collections in addition to object reference types.
-         *
-         * @return the type handle, or {@code null}
+         * @return the compile-time type
          */
-        default @Nullable TypeHandle typeHandle() {
-            return null;
-        }
+        @NotNull LumenType type();
 
         /**
          * Returns the Java variable name that this variable maps to in generated code.
+         *
+         * <p>Throws for scoped globals, which have no single standalone Java expression.
+         * Callers handling scoped globals must consult {@link #globalInfo()} and build
+         * storage accesses with an explicit scope.
          *
          * @return the Java variable expression
          */
@@ -322,19 +360,22 @@ public interface EnvironmentAccess {
          * @return the metadata map
          */
         @NotNull Map<String, Object> metadata();
+
+        /**
+         * Returns the global declaration info if this variable is a script-wide global,
+         * or {@code null} for locals and root variables.
+         *
+         * @return the global declaration info, or {@code null}
+         */
+        default @Nullable GlobalInfo globalInfo() {
+            return null;
+        }
     }
 
     /**
-     * Compile-time descriptor for a script-wide global variable declared with {@code global var}.
+     * Compile-time descriptor for a script-wide global variable.
      */
     interface GlobalInfo {
-
-        /**
-         * Returns the variable name.
-         *
-         * @return the name
-         */
-        @NotNull String name();
 
         /**
          * Returns the Java expression for the default value.
@@ -365,20 +406,11 @@ public interface EnvironmentAccess {
         boolean stored();
 
         /**
-         * Returns the ref type ID inferred from the default expression, or {@code null}.
+         * Returns the scope type for scoped globals (e.g. {@code player}, {@code entity}).
          *
-         * @return the expression ref type ID, or {@code null}
+         * @return the scope type, or {@code null} if the global is not scoped
          */
-        default @Nullable String exprRefTypeId() {
-            return null;
-        }
-
-        /**
-         * Returns compile-time metadata from the default expression, or {@code null}.
-         *
-         * @return the expression metadata, or {@code null}
-         */
-        default @Nullable Map<String, Object> exprMetadata() {
+        default @Nullable LumenType scopeType() {
             return null;
         }
     }

@@ -11,71 +11,41 @@ import org.jetbrains.annotations.NotNull;
  * Registers built-in condition patterns for location and spatial queries.
  */
 @Registration
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "DataFlowIssue"})
 public final class LocationConditions {
 
     @Call
     public void register(@NotNull LumenAPI api) {
         api.patterns().condition(b -> b
                 .by("Lumen")
-                .pattern("%loc:LOCATION% is inside %min:LOCATION% to %max:LOCATION%")
-                .description("Checks if a location is inside a bounding box defined by two corner locations.")
-                .example("if player location is inside corner1 to corner2:")
+                .pattern("%loc:LOCATION% (is|is not) inside %min:LOCATION% to %max:LOCATION%")
+                .description("Checks if a location is or is not inside a bounding box defined by two corner locations.")
+                .examples("if player location is inside corner1 to corner2:", "if player location is not inside corner1 to corner2:")
                 .since("1.0.0")
                 .category(Categories.LOCATION)
-                .handler((match, env, ctx) -> {
-                    ctx.addImport(LocationUtils.class.getName());
-                    String loc = match.java("loc", ctx, env);
-                    String min = match.java("min", ctx, env);
-                    String max = match.java("max", ctx, env);
-                    return "LocationUtils.inside(" + loc + ", " + min + ", " + max + ")";
+                .handler(ctx -> {
+                    ctx.codegen().addImport(LocationUtils.class.getName());
+                    String loc = ctx.java("loc");
+                    String min = ctx.java("min");
+                    String max = ctx.java("max");
+                    boolean negated = ctx.choice(0).equals("is not");
+                    return (negated ? "LocationUtils.notInside" : "LocationUtils.inside") + "(" + loc + ", " + min + ", " + max + ")";
                 }));
 
         api.patterns().condition(b -> b
                 .by("Lumen")
-                .pattern("%loc:LOCATION% is not inside %min:LOCATION% to %max:LOCATION%")
-                .description("Checks if a location is not inside a bounding box defined by two corner locations.")
-                .example("if player location is not inside corner1 to corner2:")
+                .pattern("%who:PLAYER% (is|is not) inside %min:LOCATION% to %max:LOCATION%")
+                .description("Checks if a player is or is not inside a bounding box defined by two corner locations.")
+                .examples("if player is inside corner1 to corner2:", "if player is not inside corner1 to corner2:")
                 .since("1.0.0")
                 .category(Categories.LOCATION)
-                .handler((match, env, ctx) -> {
-                    ctx.addImport(LocationUtils.class.getName());
-                    String loc = match.java("loc", ctx, env);
-                    String min = match.java("min", ctx, env);
-                    String max = match.java("max", ctx, env);
-                    return "LocationUtils.notInside(" + loc + ", " + min + ", " + max + ")";
-                }));
-
-        api.patterns().condition(b -> b
-                .by("Lumen")
-                .pattern("%who:PLAYER% is inside %min:LOCATION% to %max:LOCATION%")
-                .description("Checks if a player is inside a bounding box defined by two corner locations.")
-                .example("if player is inside corner1 to corner2:")
-                .since("1.0.0")
-                .category(Categories.LOCATION)
-                .handler((match, env, ctx) -> {
-                    ctx.addImport(LocationUtils.class.getName());
-                    String who = match.java("who", ctx, env);
-                    String loc = who + ".getLocation()";
-                    String min = match.java("min", ctx, env);
-                    String max = match.java("max", ctx, env);
-                    return "LocationUtils.inside(" + loc + ", " + min + ", " + max + ")";
-                }));
-
-        api.patterns().condition(b -> b
-                .by("Lumen")
-                .pattern("%who:PLAYER% is not inside %min:LOCATION% to %max:LOCATION%")
-                .description("Checks if a player is not inside a bounding box defined by two corner locations.")
-                .example("if player is not inside corner1 to corner2:")
-                .since("1.0.0")
-                .category(Categories.LOCATION)
-                .handler((match, env, ctx) -> {
-                    ctx.addImport(LocationUtils.class.getName());
-                    String who = match.java("who", ctx, env);
-                    String loc = who + ".getLocation()";
-                    String min = match.java("min", ctx, env);
-                    String max = match.java("max", ctx, env);
-                    return "LocationUtils.notInside(" + loc + ", " + min + ", " + max + ")";
+                .handler(ctx -> {
+                    ctx.codegen().addImport(LocationUtils.class.getName());
+                    String loc = ctx.java("who") + ".getLocation()";
+                    String min = ctx.java("min");
+                    String max = ctx.java("max");
+                    boolean negated = ctx.choice(0).equals("is not");
+                    return (negated ? "LocationUtils.notInside" : "LocationUtils.inside") + "(" + loc + ", " + min + ", " + max + ")";
                 }));
 
         api.patterns().condition(b -> b
@@ -85,10 +55,10 @@ public final class LocationConditions {
                 .example("if player location is in same world as target location:")
                 .since("1.0.0")
                 .category(Categories.LOCATION)
-                .handler((match, env, ctx) -> {
-                    ctx.addImport(LocationUtils.class.getName());
-                    String locA = match.java("a", ctx, env);
-                    String locB = match.java("b", ctx, env);
+                .handler(ctx -> {
+                    ctx.codegen().addImport(LocationUtils.class.getName());
+                    String locA = ctx.java("a");
+                    String locB = ctx.java("b");
                     return "LocationUtils.sameWorld(" + locA + ", " + locB + ")";
                 }));
 
@@ -99,11 +69,11 @@ public final class LocationConditions {
                 .example("if player location is near spawn within 10:")
                 .since("1.0.0")
                 .category(Categories.LOCATION)
-                .handler((match, env, ctx) -> {
-                    ctx.addImport(LocationUtils.class.getName());
-                    String loc = match.java("loc", ctx, env);
-                    String target = match.java("target", ctx, env);
-                    String dist = match.java("dist", ctx, env);
+                .handler(ctx -> {
+                    ctx.codegen().addImport(LocationUtils.class.getName());
+                    String loc = ctx.java("loc");
+                    String target = ctx.java("target");
+                    String dist = ctx.java("dist");
                     return "LocationUtils.near(" + loc + ", " + target + ", " + dist + ")";
                 }));
 
@@ -114,12 +84,12 @@ public final class LocationConditions {
                 .example("if player is near spawn within 10:")
                 .since("1.0.0")
                 .category(Categories.LOCATION)
-                .handler((match, env, ctx) -> {
-                    ctx.addImport(LocationUtils.class.getName());
-                    String who = match.java("who", ctx, env);
+                .handler(ctx -> {
+                    ctx.codegen().addImport(LocationUtils.class.getName());
+                    String who = ctx.java("who");
                     String loc = who + ".getLocation()";
-                    String target = match.java("target", ctx, env);
-                    String dist = match.java("dist", ctx, env);
+                    String target = ctx.java("target");
+                    String dist = ctx.java("dist");
                     return "LocationUtils.near(" + loc + ", " + target + ", " + dist + ")";
                 }));
     }

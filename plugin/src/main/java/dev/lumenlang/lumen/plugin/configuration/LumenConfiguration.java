@@ -2,14 +2,17 @@ package dev.lumenlang.lumen.plugin.configuration;
 
 import dev.lumenlang.lumen.api.ConfigOption;
 import dev.lumenlang.lumen.api.ConfigOverride;
+import dev.lumenlang.lumen.api.StringConfigOption;
+import dev.lumenlang.lumen.api.StringConfigOverride;
+import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
 import dev.lumenlang.lumen.plugin.Lumen;
 import net.vansencool.lsyaml.LSYAML;
 import net.vansencool.lsyaml.binding.ConfigFile;
 import net.vansencool.lsyaml.binding.ConfigLoader;
 import net.vansencool.lsyaml.binding.Ignore;
-import net.vansencool.lsyaml.binding.Key;
 import net.vansencool.lsyaml.binding.LatestConfig;
+import net.vansencool.lsyaml.binding.PreferKeysWith;
 import net.vansencool.lsyaml.binding.watcher.ConfigWatcher;
 import net.vansencool.lsyaml.binding.watcher.WatchAction;
 import net.vansencool.lsyaml.binding.watcher.WatcherOptions;
@@ -28,6 +31,7 @@ import java.util.List;
  */
 @ConfigFile("plugins/Lumen/config.yml")
 @LatestConfig("config.yml")
+@PreferKeysWith("-")
 public final class LumenConfiguration {
 
     public static Scripts SCRIPTS = new Scripts();
@@ -40,6 +44,9 @@ public final class LumenConfiguration {
     @Ignore
     private static final List<ConfigOverride> lastingOverrides = new ArrayList<>();
 
+    @Ignore
+    private static final List<StringConfigOverride> lastingStringOverrides = new ArrayList<>();
+
     public static void load() {
         if (!Files.exists(Lumen.instance().getDataFolder().toPath().resolve("config.yml"))) {
             Lumen.instance().saveResource("config.yml", false);
@@ -51,6 +58,7 @@ public final class LumenConfiguration {
                 LumenConfiguration.DEBUG.LOG_INFO,
                 LumenConfiguration.DEBUG.LOG_WARNINGS
         );
+        LumenDiagnostic.configureVerbose(LumenConfiguration.DEBUG.VERBOSE_DIAGNOSTICS);
         if (LumenConfiguration.EXTRA.ENABLE_CONFIG_FILE_WATCHER)
             ConfigWatcher.watch(LumenConfiguration.class, WatcherOptions.builder().listener(((file, action) -> {
                 if (action == WatchAction.DELETED)
@@ -88,6 +96,9 @@ public final class LumenConfiguration {
         for (ConfigOverride override : lastingOverrides) {
             applyInMemory(override.option(), override.value());
         }
+        for (StringConfigOverride override : lastingStringOverrides) {
+            applyInMemory(override.option(), override.value());
+        }
     }
 
     /**
@@ -105,6 +116,44 @@ public final class LumenConfiguration {
             case RAW_JAVA -> LANGUAGE.EXPERIMENTAL.RAW_JAVA = value;
             case INVENTORY_HOT_RELOAD -> FEATURES.INVENTORIES.HOT_RELOAD = value;
         }
+    }
+
+    /**
+     * Applies a {@link StringConfigOverride} to the running configuration.
+     *
+     * @param override the override to apply
+     */
+    public static void applyOverride(@NotNull StringConfigOverride override) {
+        applyInMemory(override.option(), override.value());
+        if (override.persistence() == ConfigOverride.Persistence.LASTING_SESSION) {
+            lastingStringOverrides.add(override);
+        } else if (override.persistence() == ConfigOverride.Persistence.PERMANENT) {
+            writeOption(override.option(), override.value());
+        }
+    }
+
+    /**
+     * Applies a string configuration option value in memory without writing to disk.
+     *
+     * @param option the config option to change
+     * @param value  the desired value
+     */
+    public static void applyInMemory(@NotNull StringConfigOption option, @NotNull String value) {
+        if (option == StringConfigOption.COMPILER) PERFORMANCE.COMPILER = value;
+    }
+
+    /**
+     * Applies a string configuration option value in memory and writes it to {@code config.yml}.
+     *
+     * @param option the config option to change
+     * @param value  the desired value
+     */
+    public static void writeOption(@NotNull StringConfigOption option, @NotNull String value) {
+        applyInMemory(option, value);
+        MapNode node = ConfigLoader.node(LumenConfiguration.class);
+        if (node == null) throw new RuntimeException("writeOption called before startup");
+        node.setString(option.path(), value);
+        LSYAML.writeToFile(node, Lumen.instance().getDataFolder().toPath().resolve("config.yml"));
     }
 
     /**
@@ -130,59 +179,51 @@ public final class LumenConfiguration {
 
         public String EXTENSION = ".luma";
 
-        @Key("load-all-on-startup")
         public boolean LOAD_ALL_ON_STARTUP = true;
 
-        @Key("enable-all-scripts-immediately-on-startup")
         public boolean ENABLE_ALL_SCRIPTS_IMMEDIATELY_ON_STARTUP = false;
 
-        @Key("reload-on-save")
         public boolean RELOAD_ON_SAVE = true;
 
-        @Key("load-on-create")
         public boolean LOAD_ON_CREATE = true;
 
-        @Key("unload-on-delete")
         public boolean UNLOAD_ON_DELETE = true;
 
-        @Key("watcher-debounce-ms")
         public long WATCHER_DEBOUNCE_MS = 200;
     }
 
     public static final class Debug {
 
-        @Key("log-warnings")
         public boolean LOG_WARNINGS = true;
 
-        @Key("log-info")
         public boolean LOG_INFO = true;
 
-        @Key("log-compilation")
         public boolean LOG_COMPILATION = false;
 
-        @Key("dump-generated-java")
         public boolean DUMP_GENERATED_JAVA = false;
 
-        @Key("full-debug")
         public boolean FULL_DEBUG = false;
+
+        public boolean VERBOSE_DIAGNOSTICS = false;
     }
 
     public static final class Performance {
 
-        @Key("cache-compiled-classes")
+        public String COMPILER = "auto";
+
         public boolean CACHE_COMPILED_CLASSES = true;
 
-        @Key("load-scripts-async-on-startup")
         public boolean LOAD_SCRIPTS_ASYNC_ON_STARTUP = false;
 
-        @Key("warmup-on-startup")
         public boolean WARMUP_ON_STARTUP = true;
 
-        @Key("reduce-classpath")
+        public int COMPILE_THREADS = 2;
+
         public boolean REDUCE_CLASSPATH = false;
 
-        @Key("async-define-class")
         public boolean ASYNC_DEFINE_CLASS = true;
+
+        public int PARALLEL_PARSE_THREADS = 3;
     }
 
     public static final class Language {
@@ -191,37 +232,30 @@ public final class LumenConfiguration {
 
         public static final class Experimental {
 
-            @Key("raw-java")
             public boolean RAW_JAVA = false;
 
-            @Key("code-transform")
             public boolean CODE_TRANSFORM = false;
         }
     }
 
     public static final class Features {
 
-        @Key("use-legacy-colors")
         public boolean USE_LEGACY_COLORS = true;
 
-        @Key("paper-only-features")
         public boolean PAPER_ONLY_FEATURES = true;
 
         public Inventories INVENTORIES = new Inventories();
 
         public static final class Inventories {
 
-            @Key("hot-reload")
             public boolean HOT_RELOAD = true;
         }
     }
 
     public static final class Extra {
 
-        @Key("enable-config-file-watcher")
         public boolean ENABLE_CONFIG_FILE_WATCHER = true;
 
-        @Key("enable-documentation-tool")
         public boolean ENABLE_DOCUMENTATION_TOOL = false;
     }
 }

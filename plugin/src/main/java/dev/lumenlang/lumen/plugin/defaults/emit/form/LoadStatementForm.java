@@ -3,13 +3,12 @@ package dev.lumenlang.lumen.plugin.defaults.emit.form;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
-import dev.lumenlang.lumen.api.emit.EmitContext;
-import dev.lumenlang.lumen.api.emit.ScriptToken;
-import dev.lumenlang.lumen.api.emit.StatementFormHandler;
+import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
-import dev.lumenlang.lumen.pipeline.codegen.BindingContext;
+import dev.lumenlang.lumen.api.pattern.Categories;
+import dev.lumenlang.lumen.api.type.ObjectType;
+import dev.lumenlang.lumen.pipeline.codegen.HandlerContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
-import dev.lumenlang.lumen.pipeline.language.emit.EmitContextImpl;
 import dev.lumenlang.lumen.pipeline.language.exceptions.LumenScriptException;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.language.pattern.registered.RegisteredExpressionMatch;
@@ -20,7 +19,6 @@ import dev.lumenlang.lumen.pipeline.language.typed.ExprParser;
 import dev.lumenlang.lumen.pipeline.language.validator.VarNameValidator;
 import dev.lumenlang.lumen.pipeline.persist.PersistentVars;
 import dev.lumenlang.lumen.pipeline.placeholder.PlaceholderExpander;
-import dev.lumenlang.lumen.pipeline.var.RefType;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,70 +26,42 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * Statement form handler for inline stored variable loading.
+ * Registers statement patterns for inline stored variable loading.
  *
- * <p>Accepts the syntax {@code load name [for [ref type] scope] with default expr}.
+ * <p>Accepts the syntax {@code load name [for scope] with default expr}.
  * This loads a persistent variable into the current scope, creating it with the given
  * default value if it does not yet exist. The variable is backed by {@link PersistentVars}
  * and survives server restarts.
  */
 @Registration(order = -1999)
 @SuppressWarnings({"unused", "DataFlowIssue"})
-public final class LoadStatementForm implements StatementFormHandler {
+public final class LoadStatementForm {
 
     @Call
     public void register(@NotNull LumenAPI api) {
-        api.emitters().statementForm(this);
+        api.patterns().statement(b -> b
+                .by("Lumen")
+                .pattern("load %name:IDENT% for %scope:IDENT% with default %val:EXPR%")
+                .description("Loads a stored variable scoped to an entity with a default value.")
+                .example("load coins for player with default 0")
+                .since("1.0.0")
+                .category(Categories.VARIABLE)
+                .handler(ctx -> emitLoadVar(ctx.tokens("name").get(0), ctx.tokens("scope").get(0), ctx)));
+
+        api.patterns().statement(b -> b
+                .by("Lumen")
+                .pattern("load %name:IDENT% with default %val:EXPR%")
+                .description("Loads a stored variable with a default value.")
+                .example("load counter with default 0")
+                .since("1.0.0")
+                .category(Categories.VARIABLE)
+                .handler(ctx -> emitLoadVar(ctx.tokens("name").get(0), null, ctx)));
     }
 
-    private static boolean isLoadStatement(@NotNull List<Token> t) {
-        if (t.size() < 5 || !t.get(0).text().equalsIgnoreCase("load")) return false;
-        for (int i = 2; i < t.size() - 1; i++) {
-            if (t.get(i).text().equalsIgnoreCase("with") && t.get(i + 1).text().equalsIgnoreCase("default")) return true;
-        }
-        return false;
-    }
-
-    @Override
-    public boolean tryHandle(@NotNull List<? extends ScriptToken> tokens, @NotNull EmitContext ctx) {
-        List<Token> t = EmitContextImpl.toPipelineTokens(tokens);
-        if (!isLoadStatement(t)) return false;
-        handleLoad(t, ctx);
-        return true;
-    }
-
-    private void handleLoad(@NotNull List<Token> t, @NotNull EmitContext ctx) {
-        String name = t.get(1).text();
-        int idx = 2;
-        String scopeVar = null;
-
-        if (idx < t.size() && t.get(idx).text().equalsIgnoreCase("for")) {
-            idx++;
-            if (idx + 1 < t.size() && t.get(idx).text().equalsIgnoreCase("ref") && t.get(idx + 1).text().equalsIgnoreCase("type")) {
-                idx += 2;
-            }
-            if (idx >= t.size()) {
-                throw new LumenScriptException(ctx.line(), ctx.raw(), "Expected scope variable after 'for'. Correct syntax: load " + name + " for <scope> with default ...");
-            }
-            scopeVar = t.get(idx).text();
-            idx++;
-        }
-
-        if (idx >= t.size() || !t.get(idx).text().equalsIgnoreCase("with")) {
-            throw new LumenScriptException(ctx.line(), ctx.raw(), "Expected 'with default'. Correct syntax: load " + name + " [for <scope>] with default ...");
-        }
-        idx++;
-        if (idx >= t.size() || !t.get(idx).text().equalsIgnoreCase("default")) {
-            throw new LumenScriptException(ctx.line(), ctx.raw(), "Expected 'default' after 'with'. Correct syntax: load " + name + " [for <scope>] with default ...");
-        }
-        idx++;
-
-        List<Token> exprTokens = t.subList(idx, t.size());
-        emitLoadVar(name, scopeVar, exprTokens, ctx);
-    }
-
-    private void emitLoadVar(@NotNull String name, @Nullable String scopeVar, @NotNull List<Token> exprTokens, @NotNull EmitContext ctx) {
+    private static void emitLoadVar(@NotNull String name, @Nullable String scopeVar, @NotNull HandlerContext ctx) {
+        HandlerContextImpl emitCtx = (HandlerContextImpl) ctx;
         TypeEnv env = (TypeEnv) ctx.env();
+        List<Token> exprTokens = emitCtx.bound("val").tokens();
 
         String nameError = VarNameValidator.validate(name);
         if (nameError != null) {
@@ -105,15 +75,13 @@ public final class LoadStatementForm implements StatementFormHandler {
         RegisteredExpressionMatch exprMatch = PatternRegistry.instance().matchExpression(exprTokens, env);
 
         String defaultJava;
-        RefType exprRefType = null;
+        ObjectType resolvedObjectType = null;
 
         if (exprMatch != null) {
-            BindingContext bc = new BindingContext(exprMatch.match(), env, ((EmitContextImpl) ctx).codegenContext(), env.blockContext());
-            ExpressionResult result = exprMatch.reg().handler().handle(bc);
+            HandlerContextImpl hctx = new HandlerContextImpl(exprMatch.match(), env, emitCtx.codegenContext(), env.blockContext(), null, 0, "");
+            ExpressionResult result = exprMatch.reg().handler().handle(hctx);
             defaultJava = result.java();
-            if (result.refTypeId() != null) {
-                exprRefType = RefType.byId(result.refTypeId());
-            }
+            resolvedObjectType = result.type() instanceof ObjectType ot ? ot : null;
         } else {
             Expr e = ExprParser.parse(exprTokens, env);
             if (e instanceof Expr.Literal l) {
@@ -140,8 +108,8 @@ public final class LoadStatementForm implements StatementFormHandler {
                 throw new RuntimeException("Scope variable not found: " + scopeVar);
             }
             String scopeKeyPart;
-            if (scopeRef.refType() != null) {
-                scopeKeyPart = scopeRef.refType().keyExpression(scopeRef.java());
+            if (scopeRef.objectType() != null) {
+                scopeKeyPart = scopeRef.objectType().keyExpression(scopeRef.java());
             } else {
                 scopeKeyPart = "String.valueOf(" + scopeRef.java() + ")";
             }
@@ -152,8 +120,9 @@ public final class LoadStatementForm implements StatementFormHandler {
 
         ctx.codegen().addImport(PersistentVars.class.getName());
         ctx.out().line("var " + name + " = PersistentVars.get(" + keyExpr + ", " + defaultJava + ");");
-        VarRef varRef = new VarRef(exprRefType, name);
+        VarRef varRef = new VarRef(name, resolvedObjectType, name);
         env.defineVar(name, varRef);
+        env.recordDeclaration(name, ctx.line(), ctx.raw());
         if (env.blockContext().parent() != null) {
             env.blockContext().parent().defineVar(name, varRef);
         }

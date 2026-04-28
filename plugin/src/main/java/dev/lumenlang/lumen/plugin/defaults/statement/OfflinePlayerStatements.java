@@ -30,7 +30,7 @@ public final class OfflinePlayerStatements {
                 .example("ban offlinePlayer")
                 .since("1.0.0")
                 .category(Categories.OFFLINE_PLAYER)
-                .handler((line, ctx, out) -> out.line(ctx.java("who") + ".banPlayer(null);")));
+                .handler(ctx -> ctx.out().line(ctx.java("who") + ".banPlayer(null);")));
 
         api.patterns().statement(b -> b
                 .by("Lumen")
@@ -39,7 +39,7 @@ public final class OfflinePlayerStatements {
                 .example("ban offlinePlayer for \"Cheating\"")
                 .since("1.0.0")
                 .category(Categories.OFFLINE_PLAYER)
-                .handler((line, ctx, out) -> out
+                .handler(ctx -> ctx.out()
                         .line(ctx.java("who") + ".banPlayer(" + ctx.java("reason") + ");")));
 
         api.patterns().statement(b -> b
@@ -49,7 +49,7 @@ public final class OfflinePlayerStatements {
                 .example("unban offlinePlayer")
                 .since("1.0.0")
                 .category(Categories.OFFLINE_PLAYER)
-                .handler((line, ctx, out) -> out.line(ctx.java("who") + ".setWhitelisted(true); "
+                .handler(ctx -> ctx.out().line(ctx.java("who") + ".setWhitelisted(true); "
                         + ctx.java("who") + ".banPlayer(null);")));
 
         api.patterns().statement(b -> b
@@ -59,12 +59,12 @@ public final class OfflinePlayerStatements {
                 .example("pardon offlinePlayer")
                 .since("1.0.0")
                 .category(Categories.OFFLINE_PLAYER)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     ctx.codegen().addImport(BanList.class.getName());
-                    out.line("{");
-                    out.line("BanList banList = Bukkit.getBanList(BanList.Type.NAME);");
-                    out.line("banList.pardon(" + ctx.java("who") + ".getName());");
-                    out.line("}");
+                    ctx.out().line("{");
+                    ctx.out().line("BanList banList = Bukkit.getBanList(BanList.Type.NAME);");
+                    ctx.out().line("banList.pardon(" + ctx.java("who") + ".getName());");
+                    ctx.out().line("}");
                 }));
 
         api.patterns().statement(b -> b
@@ -74,7 +74,7 @@ public final class OfflinePlayerStatements {
                 .example("whitelist offlinePlayer")
                 .since("1.0.0")
                 .category(Categories.OFFLINE_PLAYER)
-                .handler((line, ctx, out) -> out.line(ctx.java("who") + ".setWhitelisted(true);")));
+                .handler(ctx -> ctx.out().line(ctx.java("who") + ".setWhitelisted(true);")));
 
         api.patterns().statement(b -> b
                 .by("Lumen")
@@ -83,7 +83,7 @@ public final class OfflinePlayerStatements {
                 .example("unwhitelist offlinePlayer")
                 .since("1.0.0")
                 .category(Categories.OFFLINE_PLAYER)
-                .handler((line, ctx, out) -> out.line(ctx.java("who") + ".setWhitelisted(false);")));
+                .handler(ctx -> ctx.out().line(ctx.java("who") + ".setWhitelisted(false);")));
 
         api.patterns().statement(b -> b
                 .by("Lumen")
@@ -92,7 +92,7 @@ public final class OfflinePlayerStatements {
                 .example("set offlinePlayer's op to true")
                 .since("1.0.0")
                 .category(Categories.OFFLINE_PLAYER)
-                .handler((line, ctx, out) -> out
+                .handler(ctx -> ctx.out()
                         .line(ctx.java("who") + ".setOp(" + ctx.java("val") + ");")));
 
         api.patterns().statement(b -> b
@@ -102,7 +102,7 @@ public final class OfflinePlayerStatements {
                 .example("op offlinePlayer")
                 .since("1.0.0")
                 .category(Categories.OFFLINE_PLAYER)
-                .handler((line, ctx, out) -> out.line(ctx.java("who") + ".setOp(true);")));
+                .handler(ctx -> ctx.out().line(ctx.java("who") + ".setOp(true);")));
 
         api.patterns().statement(b -> b
                 .by("Lumen")
@@ -111,6 +111,6 @@ public final class OfflinePlayerStatements {
                 .example("deop offlinePlayer")
                 .since("1.0.0")
                 .category(Categories.OFFLINE_PLAYER)
-                .handler((line, ctx, out) -> out.line(ctx.java("who") + ".setOp(false);")));
+                .handler(ctx -> ctx.out().line(ctx.java("who") + ".setOp(false);")));
     }
 }

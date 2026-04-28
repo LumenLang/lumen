@@ -18,12 +18,10 @@ public final class PigConditions {
         EntityHelper.forType(FQCN)
                 .alias("_pg")
                 .conditionPair(
-                        "%e:ENTITY% has saddle",
-                        "%e:ENTITY% (does not have|has no) saddle",
+                        "%e:ENTITY% (has|does not have|has no) saddle",
+                        0, "has",
                         "hasSaddle()",
-                        "Checks if a pig has a saddle.",
-                        "Checks if a pig does not have a saddle.",
-                        "if mob has saddle:",
-                        "if mob has no saddle:");
+                        "Checks if a pig has or does not have a saddle.",
+                        "if mob has saddle:");
     }
 }

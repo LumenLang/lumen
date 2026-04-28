@@ -29,14 +29,14 @@ public final class LivingEntityStatements {
                 .example("kill mob")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     VarHandle h = (VarHandle) ctx.value("e");
                     boolean known = EntityValidation.requireLivingEntity(h, "kill");
                     ctx.codegen().addImport(LIVING_ENTITY);
                     if (known) {
-                        out.line("((LivingEntity) " + ctx.java("e") + ").setHealth(0);");
+                        ctx.out().line("((LivingEntity) " + ctx.java("e") + ").setHealth(0);");
                     } else {
-                        out.line("if (" + ctx.java("e") + " instanceof LivingEntity _le) { _le.setHealth(0); }");
+                        ctx.out().line("if (" + ctx.java("e") + " instanceof LivingEntity _le) { _le.setHealth(0); }");
                     }
                 }));
 
@@ -46,14 +46,14 @@ public final class LivingEntityStatements {
                 .example("set mob's health to 10")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     VarHandle h = (VarHandle) ctx.value("e");
                     boolean known = EntityValidation.requireLivingEntity(h, "set health");
                     ctx.codegen().addImport(LIVING_ENTITY);
                     if (known) {
-                        out.line("((LivingEntity) " + ctx.java("e") + ").setHealth(" + ctx.java("val") + ");");
+                        ctx.out().line("((LivingEntity) " + ctx.java("e") + ").setHealth(" + ctx.java("val") + ");");
                     } else {
-                        out.line("if (" + ctx.java("e") + " instanceof LivingEntity _le) { _le.setHealth(" + ctx.java("val") + "); }");
+                        ctx.out().line("if (" + ctx.java("e") + " instanceof LivingEntity _le) { _le.setHealth(" + ctx.java("val") + "); }");
                     }
                 }));
 
@@ -63,14 +63,14 @@ public final class LivingEntityStatements {
                 .example("damage mob by 5")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     VarHandle h = (VarHandle) ctx.value("e");
                     boolean known = EntityValidation.requireLivingEntity(h, "damage");
                     ctx.codegen().addImport(LIVING_ENTITY);
                     if (known) {
-                        out.line("((LivingEntity) " + ctx.java("e") + ").damage(" + ctx.java("val") + ");");
+                        ctx.out().line("((LivingEntity) " + ctx.java("e") + ").damage(" + ctx.java("val") + ");");
                     } else {
-                        out.line("if (" + ctx.java("e") + " instanceof LivingEntity _le) { _le.damage(" + ctx.java("val") + "); }");
+                        ctx.out().line("if (" + ctx.java("e") + " instanceof LivingEntity _le) { _le.damage(" + ctx.java("val") + "); }");
                     }
                 }));
 
@@ -80,16 +80,16 @@ public final class LivingEntityStatements {
                 .example("heal mob")
                 .since("1.0.0")
                 .category(Categories.ENTITY)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     VarHandle h = (VarHandle) ctx.value("e");
                     boolean known = EntityValidation.requireLivingEntity(h, "heal");
                     String attrName = AttributeNames.resolve("max_health");
                     ctx.codegen().addImport(LIVING_ENTITY);
                     ctx.codegen().addImport(ATTRIBUTE);
                     if (known) {
-                        out.line("((LivingEntity) " + ctx.java("e") + ").setHealth(((LivingEntity) " + ctx.java("e") + ").getAttribute(Attribute." + attrName + ").getValue());");
+                        ctx.out().line("((LivingEntity) " + ctx.java("e") + ").setHealth(((LivingEntity) " + ctx.java("e") + ").getAttribute(Attribute." + attrName + ").getValue());");
                     } else {
-                        out.line("if (" + ctx.java("e") + " instanceof LivingEntity _le) { _le.setHealth(_le.getAttribute(Attribute." + attrName + ").getValue()); }");
+                        ctx.out().line("if (" + ctx.java("e") + " instanceof LivingEntity _le) { _le.setHealth(_le.getAttribute(Attribute." + attrName + ").getValue()); }");
                     }
                 }));
     }

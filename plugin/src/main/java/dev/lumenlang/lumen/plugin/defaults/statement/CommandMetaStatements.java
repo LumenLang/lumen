@@ -3,7 +3,7 @@ package dev.lumenlang.lumen.plugin.defaults.statement;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
-import dev.lumenlang.lumen.api.codegen.BindingAccess;
+import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.plugin.commands.CommandMeta;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 @SuppressWarnings("unused")
 public final class CommandMetaStatements {
 
-    private static @NotNull CommandMeta requireCommandMeta(@NotNull BindingAccess ctx) {
+    private static @NotNull CommandMeta requireCommandMeta(@NotNull HandlerContext ctx) {
         CommandMeta cmd = ctx.block().getEnvFromParents("cmd_meta");
         if (cmd == null) {
             throw new RuntimeException("Command metadata statements used outside a 'command' block");
@@ -34,36 +34,36 @@ public final class CommandMetaStatements {
     public void register(@NotNull LumenAPI api) {
         api.patterns().statement(b -> b
                 .by("Lumen")
-                .pattern("description %d:STRING%")
+                .pattern("description[:] %d:STRING%")
                 .description("Sets the description of a command.")
-                .example("description \"Teleports the player home\"")
+                .example("description: \"Teleports the player home\"")
                 .since("1.0.0")
                 .category(Categories.COMMAND)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     CommandMeta cmd = requireCommandMeta(ctx);
                     cmd.setDescription(ctx.java("d"));
                 }));
 
         api.patterns().statement(b -> b
                 .by("Lumen")
-                .pattern("name %n:EXPR%")
+                .pattern("name[:] %n:STRING%")
                 .description("Sets the primary name of a command, useful if you need to have the command name based on a variable or expression.")
-                .example("name tp")
+                .example("name: tp")
                 .since("1.0.0")
                 .category(Categories.COMMAND)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     CommandMeta cmd = requireCommandMeta(ctx);
                     cmd.setName(ctx.java("n"));
                 }));
 
         api.patterns().statement(b -> b
                 .by("Lumen")
-                .pattern("aliases %list:EXPR%")
+                .pattern("aliases[:] %list:LITERAL_LIST%")
                 .description("Adds comma-separated aliases to a command.")
-                .example("aliases tp, teleport, goto")
+                .example("aliases: tp, teleport, goto")
                 .since("1.0.0")
                 .category(Categories.COMMAND)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     CommandMeta cmd = requireCommandMeta(ctx);
                     // noinspection DataFlowIssue
                     String raw = ctx.value("list").toString();
@@ -80,24 +80,24 @@ public final class CommandMetaStatements {
 
         api.patterns().statement(b -> b
                 .by("Lumen")
-                .pattern("namespace %ns:EXPR%")
+                .pattern("namespace[:] %ns:STRING%")
                 .description("Sets the namespace of a command.")
-                .example("namespace myplugin")
+                .example("namespace: myplugin")
                 .since("1.0.0")
                 .category(Categories.COMMAND)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     CommandMeta cmd = requireCommandMeta(ctx);
                     cmd.setNamespace(ctx.java("ns"));
                 }));
 
         api.patterns().statement(b -> b
                 .by("Lumen")
-                .pattern("permission %perm:STRING%")
+                .pattern("permission[:] %perm:STRING%")
                 .description("Sets the required permission for a command.")
-                .example("permission \"myplugin.admin\"")
+                .example("permission: \"myplugin.admin\"")
                 .since("1.0.0")
                 .category(Categories.COMMAND)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     CommandMeta cmd = requireCommandMeta(ctx);
                     cmd.setPermission(ctx.java("perm"));
                 }));

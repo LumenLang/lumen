@@ -27,9 +27,9 @@ public final class TitleStatements {
                 .example("send title \"<gold>Welcome!\" to player")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     ctx.codegen().addImport(LumenText.class.getName());
-                    out.line("LumenText.sendTitle(" + ctx.java("who") + ", " + ctx.java("title") + ", null, 10, 70, 20);");
+                    ctx.out().line("LumenText.sendTitle(" + ctx.java("who") + ", " + ctx.java("title") + ", null, 10, 70, 20);");
                 }));
 
         api.patterns().statement(b -> b
@@ -39,9 +39,9 @@ public final class TitleStatements {
                 .example("send title \"<gold>Welcome!\" with subtitle \"<gray>Enjoy your stay\" to player")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     ctx.codegen().addImport(LumenText.class.getName());
-                    out.line("LumenText.sendTitle(" + ctx.java("who") + ", " + ctx.java("title") + ", " + ctx.java("sub") + ", 10, 70, 20);");
+                    ctx.out().line("LumenText.sendTitle(" + ctx.java("who") + ", " + ctx.java("title") + ", " + ctx.java("sub") + ", 10, 70, 20);");
                 }));
 
         api.patterns().statement(b -> b
@@ -51,9 +51,9 @@ public final class TitleStatements {
                 .example("send title \"<gold>Welcome!\" with subtitle \"<gray>Enjoy\" to player with fade in 5 stay 40 fade out 10")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     ctx.codegen().addImport(LumenText.class.getName());
-                    out.line("LumenText.sendTitle(" + ctx.java("who") + ", " + ctx.java("title") + ", " + ctx.java("sub") + ", " + ctx.java("fi") + ", " + ctx.java("st") + ", " + ctx.java("fo") + ");");
+                    ctx.out().line("LumenText.sendTitle(" + ctx.java("who") + ", " + ctx.java("title") + ", " + ctx.java("sub") + ", " + ctx.java("fi") + ", " + ctx.java("st") + ", " + ctx.java("fo") + ");");
                 }));
 
         api.patterns().statement(b -> b
@@ -63,9 +63,9 @@ public final class TitleStatements {
                 .example("send actionbar \"<green>Health: 20\" to player")
                 .since("1.0.0")
                 .category(Categories.PLAYER)
-                .handler((line, ctx, out) -> {
+                .handler(ctx -> {
                     ctx.codegen().addImport(LumenText.class.getName());
-                    out.line("LumenText.sendActionBar(" + ctx.java("who") + ", " + ctx.java("text") + ");");
+                    ctx.out().line("LumenText.sendActionBar(" + ctx.java("who") + ", " + ctx.java("text") + ");");
                 }));
     }
 }

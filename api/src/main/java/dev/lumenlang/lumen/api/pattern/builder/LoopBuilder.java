@@ -26,7 +26,7 @@ import java.util.function.Consumer;
  *         .example("loop p in all players:")
  *         .since("1.0.0")
  *         .category(Categories.PLAYER)
- *         .handler(ctx -> new LoopResult("Bukkit.getOnlinePlayers()", "PLAYER")));
+ *         .handler(ctx -> new LoopResult("Bukkit.getOnlinePlayers()", MinecraftTypes.PLAYER)));
  * }</pre>
  *
  * @see PatternRegistrar#loop(Consumer)

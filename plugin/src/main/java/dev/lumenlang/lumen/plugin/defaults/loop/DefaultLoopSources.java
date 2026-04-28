@@ -5,6 +5,7 @@ import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.handler.LoopHandler;
 import dev.lumenlang.lumen.api.pattern.Categories;
+import dev.lumenlang.lumen.api.type.MinecraftTypes;
 import org.bukkit.Bukkit;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +28,7 @@ public final class DefaultLoopSources {
                 .category(Categories.PLAYER)
                 .handler(ctx -> {
                     ctx.codegen().addImport(Bukkit.class.getName());
-                    return new LoopHandler.LoopResult("Bukkit.getOnlinePlayers()", "PLAYER");
+                    return new LoopHandler.LoopResult("Bukkit.getOnlinePlayers()", MinecraftTypes.PLAYER);
                 }));
 
         api.patterns().loop(b -> b
@@ -39,7 +40,7 @@ public final class DefaultLoopSources {
                 .category(Categories.ENTITY)
                 .handler(ctx -> {
                     String worldJava = ctx.java("world");
-                    return new LoopHandler.LoopResult(worldJava + ".getEntities()", "ENTITY");
+                    return new LoopHandler.LoopResult(worldJava + ".getEntities()", MinecraftTypes.ENTITY);
                 }));
 
         api.patterns().loop(b -> b
@@ -51,7 +52,7 @@ public final class DefaultLoopSources {
                 .category(Categories.WORLD)
                 .handler(ctx -> {
                     ctx.codegen().addImport(Bukkit.class.getName());
-                    return new LoopHandler.LoopResult("Bukkit.getWorlds()", "WORLD");
+                    return new LoopHandler.LoopResult("Bukkit.getWorlds()", MinecraftTypes.WORLD);
                 }));
     }
 }

@@ -1,6 +1,7 @@
 package dev.lumenlang.lumen.plugin.inject.handler;
 
 import dev.lumenlang.lumen.api.codegen.CodegenAccess;
+import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.plugin.inject.bytecode.ExtractedBody;
 import dev.lumenlang.lumen.plugin.inject.bytecode.InjectableMethod;
 import dev.lumenlang.lumen.plugin.inject.bytecode.InjectableRegistry;
@@ -103,6 +104,12 @@ public final class InjectableHandlerSupport {
     public static @NotNull String simpleClassName(@NotNull String fqcn) {
         int lastDot = fqcn.lastIndexOf('.');
         return lastDot >= 0 ? fqcn.substring(lastDot + 1) : fqcn;
+    }
+
+    public static @Nullable String descriptorToTypeId(@NotNull String descriptor) {
+        String javaType = descriptorToJavaType(descriptor);
+        LumenType type = LumenType.fromJavaType(javaType);
+        return type != null ? type.id() : null;
     }
 
     private static @NotNull String defaultReturn(@NotNull String type) {

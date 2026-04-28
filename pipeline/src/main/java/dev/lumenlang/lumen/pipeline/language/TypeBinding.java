@@ -183,7 +183,7 @@ public interface TypeBinding {
      */
     default int consumeCount(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
         if (tokens.isEmpty())
-            throw new ParseFailureException(id() + " requires at least one token");
+            throw new ParseFailureException("expected a value here");
         return 1;
     }
 }

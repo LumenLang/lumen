@@ -12,8 +12,8 @@ import java.util.List;
  * a new placeholders type.
  *
  * <p>Register instances with {@link TypeRegistrar#register(AddonTypeBinding)}.
- * If the binding works with a custom reference type, register that type first via
- * {@link RefTypeRegistrar} so it participates in type checking.
+ * If the binding works with a custom object type, register that type first via
+ * {@link LumenTypeRegistry} so it participates in type checking.
  *
  * <h2>Example</h2>
  * <pre>{@code
@@ -35,7 +35,7 @@ import java.util.List;
  * }</pre>
  *
  * @see TypeRegistrar
- * @see RefTypeRegistrar
+ * @see LumenTypeRegistry
  */
 public interface AddonTypeBinding {
 
@@ -48,6 +48,10 @@ public interface AddonTypeBinding {
 
     /**
      * Parses the given token texts into a runtime value.
+     *
+     * <p>
+     * To <b>reject</b> a match, throw {@link ParseFailureException}. The pattern
+     * matcher catches it and treats the binding as a non-match.
      *
      * @param tokens the token texts to parse
      * @param env    the current type environment
@@ -94,7 +98,7 @@ public interface AddonTypeBinding {
      */
     default int consumeCount(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
         if (tokens.isEmpty())
-            throw new ParseFailureException(id() + " requires at least one token");
+            throw new ParseFailureException("expected a value here");
         return 1;
     }
 

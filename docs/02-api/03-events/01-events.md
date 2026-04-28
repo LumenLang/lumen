@@ -1,144 +1,122 @@
 ---
-description: "How to register custom events that scripts can listen to with the on keyword."
+description: "Register events that scripts listen to with on <name>: blocks."
 ---
 
 # Events
 
-Events let scripts react to things happening on the server. Addons can register custom event definitions so scripts can use `on <name>:` to listen for any Bukkit event or custom behavior.
+Events are what `on <name>:` blocks bind to. A regular event wraps a Bukkit event class and auto-generates an
+`@EventHandler` method. An advanced event runs custom code generation instead, for things that aren't Bukkit events at
+all (lifecycle hooks, repeating ticks, etc.).
 
-Events are registered through `api.events()`, which returns an `EventRegistrar`.
+Register events through `api.events()`.
 
 ## Regular Events
-
-Regular events are tied to a Bukkit event class. When you register a regular event, Lumen automatically generates an `@EventHandler` method that listens for that Bukkit event and runs the script's body.
-
-### Using the Builder
 
 ```java
 api.events().register(
     api.events().builder("respawn")
-        .by("MyAddon")
         .className("org.bukkit.event.player.PlayerRespawnEvent")
         .description("Fires when a player respawns.")
         .example("on respawn:")
-        .since("1.0.0")
-        .category("Player")
-        .addVar("player", Types.PLAYER, "event.getPlayer()")
+        .addVar("player", MinecraftTypes.PLAYER, "event.getPlayer()")
         .cancellable(false)
         .build()
 );
 ```
 
-In a script:
+The builder generates a method that listens for `PlayerRespawnEvent`, runs the script body, and exposes `player` inside
+it.
 
-```luma
-on respawn:
-    message player "Welcome back!"
-```
+## addVar
 
-### Adding Variables
+Each `addVar(name, type, expr)` declares a script-visible variable. `expr` is a Java snippet evaluated once at the top
+of the generated method, with `event` in scope as the Bukkit event instance. The result is assigned to a local of the
+declared `type` and then bound under `name` so subsequent script lines (and child statements of the `on` block) can
+reference it.
 
-The `addVar` method defines variables that are available inside the event block. Each variable has a name, a ref type from the `Types` class, and a Java expression that extracts the value from the Bukkit event object.
+Multiple `addVar` calls produce multiple locals, emitted in call order:
 
 ```java
-api.events().register(
-    api.events().builder("block_break")
-        .by("MyAddon")
-        .className("org.bukkit.event.block.BlockBreakEvent")
-        .addVar("player", Types.PLAYER, "event.getPlayer()")
-        .addVar("block", Types.BLOCK, "event.getBlock()")
-        .cancellable(true)
-        .build()
-);
+api.events().builder("block_break")
+    .className("org.bukkit.event.block.BlockBreakEvent")
+    .addVar("player", MinecraftTypes.PLAYER, "event.getPlayer()")
+    .addVar("block", MinecraftTypes.BLOCK, "event.getBlock()")
+    .cancellable(true)
+    .build();
 ```
-
-The Java expression uses `event` as the variable name for the Bukkit event object. Scripts can then use these variables directly:
 
 ```luma
 on block_break:
     message player "You broke a {block_type}!"
 ```
 
-### Variable Descriptions
+Because each variable is a real local in the generated method, a multi-line `on` block can read the same variable as
+many times as needed without re-evaluating `expr`.
 
-You can chain `.varDescription()` after `addVar()` to document what a specific variable represents:
+### Documenting and Annotating Variables
 
-```java
-api.events().register(
-    api.events().builder("join")
-        .by("MyAddon")
-        .className("org.bukkit.event.player.PlayerJoinEvent")
-        .addVar("player", Types.PLAYER, "event.getPlayer()")
-        .varDescription("The player who joined the server")
-        .addVar("message", "String", "event.getJoinMessage()")
-        .varDescription("The join message shown in chat")
-        .build()
-);
-```
+Chain after `addVar` to attach information to the most recently added variable:
 
-### Variable Metadata
-
-You can chain `.withMeta()` after `addVar()` to attach compile time metadata to a variable. Common metadata keys include `"nullable"` for variables that may be null:
+- `.varDescription(text)` for human-readable docs
+- `.withMeta(key, value)` for compile-time metadata that downstream pattern handlers can read via `VarHandle.meta()`
 
 ```java
-api.events().register(
-    api.events().builder("vehicle_enter")
-        .by("MyAddon")
-        .className("org.bukkit.event.vehicle.VehicleEnterEvent")
-        .addVar("player", Types.PLAYER, "event.getEntered() instanceof Player ? (Player) event.getEntered() : null")
-        .withMeta("nullable", true)
-        .varDescription("The player who entered, or null if the entity is not a player")
-        .addVar("vehicle", "org.bukkit.entity.Vehicle", "event.getVehicle()")
-        .varDescription("The vehicle that was entered")
-        .cancellable(true)
-        .build()
-);
+.addVar("entered", MinecraftTypes.PLAYER, "event.getEntered() instanceof Player p ? p : null")
+    .withMeta("nullable", true)
+    .varDescription("The player who entered, or null if the entity is not a player")
 ```
 
-Metadata is propagated to the resulting `VarHandle` when the event fires. Downstream patterns can inspect metadata using `VarHandle.hasMeta()` and `VarHandle.meta()` to perform parse time validation.
+Metadata is the common way to signal per-event nuances like nullability without inventing new types.
+
+### Multi-line Expressions
+
+`expr` can be a multi-line Java text block when simple assignment isn't enough. The variable name is already declared as
+a local before the block runs, so you assign to it directly:
+
+```java
+.addVar("killer",MinecraftTypes.PLAYER,
+    """
+    if (event.getEntity().getKiller() != null) {
+        killer = event.getEntity().getKiller();
+    } else {
+        killer = null;
+    }""")
+```
+
+Use a temp variable with a `__` prefix (like `__p`) to avoid colliding with the declared local.
 
 ## Advanced Events
 
-Advanced events give you full control over the generated code. Instead of tying to a Bukkit event class, you provide a `BlockHandler` that emits whatever Java code you want. This is useful for events that are not directly backed by a Bukkit event, like lifecycle hooks or scheduled ticks.
-
-Here is an example based on the real `tick` event implementation, which uses `@LumenPreload` to generate a method that starts a repeating task:
+When the event isn't backed by a Bukkit event, provide a `BlockHandler` that emits the whole method itself. This is how
+`on tick:` is implemented:
 
 ```java
 api.events().advanced(b -> b
     .name("tick")
-    .by("MyAddon")
     .description("Runs every server tick.")
     .example("on tick:")
-    .since("1.0.0")
-    .category("Lifecycle")
     .addImport("org.bukkit.scheduler.BukkitRunnable")
     .handler(new BlockHandler() {
         @Override
-        public void begin(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
+        public void begin(@NotNull HandlerContext ctx) {
             ctx.codegen().addImport(LumenPreload.class.getName());
-            out.line("@LumenPreload");
-            out.line("public void __tick_" + out.lineNum() + "() {");
-            out.line("new BukkitRunnable() { public void run() {");
+            ctx.out().line("@LumenPreload");
+            ctx.out().line("public void __tick_" + ctx.codegen().nextMethodId() + "() {");
+            ctx.out().line("new BukkitRunnable() { public void run() {");
         }
 
         @Override
-        public void end(@NotNull BindingAccess ctx, @NotNull JavaOutput out) {
-            out.line("} }.runTaskTimer(Lumen.instance(), 0L, 1L);");
-            out.line("}");
+        public void end(@NotNull HandlerContext ctx) {
+            ctx.out().line("} }.runTaskTimer(Lumen.instance(), 0L, 1L);");
+            ctx.out().line("}");
         }
     })
 );
 ```
 
-Advanced events can also add imports, fields, and interfaces to the generated class using the builder methods `addImport()`, `field()`, and `addInterface()`.
+The builder also takes `field(...)` and `addInterface(...)` when the generated class needs extra members.
 
-## Looking Up Events
+## Lookup
 
-You can look up previously registered events by name:
-
-```java
-EventDefinition join = api.events().lookup("join");
-AdvancedEventDefinition tick = api.events().lookupAdvanced("tick");
-```
-
-Both return `null` if the event is not registered. This can be useful for checking whether another addon has already registered an event before yours.
+`api.events().lookup(name)` and `lookupAdvanced(name)` return the registered definition, or null. Useful for detecting
+an event another addon already owns.

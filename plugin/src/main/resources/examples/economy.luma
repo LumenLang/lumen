@@ -18,21 +18,24 @@
 config:
     prefix: "&6[Economy]&r"
 
-global stored currencies with default new list
-global stored scoped balances with default new map
+global:
+    stored currencies: list of string
+    stored scoped to player balances: map of string to int
 
 on join:
     message player "{prefix} &eWelcome back! Your balances:"
     if currencies is empty:
         message player "  &7No currencies registered yet."
     else:
+        set player_bals to get balances for player
         loop currency in currencies:
-            set bal to get balances at key currency for player
-            if bal is not set:
-                set balances at key currency to 0 for player
-                message player "  &f{currency}: &a0"
-            else:
+            if player_bals contains key currency:
+                set bal to get player_bals at key currency
                 message player "  &f{currency}: &a{bal}"
+            else:
+                set player_bals at key currency to 0
+                message player "  &f{currency}: &a0"
+        set balances to player_bals for player
 
 command balance:
     description "View your economy balances"
@@ -41,13 +44,15 @@ command balance:
         message player "{prefix} &7No currencies registered."
     else:
         message player "{prefix} &eYour balances:"
+        set player_bals to get balances for player
         loop currency in currencies:
-            set bal to get balances at key currency for player
-            if bal is not set:
-                set balances at key currency to 0 for player
-                message player "  &f{currency}: &a0"
-            else:
+            if player_bals contains key currency:
+                set bal to get player_bals at key currency
                 message player "  &f{currency}: &a{bal}"
+            else:
+                set player_bals at key currency to 0
+                message player "  &f{currency}: &a0"
+        set balances to player_bals for player
 
 command pay:
     description "Send currency to another player"
@@ -57,31 +62,35 @@ command pay:
     else:
         set target to get args at index 0
         set currency to get args at index 1
-        set amount to get args at index 2
+        set amt to get args at index 2 as integer
         if target is "{player_name}":
             message player "{prefix} &cYou cannot pay yourself!"
         else if currencies does not contain currency:
             message player "{prefix} &cUnknown currency: {currency}"
         else:
-            set my_bal to get balances at key currency for player
-            if my_bal is not set:
-                set my_bal to 0
-            if my_bal < amount:
+            set my_bals to get balances for player
+            set my_bal to 0
+            if my_bals contains key currency:
+                set my_bal to get my_bals at key currency
+            if my_bal < amt:
                 message player "{prefix} &cInsufficient {currency}!"
             else:
                 set p to get player by name target
                 if p is not set:
                     message player "{prefix} &cPlayer {target} is not online!"
                 else:
-                    subtract amount from my_bal
-                    set balances at key currency to my_bal for player
-                    set p_bal to get balances at key currency for p
-                    if p_bal is not set:
-                        set p_bal to 0
-                    add amount to p_bal
-                    set balances at key currency to p_bal for p
-                    message p "{prefix} &a{player_name} sent you {amount} {currency}!"
-                    message player "{prefix} &aSent {amount} {currency} to {target}!"
+                    subtract amt from my_bal
+                    set my_bals at key currency to my_bal
+                    set balances to my_bals for player
+                    set p_bals to get balances for p
+                    set p_bal to 0
+                    if p_bals contains key currency:
+                        set p_bal to get p_bals at key currency
+                    add amt to p_bal
+                    set p_bals at key currency to p_bal
+                    set balances to p_bals for p
+                    message p "{prefix} &a{player_name} sent you {amt} {currency}!"
+                    message player "{prefix} &aSent {amt} {currency} to {target}!"
 
 command eco:
     permission "economy.admin"
@@ -128,7 +137,7 @@ command eco:
             else:
                 set target to get args at index 1
                 set currency to get args at index 2
-                set amount to get args at index 3
+                set amt to get args at index 3 as integer
                 if currencies does not contain currency:
                     message player "{prefix} &cUnknown currency: {currency}"
                 else:
@@ -136,13 +145,15 @@ command eco:
                     if p is not set:
                         message player "{prefix} &cPlayer {target} is not online!"
                     else:
-                        set p_bal to get balances at key currency for p
-                        if p_bal is not set:
-                            set p_bal to 0
-                        add amount to p_bal
-                        set balances at key currency to p_bal for p
-                        message p "{prefix} &aReceived {amount} {currency} from an admin!"
-                        message player "{prefix} &aGave {amount} {currency} to {target}!"
+                        set p_bals to get balances for p
+                        set p_bal to 0
+                        if p_bals contains key currency:
+                            set p_bal to get p_bals at key currency
+                        add amt to p_bal
+                        set p_bals at key currency to p_bal
+                        set balances to p_bals for p
+                        message p "{prefix} &aReceived {amt} {currency} from an admin!"
+                        message player "{prefix} &aGave {amt} {currency} to {target}!"
 
         else if action is "take":
             if argc < 4:
@@ -150,7 +161,7 @@ command eco:
             else:
                 set target to get args at index 1
                 set currency to get args at index 2
-                set amount to get args at index 3
+                set amt to get args at index 3 as integer
                 if currencies does not contain currency:
                     message player "{prefix} &cUnknown currency: {currency}"
                 else:
@@ -158,13 +169,15 @@ command eco:
                     if p is not set:
                         message player "{prefix} &cPlayer {target} is not online!"
                     else:
-                        set p_bal to get balances at key currency for p
-                        if p_bal is not set:
-                            set p_bal to 0
-                        subtract amount from p_bal
-                        set balances at key currency to p_bal for p
-                        message p "{prefix} &c{amount} {currency} was removed by an admin."
-                        message player "{prefix} &aTook {amount} {currency} from {target}!"
+                        set p_bals to get balances for p
+                        set p_bal to 0
+                        if p_bals contains key currency:
+                            set p_bal to get p_bals at key currency
+                        subtract amt from p_bal
+                        set p_bals at key currency to p_bal
+                        set balances to p_bals for p
+                        message p "{prefix} &c{amt} {currency} was removed by an admin."
+                        message player "{prefix} &aTook {amt} {currency} from {target}!"
 
         else if action is "set":
             if argc < 4:
@@ -172,7 +185,7 @@ command eco:
             else:
                 set target to get args at index 1
                 set currency to get args at index 2
-                set amount to get args at index 3
+                set amt to get args at index 3 as integer
                 if currencies does not contain currency:
                     message player "{prefix} &cUnknown currency: {currency}"
                 else:
@@ -180,8 +193,10 @@ command eco:
                     if p is not set:
                         message player "{prefix} &cPlayer {target} is not online!"
                     else:
-                        set balances at key currency to amount for p
-                        message player "{prefix} &aSet {target}'s {currency} to {amount}!"
+                        set p_bals to get balances for p
+                        set p_bals at key currency to amt
+                        set balances to p_bals for p
+                        message player "{prefix} &aSet {target}'s {currency} to {amt}!"
 
         else if action is "reset":
             if argc < 3:
@@ -196,7 +211,9 @@ command eco:
                     if p is not set:
                         message player "{prefix} &cPlayer {target} is not online!"
                     else:
-                        set balances at key currency to 0 for p
+                        set p_bals to get balances for p
+                        set p_bals at key currency to 0
+                        set balances to p_bals for p
                         message player "{prefix} &aReset {target}'s {currency} balance!"
 
         else if action is "resetall":

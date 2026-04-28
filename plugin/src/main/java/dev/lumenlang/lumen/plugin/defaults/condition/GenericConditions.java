@@ -4,6 +4,7 @@ import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
+import dev.lumenlang.lumen.api.codegen.NarrowingFact;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,7 +19,7 @@ import java.util.concurrent.ThreadLocalRandom;
  * specific patterns are tried first.
  */
 @Registration(order = 100)
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "DataFlowIssue"})
 public final class GenericConditions {
 
     private static void validateExprIdentifier(@NotNull String java,
@@ -37,69 +38,43 @@ public final class GenericConditions {
                 .example("if a chance of 50%:")
                 .since("1.0.0")
                 .category(Categories.SERVER)
-                .handler((match, env, ctx) -> {
-                    ctx.addImport(ThreadLocalRandom.class.getName());
-                    return "(ThreadLocalRandom.current().nextInt(100) < " + match.java("value", ctx, env) + ")";
+                .handler(ctx -> {
+                    ctx.codegen().addImport(ThreadLocalRandom.class.getName());
+                    return "(ThreadLocalRandom.current().nextInt(100) < " + ctx.java("value") + ")";
                 }));
 
         api.patterns().condition(b -> b
                 .by("Lumen")
-                .pattern("%v:EXPR% is set")
-                .description("Checks if a value is not null.")
-                .example("if myVar is set:")
+                .pattern("%v:EXPR% (is|is not) set")
+                .description("Checks if a value is null or not null.")
+                .examples("if myVar is set:", "if myVar is not set:")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
-                .handler((match, env, ctx) -> {
-                    String java = match.java("v", ctx, env);
-                    validateExprIdentifier(java, env);
-                    return java + " != null";
+                .handler(ctx -> {
+                    String java = ctx.java("v");
+                    validateExprIdentifier(java, ctx.env());
+                    boolean negated = ctx.choice(0).equals("is not");
+                    ctx.env().pushNarrowing(negated ? NarrowingFact.nullable(java) : NarrowingFact.nonNull(java));
+                    return java + (negated ? " == null" : " != null");
                 }));
 
         api.patterns().condition(b -> b
                 .by("Lumen")
-                .pattern("%v:EXPR% is not set")
-                .description("Checks if a value is null.")
-                .example("if myVar is not set:")
-                .since("1.0.0")
-                .category(Categories.VARIABLE)
-                .handler((match, env, ctx) -> {
-                    String java = match.java("v", ctx, env);
-                    validateExprIdentifier(java, env);
-                    return java + " == null";
-                }));
-
-        api.patterns().condition(b -> b
-                .by("Lumen")
-                .pattern("%val:EXPR% is between %min:EXPR% and %max:EXPR%")
-                .description("Checks if a value is between a minimum and maximum (inclusive).")
-                .examples("if player's x is between 100 and 200:", "if score is between 0 and 100:")
+                .pattern("%val:EXPR% (is|is not) between %min:EXPR% and %max:EXPR%")
+                .description("Checks if a value is between or outside a minimum and maximum range (inclusive).")
+                .examples("if player's x is between 100 and 200:", "if player's y is not between 60 and 120:")
                 .since("1.0.0")
                 .category(Categories.MATH)
-                .handler((match, env, ctx) -> {
-                    String val = match.java("val", ctx, env);
-                    String min = match.java("min", ctx, env);
-                    String max = match.java("max", ctx, env);
-                    validateExprIdentifier(val, env);
-                    validateExprIdentifier(min, env);
-                    validateExprIdentifier(max, env);
+                .handler(ctx -> {
+                    String val = ctx.java("val");
+                    String min = ctx.java("min");
+                    String max = ctx.java("max");
+                    validateExprIdentifier(val, ctx.env());
+                    validateExprIdentifier(min, ctx.env());
+                    validateExprIdentifier(max, ctx.env());
+                    boolean negated = ctx.choice(0).equals("is not");
+                    if (negated) return "(" + val + " < " + min + " || " + val + " > " + max + ")";
                     return "(" + val + " >= " + min + " && " + val + " <= " + max + ")";
-                }));
-
-        api.patterns().condition(b -> b
-                .by("Lumen")
-                .pattern("%val:EXPR% is not between %min:EXPR% and %max:EXPR%")
-                .description("Checks if a value is outside a minimum and maximum range.")
-                .examples("if player's y is not between 60 and 120:")
-                .since("1.0.0")
-                .category(Categories.MATH)
-                .handler((match, env, ctx) -> {
-                    String val = match.java("val", ctx, env);
-                    String min = match.java("min", ctx, env);
-                    String max = match.java("max", ctx, env);
-                    validateExprIdentifier(val, env);
-                    validateExprIdentifier(min, env);
-                    validateExprIdentifier(max, env);
-                    return "(" + val + " < " + min + " || " + val + " > " + max + ")";
                 }));
     }
 }

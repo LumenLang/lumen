@@ -5,7 +5,6 @@ import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.pattern.Categories;
-import dev.lumenlang.lumen.pipeline.java.compiled.Coerce;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -37,15 +36,14 @@ public final class GenericComparisonCondition {
                 .example("if damage > 5:")
                 .since("1.0.0")
                 .category(Categories.MATH)
-                .handler((match, env, ctx) -> {
-                    String aVal = match.java("a", ctx, env);
-                    String bVal = match.java("b", ctx, env);
-                    validateExprIdentifier(aVal, env);
-                    validateExprIdentifier(bVal, env);
-                    String op = match.java("op", ctx, env);
+                .handler(ctx -> {
+                    String aVal = ctx.java("a");
+                    String bVal = ctx.java("b");
+                    validateExprIdentifier(aVal, ctx.env());
+                    validateExprIdentifier(bVal, ctx.env());
+                    String op = ctx.java("op");
                     if (op.equals("<") || op.equals(">") || op.equals("<=") || op.equals(">=")) {
-                        ctx.addImport(Coerce.class.getName());
-                        return "Coerce.toDouble(" + aVal + ") " + op + " Coerce.toDouble(" + bVal + ")";
+                        return "((Number) " + aVal + ").doubleValue() " + op + " ((Number) " + bVal + ").doubleValue()";
                     }
                     return aVal + " " + op + " " + bVal;
                 }));

@@ -6,7 +6,7 @@ import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.codegen.CodegenAccess;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.pattern.Categories;
-import dev.lumenlang.lumen.api.type.Types;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.plugin.Lumen;
 import org.bukkit.NamespacedKey;
 import org.bukkit.persistence.PersistentDataType;
@@ -36,13 +36,12 @@ public final class PersistentDataExpressions {
                 .description("Retrieves a string value from an entity's PersistentDataContainer.")
                 .example("set val to get pdc \"myKey\" of entity")
                 .since("1.0.0").category(Categories.ENTITY)
-                .returnJavaType(Types.STRING)
                 .handler(ctx -> {
                     pdcImports(ctx.codegen());
                     return new ExpressionResult(
                             ctx.java("e") + ".getPersistentDataContainer().getOrDefault(new NamespacedKey(Lumen.instance(), "
                                     + ctx.java("key") + "), PersistentDataType.STRING, \"\")",
-                            null, Types.STRING);
+                            PrimitiveType.STRING);
                 }));
 
         api.patterns().expression(b -> b
@@ -50,14 +49,13 @@ public final class PersistentDataExpressions {
                 .description("Retrieves a string value from an item stack's PersistentDataContainer.")
                 .example("set val to get pdc \"custom_id\" of item")
                 .since("1.0.0").category(Categories.ITEM)
-                .returnJavaType(Types.STRING)
                 .handler(ctx -> {
                     pdcImports(ctx.codegen());
                     String itemJava = ctx.java("i");
                     return new ExpressionResult(
                             "(" + itemJava + ".hasItemMeta() ? " + itemJava + ".getItemMeta().getPersistentDataContainer().getOrDefault(new NamespacedKey(Lumen.instance(), "
                                     + ctx.java("key") + "), PersistentDataType.STRING, \"\") : \"\")",
-                            null, Types.STRING);
+                            PrimitiveType.STRING);
                 }));
 
         api.patterns().expression(b -> b
@@ -65,13 +63,12 @@ public final class PersistentDataExpressions {
                 .description("Retrieves a string value from a block's PersistentDataContainer.")
                 .example("set val to get pdc \"owner\" of block")
                 .since("1.0.0").category(Categories.BLOCK)
-                .returnJavaType(Types.STRING)
                 .handler(ctx -> {
                     pdcImports(ctx.codegen());
                     return new ExpressionResult(
                             ctx.java("bl") + ".getState().getPersistentDataContainer().getOrDefault(new NamespacedKey(Lumen.instance(), "
                                     + ctx.java("key") + "), PersistentDataType.STRING, \"\")",
-                            null, Types.STRING);
+                            PrimitiveType.STRING);
                 }));
     }
 }

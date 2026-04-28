@@ -9,6 +9,8 @@ import dev.lumenlang.lumen.pipeline.conditions.ConditionOr;
 import dev.lumenlang.lumen.pipeline.conditions.registry.ConditionRegistry;
 import dev.lumenlang.lumen.pipeline.conditions.registry.RegisteredConditionMatch;
 import dev.lumenlang.lumen.pipeline.language.exceptions.TokenCarryingException;
+import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
+import dev.lumenlang.lumen.pipeline.language.resolve.PatternSimulator;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.language.tokenization.TokenKind;
 import dev.lumenlang.lumen.pipeline.placeholder.PlaceholderExpander;
@@ -179,6 +181,7 @@ public final class ConditionParser {
             return new ConditionAtom(slowM);
         }
 
-        throw new TokenCarryingException("Unknown condition: " + joinTokens(tokens), tokens);
+        List<PatternSimulator.Suggestion> suggestions = PatternSimulator.suggestConditions(tokens, PatternRegistry.instance(), env);
+        throw new TokenCarryingException("Unknown condition: " + joinTokens(tokens), tokens, suggestions);
     }
 }
