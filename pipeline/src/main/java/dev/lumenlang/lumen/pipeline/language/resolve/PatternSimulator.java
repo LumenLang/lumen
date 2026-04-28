@@ -320,7 +320,9 @@ public final class PatternSimulator {
                 }
             } else if (bestPartialProgress.failedBindingId() != null && !bestPartialProgress.failedTokens().isEmpty()) {
                 Token ft = bestPartialProgress.failedTokens().get(0);
-                issues.add(new SuggestionIssue.TypeMismatch(ft, bestPartialProgress.failedBindingId(), bestPartialProgress.failedReason()));
+                String reason = bestPartialProgress.failedReason();
+                if (reason != null)
+                    issues.add(new SuggestionIssue.TypeMismatch(ft, bestPartialProgress.failedBindingId(), reason));
             }
             for (MatchProgress.LiteralTypo lt : bestPartialProgress.literalTypos()) {
                 if (!lt.token().text().equals(primaryTypo.token.text())) {
@@ -351,8 +353,10 @@ public final class PatternSimulator {
                 }
             } else {
                 Token failedToken = level0Progress.failedTokens().isEmpty() ? null : level0Progress.failedTokens().get(0);
-                if (failedToken != null) {
-                    issues.add(new SuggestionIssue.TypeMismatch(failedToken, level0Progress.failedBindingId(), level0Progress.failedReason()));
+                String reason = level0Progress.failedReason();
+                String bindingId = level0Progress.failedBindingId();
+                if (failedToken != null && bindingId != null && reason != null) {
+                    issues.add(new SuggestionIssue.TypeMismatch(failedToken, bindingId, reason));
                 }
             }
             if (!level0Progress.unmatchedTrailingTokens().isEmpty()) {
@@ -775,10 +779,11 @@ public final class PatternSimulator {
          * A token that was rejected by a type binding in the pattern.
          *
          * @param token     the rejected input token
-         * @param bindingId the type binding ID that rejected it
-         * @param reason    human readable rejection reason, or null if unknown
+         * @param bindingId the type binding id that rejected it
+         * @param reason    a human readable rejection reason produced by the binding
          */
-        record TypeMismatch(@NotNull Token token, @NotNull String bindingId, @Nullable String reason) implements SuggestionIssue {
+        record TypeMismatch(@NotNull Token token, @NotNull String bindingId,
+                            @NotNull String reason) implements SuggestionIssue {
         }
 
         /**

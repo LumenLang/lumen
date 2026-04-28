@@ -33,6 +33,7 @@ public final class AttributeBinding {
             @Override
             public @NotNull TypeBindingMeta meta() {
                 return new TypeBindingMeta(
+                        "a valid attribute",
                         "Resolves an attribute name (e.g. max_health, attack_damage) into the correct "
                                 + "Bukkit Attribute enum constant for the current server version. "
                                 + "Handles the renames across versions automatically.",

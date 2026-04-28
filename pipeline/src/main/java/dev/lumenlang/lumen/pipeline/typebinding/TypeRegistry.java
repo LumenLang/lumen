@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -63,6 +64,29 @@ public final class TypeRegistry {
      */
     public @NotNull TypeBindingMeta getMeta(@NotNull String id) {
         return metaMap.getOrDefault(id, TypeBindingMeta.EMPTY);
+    }
+
+    /**
+     * Returns the short noun phrase used in diagnostic labels for the given type id.
+     *
+     * <p>Uses {@link TypeBindingMeta#displayName()} when registered. Otherwise falls back
+     * to a humanized version of the id (lowercased, underscores replaced with spaces,
+     * prefixed with a sensible article).
+     *
+     * @param id the type identifier
+     * @return a short noun phrase such as {@code "a player variable"} or {@code "a valid integer"}
+     */
+    public @NotNull String displayNameOf(@NotNull String id) {
+        TypeBindingMeta meta = metaMap.get(id);
+        if (meta != null && meta.displayName() != null) return meta.displayName();
+        return humanizeId(id);
+    }
+
+    private static @NotNull String humanizeId(@NotNull String id) {
+        String pretty = id.toLowerCase(Locale.ROOT).replace('_', ' ');
+        char first = pretty.charAt(0);
+        String article = (first == 'a' || first == 'e' || first == 'i' || first == 'o' || first == 'u') ? "an" : "a";
+        return article + " " + pretty;
     }
 
     /**

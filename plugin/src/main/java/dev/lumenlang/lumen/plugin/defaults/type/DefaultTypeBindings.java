@@ -154,6 +154,7 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull TypeBindingMeta meta() {
                 return new TypeBindingMeta(
+                        "a valid integer",
                         "Parses an integer number from a single token or a variable reference, supporting modulo with %.",
                         "int",
                         List.of("give player diamond %amt:INT%"),
@@ -203,6 +204,7 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull TypeBindingMeta meta() {
                 return new TypeBindingMeta(
+                        "a valid long",
                         "Parses a long integer from a single token or a variable reference. Useful for large numeric values that exceed the int range.",
                         "long",
                         List.of("set %var:EXPR% to %val:LONG%"),
@@ -246,6 +248,7 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull TypeBindingMeta meta() {
                 return new TypeBindingMeta(
+                        "a valid number",
                         "Parses a decimal number from a single token or a variable reference. Trailing zeros are stripped for cleaner output (e.g. 20.50 becomes 20.5).",
                         "double",
                         List.of("set %e:ENTITY% max_health [to] %val:DOUBLE%"),
@@ -286,6 +289,7 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull TypeBindingMeta meta() {
                 return new TypeBindingMeta(
+                        "a valid number",
                         "Parses any numeric literal (int, long, or double) from a single token or a variable reference. Automatically detects the appropriate numeric type based on the token content.",
                         "Number",
                         List.of("set %var:EXPR% to %val:NUMBER%"),
@@ -348,6 +352,7 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull TypeBindingMeta meta() {
                 return new TypeBindingMeta(
+                        "a boolean (true or false)",
                         "Parses a boolean from a single token using truthiness: true/yes/on map to true, and false/no/off map to false.",
                         "boolean",
                         List.of("set %e:ENTITY% gravity [to] %val:BOOLEAN%"),
@@ -391,6 +396,7 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull TypeBindingMeta meta() {
                 return new TypeBindingMeta(
+                        "a valid material",
                         "Resolves a single token to a Bukkit Material enum constant, or a variable reference for runtime resolution.",
                         Material.class.getName(),
                         List.of("give player %mat:MATERIAL% 1"),
@@ -428,6 +434,7 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull TypeBindingMeta meta() {
                 return new TypeBindingMeta(
+                        "a player variable",
                         "Resolves a player reference from a variable name. Does not accept possessive syntax.",
                         Player.class.getName(),
                         List.of("message %who:PLAYER% \"Hello!\"", "kill player"),
@@ -442,8 +449,10 @@ public final class DefaultTypeBindings {
                     throw new ParseFailureException("'" + raw + "' should not use possessive form here");
 
                 VarHandle ref = env.lookupVar(raw);
-                if (ref == null || !isPlayer(ref))
-                    throw new ParseFailureException("'" + raw + "' is not a player variable");
+                if (ref == null)
+                    throw new ParseFailureException("'" + raw + "' does not exist in this scope");
+                if (!isPlayer(ref))
+                    throw new ParseFailureException("'" + raw + "' is a " + ref.type().displayName() + ", not a player");
                 return ref;
             }
 
@@ -468,6 +477,7 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull TypeBindingMeta meta() {
                 return new TypeBindingMeta(
+                        "a player variable in possessive form (e.g. player's)",
                         "Resolves a player reference from a possessive token (e.g. player's). The token must end with 's.",
                         Player.class.getName(),
                         List.of("%who:PLAYER_POSSESSIVE% name", "%who:PLAYER_POSSESSIVE% health"),
@@ -483,8 +493,10 @@ public final class DefaultTypeBindings {
                 String name = raw.substring(0, raw.length() - 2);
 
                 VarHandle ref = env.lookupVar(name);
-                if (ref == null || !isPlayer(ref))
-                    throw new ParseFailureException("'" + name + "' is not a player variable");
+                if (ref == null)
+                    throw new ParseFailureException("'" + name + "' does not exist in this scope");
+                if (!isPlayer(ref))
+                    throw new ParseFailureException("'" + name + "' is a " + ref.type().displayName() + ", not a player");
                 return ref;
             }
 
@@ -511,6 +523,7 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull TypeBindingMeta meta() {
                 return new TypeBindingMeta(
+                        "an offline player variable",
                         "Resolves an offline player reference. Does not accept possessive syntax.",
                         OfflinePlayer.class.getName(),
                         List.of("ban %target:OFFLINE_PLAYER%"),
@@ -525,8 +538,10 @@ public final class DefaultTypeBindings {
                     throw new ParseFailureException("'" + raw + "' should not use possessive form here");
 
                 VarHandle ref = env.lookupVar(raw);
-                if (ref == null || !isOfflinePlayer(ref))
-                    throw new ParseFailureException("'" + raw + "' is not a player variable");
+                if (ref == null)
+                    throw new ParseFailureException("'" + raw + "' does not exist in this scope");
+                if (!isOfflinePlayer(ref))
+                    throw new ParseFailureException("'" + raw + "' is a " + ref.type().displayName() + ", not an offline player");
                 return ref;
             }
 
@@ -551,6 +566,7 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull TypeBindingMeta meta() {
                 return new TypeBindingMeta(
+                        "an offline player variable in possessive form (e.g. player's)",
                         "Resolves an offline player reference from a possessive token (e.g. offlinePlayer's). The token must end with 's.",
                         OfflinePlayer.class.getName(),
                         List.of("%who:OFFLINE_PLAYER_POSSESSIVE% name"),
@@ -566,8 +582,10 @@ public final class DefaultTypeBindings {
                 String name = raw.substring(0, raw.length() - 2);
 
                 VarHandle ref = env.lookupVar(name);
-                if (ref == null || !isOfflinePlayer(ref))
-                    throw new ParseFailureException("'" + name + "' is not a player variable");
+                if (ref == null)
+                    throw new ParseFailureException("'" + name + "' does not exist in this scope");
+                if (!isOfflinePlayer(ref))
+                    throw new ParseFailureException("'" + name + "' is a " + ref.type().displayName() + ", not an offline player");
                 return ref;
             }
 
@@ -594,6 +612,7 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull TypeBindingMeta meta() {
                 return new TypeBindingMeta(
+                        "a condition",
                         "Captures all remaining tokens as a raw condition string. Used internally for conditional expressions.",
                         "String",
                         List.of(),
@@ -628,6 +647,7 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull TypeBindingMeta meta() {
                 return new TypeBindingMeta(
+                        "a comparison operator (e.g. 'is', 'greater than', '==')",
                         "Parses a comparison operator from natural language (e.g. 'greater than', 'is', '==') into a Java operator string.",
                         "String",
                         List.of("%a:EXPR% %op:OP% %b:EXPR%"),
@@ -738,6 +758,7 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull TypeBindingMeta meta() {
                 return new TypeBindingMeta(
+                        "an entity variable",
                         "Resolves an entity reference from a variable name. Does not accept possessive syntax.",
                         Entity.class.getName(),
                         List.of("kill %e:ENTITY%", "teleport entity to location"),
@@ -752,8 +773,10 @@ public final class DefaultTypeBindings {
                     throw new ParseFailureException("'" + raw + "' should not use possessive form here");
 
                 VarHandle ref = env.lookupVar(raw);
-                if (ref == null || !isEntity(ref))
-                    throw new ParseFailureException("'" + raw + "' is not an entity variable");
+                if (ref == null)
+                    throw new ParseFailureException("'" + raw + "' does not exist in this scope");
+                if (!isEntity(ref))
+                    throw new ParseFailureException("'" + raw + "' is a " + ref.type().displayName() + ", not an entity");
                 return ref;
             }
 
@@ -778,6 +801,7 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull TypeBindingMeta meta() {
                 return new TypeBindingMeta(
+                        "an entity variable in possessive form (e.g. entity's)",
                         "Resolves an entity reference from a possessive token (e.g. entity's). The token must end with 's.",
                         Entity.class.getName(),
                         List.of("%e:ENTITY_POSSESSIVE% health"),
@@ -793,8 +817,10 @@ public final class DefaultTypeBindings {
                 String name = raw.substring(0, raw.length() - 2);
 
                 VarHandle ref = env.lookupVar(name);
-                if (ref == null || !isEntity(ref))
-                    throw new ParseFailureException("'" + name + "' is not an entity variable");
+                if (ref == null)
+                    throw new ParseFailureException("'" + name + "' does not exist in this scope");
+                if (!isEntity(ref))
+                    throw new ParseFailureException("'" + name + "' is a " + ref.type().displayName() + ", not an entity");
                 return ref;
             }
 
@@ -831,6 +857,7 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull TypeBindingMeta meta() {
                 return new TypeBindingMeta(
+                        "a valid entity type",
                         "Resolves a single token to a Bukkit EntityType enum constant. Validates against all known entity types.",
                         EntityType.class.getName(),
                         List.of("spawn %type:ENTITY_TYPE% at location"),
@@ -885,6 +912,7 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull TypeBindingMeta meta() {
                 return new TypeBindingMeta(
+                        "a valid item",
                         "Resolves a single token to a Bukkit ItemStack created from a Material name. Only accepts materials that are valid items.",
                         ItemStack.class.getName(),
                         List.of("give player %item:ITEM%"),
@@ -931,6 +959,7 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull TypeBindingMeta meta() {
                 return new TypeBindingMeta(
+                        "an item variable",
                         "Resolves an ItemStack reference from a variable name. Does not accept possessive syntax.",
                         ItemStack.class.getName(),
                         List.of("set %i:ITEMSTACK% amount to 5"),
@@ -944,8 +973,10 @@ public final class DefaultTypeBindings {
                 if (raw.endsWith("'s"))
                     throw new ParseFailureException("'" + raw + "' should not use possessive form here");
                 VarHandle ref = env.lookupVar(raw);
-                if (ref == null || !isItemStack(ref))
-                    throw new ParseFailureException("'" + raw + "' is not an item variable");
+                if (ref == null)
+                    throw new ParseFailureException("'" + raw + "' does not exist in this scope");
+                if (!isItemStack(ref))
+                    throw new ParseFailureException("'" + raw + "' is a " + ref.type().displayName() + ", not an item");
                 return ref;
             }
 
@@ -970,6 +1001,7 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull TypeBindingMeta meta() {
                 return new TypeBindingMeta(
+                        "an item variable in possessive form (e.g. item's)",
                         "Resolves an ItemStack reference from a possessive token (e.g. item's). The token must end with 's.",
                         ItemStack.class.getName(),
                         List.of("%i:ITEMSTACK_POSSESSIVE% display name"),
@@ -984,8 +1016,10 @@ public final class DefaultTypeBindings {
                     throw new ParseFailureException("'" + raw + "' must use possessive form (e.g. item's)");
                 String name = raw.substring(0, raw.length() - 2);
                 VarHandle ref = env.lookupVar(name);
-                if (ref == null || !isItemStack(ref))
-                    throw new ParseFailureException("'" + name + "' is not an item variable");
+                if (ref == null)
+                    throw new ParseFailureException("'" + name + "' does not exist in this scope");
+                if (!isItemStack(ref))
+                    throw new ParseFailureException("'" + name + "' is a " + ref.type().displayName() + ", not an item");
                 return ref;
             }
 
@@ -1012,6 +1046,7 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull TypeBindingMeta meta() {
                 return new TypeBindingMeta(
+                        "a world variable",
                         "Resolves a world reference from a variable name.",
                         World.class.getName(),
                         List.of("set time in %w:WORLD% to 0"),
@@ -1023,8 +1058,10 @@ public final class DefaultTypeBindings {
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 String name = tokens.get(0);
                 VarHandle ref = env.lookupVar(name);
-                if (ref == null || !isWorld(ref))
-                    throw new ParseFailureException("'" + name + "' is not a world variable");
+                if (ref == null)
+                    throw new ParseFailureException("'" + name + "' does not exist in this scope");
+                if (!isWorld(ref))
+                    throw new ParseFailureException("'" + name + "' is a " + ref.type().displayName() + ", not a world");
                 return ref;
             }
 
@@ -1049,6 +1086,7 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull TypeBindingMeta meta() {
                 return new TypeBindingMeta(
+                        "a location variable",
                         "Resolves a location reference from a variable name.",
                         Location.class.getName(),
                         List.of("teleport player to %loc:LOCATION%"),
@@ -1060,8 +1098,10 @@ public final class DefaultTypeBindings {
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 String name = tokens.get(0);
                 VarHandle ref = env.lookupVar(name);
-                if (ref == null || !isLocation(ref))
-                    throw new ParseFailureException("'" + name + "' is not a location variable");
+                if (ref == null)
+                    throw new ParseFailureException("'" + name + "' does not exist in this scope");
+                if (!isLocation(ref))
+                    throw new ParseFailureException("'" + name + "' is a " + ref.type().displayName() + ", not a location");
                 return ref;
             }
 
@@ -1086,6 +1126,7 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull TypeBindingMeta meta() {
                 return new TypeBindingMeta(
+                        "a list variable",
                         "Resolves a list variable reference. The variable must have been declared as a list type.",
                         List.class.getName(),
                         List.of("add \"hello\" to %list:LIST%"),
@@ -1097,8 +1138,10 @@ public final class DefaultTypeBindings {
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 String name = tokens.get(0);
                 VarHandle ref = env.lookupVar(name);
-                if (ref == null) throw new ParseFailureException("'" + name + "' is not a list variable");
-                if (!isList(ref)) throw new ParseFailureException("'" + name + "' is not a list variable");
+                if (ref == null)
+                    throw new ParseFailureException("'" + name + "' does not exist in this scope");
+                if (!isList(ref))
+                    throw new ParseFailureException("'" + name + "' is a " + ref.type().displayName() + ", not a list");
                 return ref;
             }
 
@@ -1127,6 +1170,7 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull TypeBindingMeta meta() {
                 return new TypeBindingMeta(
+                        "a map variable",
                         "Resolves a map variable reference. The variable must have been declared as a map type.",
                         Map.class.getName(),
                         List.of("set %map:MAP% at key \"name\" to \"value\""),
@@ -1138,8 +1182,10 @@ public final class DefaultTypeBindings {
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 String name = tokens.get(0);
                 VarHandle ref = env.lookupVar(name);
-                if (ref == null) throw new ParseFailureException("'" + name + "' is not a map variable");
-                if (!isMap(ref)) throw new ParseFailureException("'" + name + "' is not a map variable");
+                if (ref == null)
+                    throw new ParseFailureException("'" + name + "' does not exist in this scope");
+                if (!isMap(ref))
+                    throw new ParseFailureException("'" + name + "' is a " + ref.type().displayName() + ", not a map");
                 return ref;
             }
 
@@ -1168,6 +1214,7 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull TypeBindingMeta meta() {
                 return new TypeBindingMeta(
+                        "a data variable",
                         "Resolves a data instance variable reference. The variable must have been declared as a data type.",
                         DataInstance.class.getName(),
                         List.of("get field \"name\" of %obj:DATA%"),
@@ -1179,12 +1226,11 @@ public final class DefaultTypeBindings {
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 String name = tokens.get(0);
                 VarHandle ref = env.lookupVar(name);
-                if (ref != null) {
-                    if (!isData(ref))
-                        throw new ParseFailureException("'" + name + "' is not a data variable");
-                    return ref;
-                }
-                throw new ParseFailureException("'" + name + "' is not a data variable");
+                if (ref == null)
+                    throw new ParseFailureException("'" + name + "' does not exist in this scope");
+                if (!isData(ref))
+                    throw new ParseFailureException("'" + name + "' is a " + ref.type().displayName() + ", not a data instance");
+                return ref;
             }
 
             @Override
@@ -1210,6 +1256,7 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull TypeBindingMeta meta() {
                 return new TypeBindingMeta(
+                        "a block variable",
                         "Resolves a block reference from a variable name.",
                         Block.class.getName(),
                         List.of("set %b:BLOCK% type to stone", "break block naturally"),
@@ -1221,8 +1268,10 @@ public final class DefaultTypeBindings {
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 String name = tokens.get(0);
                 VarHandle ref = env.lookupVar(name);
-                if (ref == null || !isBlock(ref))
-                    throw new ParseFailureException("'" + name + "' is not a block variable");
+                if (ref == null)
+                    throw new ParseFailureException("'" + name + "' does not exist in this scope");
+                if (!isBlock(ref))
+                    throw new ParseFailureException("'" + name + "' is a " + ref.type().displayName() + ", not a block");
                 return ref;
             }
 
@@ -1249,6 +1298,7 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull TypeBindingMeta meta() {
                 return new TypeBindingMeta(
+                        "an inventory variable",
                         "Resolves an inventory reference from a variable name.",
                         "org.bukkit.inventory.Inventory",
                         List.of("set slot 0 of %inv:INVENTORY% to diamond"),
@@ -1260,8 +1310,10 @@ public final class DefaultTypeBindings {
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 String name = tokens.get(0);
                 VarHandle ref = env.lookupVar(name);
-                if (ref == null || !isInventory(ref))
-                    throw new ParseFailureException("'" + name + "' is not an inventory variable");
+                if (ref == null)
+                    throw new ParseFailureException("'" + name + "' does not exist in this scope");
+                if (!isInventory(ref))
+                    throw new ParseFailureException("'" + name + "' is a " + ref.type().displayName() + ", not an inventory");
                 return ref;
             }
 
@@ -1288,6 +1340,7 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull TypeBindingMeta meta() {
                 return new TypeBindingMeta(
+                        "a known variable",
                         "Resolves any variable reference from a single token. Validates that the name refers to a known variable.",
                         "Object",
                         List.of("add 1 to %name:VAR%"),
@@ -1300,7 +1353,7 @@ public final class DefaultTypeBindings {
                 String name = tokens.get(0);
                 VarHandle ref = env.lookupVar(name);
                 if (ref == null)
-                    throw new ParseFailureException("'" + name + "' is not a known variable");
+                    throw new ParseFailureException("'" + name + "' does not exist in this scope");
                 return ref;
             }
 
@@ -1321,6 +1374,7 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull TypeBindingMeta meta() {
                 return new TypeBindingMeta(
+                        "a comma separated list of values",
                         "Parses a comma separated list of literal values from all remaining tokens (e.g. 'hello, hi, hey').",
                         "String",
                         List.of("aliases %list:LITERAL_LIST%"),

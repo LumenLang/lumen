@@ -73,6 +73,7 @@ public final class RegistryTypeBinding {
             @Override
             public @NotNull TypeBindingMeta meta() {
                 return new TypeBindingMeta(
+                        "a valid " + typeId.toLowerCase(Locale.ROOT).replace('_', ' '),
                         "Resolves a single token to a " + fqcn + " constant.",
                         fqcn,
                         List.of(),

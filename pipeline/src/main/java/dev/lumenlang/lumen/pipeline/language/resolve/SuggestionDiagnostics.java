@@ -6,9 +6,11 @@ import dev.lumenlang.lumen.api.emit.ScriptToken;
 import dev.lumenlang.lumen.api.type.NullableType;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.pipeline.language.match.MatchProgress;
+import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.language.tokenization.TokenKind;
 import dev.lumenlang.lumen.pipeline.type.TypeAnnotationParser;
+import dev.lumenlang.lumen.pipeline.typebinding.TypeRegistry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,6 +70,7 @@ public final class SuggestionDiagnostics {
     private static @NotNull LumenDiagnostic build(@NotNull String title, int line, @NotNull String raw, @NotNull List<Token> tokens, @NotNull PatternSimulator.Suggestion top, @Nullable PatternSimulator.Suggestion second, @Nullable TypeEnv env) {
         LumenDiagnostic unsupported = detectUnsupportedSyntax(line, raw, tokens);
         if (unsupported != null) return unsupported;
+        TypeRegistry types = PatternRegistry.instance().getTypeRegistry();
         LumenDiagnostic.Builder builder = LumenDiagnostic.error(title).at(line, raw);
         if (!tokens.isEmpty()) {
             builder.highlight(tokens.get(0).start(), tokens.get(tokens.size() - 1).end());
@@ -75,38 +78,37 @@ public final class SuggestionDiagnostics {
         List<PatternSimulator.SuggestionIssue> issues = top.issues();
         PatternSimulator.SuggestionIssue primary = findPrimary(issues);
         if (primary != null) {
-            applyPrimaryHighlight(builder, primary, top);
+            applyPrimaryHighlight(builder, primary, top, types);
             for (PatternSimulator.SuggestionIssue issue : issues) {
                 if (issue == primary) continue;
-                applySubHighlight(builder, issue);
+                applySubHighlight(builder, issue, types);
             }
         } else if (top.progress() != null && !top.progress().bindingFailures().isEmpty()) {
             List<MatchProgress.BindingFailure> failures = top.progress().bindingFailures();
             MatchProgress.BindingFailure first = failures.get(0);
             if (!first.failedTokens().isEmpty()) {
                 Token t = first.failedTokens().get(0);
-                String label = fallbackBindingLabel(first, t);
-                builder.highlight(t.start(), t.end()).label(label);
+                builder.highlight(t.start(), t.end()).label(first.reason());
             } else {
                 Token last = tokens.isEmpty() ? null : tokens.get(tokens.size() - 1);
-                if (last != null) builder.highlight(last.end(), last.end() + 1).label("expected " + bindingDescription(first.bindingId()));
-                else builder.label("expected " + bindingDescription(first.bindingId()));
+                String label = "expected " + types.displayNameOf(first.bindingId());
+                if (last != null) builder.highlight(last.end(), last.end() + 1).label(label);
+                else builder.label(label);
             }
             for (int i = 1; i < failures.size(); i++) {
                 MatchProgress.BindingFailure bf = failures.get(i);
                 if (!bf.failedTokens().isEmpty()) {
                     Token t = bf.failedTokens().get(0);
-                    builder.subHighlight(t.start(), t.end(), fallbackBindingLabel(bf, t));
+                    builder.subHighlight(t.start(), t.end(), bf.reason());
                 }
             }
         } else if (top.progress() != null && top.progress().failedBindingId() != null) {
             MatchProgress progress = top.progress();
             Token last = tokens.isEmpty() ? null : tokens.get(tokens.size() - 1);
-            if (last != null) {
-                builder.highlight(last.end(), last.end() + 1).label("expected " + bindingDescription(progress.failedBindingId()));
-            } else {
-                builder.label("expected " + bindingDescription(progress.failedBindingId()));
-            }
+            String reason = progress.failedReason();
+            String label = reason != null ? reason : "expected " + types.displayNameOf(progress.failedBindingId());
+            if (last != null) builder.highlight(last.end(), last.end() + 1).label(label);
+            else builder.label(label);
         } else {
             if (!tokens.isEmpty()) {
                 builder.label("'" + ExprResolver.joinTokens(tokens) + "' is not recognized");
@@ -278,7 +280,7 @@ public final class SuggestionDiagnostics {
         return 0;
     }
 
-    private static void applyPrimaryHighlight(@NotNull LumenDiagnostic.Builder builder, @NotNull PatternSimulator.SuggestionIssue issue, @NotNull PatternSimulator.Suggestion top) {
+    private static void applyPrimaryHighlight(@NotNull LumenDiagnostic.Builder builder, @NotNull PatternSimulator.SuggestionIssue issue, @NotNull PatternSimulator.Suggestion top, @NotNull TypeRegistry types) {
         if (issue instanceof PatternSimulator.SuggestionIssue.Typo typo) {
             boolean validated = top.progress() != null && top.progress().succeeded();
             builder.highlight(typo.token().start(), typo.token().end());
@@ -293,9 +295,9 @@ public final class SuggestionDiagnostics {
             }
         } else if (issue instanceof PatternSimulator.SuggestionIssue.TypeMismatch mismatch) {
             builder.highlight(mismatch.token().start(), mismatch.token().end());
-            builder.label(typeMismatchLabel(mismatch));
+            builder.label(mismatch.reason());
         } else if (issue instanceof PatternSimulator.SuggestionIssue.MissingBinding missing) {
-            builder.label("missing " + bindingDescription(missing.bindingId()));
+            builder.label("missing " + types.displayNameOf(missing.bindingId()));
         } else if (issue instanceof PatternSimulator.SuggestionIssue.Reorder reorder) {
             int start = reorder.tokens().stream().mapToInt(Token::start).min().orElse(0);
             int end = reorder.tokens().stream().mapToInt(Token::end).max().orElse(0);
@@ -303,7 +305,7 @@ public final class SuggestionDiagnostics {
         }
     }
 
-    private static void applySubHighlight(@NotNull LumenDiagnostic.Builder builder, @NotNull PatternSimulator.SuggestionIssue issue) {
+    private static void applySubHighlight(@NotNull LumenDiagnostic.Builder builder, @NotNull PatternSimulator.SuggestionIssue issue, @NotNull TypeRegistry types) {
         if (issue instanceof PatternSimulator.SuggestionIssue.Typo typo) {
             builder.subHighlight(typo.token().start(), typo.token().end(), "did you mean '" + typo.expected() + "'?");
         } else if (issue instanceof PatternSimulator.SuggestionIssue.ExtraTokens extra) {
@@ -311,9 +313,9 @@ public final class SuggestionDiagnostics {
                 builder.subHighlight(t.start(), t.end(), "extra token");
             }
         } else if (issue instanceof PatternSimulator.SuggestionIssue.TypeMismatch mismatch) {
-            builder.subHighlight(mismatch.token().start(), mismatch.token().end(), typeMismatchLabel(mismatch));
+            builder.subHighlight(mismatch.token().start(), mismatch.token().end(), mismatch.reason());
         } else if (issue instanceof PatternSimulator.SuggestionIssue.MissingBinding missing) {
-            builder.note("missing " + bindingDescription(missing.bindingId()));
+            builder.note("missing " + types.displayNameOf(missing.bindingId()));
         } else if (issue instanceof PatternSimulator.SuggestionIssue.Reorder reorder) {
             for (Token t : reorder.tokens()) {
                 builder.subHighlight(t.start(), t.end(), "out of order");
@@ -330,59 +332,5 @@ public final class SuggestionDiagnostics {
         else if (pct >= 30) tier = "low";
         else tier = "very low";
         return pct + "% (" + tier + ")";
-    }
-
-    private static @NotNull String typeMismatchLabel(@NotNull PatternSimulator.SuggestionIssue.TypeMismatch mismatch) {
-        if (mismatch.reason() != null) return mismatch.reason();
-        String token = mismatch.token().text();
-        return switch (mismatch.bindingId()) {
-            case "INVENTORY" -> "'" + token + "' is not a known inventory variable";
-            case "PLAYER" -> "'" + token + "' is not a known player variable";
-            case "PLAYER_POSSESSIVE" -> "'" + token + "' must use possessive form (e.g. player's)";
-            case "ENTITY" -> "'" + token + "' is not a known entity variable";
-            case "ENTITY_POSSESSIVE" -> "'" + token + "' must use possessive form (e.g. entity's)";
-            case "ITEMSTACK" -> "'" + token + "' is not a known item variable";
-            case "WORLD" -> "'" + token + "' is not a known world variable";
-            case "LIST" -> "'" + token + "' is not a known list variable";
-            case "MAP" -> "'" + token + "' is not a known map variable";
-            case "DATA" -> "'" + token + "' is not a known data variable";
-            default -> "'" + token + "' is not valid here";
-        };
-    }
-
-    private static @NotNull String fallbackBindingLabel(@NotNull MatchProgress.BindingFailure bf, @NotNull Token t) {
-        if (bf.reason() != null) return bf.reason();
-        return "'" + t.text() + "' is not " + bindingDescription(bf.bindingId());
-    }
-
-    private static @NotNull String bindingDescription(@NotNull String bindingId) {
-        return switch (bindingId) {
-            case "PLAYER" -> "a player variable";
-            case "PLAYER_POSSESSIVE" -> "a player variable (possessive form, e.g. player's)";
-            case "ENTITY" -> "an entity variable";
-            case "ENTITY_POSSESSIVE" -> "a possessive entity reference (e.g. entity's)";
-            case "ITEMSTACK" -> "an item variable";
-            case "INVENTORY" -> "an inventory variable";
-            case "WORLD" -> "a world variable";
-            case "LOCATION" -> "a location variable";
-            case "BLOCK" -> "a block variable";
-            case "LIST" -> "a list variable";
-            case "MAP" -> "a map variable";
-            case "DATA" -> "a data variable";
-            case "INT" -> "a valid integer";
-            case "DOUBLE", "NUMBER" -> "a valid number";
-            case "LONG" -> "a valid long";
-            case "BOOLEAN" -> "a boolean (true or false)";
-            case "MATERIAL" -> "a valid material";
-            case "ATTRIBUTE" -> "a valid attribute";
-            case "ENTITY_TYPE" -> "a valid entity type";
-            case "GAME_MODE" -> "a valid game mode";
-            case "STRING" -> "a string value";
-            case "QSTRING" -> "a quoted string, variable, or placeholder";
-            case "COND" -> "a condition";
-            case "EXPR" -> "an expression";
-            case "VAR" -> "a variable";
-            default -> "a valid " + bindingId.toLowerCase().replace('_', ' ');
-        };
     }
 }

@@ -65,7 +65,7 @@ public final class ControlBlocks {
     private static boolean nextIsElseChain(@NotNull HandlerContext ctx) {
         if (!ctx.block().hasNext()) return false;
         String nextRaw = ctx.block().nextRaw().trim().toLowerCase();
-        return nextRaw.startsWith("else if") || nextRaw.equals("else:") || nextRaw.startsWith("else ") || nextRaw.startsWith("else:");
+        return nextRaw.startsWith("else if") || nextRaw.startsWith("else ") || nextRaw.startsWith("else:");
     }
 
     @Call

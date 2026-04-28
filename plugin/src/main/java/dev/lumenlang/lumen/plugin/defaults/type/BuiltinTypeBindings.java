@@ -39,24 +39,28 @@ public final class BuiltinTypeBindings {
         registerIdent(types);
 
         types.registerMeta("EXPR", new TypeBindingMeta(
+                "an expression",
                 "Captures all remaining tokens as a raw expression. Preserves string literal quoting and is used for arbitrary sub-expressions.",
                 "String",
                 List.of("set %var:EXPR% to %val:EXPR%"),
                 "1.0.0",
                 false));
         types.registerMeta("STRING", new TypeBindingMeta(
+                "a string value",
                 "Captures a single token as a string value. Resolves variable references and supports placeholders expansion.",
                 "String",
                 List.of("message player %text:STRING%"),
                 "1.0.0",
                 false));
         types.registerMeta("QSTRING", new TypeBindingMeta(
+                "a quoted string, variable, or placeholder",
                 "Captures a single quoted string literal, variable reference, or placeholder token. Rejects bare identifiers to prevent accidental matches with other patterns.",
                 "String",
                 List.of("%a:STRING% (is|equals) %b:QSTRING%"),
                 "1.0.0",
                 false));
         types.registerMeta("IDENT", new TypeBindingMeta(
+                "an identifier",
                 "Captures a single identifier token. Only matches bare identifiers, rejecting string literals, numbers, and other token kinds.",
                 "String",
                 List.of("set %name:IDENT% to %val:EXPR%"),

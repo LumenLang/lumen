@@ -11,12 +11,16 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Tracks the progress and failure point of a pattern match attempt.
+ * Tracks the progress and failure point of a single pattern match attempt.
  *
- * <p>During matching, the matcher records the deepest point reached before
- * failure across all backtracking branches. After matching completes, this
- * object describes either a successful match or exactly where and why
- * the best attempt failed.
+ * <p>During matching, the deepest position reached across all backtracking
+ * branches is recorded as the {@linkplain #deepestFailure() deepest failure}.
+ * Per binding rejections encountered during downstream discovery are
+ * collected separately as {@link BindingFailure} entries.
+ *
+ * <p>Failures are produced exclusively from explicit rejection messages
+ * supplied by type bindings, literals, and structural matchers. Reasons
+ * therefore always carry a precise, binding authored explanation.
  */
 public final class MatchProgress {
 
@@ -24,35 +28,17 @@ public final class MatchProgress {
     private final @NotNull List<LiteralTypo> literalTypos = new ArrayList<>();
     private @NotNull List<Token> unmatchedTrailingTokens = List.of();
     private @Nullable Match match;
-    private int furthestTokenIndex = -1;
-    private @Nullable PatternPart failedPart;
-    private @Nullable String failedBindingId;
-    private @Nullable String failedReason;
-    private @NotNull List<Token> failedTokens = List.of();
-    private @Nullable String lastRejectionReason;
+    private @Nullable Failure deepest;
 
-    void storeRejectionReason(@NotNull String reason) {
-        this.lastRejectionReason = reason;
+    void recordFailure(int tokenIndex, @Nullable PatternPart part, @Nullable String bindingId, @Nullable String reason, @NotNull List<Token> failedTokens) {
+        if (deepest != null && tokenIndex <= deepest.tokenIndex()) return;
+        if (deepest != null && bindingId == null && deepest.bindingId() != null && tokenIndex - deepest.tokenIndex() <= 2)
+            return;
+        deepest = new Failure(tokenIndex, part, bindingId, reason, failedTokens);
     }
 
-    void clearRejectionReason() {
-        this.lastRejectionReason = null;
-    }
-
-    void recordFailure(int tokenIndex, @Nullable PatternPart part, @Nullable String bindingId, @NotNull List<Token> failedTokens) {
-        if (tokenIndex > this.furthestTokenIndex) {
-            if (bindingId == null && this.failedBindingId != null && tokenIndex - this.furthestTokenIndex <= 2) return;
-            this.furthestTokenIndex = tokenIndex;
-            this.failedPart = part;
-            this.failedBindingId = bindingId;
-            this.failedTokens = failedTokens;
-            this.failedReason = this.lastRejectionReason;
-        }
-        this.lastRejectionReason = null;
-    }
-
-    void recordBindingFailure(int tokenIndex, @NotNull String bindingId, @NotNull List<Token> failedTokens) {
-        bindingFailures.add(new BindingFailure(tokenIndex, bindingId, lastRejectionReason, failedTokens));
+    void recordBindingFailure(int tokenIndex, @NotNull String bindingId, @NotNull String reason, @NotNull List<Token> failedTokens) {
+        bindingFailures.add(new BindingFailure(tokenIndex, bindingId, reason, failedTokens));
     }
 
     void transferBindingFailures(@NotNull MatchProgress from) {
@@ -89,38 +75,45 @@ public final class MatchProgress {
     }
 
     /**
-     * @return the deepest token index reached before failure across all backtracking branches, or -1 if nothing was consumed
+     * @return the deepest failure observed across all backtracking branches, or null when nothing was attempted
+     */
+    public @Nullable Failure deepestFailure() {
+        return deepest;
+    }
+
+    /**
+     * @return the deepest token index reached before failure, or {@code -1} when nothing was attempted
      */
     public int furthestTokenIndex() {
-        return furthestTokenIndex;
+        return deepest == null ? -1 : deepest.tokenIndex();
     }
 
     /**
-     * @return the pattern part that was being matched when the deepest failure occurred, or null
+     * @return the pattern part that was being matched at the deepest failure, or null when not available
      */
     public @Nullable PatternPart failedPart() {
-        return failedPart;
+        return deepest == null ? null : deepest.part();
     }
 
     /**
-     * @return the type binding ID that rejected the input, or null if the failure was not binding related
+     * @return the type binding id that produced the deepest failure, or null when the deepest failure was a literal or structural mismatch
      */
     public @Nullable String failedBindingId() {
-        return failedBindingId;
+        return deepest == null ? null : deepest.bindingId();
     }
 
     /**
-     * @return a human readable reason why the type binding rejected the input, or null if unknown
+     * @return the human readable reason from the deepest failure, or null when the failure originated from a literal or structural match (which has no binding authored message)
      */
     public @Nullable String failedReason() {
-        return failedReason;
+        return deepest == null ? null : deepest.reason();
     }
 
     /**
-     * @return the tokens that were attempted when the deepest failure occurred
+     * @return the tokens attempted when the deepest failure occurred
      */
     public @NotNull List<Token> failedTokens() {
-        return failedTokens;
+        return deepest == null ? List.of() : deepest.failedTokens();
     }
 
     /**
@@ -132,10 +125,10 @@ public final class MatchProgress {
 
     /**
      * Returns all type binding failures discovered during continuation matching,
-     * deduplicated by binding ID (keeping the failure at the highest token index
+     * deduplicated by binding id (keeping the failure at the highest token index
      * for each binding).
      *
-     * @return an immutable list of binding failures, one per unique binding ID
+     * @return immutable list of binding failures, one per unique binding id
      */
     public @NotNull List<BindingFailure> bindingFailures() {
         if (bindingFailures.isEmpty()) return List.of();
@@ -162,19 +155,32 @@ public final class MatchProgress {
     }
 
     /**
-     * Represents a single type binding failure during pattern matching.
+     * Snapshot of the deepest failure observed during a single match attempt.
+     *
+     * @param tokenIndex   the token index at which the failure occurred
+     * @param part         the pattern part being matched, or null when unavailable
+     * @param bindingId    the type binding id when the failure was binding driven, or null
+     * @param reason       a human readable reason from the binding, or null when the failure was a literal or structural mismatch
+     * @param failedTokens the tokens attempted at the failure point
+     */
+    public record Failure(int tokenIndex, @Nullable PatternPart part, @Nullable String bindingId,
+                          @Nullable String reason, @NotNull List<Token> failedTokens) {
+    }
+
+    /**
+     * A single type binding rejection captured during downstream failure analysis.
      *
      * @param tokenIndex   the token index where the binding was attempted
-     * @param bindingId    the type binding identifier that rejected the input
-     * @param reason       a human readable rejection reason, or null
-     * @param failedTokens the tokens that were attempted
+     * @param bindingId    the type binding id that rejected the input
+     * @param reason       a human readable rejection reason supplied by the binding
+     * @param failedTokens the tokens attempted at the rejection point
      */
-    public record BindingFailure(int tokenIndex, @NotNull String bindingId, @Nullable String reason,
+    public record BindingFailure(int tokenIndex, @NotNull String bindingId, @NotNull String reason,
                                  @NotNull List<Token> failedTokens) {
     }
 
     /**
-     * Represents a literal token that was close enough to a pattern literal to be considered a typo.
+     * A literal token close enough to a pattern literal to be treated as a typo.
      *
      * @param token    the mismatched token
      * @param expected the literal text the token was close to
