@@ -217,8 +217,7 @@ command menu:
     open inventory named "menu" for player
 ```
 
-The interesting part: when you save the script while a player has the inventory open, the inventory **updates in place
-**. Items get replaced, the title refreshes, click handlers stay wired up, and the player sees the changes live without
+The interesting part: when you save the script while a player has the inventory open, the inventory updates in place. Items get replaced, the title refreshes, click handlers are updated, and the player sees the changes live without
 the inventory closing or flickering. This is genuinely rare in the Minecraft scripting world and is worth trying once on
 a test server just to feel the difference in iteration speed.
 
@@ -249,9 +248,6 @@ errors, it just behaves wrong, and the failure can be wildly far from the line t
 
 Lumen has no coercion at all. If a pattern wants a string, you give it a string. If it wants a player, you give it a
 player. The compiler refuses anything else, loudly, at compile time.
-
-Lumen does have **widening** (e.g. an `int` is accepted where a `double` is expected, since it fits), but that's a
-different concept: widening is safe and lossless, coercion is a guess.
 
 ### Variables don't change type
 
