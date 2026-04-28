@@ -9,10 +9,6 @@ import dev.lumenlang.lumen.pipeline.java.JavaBuilder;
 import dev.lumenlang.lumen.pipeline.java.compiled.ClassBuilder;
 import dev.lumenlang.lumen.pipeline.java.compiled.ScriptSourceMap;
 import dev.lumenlang.lumen.pipeline.java.compiler.ScriptClassLoader;
-import dev.lumenlang.lumen.pipeline.java.compiler.system.CompilationFailedException;
-import dev.lumenlang.lumen.pipeline.java.compiler.system.InMemoryFileManager;
-import dev.lumenlang.lumen.pipeline.java.compiler.system.SourceFile;
-import dev.lumenlang.lumen.pipeline.java.compiler.system.SystemCompiler;
 import dev.lumenlang.lumen.pipeline.java.formatter.MiniJavaCleaner;
 import dev.lumenlang.lumen.pipeline.language.emit.CodeEmitter;
 import dev.lumenlang.lumen.pipeline.language.emit.TransformerRegistry;
@@ -21,6 +17,9 @@ import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
 import dev.lumenlang.lumen.pipeline.persist.GlobalVars;
 import dev.lumenlang.lumen.plugin.Lumen;
+import dev.lumenlang.lumen.plugin.compiler.ScriptCompiler;
+import dev.lumenlang.lumen.plugin.compiler.system.CompilationFailedException;
+import dev.lumenlang.lumen.plugin.compiler.system.SourceFile;
 import dev.lumenlang.lumen.plugin.configuration.LumenConfiguration;
 import dev.lumenlang.lumen.plugin.inject.bytecode.BytecodeInjector;
 import dev.lumenlang.lumen.plugin.inject.bytecode.InjectableRegistry;
@@ -53,7 +52,6 @@ import static dev.lumenlang.lumen.plugin.scripts.ScriptManagerEvents.postScriptU
  * Manages the lifecycle of Lumen scripts: parsing, compiling, loading, and
  * unloading.
  */
-@SuppressWarnings("resource")
 public final class ScriptManager {
 
     private static final Map<String, LoadedScript> scripts = new ConcurrentHashMap<>();
@@ -501,9 +499,7 @@ public final class ScriptManager {
 
     private static @NotNull Map<String, byte[]> compile(@NotNull GeneratedSource source) {
         try {
-            return SystemCompiler.compileAll(
-                    ClassBuilder.class.getClassLoader(),
-                    List.of(new SourceFile(source.fqcn(), source.javaSource()))).classes;
+            return ScriptCompiler.compileAll(List.of(new SourceFile(source.fqcn(), source.javaSource())));
         } catch (CompilationFailedException e) {
             dumpSource(source);
             logCompileErrors(e.errors(), source.scriptName());
@@ -584,9 +580,9 @@ public final class ScriptManager {
         }
 
         long compileStart = System.nanoTime();
-        InMemoryFileManager fm;
+        Map<String, byte[]> allClasses;
         try {
-            fm = SystemCompiler.compileAll(ClassBuilder.class.getClassLoader(), files);
+            allClasses = ScriptCompiler.compileAll(files);
         } catch (CompilationFailedException e) {
             logCompileErrors(e.errors(), generated);
             LumenLogger.severe("Batch compilation failed due to script errors, falling back to individual compilation...");
@@ -603,7 +599,7 @@ public final class ScriptManager {
         long compilePerScript = generated.isEmpty() ? 0 : compileTotal / generated.size();
         for (GeneratedSource s : generated) {
             String normalized = ClassBuilder.normalize(s.className());
-            Map<String, byte[]> bytecodes = extractBytecodes(fm.classes, normalized);
+            Map<String, byte[]> bytecodes = extractBytecodes(allClasses, normalized);
             BytecodeInjector.inject(bytecodes);
             dumpIfEnabled(s, bytecodes);
             if (LumenConfiguration.DEBUG.LOG_COMPILATION) {
@@ -640,9 +636,7 @@ public final class ScriptManager {
         return loader;
     }
 
-    private static void activateScript(@NotNull String scriptName,
-                                       @NotNull String fqcn,
-                                       @NotNull ScriptClassLoader loader) {
+    private static void activateScript(@NotNull String scriptName, @NotNull String fqcn, @NotNull ScriptClassLoader loader) {
         try {
             Class<?> main = loader.loadClass(fqcn);
             Object inst = main.getDeclaredConstructor().newInstance();
@@ -655,16 +649,11 @@ public final class ScriptManager {
         }
     }
 
-    private static void loadBytecodes(@NotNull String scriptName,
-                                      @NotNull String fqcn,
-                                      @NotNull Map<String, byte[]> bytecodes) {
+    private static void loadBytecodes(@NotNull String scriptName, @NotNull String fqcn, @NotNull Map<String, byte[]> bytecodes) {
         activateScript(scriptName, fqcn, createLoader(bytecodes));
     }
 
-    private static void cacheIfEnabled(@NotNull String scriptName,
-                                       @NotNull String originalSource,
-                                       @NotNull String javaSource,
-                                       @NotNull Map<String, byte[]> bytecodes) {
+    private static void cacheIfEnabled(@NotNull String scriptName, @NotNull String originalSource, @NotNull String javaSource, @NotNull Map<String, byte[]> bytecodes) {
         if (scriptName.startsWith("__")) return;
         if (LumenConfiguration.PERFORMANCE.CACHE_COMPILED_CLASSES) {
             CompiledClassCache.save(scriptName, originalSource, bytecodes);
@@ -710,8 +699,7 @@ public final class ScriptManager {
         }
     }
 
-    private static @NotNull Map<String, byte[]> extractBytecodes(@NotNull Map<String, byte[]> allClasses,
-                                                                 @NotNull String normalizedName) {
+    private static @NotNull Map<String, byte[]> extractBytecodes(@NotNull Map<String, byte[]> allClasses, @NotNull String normalizedName) {
         String prefix = "dev.lumenlang.lumen.java.compiled." + normalizedName;
         Map<String, byte[]> result = new HashMap<>();
         for (var entry : allClasses.entrySet()) {

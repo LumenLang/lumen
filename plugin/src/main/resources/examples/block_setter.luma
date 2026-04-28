@@ -9,8 +9,8 @@
 #   /fill <material>    Fills the selected region with the given block type
 
 global:
-    scoped to player pos1: location with default no location
-    scoped to player pos2: location with default no location
+    scoped to player pos1: nullable location with default no location
+    scoped to player pos2: nullable location with default no location
 
 command wand:
     permission "lumen.wand"

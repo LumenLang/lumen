@@ -73,7 +73,7 @@ public final class MathEngine {
         String result = engine.parseExpr();
         if (engine.pos < engine.tokens.size()) {
             Token trailing = engine.peek();
-            throw new DiagnosticException(LumenDiagnostic.error("E206", "Unexpected token after expression")
+            throw new DiagnosticException(LumenDiagnostic.error("Unexpected token after expression")
                     .at(line, rawLine)
                     .highlight(trailing.start(), trailing.end())
                     .label("'" + trailing.text() + "' is not expected here")
@@ -98,7 +98,7 @@ public final class MathEngine {
         TypedFragment fragment = engine.parseExprTyped();
         if (engine.pos < engine.tokens.size()) {
             Token trailing = engine.peek();
-            throw new DiagnosticException(LumenDiagnostic.error("E206", "Unexpected token after expression")
+            throw new DiagnosticException(LumenDiagnostic.error("Unexpected token after expression")
                     .at(line, rawLine)
                     .highlight(trailing.start(), trailing.end())
                     .label("'" + trailing.text() + "' is not expected here")
@@ -207,7 +207,7 @@ public final class MathEngine {
 
     private @NotNull String parseFactor() {
         if (pos >= tokens.size()) {
-            throw new DiagnosticException(LumenDiagnostic.error("E200", "Unexpected end of math expression")
+            throw new DiagnosticException(LumenDiagnostic.error("Unexpected end of math expression")
                     .at(line, rawLine)
                     .label("expression is incomplete")
                     .build());
@@ -222,7 +222,7 @@ public final class MathEngine {
 
         if (t.kind() == TokenKind.STRING) {
             pos++;
-            throw new DiagnosticException(LumenDiagnostic.error("E203", "Non-numeric operand in arithmetic expression")
+            throw new DiagnosticException(LumenDiagnostic.error("Non-numeric operand in arithmetic expression")
                     .at(line, rawLine)
                     .highlight(t.start(), t.end())
                     .label("string literal is not numeric")
@@ -234,7 +234,7 @@ public final class MathEngine {
             pos++;
             VarRef ref = env.lookupVar(t.text());
             if (ref == null) {
-                throw new DiagnosticException(LumenDiagnostic.error("E201", "Variable not found in math expression")
+                throw new DiagnosticException(LumenDiagnostic.error("Variable not found in math expression")
                         .at(line, rawLine)
                         .highlight(t.start(), t.end())
                         .label("'" + t.text() + "' is not defined")
@@ -242,7 +242,7 @@ public final class MathEngine {
             }
             LumenType type = ref.type();
             if (!type.numeric()) {
-                LumenDiagnostic.Builder b = LumenDiagnostic.error("E203", "Non-numeric operand in arithmetic expression")
+                LumenDiagnostic.Builder b = LumenDiagnostic.error("Non-numeric operand in arithmetic expression")
                         .at(line, rawLine)
                         .highlight(t.start(), t.end())
                         .label("'" + t.text() + "' is '" + type.displayName() + "', not numeric");
@@ -263,7 +263,7 @@ public final class MathEngine {
                 pos += 3;
                 String java = PlaceholderExpander.resolveForExpression(placeholder, env);
                 if (java == null) {
-                    throw new DiagnosticException(LumenDiagnostic.error("E202", "Cannot resolve placeholder in math expression")
+                    throw new DiagnosticException(LumenDiagnostic.error("Cannot resolve placeholder in math expression")
                             .at(line, rawLine)
                             .highlight(tokens.get(pos - 3).start(), tokens.get(pos - 1).end())
                             .label("'{" + placeholder + "}' could not be resolved")
@@ -277,7 +277,7 @@ public final class MathEngine {
             pos++;
             String inner = parseExpr();
             if (pos >= tokens.size() || !peek().text().equals(")")) {
-                throw new DiagnosticException(LumenDiagnostic.error("E204", "Missing closing parenthesis in math expression")
+                throw new DiagnosticException(LumenDiagnostic.error("Missing closing parenthesis in math expression")
                         .at(line, rawLine)
                         .highlight(t.start(), t.end())
                         .label("this '(' has no matching ')'")
@@ -287,7 +287,7 @@ public final class MathEngine {
             return "(" + inner + ")";
         }
 
-        throw new DiagnosticException(LumenDiagnostic.error("E205", "Unexpected token in math expression")
+        throw new DiagnosticException(LumenDiagnostic.error("Unexpected token in math expression")
                 .at(line, rawLine)
                 .highlight(t.start(), t.end())
                 .label("'" + t.text() + "' is not valid in a math expression")
@@ -335,7 +335,7 @@ public final class MathEngine {
 
     private @NotNull TypedFragment parseFactorTyped() {
         if (pos >= tokens.size()) {
-            throw new DiagnosticException(LumenDiagnostic.error("E200", "Unexpected end of math expression")
+            throw new DiagnosticException(LumenDiagnostic.error("Unexpected end of math expression")
                     .at(line, rawLine)
                     .label("expression is incomplete")
                     .build());
@@ -351,7 +351,7 @@ public final class MathEngine {
 
         if (t.kind() == TokenKind.STRING) {
             pos++;
-            throw new DiagnosticException(LumenDiagnostic.error("E203", "Non-numeric operand in arithmetic expression")
+            throw new DiagnosticException(LumenDiagnostic.error("Non-numeric operand in arithmetic expression")
                     .at(line, rawLine)
                     .highlight(t.start(), t.end())
                     .label("string literal is not numeric")
@@ -363,7 +363,7 @@ public final class MathEngine {
             pos++;
             VarRef ref = env.lookupVar(t.text());
             if (ref == null) {
-                throw new DiagnosticException(LumenDiagnostic.error("E201", "Variable not found in math expression")
+                throw new DiagnosticException(LumenDiagnostic.error("Variable not found in math expression")
                         .at(line, rawLine)
                         .highlight(t.start(), t.end())
                         .label("'" + t.text() + "' is not defined")
@@ -371,7 +371,7 @@ public final class MathEngine {
             }
             LumenType type = ref.type();
             if (!type.numeric()) {
-                LumenDiagnostic.Builder b = LumenDiagnostic.error("E203", "Non-numeric operand in arithmetic expression")
+                LumenDiagnostic.Builder b = LumenDiagnostic.error("Non-numeric operand in arithmetic expression")
                         .at(line, rawLine)
                         .highlight(t.start(), t.end())
                         .label("'" + t.text() + "' is '" + type.displayName() + "', not numeric");
@@ -392,7 +392,7 @@ public final class MathEngine {
                 pos += 3;
                 String java = PlaceholderExpander.resolveForExpression(placeholder, env);
                 if (java == null) {
-                    throw new DiagnosticException(LumenDiagnostic.error("E202", "Cannot resolve placeholder in math expression")
+                    throw new DiagnosticException(LumenDiagnostic.error("Cannot resolve placeholder in math expression")
                             .at(line, rawLine)
                             .highlight(tokens.get(pos - 3).start(), tokens.get(pos - 1).end())
                             .label("'{" + placeholder + "}' could not be resolved")
@@ -407,7 +407,7 @@ public final class MathEngine {
             pos++;
             TypedFragment inner = parseExprTyped();
             if (pos >= tokens.size() || !peek().text().equals(")")) {
-                throw new DiagnosticException(LumenDiagnostic.error("E204", "Missing closing parenthesis in math expression")
+                throw new DiagnosticException(LumenDiagnostic.error("Missing closing parenthesis in math expression")
                         .at(line, rawLine)
                         .highlight(t.start(), t.end())
                         .label("this '(' has no matching ')'")
@@ -417,7 +417,7 @@ public final class MathEngine {
             return new TypedFragment("(" + inner.java + ")", inner.type);
         }
 
-        throw new DiagnosticException(LumenDiagnostic.error("E205", "Unexpected token in math expression")
+        throw new DiagnosticException(LumenDiagnostic.error("Unexpected token in math expression")
                 .at(line, rawLine)
                 .highlight(t.start(), t.end())
                 .label("'" + t.text() + "' is not valid in a math expression")

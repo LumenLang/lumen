@@ -36,6 +36,15 @@ public final class DataBlockForm implements BlockFormHandler {
         api.emitters().blockForm(this);
     }
 
+    private boolean isValidIdentifier(@NotNull String name) {
+        if (name.isEmpty()) return false;
+        if (!Character.isJavaIdentifierStart(name.charAt(0))) return false;
+        for (int i = 1; i < name.length(); i++) {
+            if (!Character.isJavaIdentifierPart(name.charAt(i))) return false;
+        }
+        return true;
+    }
+
     @Override
     public boolean matches(@NotNull List<? extends ScriptToken> headTokens) {
         return headTokens.size() >= 2
@@ -50,12 +59,42 @@ public final class DataBlockForm implements BlockFormHandler {
                        @NotNull HandlerContext ctx) {
         String typeName = headTokens.get(1).text().toLowerCase();
         TypeEnv env = (TypeEnv) ctx.env();
+        ScriptToken typeNameToken = headTokens.get(1);
+        int headLineNum = children.isEmpty() ? 1 : children.get(0).lineNumber() - 1;
+
+        if (!isValidIdentifier(typeName)) {
+            throw new DiagnosticException(LumenDiagnostic.error("Invalid data class name '" + typeName + "'")
+                    .at(headLineNum, typeNameToken.text())
+                    .highlight(typeNameToken.start(), typeNameToken.end())
+                    .label("data class name must be a single word with no spaces or special characters")
+                    .help("use a name like 'MyArena', 'user', or 'playerdata' (alphanumeric and underscores only)")
+                    .build());
+        }
+
+        if (LumenType.fromName(typeName) != null) {
+            throw new DiagnosticException(LumenDiagnostic.error("Type '" + typeName + "' is already defined")
+                    .at(headLineNum, typeNameToken.text())
+                    .highlight(typeNameToken.start(), typeNameToken.end())
+                    .label("cannot declare data class with same name as built-in type")
+                    .help("choose a different name for this data class")
+                    .build());
+        }
+
+        if (env.lookupDataSchema(typeName) != null) {
+            throw new DiagnosticException(LumenDiagnostic.error("Data class '" + typeName + "' is already declared")
+                    .at(headLineNum, typeNameToken.text())
+                    .highlight(typeNameToken.start(), typeNameToken.end())
+                    .label("you cannot declare the same data class twice")
+                    .help("rename this data class or remove the duplicate declaration")
+                    .build());
+        }
+
         DataSchema.Builder builder = DataSchema.builder(typeName);
 
         for (ScriptLine child : children) {
             List<? extends ScriptToken> tokens = child.tokens();
             if (tokens.isEmpty() || tokens.get(0).tokenType() != ScriptToken.TokenType.IDENT) {
-                throw new DiagnosticException(LumenDiagnostic.error("E700", "Invalid data field definition")
+                throw new DiagnosticException(LumenDiagnostic.error("Invalid data field definition")
                         .at(child.lineNumber(), child.raw())
                         .label("expected 'fieldName <type>'")
                         .help("each line in a data block must be: fieldName <type> (e.g. 'name text', 'health number', 'owner nullable player')")
@@ -64,8 +103,26 @@ public final class DataBlockForm implements BlockFormHandler {
 
             String fieldName = tokens.get(0).text();
 
+            if (!isValidIdentifier(fieldName)) {
+                throw new DiagnosticException(LumenDiagnostic.error("Invalid field name '" + fieldName + "'")
+                        .at(child.lineNumber(), child.raw())
+                        .highlight(tokens.get(0).start(), tokens.get(0).end())
+                        .label("field name must be a single word with no spaces or special characters")
+                        .help("use a name like 'name', 'health', or 'owner_level' (alphanumeric and underscores only)")
+                        .build());
+            }
+
+            if (builder.hasField(fieldName)) {
+                throw new DiagnosticException(LumenDiagnostic.error("Field '" + fieldName + "' is already declared in data class '" + typeName + "'")
+                        .at(child.lineNumber(), child.raw())
+                        .highlight(tokens.get(0).start(), tokens.get(0).end())
+                        .label("duplicate field name in same data class")
+                        .help("remove the duplicate field or rename it to something else")
+                        .build());
+            }
+
             if (tokens.size() < 2) {
-                throw new DiagnosticException(LumenDiagnostic.error("E701", "Missing type for field '" + fieldName + "'")
+                throw new DiagnosticException(LumenDiagnostic.error("Missing type for field '" + fieldName + "'")
                         .at(child.lineNumber(), child.raw())
                         .highlight(tokens.get(0).start(), tokens.get(0).end())
                         .label("field '" + fieldName + "' has no type")
@@ -75,7 +132,7 @@ public final class DataBlockForm implements BlockFormHandler {
 
             TypeAnnotationParser.ParseResult result = TypeAnnotationParser.parseDetailed(tokens, 1, env::lookupDataSchema);
             if (result instanceof TypeAnnotationParser.ParseResult.Failure f) {
-                throw new DiagnosticException(SuggestionDiagnostics.buildTypeFailure("E702", "Invalid field type in data class '" + typeName + "'", child.lineNumber(), child.raw(), tokens, f));
+                throw new DiagnosticException(SuggestionDiagnostics.buildTypeFailure("Invalid field type in data class '" + typeName + "'", child.lineNumber(), child.raw(), tokens, f));
             }
 
             TypeAnnotationParser parsed = ((TypeAnnotationParser.ParseResult.Success) result).parser();
@@ -83,7 +140,7 @@ public final class DataBlockForm implements BlockFormHandler {
             int expectedTokens = 1 + parsed.tokensConsumed();
             if (tokens.size() != expectedTokens) {
                 ScriptToken extraToken = tokens.get(expectedTokens);
-                throw new DiagnosticException(LumenDiagnostic.error("E703", "Unexpected token after field type")
+                throw new DiagnosticException(LumenDiagnostic.error("Unexpected token after field type")
                         .at(child.lineNumber(), child.raw())
                         .highlight(extraToken.start(), extraToken.end())
                         .label("unexpected '" + extraToken.text() + "' after type '" + fieldType.displayName() + "'")

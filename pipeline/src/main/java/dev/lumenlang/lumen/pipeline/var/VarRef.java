@@ -15,35 +15,45 @@ import java.util.Map;
 /**
  * A compile-time descriptor for a named variable that is in scope during code generation.
  *
- * <p>A {@code VarRef} represents knowledge that, at runtime, there will be a local variable
- * bound to the given Java name. If a {@link LumenType} is present, the variable participates
- * in type checking (e.g. a player reference can be resolved by type bindings
- * when an explicit variable name is provided in script source).
+ * <p>A {@code VarRef} carries the source-level {@link #name()} for diagnostics and lookups,
+ * the compile-time {@link LumenType}, and the Java variable name used in generated code.
+ * For scoped globals, {@link #java()} throws because there is no single standalone
+ * Java expression, callers must use {@link #globalInfo()} to build scoped accesses.
  *
- * <p>An optional {@link #metadata()} map carries additional compile-time knowledge about the
- * variable. For example, an entity variable might carry {@code {"entityType": "ZOMBIE"}} so
- * that downstream statements and conditions can generate type-specific code. Metadata is
- * immutable once attached; use {@link #withMeta(String, Object)} to produce a copy with
- * additional entries.
+ * <p>An optional {@link #metadata()} map carries additional compile-time knowledge. Metadata
+ * is immutable once attached, use {@link #withMeta(String, Object)} to produce a copy.
  *
- * @param type     the compile-time type
- * @param java     the Java variable name that will appear in generated source
- * @param metadata an unmodifiable map of compile-time metadata entries
+ * @param name       the source-level variable name
+ * @param type       the compile-time type
+ * @param java       the Java variable name, or {@code null} for scoped globals
+ * @param metadata   an unmodifiable map of compile-time metadata entries
+ * @param globalInfo the global declaration info, or {@code null} for locals and root variables
  * @see LumenType
  * @see TypeEnv
  */
 @SuppressWarnings("unused")
-public record VarRef(@NotNull LumenType type, @NotNull String java, @NotNull Map<String, Object> metadata)
-        implements EnvironmentAccess.VarHandle {
+public record VarRef(
+        @NotNull String name,
+        @NotNull LumenType type,
+        @Nullable String java,
+        @NotNull Map<String, Object> metadata,
+        @Nullable EnvironmentAccess.GlobalInfo globalInfo
+) implements EnvironmentAccess.VarHandle {
 
-    /**
-     * Creates a {@code VarRef} with no metadata.
-     *
-     * @param type the compile-time type
-     * @param java the Java variable name
-     */
-    public VarRef(@NotNull LumenType type, @NotNull String java) {
-        this(type, java, Map.of());
+    public VarRef(@NotNull String name, @NotNull LumenType type, @NotNull String java) {
+        this(name, type, java, Map.of(), null);
+    }
+
+    public VarRef(@NotNull String name, @NotNull LumenType type, @NotNull String java, @NotNull Map<String, Object> metadata) {
+        this(name, type, java, metadata, null);
+    }
+
+    @Override
+    public @NotNull String java() {
+        if (java == null) {
+            throw new IllegalStateException("Scoped global '" + name + "' has no standalone Java expression. Build a scoped storage access using globalInfo() and an explicit scope.");
+        }
+        return java;
     }
 
     /**
@@ -65,28 +75,13 @@ public record VarRef(@NotNull LumenType type, @NotNull String java, @NotNull Map
         return metadata.containsKey(key);
     }
 
-    /**
-     * Returns a new {@code VarRef} that is identical to this one but with an additional
-     * metadata entry. Existing entries are preserved; if the key already exists it is
-     * overwritten.
-     *
-     * @param key   the metadata key
-     * @param value the metadata value
-     * @return a new {@code VarRef} with the added metadata
-     */
     public @NotNull VarRef withMeta(@NotNull String key, @NotNull Object value) {
         Map<String, Object> newMeta = new HashMap<>(metadata);
         newMeta.put(key, value);
-        return new VarRef(type, java, Collections.unmodifiableMap(newMeta));
+        return new VarRef(name, type, java, Collections.unmodifiableMap(newMeta), globalInfo);
     }
 
-    /**
-     * Returns a new {@code VarRef} that is identical but with the given LumenType.
-     *
-     * @param type the new compile-time type
-     * @return a new {@code VarRef} with the given type
-     */
     public @NotNull VarRef withType(@NotNull LumenType type) {
-        return new VarRef(type, java, metadata);
+        return new VarRef(name, type, java, metadata, globalInfo);
     }
 }

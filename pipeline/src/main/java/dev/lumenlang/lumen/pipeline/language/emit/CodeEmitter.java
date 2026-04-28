@@ -127,6 +127,10 @@ public final class CodeEmitter {
         List<LumenScriptException> errors = new ArrayList<>();
         emitChildren(root, null, reg, env, ctx, out, errors);
 
+        for (LumenDiagnostic warning : env.warnings()) {
+            LumenLogger.warning("[Script " + ctx.scriptName() + "] " + warning.format());
+        }
+
         if (!errors.isEmpty()) {
             if (errors.size() == 1) {
                 throw errors.get(0);
@@ -137,10 +141,6 @@ public final class CodeEmitter {
                 sb.append('\n').append(e.getMessage());
             }
             throw new LumenScriptException(errors.get(0).line(), null, sb.toString());
-        }
-
-        for (LumenDiagnostic warning : env.warnings()) {
-            LumenLogger.warning(warning.format());
         }
     }
 
@@ -177,19 +177,20 @@ public final class CodeEmitter {
             @NotNull JavaBuilder out,
             @NotNull List<LumenScriptException> errors) {
         for (int i = 0; i < children.size(); i++) {
-            if (parentBlock == null) {
+            Node child = children.get(i);
+            boolean isStatement = child instanceof StatementNode;
+            if (parentBlock == null || isStatement) {
                 try {
-                    emit(children.get(i), null, children, i, reg, env, ctx, out, errors);
+                    emit(child, parentBlock, children, i, reg, env, ctx, out, errors);
                 } catch (LumenScriptException e) {
                     errors.add(e);
                 } catch (DiagnosticException e) {
                     errors.add(new LumenScriptException(e));
                 } catch (RuntimeException e) {
-                    Node node = children.get(i);
-                    errors.add(new LumenScriptException(node.line(), node.raw(), e.getMessage(), e));
+                    errors.add(new LumenScriptException(child.line(), child.raw(), e.getMessage(), e));
                 }
             } else {
-                emit(children.get(i), parentBlock, children, i, reg, env, ctx, out, errors);
+                emit(child, parentBlock, children, i, reg, env, ctx, out, errors);
             }
         }
     }
@@ -390,9 +391,9 @@ public final class CodeEmitter {
         if (bm == null) {
             List<PatternSimulator.Suggestion> suggestions = PatternSimulator.suggestBlocks(head, reg, env);
             if (!suggestions.isEmpty()) {
-                throw new LumenScriptException(new DiagnosticException(SuggestionDiagnostics.build("E500", "Unknown block", b.line(), b.raw(), head, suggestions)));
+                throw new LumenScriptException(new DiagnosticException(SuggestionDiagnostics.build("Unknown block", b.line(), b.raw(), head, suggestions)));
             }
-            throw new LumenScriptException(new DiagnosticException(SuggestionDiagnostics.buildNoSuggestion("E500", "Unknown block", b.line(), b.raw(), head)));
+            throw new LumenScriptException(new DiagnosticException(SuggestionDiagnostics.buildNoSuggestion("Unknown block", b.line(), b.raw(), head)));
         }
 
         HandlerContextImpl hctx = new HandlerContextImpl(bm.match(), env, ctx, blockCtx, out, b.line(), b.raw());
@@ -437,6 +438,14 @@ public final class CodeEmitter {
             @NotNull TypeEnv env,
             @NotNull CodegenContext ctx,
             @NotNull JavaBuilder out) {
+        if (blockCtx.isRoot()) {
+            throw new DiagnosticException(LumenDiagnostic.error("Statements cannot be used at the top level of a script")
+                    .at(st.line(), st.raw())
+                    .highlight(0, st.raw().length())
+                    .label("top-level statements are not allowed")
+                    .help("wrap this in a block. See https://lumenlang.dev/blocks for the full list of available blocks")
+                    .build());
+        }
         EmitRegistry emitReg = EmitRegistry.instance();
         List<Token> tokens = st.head();
 
@@ -482,9 +491,9 @@ public final class CodeEmitter {
         if (ts instanceof TypedStatement.ErrorStmt err) {
             List<Token> errTokens = err.errorTokens() != null ? err.errorTokens() : List.of();
             if (!err.suggestions().isEmpty()) {
-                throw new LumenScriptException(new DiagnosticException(SuggestionDiagnostics.build("E500", "Unknown statement", st.line(), st.raw(), errTokens, err.suggestions())));
+                throw new LumenScriptException(new DiagnosticException(SuggestionDiagnostics.build("Unknown statement", st.line(), st.raw(), errTokens, err.suggestions())));
             }
-            throw new LumenScriptException(new DiagnosticException(SuggestionDiagnostics.buildNoSuggestion("E500", "Unknown statement", st.line(), st.raw(), errTokens)));
+            throw new LumenScriptException(new DiagnosticException(SuggestionDiagnostics.buildNoSuggestion("Unknown statement", st.line(), st.raw(), errTokens)));
         }
 
         throw new LumenScriptException(st.line(), st.raw(),
@@ -507,10 +516,10 @@ public final class CodeEmitter {
         }
         if (e instanceof TokenCarryingException tce) {
             if (!tce.suggestions().isEmpty()) {
-                return new LumenScriptException(new DiagnosticException(SuggestionDiagnostics.build("E500", "Unknown condition", line, raw, tce.tokens(), tce.suggestions())));
+                return new LumenScriptException(new DiagnosticException(SuggestionDiagnostics.build("Unknown condition", line, raw, tce.tokens(), tce.suggestions())));
             }
-            return new LumenScriptException(new DiagnosticException(SuggestionDiagnostics.buildNoSuggestion("E500", "Unknown condition", line, raw, tce.tokens())));
+            return new LumenScriptException(new DiagnosticException(SuggestionDiagnostics.buildNoSuggestion("Unknown condition", line, raw, tce.tokens())));
         }
-        return new LumenScriptException(new DiagnosticException(LumenDiagnostic.error("E500", e.getMessage() != null ? e.getMessage() : "Unexpected error").at(line, raw).build()));
+        return new LumenScriptException(new DiagnosticException(LumenDiagnostic.error(e.getMessage() != null ? e.getMessage() : "Unexpected error").at(line, raw).build()));
     }
 }

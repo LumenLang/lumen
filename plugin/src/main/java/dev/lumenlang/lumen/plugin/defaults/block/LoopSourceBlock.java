@@ -53,7 +53,7 @@ public final class LoopSourceBlock {
                     @Override
                     public void begin(@NotNull HandlerContext ctx) {
                         if (ctx.block().isRoot()) {
-                            throw new DiagnosticException(LumenDiagnostic.error("E502", "A 'loop' block cannot be top level")
+                            throw new DiagnosticException(LumenDiagnostic.error("A 'loop' block cannot be top level")
                                     .at(ctx.block().line(), ctx.block().raw())
                                     .label("top level loop not allowed")
                                     .help("place 'loop' inside an event, command, or other block")
@@ -61,7 +61,7 @@ public final class LoopSourceBlock {
                         }
                         String varName = ctx.java("var");
                         if (ctx.env().lookupVar(varName) != null) {
-                            throw new DiagnosticException(LumenDiagnostic.error("E502", "Loop variable '" + varName + "' is already defined")
+                            throw new DiagnosticException(LumenDiagnostic.error("Loop variable '" + varName + "' is already defined")
                                     .at(ctx.block().line(), ctx.block().raw())
                                     .label("'" + varName + "' already exists in this scope")
                                     .help("use a different variable name")
@@ -78,7 +78,7 @@ public final class LoopSourceBlock {
                             String sourceText = ctx.java("source");
                             int hlStart = sourceTokens.get(0).start();
                             int hlEnd = sourceTokens.get(sourceTokens.size() - 1).end();
-                            throw new DiagnosticException(LumenDiagnostic.error("E500", "Unknown loop source '" + sourceText + "'")
+                            throw new DiagnosticException(LumenDiagnostic.error("Unknown loop source '" + sourceText + "'")
                                     .at(ctx.block().line(), ctx.block().raw())
                                     .highlight(hlStart, hlEnd)
                                     .label("not a list variable or registered loop source")

@@ -4,6 +4,7 @@ import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
+import dev.lumenlang.lumen.api.codegen.NarrowingFact;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,8 +54,7 @@ public final class GenericConditions {
                     String java = ctx.java("v");
                     validateExprIdentifier(java, ctx.env());
                     boolean negated = ctx.choice(0).equals("is not");
-                    ctx.env().put("__null_narrowing_var", java);
-                    ctx.env().put("__null_narrowing_negated", negated);
+                    ctx.env().pushNarrowing(negated ? NarrowingFact.nullable(java) : NarrowingFact.nonNull(java));
                     return java + (negated ? " == null" : " != null");
                 }));
 

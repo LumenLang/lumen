@@ -25,7 +25,7 @@ public final class VariableExpressions {
                 .by("Lumen")
                 .pattern("no location")
                 .description("Represents a null location value. The variable will carry the LOCATION type at compile time.")
-                .example("global scoped pos1 with default no location")
+                .example("pos1: nullable location with default no location")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
                 .handler(ctx -> {
@@ -37,7 +37,7 @@ public final class VariableExpressions {
                 .by("Lumen")
                 .pattern("no player")
                 .description("Represents a null player value. The variable will carry the PLAYER type at compile time.")
-                .example("global scoped target with default no player")
+                .example("target: nullable player with default no player")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
                 .handler(ctx -> new ExpressionResult("(Player) null", MinecraftTypes.PLAYER.wrapAsNullable())));
@@ -46,7 +46,7 @@ public final class VariableExpressions {
                 .by("Lumen")
                 .pattern("no entity")
                 .description("Represents a null entity value. The variable will carry the ENTITY type at compile time.")
-                .example("global scoped target with default no entity")
+                .example("target: nullable entity with default no entity")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
                 .handler(ctx -> {
@@ -58,7 +58,7 @@ public final class VariableExpressions {
                 .by("Lumen")
                 .pattern("no world")
                 .description("Represents a null world value. The variable will carry the WORLD type at compile time.")
-                .example("global scoped w with default no world")
+                .example("w: nullable world with default no world")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
                 .handler(ctx -> {
@@ -70,7 +70,7 @@ public final class VariableExpressions {
                 .by("Lumen")
                 .pattern("no block")
                 .description("Represents a null block value. The variable will carry the BLOCK type at compile time.")
-                .example("global scoped target_block with default no block")
+                .example("target_block: nullable block with default no block")
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
                 .handler(ctx -> {

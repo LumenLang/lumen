@@ -84,7 +84,7 @@ public class ListBlocks {
                     @Override
                     public void begin(@NotNull HandlerContext ctx) {
                         if (ctx.block().isRoot()) {
-                            throw new DiagnosticException(LumenDiagnostic.error("E502", "A 'loop' block cannot be top level")
+                            throw new DiagnosticException(LumenDiagnostic.error("A 'loop' block cannot be top level")
                                     .at(ctx.block().line(), ctx.block().raw())
                                     .label("top level loop not allowed")
                                     .help("place 'loop' inside an event, command, or other block")
@@ -93,7 +93,7 @@ public class ListBlocks {
                         ctx.codegen().addImport(List.class.getName());
                         String varName = ctx.java("var");
                         if (ctx.env().lookupVar(varName) != null) {
-                            throw new DiagnosticException(LumenDiagnostic.error("E502", "Loop variable '" + varName + "' is already defined")
+                            throw new DiagnosticException(LumenDiagnostic.error("Loop variable '" + varName + "' is already defined")
                                     .at(ctx.block().line(), ctx.block().raw())
                                     .label("'" + varName + "' already exists in this scope")
                                     .help("use a different variable name")
@@ -119,7 +119,7 @@ public class ListBlocks {
 
         api.patterns().block(b -> b
                 .by("Lumen")
-                .pattern("loop %var:EXPR% in %list:LIST% for %scope:EXPR%")
+                .pattern("loop %var:EXPR% in %list:LIST% for %scope:VAR%")
                 .description("Iterates over each element of a scoped global list for a specific scope reference.")
                 .example("loop item in todos for player:")
                 .since("1.0.0")
@@ -130,7 +130,7 @@ public class ListBlocks {
                     @Override
                     public void begin(@NotNull HandlerContext ctx) {
                         if (ctx.block().isRoot()) {
-                            throw new DiagnosticException(LumenDiagnostic.error("E502", "A 'loop' block cannot be top level")
+                            throw new DiagnosticException(LumenDiagnostic.error("A 'loop' block cannot be top level")
                                     .at(ctx.block().line(), ctx.block().raw())
                                     .label("top level loop not allowed")
                                     .help("place 'loop' inside an event, command, or other block")
@@ -139,7 +139,7 @@ public class ListBlocks {
                         EnvironmentAccess env = ctx.env();
                         String varName = ctx.java("var");
                         if (env.lookupVar(varName) != null) {
-                            throw new DiagnosticException(LumenDiagnostic.error("E502", "Loop variable '" + varName + "' is already defined")
+                            throw new DiagnosticException(LumenDiagnostic.error("Loop variable '" + varName + "' is already defined")
                                     .at(ctx.block().line(), ctx.block().raw())
                                     .label("'" + varName + "' already exists in this scope")
                                     .help("use a different variable name")
@@ -150,22 +150,22 @@ public class ListBlocks {
                         String scopeVarName = ctx.java("scope");
                         EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(listVarName);
                         if (info == null) {
-                            throw new DiagnosticException(LumenDiagnostic.error("E500", "'" + listVarName + "' is not a global variable")
+                            throw new DiagnosticException(LumenDiagnostic.error("'" + listVarName + "' is not a global variable")
                                     .at(ctx.block().line(), ctx.block().raw())
                                     .label("not a global")
-                                    .help("declare with 'global " + listVarName + " with default new list'")
+                                    .help("declare it inside a 'global:' block as '" + listVarName + ": list of <type>'")
                                     .build());
                         }
                         if (!info.scoped()) {
-                            throw new DiagnosticException(LumenDiagnostic.error("E502", "'" + listVarName + "' is not a scoped global")
+                            throw new DiagnosticException(LumenDiagnostic.error("'" + listVarName + "' is not a scoped global")
                                     .at(ctx.block().line(), ctx.block().raw())
                                     .label("not scoped")
-                                    .help("declare with 'global scoped " + listVarName + "' to use per-entity access")
+                                    .help("declare it inside a 'global:' block with 'scoped to <type> " + listVarName + ": list of <type>' for per-entity access")
                                     .build());
                         }
                         EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
                         if (scopeRef == null) {
-                            throw new DiagnosticException(LumenDiagnostic.error("E500", "Scope variable '" + scopeVarName + "' not found")
+                            throw new DiagnosticException(LumenDiagnostic.error("Scope variable '" + scopeVarName + "' not found")
                                     .at(ctx.block().line(), ctx.block().raw())
                                     .label("undefined variable")
                                     .help("make sure the variable is defined before using it")

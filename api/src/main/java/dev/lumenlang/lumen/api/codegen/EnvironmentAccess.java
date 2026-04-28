@@ -167,21 +167,14 @@ public interface EnvironmentAccess {
     @Nullable GlobalInfo getGlobalInfo(@NotNull String name);
 
     /**
-     * Registers a script-wide global variable declaration.
+     * Returns an unmodifiable list of all registered global variables as handles.
      *
-     * <p>Global variables are loaded automatically at the start of every block body and
-     * are auto-saved on modification.
+     * <p>Each handle exposes the source name, declared type, metadata, and the
+     * {@link GlobalInfo} descriptor through {@link VarHandle#globalInfo()}.
      *
-     * @param info the global variable declaration information
+     * @return the global variable handles
      */
-    void registerGlobal(@NotNull GlobalInfo info);
-
-    /**
-     * Returns an unmodifiable list of all registered global variable declarations.
-     *
-     * @return the global variable declarations
-     */
-    @NotNull List<? extends GlobalInfo> allGlobals();
+    @NotNull List<? extends VarHandle> allGlobals();
 
     /**
      * Marks a variable as stored (persistent) with scope information.
@@ -281,11 +274,51 @@ public interface EnvironmentAccess {
     void clearNonNull(@NotNull String javaName);
 
     /**
+     * Publishes a narrowing fact derived from the condition currently being evaluated.
+     *
+     * @param fact the narrowing fact produced by the condition
+     */
+    void pushNarrowing(@NotNull NarrowingFact fact);
+
+    /**
+     * Drains and returns all pending narrowing facts published since the last call.
+     * Block handlers call this at the start of their body to collect facts that should
+     * apply to the body, and again at the end to decide what the sibling {@code else}
+     * branch should invert.
+     *
+     * @return an immutable snapshot of the pending facts, possibly empty
+     */
+    @NotNull List<NarrowingFact> consumeNarrowings();
+
+    /**
+     * Applies the given facts to the current scope so that later uses of the referenced
+     * variables see the narrowed state. Callers must pair this with
+     * {@link #clearNarrowings} at the end of the scope.
+     *
+     * @param facts the facts to apply
+     */
+    void applyNarrowings(@NotNull List<NarrowingFact> facts);
+
+    /**
+     * Reverts narrowing state previously applied via {@link #applyNarrowings}.
+     *
+     * @param facts the facts to revert
+     */
+    void clearNarrowings(@NotNull List<NarrowingFact> facts);
+
+    /**
      * A compile-time descriptor for a named variable that is in scope.
      *
      * @see #lookupVar(String)
      */
     interface VarHandle {
+
+        /**
+         * Returns the script-level name of this variable as it appears in source.
+         *
+         * @return the source name
+         */
+        @NotNull String name();
 
         /**
          * Returns the compile-time type of this variable.
@@ -296,6 +329,10 @@ public interface EnvironmentAccess {
 
         /**
          * Returns the Java variable name that this variable maps to in generated code.
+         *
+         * <p>Throws for scoped globals, which have no single standalone Java expression.
+         * Callers handling scoped globals must consult {@link #globalInfo()} and build
+         * storage accesses with an explicit scope.
          *
          * @return the Java variable expression
          */
@@ -323,19 +360,22 @@ public interface EnvironmentAccess {
          * @return the metadata map
          */
         @NotNull Map<String, Object> metadata();
+
+        /**
+         * Returns the global declaration info if this variable is a script-wide global,
+         * or {@code null} for locals and root variables.
+         *
+         * @return the global declaration info, or {@code null}
+         */
+        default @Nullable GlobalInfo globalInfo() {
+            return null;
+        }
     }
 
     /**
-     * Compile-time descriptor for a script-wide global variable declared with {@code global var}.
+     * Compile-time descriptor for a script-wide global variable.
      */
     interface GlobalInfo {
-
-        /**
-         * Returns the variable name.
-         *
-         * @return the name
-         */
-        @NotNull String name();
 
         /**
          * Returns the Java expression for the default value.
@@ -364,22 +404,6 @@ public interface EnvironmentAccess {
          * @return {@code true} if persistent
          */
         boolean stored();
-
-        /**
-         * Returns compile-time metadata from the default expression, or {@code null}.
-         *
-         * @return the expression metadata, or {@code null}
-         */
-        default @Nullable Map<String, Object> exprMetadata() {
-            return null;
-        }
-
-        /**
-         * Returns the declared compile-time type of this global variable.
-         *
-         * @return the declared type
-         */
-        @NotNull LumenType type();
 
         /**
          * Returns the scope type for scoped globals (e.g. {@code player}, {@code entity}).

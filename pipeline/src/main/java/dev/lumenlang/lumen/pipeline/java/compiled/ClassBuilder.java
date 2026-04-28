@@ -3,8 +3,6 @@ package dev.lumenlang.lumen.pipeline.java.compiled;
 import dev.lumenlang.lumen.pipeline.codegen.CodegenContext;
 import dev.lumenlang.lumen.pipeline.java.JavaBuilder;
 import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
-import dev.lumenlang.lumen.pipeline.persist.GlobalVars;
-import dev.lumenlang.lumen.pipeline.persist.PersistentVars;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,19 +26,9 @@ public final class ClassBuilder {
 
         sb.append("package dev.lumenlang.lumen.java.compiled;\n\n");
 
-        ctx.addImport("org.bukkit.event.Listener");
-        ctx.addImport("org.bukkit.command.CommandSender");
-        ctx.addImport("org.bukkit.entity.Player");
-        ctx.addImport("org.bukkit.plugin.Plugin");
-        ctx.addImport("org.bukkit.Bukkit");
-        ctx.addImport(PersistentVars.class.getName());
-        ctx.addImport(GlobalVars.class.getName());
-        ctx.addImport("dev.lumenlang.lumen.plugin.text.LumenText");
-        ctx.addImport("dev.lumenlang.lumen.plugin.annotations.LumenEvent");
-        ctx.addImport("dev.lumenlang.lumen.plugin.annotations.LumenCmd");
-        ctx.addImport("dev.lumenlang.lumen.plugin.annotations.LumenInventory");
-        ctx.addImport("dev.lumenlang.lumen.api.annotations.LumenPreload");
-        ctx.addImport("dev.lumenlang.lumen.api.annotations.LumenLoad");
+        for (String defaultImport : DefaultImportRegistry.all()) {
+            ctx.addImport(defaultImport);
+        }
         writeFormattedImports(sb, ctx.importLines());
 
         StringBuilder classDecl = new StringBuilder();

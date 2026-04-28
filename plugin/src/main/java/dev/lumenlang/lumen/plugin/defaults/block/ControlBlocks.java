@@ -5,13 +5,17 @@ import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.codegen.BlockAccess;
 import dev.lumenlang.lumen.api.codegen.HandlerContext;
+import dev.lumenlang.lumen.api.codegen.NarrowingFact;
 import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
 import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.handler.BlockHandler;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
 
 import static dev.lumenlang.lumen.api.pattern.LumaExample.of;
@@ -25,6 +29,44 @@ import static dev.lumenlang.lumen.api.pattern.LumaExample.top;
 @Registration
 @SuppressWarnings("unused")
 public final class ControlBlocks {
+
+    private static final String BRANCH_FACTS_KEY = "__if_branch_facts";
+    private static final String CHAIN_STACK_KEY = "__if_chain_stack";
+
+    private static @NotNull Deque<List<NarrowingFact>> chainStack(@NotNull HandlerContext ctx) {
+        Deque<List<NarrowingFact>> stack = ctx.env().get(CHAIN_STACK_KEY);
+        if (stack == null) {
+            stack = new ArrayDeque<>();
+            ctx.env().put(CHAIN_STACK_KEY, stack);
+        }
+        return stack;
+    }
+
+    private static void pushChain(@NotNull HandlerContext ctx, @NotNull List<NarrowingFact> facts) {
+        chainStack(ctx).push(new ArrayList<>(facts));
+    }
+
+    private static void appendToChain(@NotNull HandlerContext ctx, @NotNull List<NarrowingFact> facts) {
+        Deque<List<NarrowingFact>> stack = chainStack(ctx);
+        if (stack.isEmpty()) stack.push(new ArrayList<>());
+        stack.peek().addAll(facts);
+    }
+
+    private static @Nullable List<NarrowingFact> peekChain(@NotNull HandlerContext ctx) {
+        Deque<List<NarrowingFact>> stack = chainStack(ctx);
+        return stack.isEmpty() ? null : stack.peek();
+    }
+
+    private static void popChain(@NotNull HandlerContext ctx) {
+        Deque<List<NarrowingFact>> stack = chainStack(ctx);
+        if (!stack.isEmpty()) stack.pop();
+    }
+
+    private static boolean nextIsElseChain(@NotNull HandlerContext ctx) {
+        if (!ctx.block().hasNext()) return false;
+        String nextRaw = ctx.block().nextRaw().trim().toLowerCase();
+        return nextRaw.startsWith("else if") || nextRaw.equals("else:") || nextRaw.startsWith("else ") || nextRaw.startsWith("else:");
+    }
 
     @Call
     public void register(@NotNull LumenAPI api) {
@@ -48,44 +90,22 @@ public final class ControlBlocks {
                             ctx.out().line("public void __lumen_if_" + methodId + "() {");
                         }
                         ctx.out().line("if (" + ctx.parseCondition("cond") + ") {");
-                        String narrowVar = ctx.env().get("__null_narrowing_var");
-                        if (narrowVar != null) {
-                            Boolean negated = ctx.env().get("__null_narrowing_negated");
-                            ctx.env().put("__null_narrowing_var", null);
-                            ctx.env().put("__null_narrowing_negated", null);
-                            boolean isNegated = Boolean.TRUE.equals(negated);
-                            List<String> narrowed = ctx.env().get("__if_narrowed_vars");
-                            if (narrowed == null) {
-                                narrowed = new ArrayList<>();
-                                ctx.env().put("__if_narrowed_vars", narrowed);
-                            }
-                            narrowed.add(narrowVar);
-                            List<Boolean> negatedFlags = ctx.env().get("__if_narrowed_negated");
-                            if (negatedFlags == null) {
-                                negatedFlags = new ArrayList<>();
-                                ctx.env().put("__if_narrowed_negated", negatedFlags);
-                            }
-                            negatedFlags.add(isNegated);
-                            if (!isNegated) {
-                                ctx.env().markNonNull(narrowVar);
-                            }
-                        }
+                        List<NarrowingFact> facts = ctx.env().consumeNarrowings();
+                        ctx.env().applyNarrowings(facts);
+                        ctx.block().putEnv(BRANCH_FACTS_KEY, facts);
                     }
 
                     @Override
                     public void end(@NotNull HandlerContext ctx) {
-                        List<String> narrowed = ctx.env().get("__if_narrowed_vars");
-                        List<Boolean> negatedFlags = ctx.env().get("__if_narrowed_negated");
-                        if (narrowed != null) {
-                            for (String var : narrowed) {
-                                ctx.env().clearNonNull(var);
-                            }
-                            ctx.env().put("__else_narrowing_vars", narrowed);
-                            ctx.env().put("__else_narrowing_negated", negatedFlags);
-                            ctx.env().put("__if_narrowed_vars", null);
-                            ctx.env().put("__if_narrowed_negated", null);
+                        List<NarrowingFact> branchFacts = ctx.block().getEnv(BRANCH_FACTS_KEY);
+                        if (branchFacts != null) {
+                            ctx.env().clearNarrowings(branchFacts);
+                            pushChain(ctx, branchFacts);
                         }
                         ctx.out().line("}");
+                        if (!nextIsElseChain(ctx)) {
+                            popChain(ctx);
+                        }
                         if (ctx.block().isRoot()) {
                             ctx.out().line("}");
                         }
@@ -109,11 +129,22 @@ public final class ControlBlocks {
                     public void begin(@NotNull HandlerContext ctx) {
                         validateElseBranch(ctx, "else if");
                         ctx.out().line("else if (" + ctx.parseCondition("cond") + ") {");
+                        List<NarrowingFact> facts = ctx.env().consumeNarrowings();
+                        ctx.env().applyNarrowings(facts);
+                        ctx.block().putEnv(BRANCH_FACTS_KEY, facts);
                     }
 
                     @Override
                     public void end(@NotNull HandlerContext ctx) {
+                        List<NarrowingFact> branchFacts = ctx.block().getEnv(BRANCH_FACTS_KEY);
+                        if (branchFacts != null) {
+                            ctx.env().clearNarrowings(branchFacts);
+                            appendToChain(ctx, branchFacts);
+                        }
                         ctx.out().line("}");
+                        if (!nextIsElseChain(ctx)) {
+                            popChain(ctx);
+                        }
                     }
                 }));
 
@@ -134,34 +165,20 @@ public final class ControlBlocks {
                     public void begin(@NotNull HandlerContext ctx) {
                         validateElseBranch(ctx, "else");
                         ctx.out().line("else {");
-                        List<String> vars = ctx.env().get("__else_narrowing_vars");
-                        List<Boolean> negatedFlags = ctx.env().get("__else_narrowing_negated");
-                        if (vars != null && negatedFlags != null) {
-                            ctx.env().put("__else_narrowing_vars", null);
-                            ctx.env().put("__else_narrowing_negated", null);
-                            List<String> elseNarrowed = new ArrayList<>();
-                            for (int i = 0; i < vars.size(); i++) {
-                                boolean wasNegated = negatedFlags.get(i);
-                                if (wasNegated) {
-                                    ctx.env().markNonNull(vars.get(i));
-                                    elseNarrowed.add(vars.get(i));
-                                }
-                            }
-                            if (!elseNarrowed.isEmpty()) {
-                                ctx.env().put("__else_block_narrowed_vars", elseNarrowed);
-                            }
+                        List<NarrowingFact> chain = peekChain(ctx);
+                        if (chain != null && !chain.isEmpty()) {
+                            List<NarrowingFact> inverted = new ArrayList<>(chain.size());
+                            for (NarrowingFact f : chain) inverted.add(f.inverted());
+                            ctx.env().applyNarrowings(inverted);
+                            ctx.block().putEnv(BRANCH_FACTS_KEY, inverted);
                         }
                     }
 
                     @Override
                     public void end(@NotNull HandlerContext ctx) {
-                        List<String> elseNarrowed = ctx.env().get("__else_block_narrowed_vars");
-                        if (elseNarrowed != null) {
-                            for (String var : elseNarrowed) {
-                                ctx.env().clearNonNull(var);
-                            }
-                            ctx.env().put("__else_block_narrowed_vars", null);
-                        }
+                        List<NarrowingFact> applied = ctx.block().getEnv(BRANCH_FACTS_KEY);
+                        if (applied != null) ctx.env().clearNarrowings(applied);
+                        popChain(ctx);
                         ctx.out().line("}");
                     }
                 }));
@@ -179,7 +196,7 @@ public final class ControlBlocks {
                     @Override
                     public void begin(@NotNull HandlerContext ctx) {
                         if (ctx.block().isRoot()) {
-                            throw new DiagnosticException(LumenDiagnostic.error("E500", "Invalid 'repeat' placement")
+                            throw new DiagnosticException(LumenDiagnostic.error("Invalid 'repeat' placement")
                                     .at(ctx.block().line(), ctx.block().raw())
                                     .label("cannot be top-level")
                                     .help("a 'repeat' block must be inside an event or command handler")
@@ -198,14 +215,14 @@ public final class ControlBlocks {
     private static void validateElseBranch(@NotNull HandlerContext ctx, @NotNull String keyword) {
         BlockAccess block = ctx.block();
         if (block.isRoot()) {
-            throw new DiagnosticException(LumenDiagnostic.error("E500", "'" + keyword + "' without matching 'if'")
+            throw new DiagnosticException(LumenDiagnostic.error("'" + keyword + "' without matching 'if'")
                     .at(block.line(), block.raw())
                     .label("cannot be top-level without a preceding 'if'")
                     .help("'" + keyword + "' must directly follow an 'if' or 'else if' block with the same indentation")
                     .build());
         }
         if (block.isFirst() || (!block.prevHeadEquals("if") && !block.prevHeadEquals("else"))) {
-            LumenDiagnostic.Builder diag = LumenDiagnostic.error("E500", "'" + keyword + "' without matching 'if'")
+            LumenDiagnostic.Builder diag = LumenDiagnostic.error("'" + keyword + "' without matching 'if'")
                     .at(block.line(), block.raw())
                     .label("no preceding 'if' or 'else if' block at the same indentation level");
             BlockAccess.SiblingInfo nearestIf = block.findSiblingBlock("if");
@@ -216,7 +233,7 @@ public final class ControlBlocks {
             throw new DiagnosticException(diag.build());
         }
         if (block.prevHeadExact("else")) {
-            LumenDiagnostic.Builder diag = LumenDiagnostic.error("E500", "'" + keyword + "' after 'else'")
+            LumenDiagnostic.Builder diag = LumenDiagnostic.error("'" + keyword + "' after 'else'")
                     .at(block.line(), block.raw())
                     .label("cannot follow an 'else' block");
             diag.context(block.prevLine(), block.prevRaw(), 0, block.prevRaw().stripTrailing().length(), "this is already the fallback branch");

@@ -45,17 +45,17 @@ public final class MapStatements {
     private static void emitScopedMutation(@NotNull HandlerContext ctx, @NotNull String mapVarName, @NotNull String scopeVarName, @NotNull Function<String, String> mutation) {
         EnvironmentAccess.GlobalInfo info = ctx.env().getGlobalInfo(mapVarName);
         if (info == null) {
-            throw new DiagnosticException(LumenDiagnostic.error("E500", "'" + mapVarName + "' is not a global variable")
+            throw new DiagnosticException(LumenDiagnostic.error("'" + mapVarName + "' is not a global variable")
                     .at(ctx.block().line(), ctx.block().raw())
                     .label("not a global")
-                    .help("declare with 'global " + mapVarName + " with default new map'")
+                    .help("declare it inside a 'global:' block as '" + mapVarName + ": map of <key> to <value>'")
                     .build());
         }
         if (!info.scoped()) {
-            throw new DiagnosticException(LumenDiagnostic.error("E502", "'" + mapVarName + "' is not a scoped global")
+            throw new DiagnosticException(LumenDiagnostic.error("'" + mapVarName + "' is not a scoped global")
                     .at(ctx.block().line(), ctx.block().raw())
                     .label("not scoped")
-                    .help("declare with 'global scoped " + mapVarName + "' to use per-entity access")
+                    .help("declare it inside a 'global:' block with 'scoped to <type> " + mapVarName + ": <type>' for per-entity access")
                     .build());
         }
         String storageClass = info.stored() ? "PersistentVars" : "GlobalVars";
@@ -72,7 +72,7 @@ public final class MapStatements {
         EnvironmentAccess env = ctx.env();
         EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
         if (scopeRef == null) {
-            throw new DiagnosticException(LumenDiagnostic.error("E500", "Scope variable '" + scopeVarName + "' not found")
+            throw new DiagnosticException(LumenDiagnostic.error("Scope variable '" + scopeVarName + "' not found")
                     .at(ctx.block().line(), ctx.block().raw())
                     .label("undefined variable")
                     .help("make sure the variable is defined before using it")
@@ -92,7 +92,7 @@ public final class MapStatements {
         LumenType expectedVal = ct.typeArguments().get(1);
         LumenType actualKey = ctx.resolvedType("key");
         if (actualKey != null && !expectedKey.assignableFrom(actualKey)) {
-            throw new DiagnosticException(LumenDiagnostic.error("E401", "Map key type mismatch")
+            throw new DiagnosticException(LumenDiagnostic.error("Map key type mismatch")
                     .at(ctx.block().line(), ctx.block().raw())
                     .label("expected '" + expectedKey.displayName() + "', got '" + actualKey.displayName() + "'")
                     .help("this map only accepts '" + expectedKey.displayName() + "' keys")
@@ -100,7 +100,7 @@ public final class MapStatements {
         }
         LumenType actualVal = ctx.resolvedType("val");
         if (actualVal != null && !expectedVal.assignableFrom(actualVal)) {
-            throw new DiagnosticException(LumenDiagnostic.error("E401", "Map value type mismatch")
+            throw new DiagnosticException(LumenDiagnostic.error("Map value type mismatch")
                     .at(ctx.block().line(), ctx.block().raw())
                     .label("expected '" + expectedVal.displayName() + "', got '" + actualVal.displayName() + "'")
                     .help("this map only accepts '" + expectedVal.displayName() + "' values")
@@ -116,7 +116,7 @@ public final class MapStatements {
         LumenType expectedKey = ct.typeArguments().get(0);
         LumenType actualKey = ctx.resolvedType("key");
         if (actualKey == null || expectedKey.assignableFrom(actualKey)) return;
-        throw new DiagnosticException(LumenDiagnostic.error("E401", "Map key type mismatch")
+        throw new DiagnosticException(LumenDiagnostic.error("Map key type mismatch")
                 .at(ctx.block().line(), ctx.block().raw())
                 .label("expected '" + expectedKey.displayName() + "', got '" + actualKey.displayName() + "'")
                 .help("this map only accepts '" + expectedKey.displayName() + "' keys")
@@ -127,7 +127,7 @@ public final class MapStatements {
     public void register(@NotNull LumenAPI api) {
         api.patterns().statement(b -> b
                 .by("Lumen")
-                .pattern("set %map:MAP% at key %key:STRING% to %val:EXPR% for %scope:EXPR%")
+                .pattern("set %map:MAP% at key %key:STRING% to %val:EXPR% for %scope:VAR%")
                 .description("Sets a key-value pair in a scoped global map for a specific scope reference. Reads the map from storage, inserts the entry, and writes it back.")
                 .example("set balances at key \"money\" to 100 for p")
                 .since("1.0.0")
@@ -154,7 +154,7 @@ public final class MapStatements {
 
         api.patterns().statement(b -> b
                 .by("Lumen")
-                .pattern("remove key %key:STRING% from %map:MAP% for %scope:EXPR%")
+                .pattern("remove key %key:STRING% from %map:MAP% for %scope:VAR%")
                 .description("Removes a key from a scoped global map for a specific scope reference.")
                 .example("remove key \"money\" from balances for p")
                 .since("1.0.0")
@@ -181,7 +181,7 @@ public final class MapStatements {
 
         api.patterns().statement(b -> b
                 .by("Lumen")
-                .pattern("clear %map:MAP% for %scope:EXPR%")
+                .pattern("clear %map:MAP% for %scope:VAR%")
                 .description("Removes all entries from a scoped global map for a specific scope reference.")
                 .example("clear stats for player")
                 .since("1.0.0")

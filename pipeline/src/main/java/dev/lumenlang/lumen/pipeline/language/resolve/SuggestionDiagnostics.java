@@ -25,7 +25,6 @@ public final class SuggestionDiagnostics {
     /**
      * Builds a diagnostic from a suggestion, highlighting specific issues found by the simulator.
      *
-     * @param errorCode   the diagnostic error code (e.g. "E500", "E502")
      * @param title       the diagnostic title
      * @param line        the source line number
      * @param raw         the raw source text
@@ -33,14 +32,13 @@ public final class SuggestionDiagnostics {
      * @param suggestions all ranked suggestions from the simulator (at least one)
      * @return a fully constructed diagnostic
      */
-    public static @NotNull LumenDiagnostic build(@NotNull String errorCode, @NotNull String title, int line, @NotNull String raw, @NotNull List<Token> tokens, @NotNull List<PatternSimulator.Suggestion> suggestions) {
-        return build(errorCode, title, line, raw, tokens, suggestions.get(0), suggestions.size() > 1 ? suggestions.get(1) : null, null);
+    public static @NotNull LumenDiagnostic build(@NotNull String title, int line, @NotNull String raw, @NotNull List<Token> tokens, @NotNull List<PatternSimulator.Suggestion> suggestions) {
+        return build(title, line, raw, tokens, suggestions.get(0), suggestions.size() > 1 ? suggestions.get(1) : null, null);
     }
 
     /**
      * Builds a diagnostic from suggestions with nullable variable awareness.
      *
-     * @param errorCode   the diagnostic error code
      * @param title       the diagnostic title
      * @param line        the source line number
      * @param raw         the raw source text
@@ -49,29 +47,28 @@ public final class SuggestionDiagnostics {
      * @param env         the type environment for nullable variable detection
      * @return a fully constructed diagnostic with nullable hints if applicable
      */
-    public static @NotNull LumenDiagnostic build(@NotNull String errorCode, @NotNull String title, int line, @NotNull String raw, @NotNull List<Token> tokens, @NotNull List<PatternSimulator.Suggestion> suggestions, @Nullable TypeEnv env) {
-        return build(errorCode, title, line, raw, tokens, suggestions.get(0), suggestions.size() > 1 ? suggestions.get(1) : null, env);
+    public static @NotNull LumenDiagnostic build(@NotNull String title, int line, @NotNull String raw, @NotNull List<Token> tokens, @NotNull List<PatternSimulator.Suggestion> suggestions, @Nullable TypeEnv env) {
+        return build(title, line, raw, tokens, suggestions.get(0), suggestions.size() > 1 ? suggestions.get(1) : null, env);
     }
 
     /**
      * Builds a diagnostic from a single suggestion.
      *
-     * @param errorCode the diagnostic error code (e.g. "E500", "E502")
-     * @param title     the diagnostic title
-     * @param line      the source line number
-     * @param raw       the raw source text
-     * @param tokens    the input tokens that failed matching (used for default highlighting)
-     * @param top       the best suggestion from the simulator
+     * @param title  the diagnostic title
+     * @param line   the source line number
+     * @param raw    the raw source text
+     * @param tokens the input tokens that failed matching (used for default highlighting)
+     * @param top    the best suggestion from the simulator
      * @return a fully constructed diagnostic
      */
-    public static @NotNull LumenDiagnostic build(@NotNull String errorCode, @NotNull String title, int line, @NotNull String raw, @NotNull List<Token> tokens, @NotNull PatternSimulator.Suggestion top) {
-        return build(errorCode, title, line, raw, tokens, top, null, null);
+    public static @NotNull LumenDiagnostic build(@NotNull String title, int line, @NotNull String raw, @NotNull List<Token> tokens, @NotNull PatternSimulator.Suggestion top) {
+        return build(title, line, raw, tokens, top, null, null);
     }
 
-    private static @NotNull LumenDiagnostic build(@NotNull String errorCode, @NotNull String title, int line, @NotNull String raw, @NotNull List<Token> tokens, @NotNull PatternSimulator.Suggestion top, @Nullable PatternSimulator.Suggestion second, @Nullable TypeEnv env) {
+    private static @NotNull LumenDiagnostic build(@NotNull String title, int line, @NotNull String raw, @NotNull List<Token> tokens, @NotNull PatternSimulator.Suggestion top, @Nullable PatternSimulator.Suggestion second, @Nullable TypeEnv env) {
         LumenDiagnostic unsupported = detectUnsupportedSyntax(line, raw, tokens);
         if (unsupported != null) return unsupported;
-        LumenDiagnostic.Builder builder = LumenDiagnostic.error(errorCode, title).at(line, raw);
+        LumenDiagnostic.Builder builder = LumenDiagnostic.error(title).at(line, raw);
         if (!tokens.isEmpty()) {
             builder.highlight(tokens.get(0).start(), tokens.get(tokens.size() - 1).end());
         }
@@ -129,32 +126,30 @@ public final class SuggestionDiagnostics {
     /**
      * Builds a diagnostic when no suggestion was found at all.
      *
-     * @param errorCode the diagnostic error code
-     * @param title     the diagnostic title
-     * @param line      the source line number
-     * @param raw       the raw source text
-     * @param tokens    the input tokens
+     * @param title  the diagnostic title
+     * @param line   the source line number
+     * @param raw    the raw source text
+     * @param tokens the input tokens
      * @return a fully constructed diagnostic
      */
-    public static @NotNull LumenDiagnostic buildNoSuggestion(@NotNull String errorCode, @NotNull String title, int line, @NotNull String raw, @NotNull List<Token> tokens) {
-        return buildNoSuggestion(errorCode, title, line, raw, tokens, null);
+    public static @NotNull LumenDiagnostic buildNoSuggestion(@NotNull String title, int line, @NotNull String raw, @NotNull List<Token> tokens) {
+        return buildNoSuggestion(title, line, raw, tokens, null);
     }
 
     /**
      * Builds a diagnostic when no suggestion was found, with nullable variable awareness.
      *
-     * @param errorCode the diagnostic error code
-     * @param title     the diagnostic title
-     * @param line      the source line number
-     * @param raw       the raw source text
-     * @param tokens    the input tokens
-     * @param env       the type environment for nullable variable detection
+     * @param title  the diagnostic title
+     * @param line   the source line number
+     * @param raw    the raw source text
+     * @param tokens the input tokens
+     * @param env    the type environment for nullable variable detection
      * @return a fully constructed diagnostic with nullable hints if applicable
      */
-    public static @NotNull LumenDiagnostic buildNoSuggestion(@NotNull String errorCode, @NotNull String title, int line, @NotNull String raw, @NotNull List<Token> tokens, @Nullable TypeEnv env) {
+    public static @NotNull LumenDiagnostic buildNoSuggestion(@NotNull String title, int line, @NotNull String raw, @NotNull List<Token> tokens, @Nullable TypeEnv env) {
         LumenDiagnostic unsupported = detectUnsupportedSyntax(line, raw, tokens);
         if (unsupported != null) return unsupported;
-        LumenDiagnostic.Builder builder = LumenDiagnostic.error(errorCode, title).at(line, raw);
+        LumenDiagnostic.Builder builder = LumenDiagnostic.error(title).at(line, raw);
         if (!tokens.isEmpty()) {
             builder.highlight(tokens.get(0).start(), tokens.get(tokens.size() - 1).end()).label("not recognized");
         }
@@ -176,16 +171,7 @@ public final class SuggestionDiagnostics {
                 continue;
             }
             builder.note("'" + t.text() + "' has nullable type '" + ref.type().displayName() + "' and may be null");
-            TypeEnv.DeclarationInfo declInfo = env.declarationInfo(t.text());
-            if (declInfo != null) {
-                builder.note("'" + t.text() + "' was declared on line " + declInfo.firstLine() + ": " + declInfo.firstRaw().strip());
-                if (declInfo.lastLine() != declInfo.firstLine()) {
-                    builder.note("'" + t.text() + "' was last assigned on line " + declInfo.lastLine() + ": " + declInfo.lastRaw().strip());
-                }
-            }
-            builder.help("use 'if " + t.text() + " is set:' to check for null before using it");
-            builder.help("or use 'if " + t.text() + " is not set:' and put the null case in the if-block, leaving the else-block with a narrowed variable");
-            builder.help("inside the else block after 'if " + t.text() + " is not set:', '" + t.text() + "' is automatically narrowed to non-null");
+            builder.help("narrow with 'if " + t.text() + " is set:' before using it");
             return;
         }
     }
@@ -194,7 +180,7 @@ public final class SuggestionDiagnostics {
         if (tokens.size() == 1 && tokens.get(0).kind() == TokenKind.SYMBOL) {
             String text = tokens.get(0).text();
             if (text.equals("{") || text.equals("}")) {
-                return LumenDiagnostic.error("E503", "Unsupported syntax")
+                return LumenDiagnostic.error("Unsupported syntax")
                         .at(line, raw)
                         .highlight(tokens.get(0).start(), tokens.get(0).end())
                         .label("curly braces are not part of Lumen syntax")
@@ -211,7 +197,7 @@ public final class SuggestionDiagnostics {
             if (brace == null && (t.text().equals("{") || t.text().equals("}"))) brace = t;
         }
         if (semicolon != null || brace != null) {
-            LumenDiagnostic.Builder builder = LumenDiagnostic.error("E503", "Unsupported syntax").at(line, raw);
+            LumenDiagnostic.Builder builder = LumenDiagnostic.error("Unsupported syntax").at(line, raw);
             if (semicolon != null && brace != null) {
                 builder.highlight(semicolon.start(), semicolon.end())
                         .label("semicolons and curly braces are not part of Lumen syntax")
@@ -234,19 +220,18 @@ public final class SuggestionDiagnostics {
     /**
      * Builds a diagnostic from a {@link TypeAnnotationParser.ParseResult.Failure}.
      *
-     * @param errorCode the diagnostic error code
-     * @param title     the diagnostic title
-     * @param line      the source line number
-     * @param raw       the raw source text
-     * @param tokens    the tokens that were being parsed
-     * @param failure   the parse failure result
+     * @param title   the diagnostic title
+     * @param line    the source line number
+     * @param raw     the raw source text
+     * @param tokens  the tokens that were being parsed
+     * @param failure the parse failure result
      * @return a fully constructed diagnostic
      */
-    public static @NotNull LumenDiagnostic buildTypeFailure(@NotNull String errorCode, @NotNull String title, int line, @NotNull String raw, @NotNull List<? extends ScriptToken> tokens, @NotNull TypeAnnotationParser.ParseResult.Failure failure) {
+    public static @NotNull LumenDiagnostic buildTypeFailure(@NotNull String title, int line, @NotNull String raw, @NotNull List<? extends ScriptToken> tokens, @NotNull TypeAnnotationParser.ParseResult.Failure failure) {
         TypeAnnotationParser.ParseError error = failure.error();
         int errorIdx = Math.min(error.tokenOffset(), tokens.size() - 1);
         ScriptToken errorToken = tokens.get(errorIdx);
-        LumenDiagnostic.Builder diag = LumenDiagnostic.error(errorCode, title)
+        LumenDiagnostic.Builder diag = LumenDiagnostic.error(title)
                 .at(line, raw)
                 .highlight(errorToken.start(), errorToken.end());
         if (error.suggestion() != null) diag.label(error.message() + ", did you mean '" + error.suggestion() + "'?");

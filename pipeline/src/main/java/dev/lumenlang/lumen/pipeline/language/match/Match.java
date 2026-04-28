@@ -5,11 +5,13 @@ import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.pipeline.codegen.BlockContext;
 import dev.lumenlang.lumen.pipeline.codegen.CodegenContext;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.pipeline.language.exceptions.TokenCarryingException;
 import dev.lumenlang.lumen.pipeline.language.pattern.Pattern;
 import dev.lumenlang.lumen.pipeline.language.resolve.ExprResolver;
+import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -226,14 +228,19 @@ public record Match(
         if (!ref.type().nullable()) return;
         TypeEnv.NullState state = env.nullState(ref.java());
         if (state == TypeEnv.NullState.NON_NULL) return;
-        String varName = bv.tokens().isEmpty() ? "?" : bv.tokens().get(0).text();
-        LumenDiagnostic diag = LumenDiagnostic.warning("W301", "Nullable variable used without null check")
-                .at(bv.tokens().get(0).line(), varName)
-                .highlight(bv.tokens().get(0).start(), bv.tokens().get(0).end())
+        Token tok = bv.tokens().get(0);
+        String varName = tok.text();
+        BlockContext block = env.blockContext();
+        String raw = block.raw();
+        int line = block.line();
+        LumenDiagnostic diag = LumenDiagnostic.warning("Nullable variable used without null check")
+                .at(line, raw)
+                .highlight(tok.start(), tok.end())
                 .label("'" + varName + "' may be null")
                 .help("prove it with 'if " + varName + " is set:' or use 'require " + varName + " or fail'")
                 .build();
         env.addWarning(diag);
+        env.markNullState(ref.java(), TypeEnv.NullState.NON_NULL, line, raw);
     }
 
     private record InlineVarRef(
@@ -241,6 +248,11 @@ public record Match(
             @NotNull LumenType lumenType,
             @NotNull Map<String, Object> meta
     ) implements EnvironmentAccess.VarHandle {
+
+        @Override
+        public @NotNull String name() {
+            return javaExpr;
+        }
 
         @Override
         public @NotNull LumenType type() {

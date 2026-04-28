@@ -22,7 +22,7 @@ dependencies {
     api project(':api')
     api project(':pipeline')
 
-    // This can be used for using reflections, such as for your IDE.
+    // This can be used for seeing internal fields/methods.
     // However, do not use any of the internals.
     //paperweight.paperDevBundle("1.20-R0.1-SNAPSHOT")
     compileOnly "org.spigotmc:spigot-api:1.20-R0.1-SNAPSHOT"
@@ -30,6 +30,7 @@ dependencies {
     api "org.ow2.asm:asm:9.9.1"
     api "org.ow2.asm:asm-commons:9.9.1"
     api "org.vineflower:vineflower:1.11.2"
+    implementation 'net.vansencool:Vanta:1.0.0-BETA'
 }
 
 processResources {

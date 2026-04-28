@@ -1,4 +1,4 @@
-package dev.lumenlang.lumen.pipeline.java.compiler.system;
+package dev.lumenlang.lumen.plugin.compiler.system;
 
 import org.jetbrains.annotations.NotNull;
 

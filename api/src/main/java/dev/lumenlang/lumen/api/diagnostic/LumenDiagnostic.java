@@ -17,24 +17,9 @@ import java.util.List;
  * All error paths (type mismatches, parse errors, null safety violations, pattern
  * failures, and addon errors) should produce diagnostics through this class.
  *
- * <h2>Error Code Convention</h2>
- * <p>Core Lumen diagnostics use plain numeric codes prefixed with {@code E}:
- * <ul>
- *   <li>{@code E1xx} for type errors (mismatch, null assignment, lossy conversion)</li>
- *   <li>{@code E2xx} for operator and arithmetic errors</li>
- *   <li>{@code E3xx} for null safety errors</li>
- *   <li>{@code E4xx} for collection errors</li>
- *   <li>{@code E5xx} for resolution errors (undefined variable, unknown type)</li>
- * </ul>
- *
- * <p>Addons should prefix their error codes with a short identifier derived from the
- * addon name, followed by {@code E} and a number. For example, an addon called
- * "MyAddon" would use codes like {@code MAE100}, {@code MAE201}, etc. This avoids
- * collisions with core codes and makes it clear which addon produced the diagnostic.
- *
  * <h2>Example Output</h2>
  * <pre>
- * error[E100]: Type mismatch in assignment
+ * error: Type mismatch in assignment
  *   -> line 3: set x to "hello"
  *   |
  * 3 | set x to "hello"
@@ -50,7 +35,6 @@ public final class LumenDiagnostic {
     private static boolean verboseDiagnostics = false;
 
     private final @NotNull Severity severity;
-    private final @NotNull String code;
     private final @NotNull String title;
     private final int line;
     private final @NotNull String sourceText;
@@ -64,7 +48,6 @@ public final class LumenDiagnostic {
 
     private LumenDiagnostic(@NotNull Builder builder) {
         this.severity = builder.severity;
-        this.code = builder.code;
         this.title = builder.title;
         this.line = builder.line;
         this.sourceText = builder.sourceText;
@@ -84,25 +67,23 @@ public final class LumenDiagnostic {
     }
 
     /**
-     * Creates a new error diagnostic builder with the given code and title.
+     * Creates a new error diagnostic builder with the given title.
      *
-     * @param code  the error code (e.g. {@code "E100"} for core, {@code "MAE100"} for addons)
      * @param title a short human-readable description of the error
      * @return a new builder
      */
-    public static @NotNull Builder error(@NotNull String code, @NotNull String title) {
-        return new Builder(Severity.ERROR, code, title);
+    public static @NotNull Builder error(@NotNull String title) {
+        return new Builder(Severity.ERROR, title);
     }
 
     /**
-     * Creates a new warning diagnostic builder with the given code and title.
+     * Creates a new warning diagnostic builder with the given title.
      *
-     * @param code  the warning code (e.g. {@code "W100"} for core, {@code "MAW100"} for addons)
      * @param title a short human-readable description of the warning
      * @return a new builder
      */
-    public static @NotNull Builder warning(@NotNull String code, @NotNull String title) {
-        return new Builder(Severity.WARNING, code, title);
+    public static @NotNull Builder warning(@NotNull String title) {
+        return new Builder(Severity.WARNING, title);
     }
 
     /**
@@ -124,15 +105,6 @@ public final class LumenDiagnostic {
      */
     public @NotNull Severity severity() {
         return severity;
-    }
-
-    /**
-     * Returns the error or warning code (e.g. {@code "E100"}).
-     *
-     * @return the diagnostic code
-     */
-    public @NotNull String code() {
-        return code;
     }
 
     /**
@@ -164,7 +136,7 @@ public final class LumenDiagnostic {
     public @NotNull String format() {
         StringBuilder sb = new StringBuilder();
         String prefix = severity == Severity.ERROR ? "error" : "warning";
-        sb.append(prefix).append('[').append(code).append("]: ").append(title).append('\n');
+        sb.append(prefix).append(": ").append(title).append('\n');
         String trimmed = sourceText.stripTrailing();
         int maxLine = line;
         for (ContextLine cl : contextLines) {
@@ -280,8 +252,8 @@ public final class LumenDiagnostic {
     /**
      * Fluent builder for constructing {@link LumenDiagnostic} instances.
      *
-     * <p>Use {@link LumenDiagnostic#error(String, String)} or
-     * {@link LumenDiagnostic#warning(String, String)} to obtain a builder, then chain
+     * <p>Use {@link LumenDiagnostic#error(String)} or
+     * {@link LumenDiagnostic#warning(String)} to obtain a builder, then chain
      * calls to configure the diagnostic before calling {@link #build()}.
      *
      * <p>If {@link #highlight(int, int)} is not called, the entire source line content
@@ -289,7 +261,6 @@ public final class LumenDiagnostic {
      */
     public static final class Builder {
         private final @NotNull Severity severity;
-        private final @NotNull String code;
         private final @NotNull String title;
         private final @NotNull ArrayList<SubHighlight> subHighlights = new ArrayList<>();
         private final @NotNull ArrayList<ContextLine> contextLines = new ArrayList<>();
@@ -301,9 +272,8 @@ public final class LumenDiagnostic {
         private @Nullable String underlineLabel;
         private final @NotNull ArrayList<String> helpLines = new ArrayList<>();
 
-        private Builder(@NotNull Severity severity, @NotNull String code, @NotNull String title) {
+        private Builder(@NotNull Severity severity, @NotNull String title) {
             this.severity = severity;
-            this.code = code;
             this.title = title;
         }
 

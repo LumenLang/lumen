@@ -2,6 +2,8 @@ package dev.lumenlang.lumen.plugin.configuration;
 
 import dev.lumenlang.lumen.api.ConfigOption;
 import dev.lumenlang.lumen.api.ConfigOverride;
+import dev.lumenlang.lumen.api.StringConfigOption;
+import dev.lumenlang.lumen.api.StringConfigOverride;
 import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
 import dev.lumenlang.lumen.plugin.Lumen;
@@ -41,6 +43,9 @@ public final class LumenConfiguration {
 
     @Ignore
     private static final List<ConfigOverride> lastingOverrides = new ArrayList<>();
+
+    @Ignore
+    private static final List<StringConfigOverride> lastingStringOverrides = new ArrayList<>();
 
     public static void load() {
         if (!Files.exists(Lumen.instance().getDataFolder().toPath().resolve("config.yml"))) {
@@ -91,6 +96,9 @@ public final class LumenConfiguration {
         for (ConfigOverride override : lastingOverrides) {
             applyInMemory(override.option(), override.value());
         }
+        for (StringConfigOverride override : lastingStringOverrides) {
+            applyInMemory(override.option(), override.value());
+        }
     }
 
     /**
@@ -108,6 +116,44 @@ public final class LumenConfiguration {
             case RAW_JAVA -> LANGUAGE.EXPERIMENTAL.RAW_JAVA = value;
             case INVENTORY_HOT_RELOAD -> FEATURES.INVENTORIES.HOT_RELOAD = value;
         }
+    }
+
+    /**
+     * Applies a {@link StringConfigOverride} to the running configuration.
+     *
+     * @param override the override to apply
+     */
+    public static void applyOverride(@NotNull StringConfigOverride override) {
+        applyInMemory(override.option(), override.value());
+        if (override.persistence() == ConfigOverride.Persistence.LASTING_SESSION) {
+            lastingStringOverrides.add(override);
+        } else if (override.persistence() == ConfigOverride.Persistence.PERMANENT) {
+            writeOption(override.option(), override.value());
+        }
+    }
+
+    /**
+     * Applies a string configuration option value in memory without writing to disk.
+     *
+     * @param option the config option to change
+     * @param value  the desired value
+     */
+    public static void applyInMemory(@NotNull StringConfigOption option, @NotNull String value) {
+        if (option == StringConfigOption.COMPILER) PERFORMANCE.COMPILER = value;
+    }
+
+    /**
+     * Applies a string configuration option value in memory and writes it to {@code config.yml}.
+     *
+     * @param option the config option to change
+     * @param value  the desired value
+     */
+    public static void writeOption(@NotNull StringConfigOption option, @NotNull String value) {
+        applyInMemory(option, value);
+        MapNode node = ConfigLoader.node(LumenConfiguration.class);
+        if (node == null) throw new RuntimeException("writeOption called before startup");
+        node.setString(option.path(), value);
+        LSYAML.writeToFile(node, Lumen.instance().getDataFolder().toPath().resolve("config.yml"));
     }
 
     /**
@@ -163,11 +209,15 @@ public final class LumenConfiguration {
 
     public static final class Performance {
 
+        public String COMPILER = "auto";
+
         public boolean CACHE_COMPILED_CLASSES = true;
 
         public boolean LOAD_SCRIPTS_ASYNC_ON_STARTUP = false;
 
         public boolean WARMUP_ON_STARTUP = true;
+
+        public int COMPILE_THREADS = 2;
 
         public boolean REDUCE_CLASSPATH = false;
 

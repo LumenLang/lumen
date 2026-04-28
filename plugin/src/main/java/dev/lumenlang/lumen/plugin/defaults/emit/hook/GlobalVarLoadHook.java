@@ -40,21 +40,23 @@ public final class GlobalVarLoadHook implements BlockEnterHook {
     @Override
     public void onBlockEnter(@NotNull HandlerContext ctx) {
         TypeEnv env = (TypeEnv) ctx.env();
-        List<? extends EnvironmentAccess.GlobalInfo> globals = env.allGlobals();
+        List<? extends EnvironmentAccess.VarHandle> globals = env.allGlobals();
 
-        for (EnvironmentAccess.GlobalInfo g : globals) {
+        for (EnvironmentAccess.VarHandle g : globals) {
+            EnvironmentAccess.GlobalInfo info = g.globalInfo();
+            if (info == null) continue;
+            if (info.scoped()) continue;
             String name = g.name();
-            if (env.lookupVar(name) != null) continue;
-            if (g.scoped()) continue;
+            if (env.hasLocalBinding(name)) continue;
 
-            String defaultJava = g.defaultJava();
-            String className = g.className();
-            Map<String, Object> exprMetadata = g.exprMetadata();
+            String defaultJava = info.defaultJava();
+            String className = info.className();
+            Map<String, Object> exprMetadata = g.metadata();
             String keyExpr = "\"" + className + "." + name + "\"";
 
             LumenType lumenType = g.type();
             String fieldType = lumenType.javaTypeName();
-            String storageClass = g.stored() ? "PersistentVars" : "GlobalVars";
+            String storageClass = info.stored() ? "PersistentVars" : "GlobalVars";
             addTypeImports(lumenType, ctx);
             ctx.codegen().addField(fieldType + " " + name + ";");
             boolean needsCast = lumenType instanceof CollectionType || lumenType instanceof NullableType;
@@ -65,11 +67,11 @@ public final class GlobalVarLoadHook implements BlockEnterHook {
                 ctx.out().taggedLine(TAG, name + " = " + getExpr + ";");
             }
 
-            VarRef varRef = new VarRef(lumenType, name, exprMetadata != null ? exprMetadata : Map.of());
+            VarRef varRef = new VarRef(name, lumenType, name, exprMetadata, info);
             env.defineVar(name, varRef);
             env.recordDeclaration(name, ctx.line(), ctx.raw());
             env.markGlobalField(name);
-            if (g.stored()) {
+            if (info.stored()) {
                 env.markStored(name, keyExpr, "\"" + className + "." + name + ".\"", null);
             } else {
                 env.markRuntimeGlobal(name);

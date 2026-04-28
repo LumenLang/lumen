@@ -4,6 +4,7 @@ import dev.lumenlang.lumen.api.binder.ScriptBinderRegistrar;
 import dev.lumenlang.lumen.api.emit.EmitRegistrar;
 import dev.lumenlang.lumen.api.emit.transform.TransformerRegistrar;
 import dev.lumenlang.lumen.api.event.EventRegistrar;
+import dev.lumenlang.lumen.api.imports.ImportRegistrar;
 import dev.lumenlang.lumen.api.pattern.PatternRegistrar;
 import dev.lumenlang.lumen.api.placeholder.PlaceholderRegistrar;
 import dev.lumenlang.lumen.api.type.TypeRegistrar;
@@ -109,6 +110,13 @@ public interface LumenAPI {
      * @return the transformer registrar
      */
     @NotNull TransformerRegistrar transformers();
+
+    /**
+     * Returns the import registrar for registering default imports added to every compiled script.
+     *
+     * @return the import registrar
+     */
+    @NotNull ImportRegistrar imports();
 
     /**
      * Adds a path to the classpath used during script compilation.

@@ -5,6 +5,7 @@ import dev.lumenlang.lumen.api.ConfigOverride;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.LumenAddon;
 import dev.lumenlang.lumen.api.LumenProvider;
+import dev.lumenlang.lumen.api.StringConfigOverride;
 import dev.lumenlang.lumen.api.scanner.RegistrationScanner;
 import dev.lumenlang.lumen.api.type.BuiltinLumenTypes;
 import dev.lumenlang.lumen.api.type.MinecraftTypes;
@@ -15,16 +16,22 @@ import dev.lumenlang.lumen.pipeline.addon.ScriptBinderManager;
 import dev.lumenlang.lumen.pipeline.binder.ScriptBinder;
 import dev.lumenlang.lumen.pipeline.bus.LumenEventBus;
 import dev.lumenlang.lumen.pipeline.inject.InjectableHandlers;
-import dev.lumenlang.lumen.pipeline.java.compiler.system.SystemCompiler;
+import dev.lumenlang.lumen.pipeline.java.compiled.DefaultImportRegistry;
+import dev.lumenlang.lumen.pipeline.java.compiler.CompilerClasspath;
 import dev.lumenlang.lumen.pipeline.language.emit.EmitRegistry;
 import dev.lumenlang.lumen.pipeline.language.emit.TransformerRegistry;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
+import dev.lumenlang.lumen.pipeline.persist.GlobalVars;
 import dev.lumenlang.lumen.pipeline.persist.PersistentVars;
 import dev.lumenlang.lumen.pipeline.persist.impl.FilePersistentStorage;
 import dev.lumenlang.lumen.pipeline.typebinding.TypeRegistry;
 import dev.lumenlang.lumen.plugin.commands.CommandRegistry;
 import dev.lumenlang.lumen.plugin.commands.lumen.LumenCommand;
+import dev.lumenlang.lumen.plugin.compiler.JavaCompilerBackend;
+import dev.lumenlang.lumen.plugin.compiler.ScriptCompiler;
+import dev.lumenlang.lumen.plugin.compiler.VantaCompilerBackend;
+import dev.lumenlang.lumen.plugin.compiler.system.SystemCompiler;
 import dev.lumenlang.lumen.plugin.configuration.LumenConfiguration;
 import dev.lumenlang.lumen.plugin.defaults.type.BuiltinTypeBindings;
 import dev.lumenlang.lumen.plugin.documentation.DocumentationDumper;
@@ -46,6 +53,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.Locale;
 
 /**
  * Lumen is a high-performance scripting platform for Minecraft servers.
@@ -100,7 +108,7 @@ public final class Lumen extends JavaPlugin {
         platformCheck();
         addonManager.enableAll(lumenApi);
         ExampleCopier.copyExamples(ScriptSourceLoader.scriptsDir());
-        setupSystemCompiler();
+        setupCompiler();
         LumenCommand.register();
         if (LumenConfiguration.SCRIPTS.ENABLE_ALL_SCRIPTS_IMMEDIATELY_ON_STARTUP) {
             loadScripts();
@@ -165,6 +173,20 @@ public final class Lumen extends JavaPlugin {
 
         lumenApi = new LumenAPIImpl(patternRegistry, types, emitReg, transformerReg, binderManager);
 
+        DefaultImportRegistry.register("org.bukkit.event.Listener");
+        DefaultImportRegistry.register("org.bukkit.command.CommandSender");
+        DefaultImportRegistry.register("org.bukkit.entity.Player");
+        DefaultImportRegistry.register("org.bukkit.plugin.Plugin");
+        DefaultImportRegistry.register("org.bukkit.Bukkit");
+        DefaultImportRegistry.register(PersistentVars.class.getName());
+        DefaultImportRegistry.register(GlobalVars.class.getName());
+        DefaultImportRegistry.register("dev.lumenlang.lumen.plugin.text.LumenText");
+        DefaultImportRegistry.register("dev.lumenlang.lumen.plugin.annotations.LumenEvent");
+        DefaultImportRegistry.register("dev.lumenlang.lumen.plugin.annotations.LumenCmd");
+        DefaultImportRegistry.register("dev.lumenlang.lumen.plugin.annotations.LumenInventory");
+        DefaultImportRegistry.register("dev.lumenlang.lumen.api.annotations.LumenPreload");
+        DefaultImportRegistry.register("dev.lumenlang.lumen.api.annotations.LumenLoad");
+
         PersistentVars.init(new FilePersistentStorage(getDataFolder().toPath().resolve("persist.dat")));
         PersistentVars.setValueResolver(BukkitValueResolver.INSTANCE);
 
@@ -214,6 +236,10 @@ public final class Lumen extends JavaPlugin {
                 LumenLogger.warning("Addon " + addon.name() + " v" + addon.version() + " is " + (override.value() ? "enabling" : "disabling") + " " + override.option().path() + ": " + override.reason());
                 LumenConfiguration.applyOverride(override);
             }
+            for (StringConfigOverride override : addon.stringConfigOverrides()) {
+                LumenLogger.warning("Addon " + addon.name() + " v" + addon.version() + " is setting " + override.option().path() + " to '" + override.value() + "': " + override.reason());
+                LumenConfiguration.applyOverride(override);
+            }
         }
     }
 
@@ -238,12 +264,40 @@ public final class Lumen extends JavaPlugin {
         }
     }
 
-    private void setupSystemCompiler() {
-        SystemCompiler.setReduceClasspath(LumenConfiguration.PERFORMANCE.REDUCE_CLASSPATH);
+    private void setupCompiler() {
+        CompilerClasspath.setReduceClasspath(LumenConfiguration.PERFORMANCE.REDUCE_CLASSPATH);
+        ScriptCompiler.setBackend(pickBackend());
         if (LumenConfiguration.PERFORMANCE.WARMUP_ON_STARTUP) {
             Thread warmup = new Thread(ScriptManager::warmup, "Lumen-Warmup");
             warmup.setDaemon(true);
             warmup.start();
         }
+    }
+
+    private @NotNull JavaCompilerBackend pickBackend() {
+        String configured = LumenConfiguration.PERFORMANCE.COMPILER.toLowerCase(Locale.ROOT).trim();
+        boolean javacAvailable = SystemCompiler.isAvailable();
+
+        if (configured.equals("vanta")) {
+            LumenLogger.info("Using Vanta compiler backend (beta).");
+            return new VantaCompilerBackend();
+        }
+
+        if (configured.equals("javac")) {
+            if (!javacAvailable) {
+                LumenLogger.warning("Compiler set to 'javac' but no system Java compiler found. Falling back to Vanta.");
+                return new VantaCompilerBackend();
+            }
+            LumenLogger.info("Using javac compiler backend.");
+            return new SystemCompiler();
+        }
+
+        if (javacAvailable) {
+            LumenLogger.info("Using javac compiler backend.");
+            return new SystemCompiler();
+        }
+
+        LumenLogger.info("No system Java compiler found. Using Vanta compiler backend (beta).");
+        return new VantaCompilerBackend();
     }
 }

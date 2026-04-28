@@ -120,7 +120,7 @@ public final class LoadStatementForm {
 
         ctx.codegen().addImport(PersistentVars.class.getName());
         ctx.out().line("var " + name + " = PersistentVars.get(" + keyExpr + ", " + defaultJava + ");");
-        VarRef varRef = new VarRef(resolvedObjectType, name);
+        VarRef varRef = new VarRef(name, resolvedObjectType, name);
         env.defineVar(name, varRef);
         env.recordDeclaration(name, ctx.line(), ctx.raw());
         if (env.blockContext().parent() != null) {

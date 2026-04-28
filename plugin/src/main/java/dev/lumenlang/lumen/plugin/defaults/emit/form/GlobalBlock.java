@@ -75,7 +75,7 @@ public final class GlobalBlock implements BlockFormHandler {
         TypeEnv env = (TypeEnv) ctx.env();
 
         if (env.has(GLOBAL_BLOCK_KEY)) {
-            throw new DiagnosticException(LumenDiagnostic.error("E600", "Duplicate global block")
+            throw new DiagnosticException(LumenDiagnostic.error("Duplicate global block")
                     .at(ctx.line(), ctx.raw())
                     .label("only one 'global:' block is allowed per script")
                     .help("merge all global declarations into a single 'global:' block")
@@ -104,7 +104,7 @@ public final class GlobalBlock implements BlockFormHandler {
         if (idx < tokens.size() && tokens.get(idx).text().equalsIgnoreCase("scoped")) {
             idx++;
             if (idx >= tokens.size() || !tokens.get(idx).text().equalsIgnoreCase("to")) {
-                throw new DiagnosticException(LumenDiagnostic.error("E601", "Expected 'to' after 'scoped'")
+                throw new DiagnosticException(LumenDiagnostic.error("Expected 'to' after 'scoped'")
                         .at(line, raw)
                         .highlight(tokens.get(idx - 1).start(), tokens.get(idx - 1).end())
                         .label("expected 'scoped to <type>'")
@@ -113,7 +113,7 @@ public final class GlobalBlock implements BlockFormHandler {
             }
             idx++;
             if (idx >= tokens.size()) {
-                throw new DiagnosticException(LumenDiagnostic.error("E601", "Expected scope type after 'scoped to'")
+                throw new DiagnosticException(LumenDiagnostic.error("Expected scope type after 'scoped to'")
                         .at(line, raw)
                         .label("missing scope type")
                         .help("example: scoped to player")
@@ -126,7 +126,7 @@ public final class GlobalBlock implements BlockFormHandler {
             scopeType = LumenType.fromName(scopeTypeName);
             if (scopeType == null) {
                 String closest = FuzzyMatch.closest(scopeTypeName, LumenType.allKnownTypeNames());
-                LumenDiagnostic.Builder diag = LumenDiagnostic.error("E602", "Unknown scope type '" + tokens.get(idx).text() + "'")
+                LumenDiagnostic.Builder diag = LumenDiagnostic.error("Unknown scope type '" + tokens.get(idx).text() + "'")
                         .at(line, raw)
                         .highlight(tokens.get(idx).start(), tokens.get(idx).end());
                 if (closest != null) {
@@ -142,7 +142,7 @@ public final class GlobalBlock implements BlockFormHandler {
         }
 
         if (idx >= tokens.size()) {
-            throw new DiagnosticException(LumenDiagnostic.error("E603", "Expected variable name")
+            throw new DiagnosticException(LumenDiagnostic.error("Expected variable name")
                     .at(line, raw)
                     .label("missing variable name")
                     .help("syntax: [stored] [scoped to <type>] <name>: <type> [with default <expr>]")
@@ -155,7 +155,7 @@ public final class GlobalBlock implements BlockFormHandler {
 
         String nameError = VarNameValidator.validate(name);
         if (nameError != null) {
-            throw new DiagnosticException(LumenDiagnostic.error("E604", "Invalid variable name")
+            throw new DiagnosticException(LumenDiagnostic.error("Invalid variable name")
                     .at(line, raw)
                     .highlight(nameToken.start(), nameToken.end())
                     .label(nameError)
@@ -163,7 +163,7 @@ public final class GlobalBlock implements BlockFormHandler {
         }
 
         if (env.isGlobal(name)) {
-            throw new DiagnosticException(LumenDiagnostic.error("E605", "Duplicate global variable '" + name + "'")
+            throw new DiagnosticException(LumenDiagnostic.error("Duplicate global variable '" + name + "'")
                     .at(line, raw)
                     .highlight(nameToken.start(), nameToken.end())
                     .label("'" + name + "' is already declared as a global")
@@ -171,7 +171,7 @@ public final class GlobalBlock implements BlockFormHandler {
         }
 
         if (idx >= tokens.size() || !tokens.get(idx).text().equals(":")) {
-            throw new DiagnosticException(LumenDiagnostic.error("E606", "Expected ':' after variable name")
+            throw new DiagnosticException(LumenDiagnostic.error("Expected ':' after variable name")
                     .at(line, raw)
                     .highlight(nameToken.start(), nameToken.end())
                     .label("expected '" + name + ": <type>'")
@@ -181,7 +181,7 @@ public final class GlobalBlock implements BlockFormHandler {
         idx++;
 
         if (idx >= tokens.size()) {
-            throw new DiagnosticException(LumenDiagnostic.error("E607", "Expected type after ':'")
+            throw new DiagnosticException(LumenDiagnostic.error("Expected type after ':'")
                     .at(line, raw)
                     .label("missing type annotation")
                     .help("syntax: " + name + ": <type>   (e.g. string, int, list of string, nullable player)")
@@ -190,7 +190,7 @@ public final class GlobalBlock implements BlockFormHandler {
 
         TypeAnnotationParser.ParseResult typeParseResult = TypeAnnotationParser.parseDetailed(tokens, idx, env::lookupDataSchema);
         if (typeParseResult instanceof TypeAnnotationParser.ParseResult.Failure f) {
-            throw new DiagnosticException(SuggestionDiagnostics.buildTypeFailure("E608", "Invalid type annotation", line, raw, tokens, f));
+            throw new DiagnosticException(SuggestionDiagnostics.buildTypeFailure("Invalid type annotation", line, raw, tokens, f));
         }
         TypeAnnotationParser typeResult = ((TypeAnnotationParser.ParseResult.Success) typeParseResult).parser();
 
@@ -201,7 +201,7 @@ public final class GlobalBlock implements BlockFormHandler {
         if (idx < tokens.size() && tokens.get(idx).text().equalsIgnoreCase("with")) {
             idx++;
             if (idx >= tokens.size() || !tokens.get(idx).text().equalsIgnoreCase("default")) {
-                throw new DiagnosticException(LumenDiagnostic.error("E609", "Expected 'default' after 'with'")
+                throw new DiagnosticException(LumenDiagnostic.error("Expected 'default' after 'with'")
                         .at(line, raw)
                         .highlight(tokens.get(idx - 1).start(), tokens.get(idx - 1).end())
                         .label("expected 'with default <expr>'")
@@ -209,7 +209,7 @@ public final class GlobalBlock implements BlockFormHandler {
             }
             idx++;
             if (idx >= tokens.size()) {
-                throw new DiagnosticException(LumenDiagnostic.error("E609", "Expected expression after 'with default'")
+                throw new DiagnosticException(LumenDiagnostic.error("Expected expression after 'with default'")
                         .at(line, raw)
                         .highlight(tokens.get(idx - 1).start(), tokens.get(idx - 1).end())
                         .label("missing default value expression")
@@ -217,7 +217,7 @@ public final class GlobalBlock implements BlockFormHandler {
             }
             exprTokens = tokens.subList(idx, tokens.size());
         } else if (idx < tokens.size()) {
-            throw new DiagnosticException(LumenDiagnostic.error("E610", "Unexpected token '" + tokens.get(idx).text() + "'")
+            throw new DiagnosticException(LumenDiagnostic.error("Unexpected token '" + tokens.get(idx).text() + "'")
                     .at(line, raw)
                     .highlight(tokens.get(idx).start(), tokens.get(idx).end())
                     .label("expected 'with default <expr>' or end of line")
@@ -244,7 +244,10 @@ public final class GlobalBlock implements BlockFormHandler {
             }
         }
 
-        env.registerGlobal(new TypeEnv.GlobalVarInfo(name, defaultJava, className, scoped, stored, exprMetadata, declaredType, scopeType));
+        TypeEnv.GlobalVarInfo info = new TypeEnv.GlobalVarInfo(defaultJava, className, scoped, stored, scopeType);
+        String javaExpr = scoped ? null : name;
+        VarRef handle = new VarRef(name, declaredType, javaExpr, exprMetadata != null ? exprMetadata : Map.of(), info);
+        env.registerGlobal(handle);
     }
 
     private void validateStoredTypeUnchanged(@NotNull String className, @NotNull String name, @NotNull LumenType declaredType, int line, @NotNull String raw) {
@@ -256,7 +259,7 @@ public final class GlobalBlock implements BlockFormHandler {
         LumenType existingType = LumenType.fromJavaType(existing.getClass().getName());
         if (existingType == null) return;
         if (!declaredType.assignableFrom(existingType)) {
-            throw new DiagnosticException(LumenDiagnostic.error("E613", "Stored variable '" + name + "' already exists with a different type")
+            throw new DiagnosticException(LumenDiagnostic.error("Stored variable '" + name + "' already exists with a different type")
                     .at(line, raw)
                     .label("stored value is '" + existingType.displayName() + "' but declared type is '" + declaredType.displayName() + "'")
                     .help("delete the stored variable with '/lumen vars delete " + key + "' before changing its type")
@@ -276,7 +279,7 @@ public final class GlobalBlock implements BlockFormHandler {
             LumenType existingType = LumenType.fromJavaType(existing.getClass().getName());
             if (existingType == null) continue;
             if (!declaredType.assignableFrom(existingType)) {
-                throw new DiagnosticException(LumenDiagnostic.error("E613", "Stored variable '" + name + "' already has scoped entries with a different type")
+                throw new DiagnosticException(LumenDiagnostic.error("Stored variable '" + name + "' already has scoped entries with a different type")
                         .at(line, raw)
                         .label("stored scoped values are '" + existingType.displayName() + "' but declared type is '" + declaredType.displayName() + "'")
                         .help("delete the scoped entries with '/lumen vars delete " + prefix + "*' or change the type to match")
@@ -288,7 +291,7 @@ public final class GlobalBlock implements BlockFormHandler {
 
     private @NotNull String resolveDefault(@NotNull LumenType declaredType, @Nullable List<Token> exprTokens, @NotNull String name, int line, @NotNull String raw, boolean stored, @NotNull TypeEnv env, @NotNull HandlerContext ctx) {
         if (exprTokens != null) {
-            if (stored) validateDefaultType(declaredType, exprTokens, name, line, raw, env);
+            validateDefaultType(declaredType, exprTokens, name, line, raw, env, ctx);
             return resolveExprJava(exprTokens, line, raw, env, ctx);
         }
 
@@ -304,19 +307,26 @@ public final class GlobalBlock implements BlockFormHandler {
         }
         if (declaredType instanceof NullableType) return "null";
 
-        throw new DiagnosticException(LumenDiagnostic.error("E611", "Non-nullable type '" + declaredType.displayName() + "' requires a default value")
+        throw new DiagnosticException(LumenDiagnostic.error("Non-nullable type '" + declaredType.displayName() + "' requires a default value")
                 .at(line, raw)
                 .label("'" + name + "' has no default and is not nullable")
                 .help("add 'with default <value>', or change the type to 'nullable " + declaredType.displayName() + "'")
                 .build());
     }
 
-    private void validateDefaultType(@NotNull LumenType declaredType, @NotNull List<Token> exprTokens, @NotNull String name, int line, @NotNull String raw, @NotNull TypeEnv env) {
+    private void validateDefaultType(@NotNull LumenType declaredType, @NotNull List<Token> exprTokens, @NotNull String name, int line, @NotNull String raw, @NotNull TypeEnv env, @NotNull HandlerContext ctx) {
         Expr expr = ExprParser.parse(exprTokens, env);
-        if (expr instanceof Expr.RawExpr) return;
-        LumenType exprType = expr.resolvedType();
+        LumenType exprType;
+        if (expr instanceof Expr.RawExpr) {
+            RegisteredExpressionMatch match = PatternRegistry.instance().matchExpression(exprTokens, env);
+            if (match == null) return;
+            HandlerContextImpl hctx = new HandlerContextImpl(match.match(), env, ((HandlerContextImpl) ctx).codegenContext(), env.blockContext(), null, 0, "");
+            exprType = match.reg().handler().handle(hctx).type();
+        } else {
+            exprType = expr.resolvedType();
+        }
         if (!declaredType.assignableFrom(exprType)) {
-            throw new DiagnosticException(LumenDiagnostic.error("E612", "Default value type mismatch for stored variable '" + name + "'")
+            throw new DiagnosticException(LumenDiagnostic.error("Default value type mismatch for global variable '" + name + "'")
                     .at(line, raw)
                     .highlight(exprTokens.get(0).start(), exprTokens.get(exprTokens.size() - 1).end())
                     .label("declared type is '" + declaredType.displayName() + "' but default value is '" + exprType.displayName() + "'")
@@ -339,9 +349,9 @@ public final class GlobalBlock implements BlockFormHandler {
         List<Token> rawTokens = ((Expr.RawExpr) expr).tokens();
         List<PatternSimulator.Suggestion> suggestions = PatternSimulator.suggestExpressions(rawTokens, PatternRegistry.instance(), env);
         if (!suggestions.isEmpty()) {
-            throw new DiagnosticException(SuggestionDiagnostics.build("E502", "Cannot resolve default expression", line, raw, rawTokens, suggestions));
+            throw new DiagnosticException(SuggestionDiagnostics.build("Cannot resolve default expression", line, raw, rawTokens, suggestions));
         }
-        throw new DiagnosticException(SuggestionDiagnostics.buildNoSuggestion("E502", "Cannot resolve default expression", line, raw, rawTokens));
+        throw new DiagnosticException(SuggestionDiagnostics.buildNoSuggestion("Cannot resolve default expression", line, raw, rawTokens));
     }
 
     private @Nullable Map<String, Object> resolveExprMetadata(@Nullable List<Token> exprTokens, @NotNull TypeEnv env, @NotNull HandlerContext ctx) {

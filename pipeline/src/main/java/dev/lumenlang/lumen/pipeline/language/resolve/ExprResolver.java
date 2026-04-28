@@ -173,7 +173,7 @@ public final class ExprResolver {
                 }
 
                 String synthName = "$sub" + depth + "$" + start;
-                VarRef synthRef = new VarRef(subResult.type(), subResult.java());
+                VarRef synthRef = new VarRef(synthName, subResult.type(), subResult.java());
 
                 BlockContext tempBlock = new BlockContext(null, env.blockContext(), List.of(), 0);
                 env.enterBlock(tempBlock);

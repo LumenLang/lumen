@@ -42,7 +42,7 @@ public final class ScopedVariableConditions {
         }
         if (!info.scoped()) {
             throw new RuntimeException("Variable '" + varName
-                    + "' is not a scoped global. Declare it with 'global scoped " + varName + "' to use per-entity access.");
+                    + "' is not a scoped global. Declare it inside a 'global:' block with 'scoped to <type> " + varName + ": <type>' for per-entity access.");
         }
         EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
         if (scopeRef == null) {
@@ -64,7 +64,7 @@ public final class ScopedVariableConditions {
     public void register(@NotNull LumenAPI api) {
         api.patterns().condition(b -> b
                 .by("Lumen")
-                .pattern("%a:EXPR% %op:OP% %b:EXPR% for %scope:EXPR%")
+                .pattern("%a:EXPR% %op:OP% %b:EXPR% for %scope:VAR%")
                 .description("Compares a scoped global variable against a value using a comparison operator. "
                         + "The 'for' clause specifies which entity's stored value to read.")
                 .example("if tp_toggle == 1 for target:")
@@ -84,7 +84,7 @@ public final class ScopedVariableConditions {
 
         api.patterns().condition(b -> b
                 .by("Lumen")
-                .pattern("%a:EXPR% (is|equals) %b:QSTRING% for %scope:EXPR%")
+                .pattern("%a:EXPR% (is|equals) %b:QSTRING% for %scope:VAR%")
                 .description("Checks if a scoped global variable equals a string value (case-insensitive). "
                         + "The 'for' clause specifies which entity's stored value to read.")
                 .example("if tpa_requester is \"none\" for target:")
@@ -100,7 +100,7 @@ public final class ScopedVariableConditions {
 
         api.patterns().condition(b -> b
                 .by("Lumen")
-                .pattern("%a:EXPR% (is not|does not equal) %b:QSTRING% for %scope:EXPR%")
+                .pattern("%a:EXPR% (is not|does not equal) %b:QSTRING% for %scope:VAR%")
                 .description("Checks if a scoped global variable does not equal a string value (case-insensitive). "
                         + "The 'for' clause specifies which entity's stored value to read.")
                 .example("if tpa_requester is not \"none\" for target:")
@@ -116,7 +116,7 @@ public final class ScopedVariableConditions {
 
         api.patterns().condition(b -> b
                 .by("Lumen")
-                .pattern("%a:EXPR% is set for %scope:EXPR%")
+                .pattern("%a:EXPR% is set for %scope:VAR%")
                 .description("Checks if a scoped global variable is not null for the given entity.")
                 .example("if tpa_requester is set for target:")
                 .since("1.0.0")
@@ -130,7 +130,7 @@ public final class ScopedVariableConditions {
 
         api.patterns().condition(b -> b
                 .by("Lumen")
-                .pattern("%a:EXPR% is not set for %scope:EXPR%")
+                .pattern("%a:EXPR% is not set for %scope:VAR%")
                 .description("Checks if a scoped global variable is null for the given entity.")
                 .example("if tpa_requester is not set for target:")
                 .since("1.0.0")

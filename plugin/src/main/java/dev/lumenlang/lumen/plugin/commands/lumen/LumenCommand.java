@@ -39,9 +39,7 @@ public final class LumenCommand implements CommandExecutor, TabCompleter {
     }
 
     @Override
-    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label,
-                             @NotNull String[] args) {
-
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (args.length < 1) {
             LumenText.send(sender, RED + "Usage: /lumen reload | reload scripts | reload <file> | unload <file> | vars");
             return true;

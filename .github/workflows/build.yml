@@ -26,4 +26,4 @@ jobs:
         with:
           name: lumen-jar
           path: plugin/build/libs/lumen-*.jar
-          retention-days: 30
+          retention-days: 15

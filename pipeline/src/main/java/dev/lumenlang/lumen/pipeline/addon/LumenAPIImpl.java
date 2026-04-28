@@ -18,6 +18,7 @@ import dev.lumenlang.lumen.api.handler.ConditionHandler;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler;
 import dev.lumenlang.lumen.api.handler.LoopHandler;
 import dev.lumenlang.lumen.api.handler.StatementHandler;
+import dev.lumenlang.lumen.api.imports.ImportRegistrar;
 import dev.lumenlang.lumen.api.inject.body.InjectableBody;
 import dev.lumenlang.lumen.api.inject.body.InjectableCondition;
 import dev.lumenlang.lumen.api.inject.body.InjectableExpression;
@@ -36,7 +37,8 @@ import dev.lumenlang.lumen.pipeline.addon.bridge.TypeBindingBridge;
 import dev.lumenlang.lumen.pipeline.events.EventDefRegistry;
 import dev.lumenlang.lumen.pipeline.events.def.EventDef;
 import dev.lumenlang.lumen.pipeline.inject.InjectableHandlers;
-import dev.lumenlang.lumen.pipeline.java.compiler.system.SystemCompiler;
+import dev.lumenlang.lumen.pipeline.java.compiled.DefaultImportRegistry;
+import dev.lumenlang.lumen.pipeline.java.compiler.CompilerClasspath;
 import dev.lumenlang.lumen.pipeline.language.emit.EmitRegistry;
 import dev.lumenlang.lumen.pipeline.language.emit.TransformerRegistry;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
@@ -62,6 +64,7 @@ public final class LumenAPIImpl implements LumenAPI {
     private final EmitRegistrar emitters;
     private final TransformerRegistrar transformerRegistrar;
     private final ScriptBinderManager binderManager;
+    private final ImportRegistrar imports;
 
     public LumenAPIImpl(@NotNull PatternRegistry patternRegistry,
                         @NotNull TypeRegistry typeRegistry,
@@ -301,6 +304,18 @@ public final class LumenAPIImpl implements LumenAPI {
                 transformerRegistry.removeTransformer(tag);
             }
         };
+
+        this.imports = new ImportRegistrar() {
+            @Override
+            public void register(@NotNull String fullyQualifiedName) {
+                DefaultImportRegistry.register(fullyQualifiedName);
+            }
+
+            @Override
+            public void unregister(@NotNull String fullyQualifiedName) {
+                DefaultImportRegistry.unregister(fullyQualifiedName);
+            }
+        };
     }
 
     @Override
@@ -339,12 +354,17 @@ public final class LumenAPIImpl implements LumenAPI {
     }
 
     @Override
+    public @NotNull ImportRegistrar imports() {
+        return imports;
+    }
+
+    @Override
     public void addClasspath(@NotNull String path) {
-        SystemCompiler.addExtraClasspath(path);
+        CompilerClasspath.addEntry(path);
     }
 
     @Override
     public void removeClasspath(@NotNull String path) {
-        SystemCompiler.removeExtraClasspath(path);
+        CompilerClasspath.removeEntry(path);
     }
 }

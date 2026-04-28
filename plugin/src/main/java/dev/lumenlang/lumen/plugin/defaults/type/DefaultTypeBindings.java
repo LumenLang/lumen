@@ -1097,17 +1097,17 @@ public final class DefaultTypeBindings {
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 String name = tokens.get(0);
                 VarHandle ref = env.lookupVar(name);
-                if (ref != null) {
-                    if (!isList(ref)) throw new ParseFailureException("'" + name + "' is not a list variable");
-                    return ref;
-                }
-                throw new ParseFailureException("'" + name + "' is not a list variable");
+                if (ref == null) throw new ParseFailureException("'" + name + "' is not a list variable");
+                if (!isList(ref)) throw new ParseFailureException("'" + name + "' is not a list variable");
+                return ref;
             }
 
             @Override
             public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
-                if (v instanceof VarHandle ref) return ref.java();
-                if (v instanceof String name) throw new RuntimeException("'" + name + "' is a scoped global variable. Retrieve it first: var " + name + " = get " + name + " for <scope>");
+                if (v instanceof VarHandle ref) {
+                    if (ref.globalInfo() != null && ref.globalInfo().scoped()) return ref.name();
+                    return ref.java();
+                }
                 throw new RuntimeException("Cannot generate Java for null list reference");
             }
 
@@ -1138,17 +1138,17 @@ public final class DefaultTypeBindings {
             public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
                 String name = tokens.get(0);
                 VarHandle ref = env.lookupVar(name);
-                if (ref != null) {
-                    if (!isMap(ref)) throw new ParseFailureException("'" + name + "' is not a map variable");
-                    return ref;
-                }
-                throw new ParseFailureException("'" + name + "' is not a map variable");
+                if (ref == null) throw new ParseFailureException("'" + name + "' is not a map variable");
+                if (!isMap(ref)) throw new ParseFailureException("'" + name + "' is not a map variable");
+                return ref;
             }
 
             @Override
             public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
-                if (v instanceof VarHandle ref) return ref.java();
-                if (v instanceof String name) throw new RuntimeException("'" + name + "' is a scoped global variable. Retrieve it first: var " + name + " = get " + name + " for <scope>");
+                if (v instanceof VarHandle ref) {
+                    if (ref.globalInfo() != null && ref.globalInfo().scoped()) return ref.name();
+                    return ref.java();
+                }
                 throw new RuntimeException("Cannot generate Java for null map reference");
             }
 

@@ -80,7 +80,7 @@ public final class VarDeclarationForm {
                 emitScopedGlobalSet(name, globalInfo, exprTokens, emitCtx, env);
                 return;
             }
-            throw new DiagnosticException(LumenDiagnostic.error("E502", "Cannot resolve expression")
+            throw new DiagnosticException(LumenDiagnostic.error("Cannot resolve expression")
                     .at(emitCtx.line(), emitCtx.raw())
                     .highlight(exprTokens.get(0).start(), exprTokens.get(exprTokens.size() - 1).end())
                     .label("'" + ExprResolver.joinTokens(exprTokens) + "' is not a recognized expression")
@@ -93,11 +93,11 @@ public final class VarDeclarationForm {
 
     private static void emitScopedGlobalSet(@NotNull String name, @NotNull EnvironmentAccess.GlobalInfo info, @NotNull List<Token> exprTokens, @NotNull HandlerContextImpl ctx, @NotNull TypeEnv env) {
         if (!info.scoped()) {
-            throw new DiagnosticException(LumenDiagnostic.error("E502", "Variable '" + name + "' is not a scoped global")
+            throw new DiagnosticException(LumenDiagnostic.error("Variable '" + name + "' is not a scoped global")
                     .at(ctx.line(), ctx.raw())
                     .highlight(exprTokens.get(0).start(), exprTokens.get(exprTokens.size() - 1).end())
                     .label("'" + name + "' is not scoped")
-                    .help("declare with 'global scoped " + name + "' to use per-entity access")
+                    .help("declare it inside a 'global:' block with 'scoped to <type> " + name + ": <type>' for per-entity access")
                     .build());
         }
         int splitIdx = -1;
@@ -109,7 +109,7 @@ public final class VarDeclarationForm {
             }
         }
         if (splitIdx < 0) {
-            throw new DiagnosticException(LumenDiagnostic.error("E502", "Scoped global '" + name + "' requires a scope")
+            throw new DiagnosticException(LumenDiagnostic.error("Scoped global '" + name + "' requires a scope")
                     .at(ctx.line(), ctx.raw())
                     .highlight(exprTokens.get(0).start(), exprTokens.get(exprTokens.size() - 1).end())
                     .label("missing scope")
@@ -126,7 +126,7 @@ public final class VarDeclarationForm {
         }
 
         if (scopeTokens.size() != 1) {
-            throw new DiagnosticException(LumenDiagnostic.error("E502", "Invalid scope expression")
+            throw new DiagnosticException(LumenDiagnostic.error("Invalid scope expression")
                     .at(ctx.line(), ctx.raw())
                     .highlight(scopeTokens.get(0).start(), scopeTokens.get(scopeTokens.size() - 1).end())
                     .label("expected a single variable name after 'for'")
@@ -137,7 +137,7 @@ public final class VarDeclarationForm {
         VarRef scopeRef = env.lookupVar(scopeVarName);
         if (scopeRef == null) {
             String suggestion = FuzzyMatch.closest(scopeVarName, env.allVisibleVarNames());
-            LumenDiagnostic.Builder diagBuilder = LumenDiagnostic.error("E500", "Variable '" + scopeVarName + "' not found")
+            LumenDiagnostic.Builder diagBuilder = LumenDiagnostic.error("Variable '" + scopeVarName + "' not found")
                     .at(ctx.line(), ctx.raw())
                     .highlight(scopeTokens.get(0).start(), scopeTokens.get(0).end())
                     .label("undefined variable");
@@ -146,39 +146,34 @@ public final class VarDeclarationForm {
             throw new DiagnosticException(diagBuilder.build());
         }
         if (scopeRef.objectType() == null) {
-            throw new DiagnosticException(LumenDiagnostic.error("E502", "Scope variable '" + scopeVarName + "' has no type")
+            throw new DiagnosticException(LumenDiagnostic.error("Scope variable '" + scopeVarName + "' has no type")
                     .at(ctx.line(), ctx.raw())
                     .highlight(scopeTokens.get(0).start(), scopeTokens.get(0).end())
                     .label("expected a typed variable like a player or entity")
                     .help("use a typed variable as scope")
                     .build());
         }
-        if (scopeRef.type() instanceof NullableType && env.nullState(scopeRef.java()) != TypeEnv.NullState.NON_NULL) {
-            env.addWarning(LumenDiagnostic.warning("W301", "Nullable scope used for scoped global access")
-                    .at(ctx.line(), ctx.raw())
-                    .highlight(scopeTokens.get(0).start(), scopeTokens.get(0).end())
-                    .label("'" + scopeVarName + "' is " + scopeRef.type().displayName() + " and may be null at runtime")
-                    .help("narrow first with 'if " + scopeVarName + " is set:' to avoid a possible NullPointerException")
-                    .build());
-        }
-
         String storageClass = info.stored() ? "PersistentVars" : "GlobalVars";
         String keyExpr = "\"" + info.className() + "." + name + ".\" + " + scopeRef.objectType().keyExpression(scopeRef.java());
         ctx.out().line(storageClass + ".set(" + keyExpr + ", " + valueJava + ");");
         VarRef fieldRef = env.lookupVar(name);
-        if (fieldRef != null) {
+        if (fieldRef != null && !isScopedGlobal(fieldRef)) {
             ctx.out().line(fieldRef.java() + " = " + valueJava + ";");
         }
+    }
+
+    private static boolean isScopedGlobal(@NotNull VarRef ref) {
+        return ref.globalInfo() != null && ref.globalInfo().scoped();
     }
 
     private static boolean tryReassignment(@NotNull String name, @NotNull VarRef ref, @NotNull List<Token> exprTokens, @NotNull Token nameToken, @NotNull HandlerContextImpl ctx, @NotNull TypeEnv env) {
         BlockContext block = env.blockContext();
         if (block.getEnvFromParents("__lambda_block") != null && env.isVarCapturedByLambda(name)) {
-            throw new DiagnosticException(LumenDiagnostic.error("E502", "Cannot modify '" + name + "' inside a schedule block")
+            throw new DiagnosticException(LumenDiagnostic.error("Cannot modify '" + name + "' inside a schedule block")
                     .at(ctx.line(), ctx.raw())
                     .highlight(nameToken.start(), nameToken.end())
                     .label("captured variable cannot be modified")
-                    .help("use 'global " + name + " with default <value>' instead")
+                    .help("declare it inside a 'global:' block as '" + name + ": <type> with default <value>'")
                     .build());
         }
         boolean isNone = exprTokens.size() == 1 && exprTokens.get(0).kind() == TokenKind.IDENT && isNullKeyword(exprTokens.get(0).text());
@@ -223,19 +218,10 @@ public final class VarDeclarationForm {
     private static void emitDeclaration(@NotNull String name, @NotNull List<Token> exprTokens, @NotNull Token nameToken, @NotNull HandlerContextImpl ctx, @NotNull TypeEnv env) {
         String nameError = VarNameValidator.validate(name);
         if (nameError != null) {
-            throw new DiagnosticException(LumenDiagnostic.error("E502", nameError)
+            throw new DiagnosticException(LumenDiagnostic.error(nameError)
                     .at(ctx.line(), ctx.raw())
                     .highlight(nameToken.start(), nameToken.end())
                     .label("invalid variable name")
-                    .build());
-        }
-
-        if (env.blockContext().isRoot()) {
-            throw new DiagnosticException(LumenDiagnostic.error("E502", "'set' cannot be used at the top level of a script")
-                    .at(ctx.line(), ctx.raw())
-                    .highlight(nameToken.start(), nameToken.end())
-                    .label("top-level 'set' not allowed")
-                    .help("use 'global " + name + " with default <value>' instead")
                     .build());
         }
 
@@ -264,7 +250,7 @@ public final class VarDeclarationForm {
             if (ref == null) {
                 Token varToken = exprTokens.get(0);
                 String suggestion = FuzzyMatch.closest(r.name(), env.allVisibleVarNames());
-                    LumenDiagnostic.Builder diagBuilder = LumenDiagnostic.error("E500", "Variable '" + r.name() + "' not found")
+                LumenDiagnostic.Builder diagBuilder = LumenDiagnostic.error("Variable '" + r.name() + "' not found")
                             .at(ctx.line(), ctx.raw())
                             .highlight(varToken.start(), varToken.end())
                             .label("undefined variable");
@@ -301,7 +287,7 @@ public final class VarDeclarationForm {
                 if (singleToken.kind() == TokenKind.IDENT) {
                     if (isNullKeyword(singleToken.text())) {
                         Token noneToken = raw.tokens().get(0);
-                        LumenDiagnostic diag = LumenDiagnostic.error("E101", "Cannot declare variable with 'none' without a type")
+                        LumenDiagnostic diag = LumenDiagnostic.error("Cannot declare variable with 'none' without a type")
                                 .at(ctx.line(), ctx.raw())
                                 .highlight(noneToken.start(), noneToken.end())
                                 .label("'none' has no type")
@@ -310,7 +296,7 @@ public final class VarDeclarationForm {
                         throw new DiagnosticException(diag);
                     } else if (env.lookupVar(singleToken.text()) == null) {
                         String suggestion = FuzzyMatch.closest(singleToken.text(), env.allVisibleVarNames());
-                        LumenDiagnostic.Builder diagBuilder = LumenDiagnostic.error("E500", "Variable '" + singleToken.text() + "' not found")
+                        LumenDiagnostic.Builder diagBuilder = LumenDiagnostic.error("Variable '" + singleToken.text() + "' not found")
                                 .at(ctx.line(), ctx.raw())
                                 .highlight(singleToken.start(), singleToken.end())
                                 .label("undefined variable");
@@ -334,7 +320,7 @@ public final class VarDeclarationForm {
         }
         String typeDecl = resolvedLumenType.javaTypeName();
         ctx.out().line(typeDecl + " " + name + " = " + java + ";");
-        VarRef varRef = new VarRef(resolvedLumenType, name, resolvedMetadata);
+        VarRef varRef = new VarRef(name, resolvedLumenType, name, resolvedMetadata);
         env.defineVar(name, varRef);
         env.recordDeclaration(name, ctx.line(), ctx.raw());
         if (resolvedLumenType instanceof NullableType) {
@@ -351,7 +337,7 @@ public final class VarDeclarationForm {
     private static void emitNullableDeclaration(@NotNull String name, @NotNull List<Token> exprTokens, @NotNull Token nameToken, @NotNull HandlerContextImpl ctx, @NotNull TypeEnv env) {
         TypeAnnotationParser.ParseResult result = TypeAnnotationParser.parseDetailed(exprTokens, 0, env::lookupDataSchema);
         if (result instanceof TypeAnnotationParser.ParseResult.Failure f) {
-            throw new DiagnosticException(SuggestionDiagnostics.buildTypeFailure("E501", "Invalid nullable type", ctx.line(), ctx.raw(), exprTokens, f));
+            throw new DiagnosticException(SuggestionDiagnostics.buildTypeFailure("Invalid nullable type", ctx.line(), ctx.raw(), exprTokens, f));
         }
         TypeAnnotationParser parsed = ((TypeAnnotationParser.ParseResult.Success) result).parser();
         NullableType nullableType = (NullableType) parsed.type();
@@ -370,7 +356,7 @@ public final class VarDeclarationForm {
         }
         ctx.out().line(nullableType.javaTypeName() + " " + name + " = " + java + ";");
         Map<String, Object> metadata = parsed.dataSchemaName() != null ? Map.of("data_type", parsed.dataSchemaName()) : Map.of();
-        VarRef varRef = new VarRef(nullableType, name, metadata);
+        VarRef varRef = new VarRef(name, nullableType, name, metadata);
         env.defineVar(name, varRef);
         env.recordDeclaration(name, ctx.line(), ctx.raw());
         env.recordNullableVarInfo(name, new TypeEnv.NullableVarInfo(ctx.line(), ctx.raw()));
@@ -486,8 +472,8 @@ public final class VarDeclarationForm {
     private static @NotNull LumenDiagnostic buildExpressionDiagnostic(@NotNull List<Token> tokens, int line, @NotNull String raw, @NotNull TypeEnv env) {
         List<PatternSimulator.Suggestion> suggestions = PatternSimulator.suggestExpressions(tokens, PatternRegistry.instance(), env);
         if (!suggestions.isEmpty()) {
-            return SuggestionDiagnostics.build("E502", "Cannot resolve expression", line, raw, tokens, suggestions, env);
+            return SuggestionDiagnostics.build("Cannot resolve expression", line, raw, tokens, suggestions, env);
         }
-        return SuggestionDiagnostics.buildNoSuggestion("E502", "Cannot resolve expression", line, raw, tokens, env);
+        return SuggestionDiagnostics.buildNoSuggestion("Cannot resolve expression", line, raw, tokens, env);
     }
 }

@@ -81,27 +81,6 @@ a local before the block runs, so you assign to it directly:
     } else {
         killer = null;
     }""")
-.
-
-withMeta("nullable",true)
-.
-
-varDescription("The player who killed the entity, or null if not killed by a player")
-```
-
-The same pattern works for `instanceof` casts:
-
-```java
-.addVar("player",MinecraftTypes.PLAYER,
-    """
-    if (event.getEntity() instanceof Player __p) {
-        player = __p;
-    } else {
-        player = null;
-    }""")
-.
-
-varDescription("The damaged player, or null if the entity is not a player")
 ```
 
 Use a temp variable with a `__` prefix (like `__p`) to avoid colliding with the declared local.

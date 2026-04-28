@@ -42,7 +42,7 @@ public final class ListStatements {
         LumenType expected = ct.typeArguments().get(0);
         LumenType actual = ctx.resolvedType(paramName);
         if (actual == null || expected.assignableFrom(actual)) return;
-        throw new DiagnosticException(LumenDiagnostic.error("E401", "List element type mismatch")
+        throw new DiagnosticException(LumenDiagnostic.error("List element type mismatch")
                 .at(ctx.block().line(), ctx.block().raw())
                 .label("expected '" + expected.displayName() + "', got '" + actual.displayName() + "'")
                 .help("this list only accepts '" + expected.displayName() + "' elements")
@@ -61,7 +61,7 @@ public final class ListStatements {
         EnvironmentAccess env = ctx.env();
         EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
         if (scopeRef == null) {
-            throw new DiagnosticException(LumenDiagnostic.error("E500", "Scope variable '" + scopeVarName + "' not found")
+            throw new DiagnosticException(LumenDiagnostic.error("Scope variable '" + scopeVarName + "' not found")
                     .at(ctx.block().line(), ctx.block().raw())
                     .label("undefined variable")
                     .help("make sure the variable is defined before using it")
@@ -74,10 +74,10 @@ public final class ListStatements {
     private static void emitScopedMutation(@NotNull HandlerContext ctx, @NotNull String listVarName, @NotNull String scopeVarName, @NotNull Function<String, String> mutation) {
         EnvironmentAccess.GlobalInfo info = ctx.env().getGlobalInfo(listVarName);
         if (info == null) {
-            throw new DiagnosticException(LumenDiagnostic.error("E500", "'" + listVarName + "' is not a global variable")
+            throw new DiagnosticException(LumenDiagnostic.error("'" + listVarName + "' is not a global variable")
                     .at(ctx.block().line(), ctx.block().raw())
                     .label("not a global")
-                    .help("declare with 'global " + listVarName + " with default new list'")
+                    .help("declare it inside a 'global:' block as '" + listVarName + ": list of <type>'")
                     .build());
         }
         String storageClass = info.stored() ? "PersistentVars" : "GlobalVars";
@@ -94,7 +94,7 @@ public final class ListStatements {
     public void register(@NotNull LumenAPI api) {
         api.patterns().statement(b -> b
                 .by("Lumen")
-                .pattern("add %val:EXPR% to %list:LIST% for %scope:EXPR%")
+                .pattern("add %val:EXPR% to %list:LIST% for %scope:VAR%")
                 .description("Adds a value to the end of a scoped global list for a specific scope reference.")
                 .example("add task to todos for player")
                 .since("1.0.0")
@@ -106,7 +106,7 @@ public final class ListStatements {
 
         api.patterns().statement(b -> b
                 .by("Lumen")
-                .pattern("remove %val:EXPR% from %list:LIST% for %scope:EXPR%")
+                .pattern("remove %val:EXPR% from %list:LIST% for %scope:VAR%")
                 .description("Removes the first occurrence of a value from a scoped global list for a specific scope reference.")
                 .example("remove task from todos for player")
                 .since("1.0.0")
@@ -118,7 +118,7 @@ public final class ListStatements {
 
         api.patterns().statement(b -> b
                 .by("Lumen")
-                .pattern("remove [index] %i:INT% from %list:LIST% for %scope:EXPR%")
+                .pattern("remove [index] %i:INT% from %list:LIST% for %scope:VAR%")
                 .description("Removes the element at a specific index from a scoped global list for a specific scope reference.")
                 .example("remove index 0 from todos for player")
                 .since("1.0.0")
@@ -127,7 +127,7 @@ public final class ListStatements {
 
         api.patterns().statement(b -> b
                 .by("Lumen")
-                .pattern("clear %list:LIST% for %scope:EXPR%")
+                .pattern("clear %list:LIST% for %scope:VAR%")
                 .description("Removes all elements from a scoped global list for a specific scope reference.")
                 .example("clear todos for player")
                 .since("1.0.0")

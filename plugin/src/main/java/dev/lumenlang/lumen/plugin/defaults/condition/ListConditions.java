@@ -49,7 +49,7 @@ public final class ListConditions {
 
         api.patterns().condition(b -> b
                 .by("Lumen")
-                .pattern("%list:LIST% (is|is not) empty for %scope:EXPR%")
+                .pattern("%list:LIST% (is|is not) empty for %scope:VAR%")
                 .description("Checks if a scoped global list is or is not empty for a specific scope reference.")
                 .examples("if todos is empty for player:", "if todos is not empty for player:")
                 .since("1.0.0")
@@ -57,12 +57,13 @@ public final class ListConditions {
                 .handler(ctx -> {
                     Object listVal = ctx.value("list");
                     if (listVal instanceof EnvironmentAccess.VarHandle) {
-                        throw new RuntimeException("Cannot use 'for <scope>' with a local list variable. Use '%list% is empty' instead, or declare the list as 'global scoped'.");
+                        throw new RuntimeException("Cannot use 'for <scope>' with a local list variable. Use '<list> is empty' instead, or declare the list inside a 'global:' block with 'scoped to <type>'.");
                     }
                     String listVarName = (String) listVal;
                     EnvironmentAccess.GlobalInfo info = ctx.env().getGlobalInfo(listVarName);
                     if (info == null) throw new RuntimeException("'" + listVarName + "' is not a global variable.");
-                    if (!info.scoped()) throw new RuntimeException("'" + listVarName + "' is not a scoped global. Declare it with 'global scoped " + listVarName + "' to use per-entity access.");
+                    if (!info.scoped())
+                        throw new RuntimeException("'" + listVarName + "' is not a scoped global. Declare it inside a 'global:' block with 'scoped to <type> " + listVarName + ": list of <type>' for per-entity access.");
                     String scopeVarName = ctx.java("scope");
                     EnvironmentAccess.VarHandle scopeRef = ctx.env().lookupVar(scopeVarName);
                     if (scopeRef == null) throw new RuntimeException("Scope variable not found: " + scopeVarName);

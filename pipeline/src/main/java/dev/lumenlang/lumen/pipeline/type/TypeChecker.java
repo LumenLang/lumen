@@ -30,7 +30,7 @@ public final class TypeChecker {
         if (targetType.assignableFrom(sourceType)) return null;
 
         if (sourceType instanceof NullableType && !(targetType instanceof NullableType)) {
-            return LumenDiagnostic.error("E102", "Cannot assign nullable value to non-nullable variable")
+            return LumenDiagnostic.error("Cannot assign nullable value to non-nullable variable")
                     .at(line, sourceText).highlight(colStart, colEnd)
                     .label("expected '" + targetType.displayName() + "', found '" + sourceType.displayName() + "'")
                     .note("variable '" + varName + "' is declared as '" + targetType.displayName() + "' which cannot hold 'none'")
@@ -39,7 +39,7 @@ public final class TypeChecker {
         }
 
         if (targetType.numeric() && sourceType.numeric()) {
-            return LumenDiagnostic.error("E103", "Lossy numeric conversion")
+            return LumenDiagnostic.error("Lossy numeric conversion")
                     .at(line, sourceText).highlight(colStart, colEnd)
                     .label("expected '" + targetType.displayName() + "', found '" + sourceType.displayName() + "'")
                     .note("converting '" + sourceType.displayName() + "' to '" + targetType.displayName() + "' may lose precision")
@@ -47,7 +47,7 @@ public final class TypeChecker {
                     .build();
         }
 
-        return LumenDiagnostic.error("E100", "Type mismatch in assignment")
+        return LumenDiagnostic.error("Type mismatch in assignment")
                 .at(line, sourceText).highlight(colStart, colEnd)
                 .label("expected '" + targetType.displayName() + "', found '" + sourceType.displayName() + "'")
                 .note("variable '" + varName + "' was declared as '" + targetType.displayName() + "'")
@@ -69,7 +69,7 @@ public final class TypeChecker {
     public static @Nullable LumenDiagnostic checkNullAssignment(@NotNull LumenType targetType, @NotNull String varName, int line, @NotNull String sourceText, int colStart, int colEnd) {
         if (targetType instanceof NullableType) return null;
 
-        return LumenDiagnostic.error("E101", "Cannot assign 'none' to non-nullable variable")
+        return LumenDiagnostic.error("Cannot assign 'none' to non-nullable variable")
                 .at(line, sourceText).highlight(colStart, colEnd)
                 .label("'" + varName + "' is not nullable")
                 .note("variable '" + varName + "' has type '" + targetType.displayName() + "' which does not accept 'none'")
@@ -97,7 +97,7 @@ public final class TypeChecker {
         if (!(type instanceof NullableType)) return null;
         if (isNullChecked) return null;
 
-        LumenDiagnostic.Builder b = LumenDiagnostic.error("E301", "Variable '" + varName + "' is none")
+        LumenDiagnostic.Builder b = LumenDiagnostic.error("Variable '" + varName + "' is none")
                 .at(line, sourceText).highlight(colStart, colEnd)
                 .label("'" + varName + "' is 'none' here");
         if (nullAssignLine > 0 && nullAssignSource != null && nullAssignLine != declLine) {

@@ -49,6 +49,10 @@ public interface AddonTypeBinding {
     /**
      * Parses the given token texts into a runtime value.
      *
+     * <p>
+     * To <b>reject</b> a match, throw {@link ParseFailureException}. The pattern
+     * matcher catches it and treats the binding as a non-match.
+     *
      * @param tokens the token texts to parse
      * @param env    the current type environment
      * @return the parsed value

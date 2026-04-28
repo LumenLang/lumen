@@ -50,7 +50,7 @@ public final class MapBlocks {
                     @Override
                     public void begin(@NotNull HandlerContext ctx) {
                         if (ctx.block().isRoot()) {
-                            throw new DiagnosticException(LumenDiagnostic.error("E502", "A 'loop' block cannot be top level")
+                            throw new DiagnosticException(LumenDiagnostic.error("A 'loop' block cannot be top level")
                                     .at(ctx.block().line(), ctx.block().raw())
                                     .label("top level loop not allowed")
                                     .help("place 'loop' inside an event, command, or other block")
@@ -60,14 +60,14 @@ public final class MapBlocks {
                         String keyName = ctx.java("key");
                         String valName = ctx.java("val");
                         if (ctx.env().lookupVar(keyName) != null) {
-                            throw new DiagnosticException(LumenDiagnostic.error("E502", "Loop variable '" + keyName + "' is already defined")
+                            throw new DiagnosticException(LumenDiagnostic.error("Loop variable '" + keyName + "' is already defined")
                                     .at(ctx.block().line(), ctx.block().raw())
                                     .label("'" + keyName + "' already exists in this scope")
                                     .help("use a different variable name")
                                     .build());
                         }
                         if (ctx.env().lookupVar(valName) != null) {
-                            throw new DiagnosticException(LumenDiagnostic.error("E502", "Loop variable '" + valName + "' is already defined")
+                            throw new DiagnosticException(LumenDiagnostic.error("Loop variable '" + valName + "' is already defined")
                                     .at(ctx.block().line(), ctx.block().raw())
                                     .label("'" + valName + "' already exists in this scope")
                                     .help("use a different variable name")
@@ -94,7 +94,7 @@ public final class MapBlocks {
 
         api.patterns().block(b -> b
                 .by("Lumen")
-                .pattern("loop %key:EXPR% %val:EXPR% in %map:MAP% for %scope:EXPR%")
+                .pattern("loop %key:EXPR% %val:EXPR% in %map:MAP% for %scope:VAR%")
                 .description("Iterates over each entry of a scoped global map, binding the key and value to separate variables.")
                 .example("loop k v in stats for player:")
                 .since("1.0.0")
@@ -107,7 +107,7 @@ public final class MapBlocks {
                     @Override
                     public void begin(@NotNull HandlerContext ctx) {
                         if (ctx.block().isRoot()) {
-                            throw new DiagnosticException(LumenDiagnostic.error("E502", "A 'loop' block cannot be top level")
+                            throw new DiagnosticException(LumenDiagnostic.error("A 'loop' block cannot be top level")
                                     .at(ctx.block().line(), ctx.block().raw())
                                     .label("top level loop not allowed")
                                     .help("place 'loop' inside an event, command, or other block")
@@ -117,14 +117,14 @@ public final class MapBlocks {
                         String keyName = ctx.java("key");
                         String valName = ctx.java("val");
                         if (env.lookupVar(keyName) != null) {
-                            throw new DiagnosticException(LumenDiagnostic.error("E502", "Loop variable '" + keyName + "' is already defined")
+                            throw new DiagnosticException(LumenDiagnostic.error("Loop variable '" + keyName + "' is already defined")
                                     .at(ctx.block().line(), ctx.block().raw())
                                     .label("'" + keyName + "' already exists in this scope")
                                     .help("use a different variable name")
                                     .build());
                         }
                         if (env.lookupVar(valName) != null) {
-                            throw new DiagnosticException(LumenDiagnostic.error("E502", "Loop variable '" + valName + "' is already defined")
+                            throw new DiagnosticException(LumenDiagnostic.error("Loop variable '" + valName + "' is already defined")
                                     .at(ctx.block().line(), ctx.block().raw())
                                     .label("'" + valName + "' already exists in this scope")
                                     .help("use a different variable name")
@@ -135,22 +135,22 @@ public final class MapBlocks {
                         String scopeVarName = ctx.java("scope");
                         EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(mapVarName);
                         if (info == null) {
-                            throw new DiagnosticException(LumenDiagnostic.error("E500", "'" + mapVarName + "' is not a global variable")
+                            throw new DiagnosticException(LumenDiagnostic.error("'" + mapVarName + "' is not a global variable")
                                     .at(ctx.block().line(), ctx.block().raw())
                                     .label("not a global")
-                                    .help("declare with 'global " + mapVarName + " with default new map'")
+                                    .help("declare it inside a 'global:' block as '" + mapVarName + ": map of <key> to <value>'")
                                     .build());
                         }
                         if (!info.scoped()) {
-                            throw new DiagnosticException(LumenDiagnostic.error("E502", "'" + mapVarName + "' is not a scoped global")
+                            throw new DiagnosticException(LumenDiagnostic.error("'" + mapVarName + "' is not a scoped global")
                                     .at(ctx.block().line(), ctx.block().raw())
                                     .label("not scoped")
-                                    .help("declare with 'global scoped " + mapVarName + "' to use per-entity access")
+                                    .help("declare it inside a 'global:' block with 'scoped to <type> " + mapVarName + ": map of <key> to <value>' for per-entity access")
                                     .build());
                         }
                         EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
                         if (scopeRef == null) {
-                            throw new DiagnosticException(LumenDiagnostic.error("E500", "Scope variable '" + scopeVarName + "' not found")
+                            throw new DiagnosticException(LumenDiagnostic.error("Scope variable '" + scopeVarName + "' not found")
                                     .at(ctx.block().line(), ctx.block().raw())
                                     .label("undefined variable")
                                     .help("make sure the variable is defined before using it")

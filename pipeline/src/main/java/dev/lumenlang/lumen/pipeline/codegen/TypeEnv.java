@@ -1,6 +1,7 @@
 package dev.lumenlang.lumen.pipeline.codegen;
 
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
+import dev.lumenlang.lumen.api.codegen.NarrowingFact;
 import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.ObjectType;
@@ -49,7 +50,7 @@ public final class TypeEnv implements EnvironmentAccess {
     private final Set<String> runtimeGlobals = new HashSet<>();
     private final Set<String> globalFields = new HashSet<>();
     private final Set<String> experimental = new HashSet<>();
-    private final List<GlobalVarInfo> globalVars = new ArrayList<>();
+    private final List<VarRef> globalVars = new ArrayList<>();
     private final List<ConfigEntry> configEntries = new ArrayList<>();
     private final Map<String, VarRef> rootVars = new HashMap<>();
     private final Map<String, DataSchema> dataSchemas = new HashMap<>();
@@ -58,6 +59,7 @@ public final class TypeEnv implements EnvironmentAccess {
     private final Map<String, NullAssignmentInfo> nullAssignments = new HashMap<>();
     private final Map<String, DeclarationInfo> declarationInfos = new HashMap<>();
     private final List<LumenDiagnostic> warnings = new ArrayList<>();
+    private final List<NarrowingFact> pendingNarrowings = new ArrayList<>();
     private BlockContext currentBlock;
 
     /**
@@ -277,6 +279,36 @@ public final class TypeEnv implements EnvironmentAccess {
         nullStates.remove(javaName);
     }
 
+    @Override
+    public void pushNarrowing(@NotNull NarrowingFact fact) {
+        pendingNarrowings.add(fact);
+    }
+
+    @Override
+    public @NotNull List<NarrowingFact> consumeNarrowings() {
+        if (pendingNarrowings.isEmpty()) return List.of();
+        List<NarrowingFact> drained = List.copyOf(pendingNarrowings);
+        pendingNarrowings.clear();
+        return drained;
+    }
+
+    @Override
+    public void applyNarrowings(@NotNull List<NarrowingFact> facts) {
+        for (NarrowingFact f : facts) {
+            switch (f.kind()) {
+                case NON_NULL -> nullStates.put(f.javaName(), NullState.NON_NULL);
+                case NULLABLE -> nullStates.put(f.javaName(), NullState.NULL);
+            }
+        }
+    }
+
+    @Override
+    public void clearNarrowings(@NotNull List<NarrowingFact> facts) {
+        for (NarrowingFact f : facts) {
+            nullStates.remove(f.javaName());
+        }
+    }
+
     /**
      * Defines a named {@link VarRef} in the current block scope.
      *
@@ -299,7 +331,16 @@ public final class TypeEnv implements EnvironmentAccess {
             VarRef v = c.getVarLocal(name);
             if (v != null) return v;
         }
-        return rootVars.get(name);
+        VarRef root = rootVars.get(name);
+        if (root != null) return root;
+        return findGlobal(name);
+    }
+
+    public boolean hasLocalBinding(@NotNull String name) {
+        for (BlockContext c = currentBlock; c != null; c = c.parent()) {
+            if (c.getVarLocal(name) != null) return true;
+        }
+        return rootVars.containsKey(name);
     }
 
     /**
@@ -500,7 +541,7 @@ public final class TypeEnv implements EnvironmentAccess {
      *
      * @return the global var declarations
      */
-    public @NotNull List<GlobalVarInfo> globalVars() {
+    public @NotNull List<VarRef> globalVars() {
         return Collections.unmodifiableList(globalVars);
     }
 
@@ -512,34 +553,31 @@ public final class TypeEnv implements EnvironmentAccess {
      */
     @Override
     public boolean isGlobal(@NotNull String name) {
-        for (GlobalVarInfo g : globalVars) {
-            if (g.name.equals(name)) return true;
+        for (VarRef g : globalVars) {
+            if (g.name().equals(name)) return true;
         }
         return false;
     }
 
     @Override
-    public @Nullable GlobalVarInfo getGlobalInfo(@NotNull String name) {
-        for (GlobalVarInfo g : globalVars) {
-            if (g.name.equals(name)) return g;
+    public @Nullable GlobalInfo getGlobalInfo(@NotNull String name) {
+        VarRef g = findGlobal(name);
+        return g != null ? g.globalInfo() : null;
+    }
+
+    public @Nullable VarRef findGlobal(@NotNull String name) {
+        for (VarRef g : globalVars) {
+            if (g.name().equals(name)) return g;
         }
         return null;
     }
 
-    @Override
-    public void registerGlobal(@NotNull GlobalInfo info) {
-        if (info instanceof GlobalVarInfo gvi) {
-            globalVars.add(gvi);
-        } else {
-            globalVars.add(new GlobalVarInfo(
-                    info.name(), info.defaultJava(), info.className(),
-                    info.scoped(), info.stored(),
-                    info.exprMetadata(), info.type(), info.scopeType()));
-        }
+    public void registerGlobal(@NotNull VarRef global) {
+        globalVars.add(global);
     }
 
     @Override
-    public @NotNull List<GlobalVarInfo> allGlobals() {
+    public @NotNull List<VarRef> allGlobals() {
         return Collections.unmodifiableList(globalVars);
     }
 
@@ -590,7 +628,7 @@ public final class TypeEnv implements EnvironmentAccess {
 
     @Override
     public VarHandle defineRootVar(@NotNull String name, @NotNull LumenType type, @NotNull String java) {
-        VarRef ref = new VarRef(type, java);
+        VarRef ref = new VarRef(name, type, java);
         rootVars.put(name, ref);
         return ref;
     }
@@ -615,14 +653,14 @@ public final class TypeEnv implements EnvironmentAccess {
 
     @Override
     public VarHandle defineVar(@NotNull String name, @NotNull LumenType type, @NotNull String java) {
-        VarRef ref = new VarRef(type, java);
+        VarRef ref = new VarRef(name, type, java);
         defineVar(name, ref);
         return ref;
     }
 
     @Override
     public VarHandle defineVar(@NotNull String name, @NotNull LumenType type, @NotNull String java, @NotNull Map<String, Object> metadata) {
-        VarRef ref = new VarRef(type, java, metadata);
+        VarRef ref = new VarRef(name, type, java, metadata);
         defineVar(name, ref);
         return ref;
     }
@@ -649,11 +687,9 @@ public final class TypeEnv implements EnvironmentAccess {
      * @param type         the declared compile-time type
      * @param scopeType    the scope type for scoped globals, or {@code null} if not scoped
      */
-    public record GlobalVarInfo(@NotNull String name, @NotNull String defaultJava,
+    public record GlobalVarInfo(@NotNull String defaultJava,
                                 @NotNull String className, boolean scoped,
                                 boolean stored,
-                                @Nullable Map<String, Object> exprMetadata,
-                                @NotNull LumenType type,
                                 @Nullable LumenType scopeType)
             implements EnvironmentAccess.GlobalInfo {
     }

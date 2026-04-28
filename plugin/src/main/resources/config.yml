@@ -65,6 +65,17 @@ debug:
 
 # Compilation strategy and performance
 performance:
+  # Java compiler backend used to compile generated script classes.
+  #
+  # Options:
+  #   auto   - Use javac when available, fall back to Vanta otherwise (default)
+  #   javac  - Always use the system Java compiler
+  #   vanta  - Use Vanta, a fast embedded compiler (beta, roughly 10 to 20x faster in hot compiles, much faster in cold as well)
+  #
+  # Vanta is in beta. If it cannot compile a file it automatically falls back to javac for that file.
+  # Vanta is only meant to have Java 17 features, so if your scripts use newer Java features (e.g. because of a addon, or raw Java code), those files may not compile properly with Vanta.
+  compiler: auto
+
   # Cache compiled classes between reloads and restarts.
   #
   # If scripts have not changed, classes will be loaded almost instantly
@@ -84,6 +95,14 @@ performance:
   # This is done asynchronously to avoid blocking the main thread, but it may be worse overall startup for bad CPUs or limited resources.
   # Note, JIT takes time to optimize, running a warmup way earlier in the startup process results in much better compile times.
   warmup-on-startup: false
+
+  # This feature only applies when compiler is set to vanta.
+  # Number of threads used to compile scripts in parallel.
+  # When enabled, multiple scripts are compiled concurrently, which can significantly reduce total compilation time on decent hardware with many scripts.
+  # However, it is not useful if you only have small scripts, or very few scripts. It may also wield diminishing returns or even worse performance if other things are taking up threads in the startup.
+  # Set to 0 or 1 to compile scripts sequentially.
+  # Best number for many scripts is usually 3 or 8 threads.
+  compile-threads: 2
 
   # Exclude certain packages from the classpath when compiling scripts, such as internals or large libraries.
   # This can speed up compilation and reduce memory usage.

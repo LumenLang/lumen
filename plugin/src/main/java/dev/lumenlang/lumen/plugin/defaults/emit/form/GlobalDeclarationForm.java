@@ -72,7 +72,7 @@ public final class GlobalDeclarationForm {
         migration.append(name).append(": <type>");
         if (hasDefault && !defaultExpr.isEmpty()) migration.append(" with default ").append(defaultExpr);
 
-        throw new DiagnosticException(LumenDiagnostic.error("W700", "Deprecated global syntax")
+        throw new DiagnosticException(LumenDiagnostic.error("Deprecated global syntax")
                 .at(ctx.line(), ctx.raw())
                 .label("the inline 'global' syntax is deprecated")
                 .note("use the typed 'global:' block syntax instead")

@@ -63,6 +63,16 @@ public record DataSchema(@NotNull String name, @NotNull Map<String, LumenType> f
         }
 
         /**
+         * Checks if a field with the given name has already been added.
+         *
+         * @param fieldName the field name to check
+         * @return true if the field exists, false otherwise
+         */
+        public boolean hasField(@NotNull String fieldName) {
+            return fields.containsKey(fieldName);
+        }
+
+        /**
          * Adds a field to the schema.
          *
          * @param fieldName the field name
