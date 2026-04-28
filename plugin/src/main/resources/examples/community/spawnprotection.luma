@@ -1,0 +1,60 @@
+# Spawn Protection
+# Prevents PvP and block breaking within a configurable radius of spawn.
+
+config:
+    sp_prefix: "&8[&bSpawn&8]&r"
+    spawn_radius: 50
+    spawn_x: 0
+    spawn_y: 64
+    spawn_z: 0
+
+on entity_damage_by_entity:
+    # player = victim (null if not a player), damagerPlayer = attacker (null if not a player)
+    if player is set:
+        if damagerPlayer is set:
+            # Check if victim is in spawn
+            set px to get player's x
+            set pz to get player's z
+            
+            # Simple distance check (ignoring Y for a cylinder-shaped zone)
+            set dx to px - spawn_x
+            set dz to pz - spawn_z
+            
+            # Compare squared distances (no sqrt needed)
+            set dist_sq to dx * dx + dz * dz
+            set radius_sq to spawn_radius * spawn_radius
+            
+            if dist_sq < radius_sq:
+                cancel event
+                message damagerPlayer "{sp_prefix} &cPvP is disabled near spawn!"
+
+on block_break:
+    set px to get player's x
+    set pz to get player's z
+    
+    set dx to px - spawn_x
+    set dz to pz - spawn_z
+    set dist_sq to dx * dx + dz * dz
+    set radius_sq to spawn_radius * spawn_radius
+    
+    if dist_sq < radius_sq:
+        # Allow ops to build
+        if player is op:
+            stop
+        cancel event
+        message player "{sp_prefix} &cYou can't break blocks near spawn!"
+
+on block_place:
+    set px to get player's x
+    set pz to get player's z
+    
+    set dx to px - spawn_x
+    set dz to pz - spawn_z
+    set dist_sq to dx * dx + dz * dz
+    set radius_sq to spawn_radius * spawn_radius
+    
+    if dist_sq < radius_sq:
+        if player is op:
+            stop
+        cancel event
+        message player "{sp_prefix} &cYou can't place blocks near spawn!"

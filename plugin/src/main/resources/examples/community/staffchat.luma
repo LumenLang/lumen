@@ -1,0 +1,50 @@
+# Staff Chat System
+# A simple toggleable staff chat for server moderators.
+# Features a toggle command and a quick-message command.
+
+config:
+    sc_prefix: "&8[&cStaff&8]&r"
+    sc_permission: "lumen.staffchat"
+
+# Store whether a player has staff chat toggled on
+global scoped staffchat_enabled with default 0
+
+# Command to toggle staff chat on/off
+command staffchat:
+    permission sc_permission
+    description "Toggle staff chat or send a quick message"
+    aliases sc
+    
+    set argc to args size
+    if argc == 0:
+        # Toggle mode
+        set current to get staffchat_enabled for player
+        if current == 0:
+            set staffchat_enabled to 1 for player
+            message player "{sc_prefix} &aStaff chat enabled. All your messages will go to staff."
+        else:
+            set staffchat_enabled to 0 for player
+            message player "{sc_prefix} &cStaff chat disabled. You are back in global chat."
+    else:
+        # Quick message mode (e.g. /sc hello everyone)
+        set msg to args joined with " "
+        set sender_name to get player's name
+        
+        loop p in all players:
+            if p has permission sc_permission:
+                message p "{sc_prefix} &e{sender_name}&f: {msg}"
+
+# Intercept normal chat if staff chat is toggled on
+on chat:
+    set enabled to get staffchat_enabled for player
+    if enabled == 1:
+        # Cancel the normal chat event so it doesn't go to everyone
+        cancel event
+        
+        set msg to message
+        set sender_name to get player's name
+        
+        # Send to all staff
+        loop p in all players:
+            if p has permission sc_permission:
+                message p "{sc_prefix} &e{sender_name}&f: {msg}"
