@@ -8,6 +8,7 @@ import dev.lumenlang.lumen.debug.server.snippet.SnippetWrapper;
 import dev.lumenlang.lumen.debug.session.DebugSession;
 import dev.lumenlang.lumen.debug.transform.LineInstrumentTransformer;
 import dev.lumenlang.lumen.pipeline.java.compiled.ScriptSourceMap;
+import dev.lumenlang.lumen.pipeline.language.exceptions.LumenScriptException;
 import org.java_websocket.WebSocket;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,8 +56,13 @@ public final class DebugMessageRouter {
     }
 
     private static @NotNull String formatException(@NotNull Throwable e) {
+        Throwable cause = e;
+        while (cause.getCause() != null) {
+            if (cause instanceof LumenScriptException) return cause.getMessage();
+            cause = cause.getCause();
+        }
+        if (cause instanceof LumenScriptException) return cause.getMessage();
         StringBuilder sb = new StringBuilder();
-        Throwable cause = e.getCause() != null ? e.getCause() : e;
         sb.append(cause.getClass().getName()).append(": ").append(cause.getMessage()).append("\n");
         for (StackTraceElement elem : cause.getStackTrace()) {
             sb.append("\tat ").append(elem).append("\n");
@@ -148,6 +154,10 @@ public final class DebugMessageRouter {
     private void handleOverride(@NotNull WebSocket conn, @NotNull Map<String, Object> msg) {
         String exprId = requireString(msg, "exprId");
         String script = exprId.substring(0, exprId.indexOf(':'));
+        if (!transformer.enabled(script)) {
+            send(conn, DebugProtocol.error("Debug not enabled for " + script + ". Call enableDebug first."));
+            return;
+        }
         Object modeRaw = msg.get("mode");
         String mode = modeRaw instanceof String s ? s : "value";
         if ("replace".equals(mode)) {
@@ -181,6 +191,10 @@ public final class DebugMessageRouter {
         String condId = requireString(msg, "condId");
         String mode = requireString(msg, "mode");
         String script = condId.substring(0, condId.indexOf(':'));
+        if (!transformer.enabled(script)) {
+            send(conn, DebugProtocol.error("Debug not enabled for " + script + ". Call enableDebug first."));
+            return;
+        }
         if ("replace".equals(mode)) {
             String condition = requireString(msg, "condition");
             overrides.putCondition(condId, condition);
@@ -251,6 +265,9 @@ public final class DebugMessageRouter {
         recompile.apply(script, source).thenRun(() -> {
             sendExpressions(conn, script);
             sendConditions(conn, script);
+        }).exceptionally(e -> {
+            send(conn, DebugProtocol.error("Recompile failed for " + script + ":\n" + formatException(e)));
+            return null;
         });
     }
 

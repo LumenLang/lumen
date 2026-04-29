@@ -503,8 +503,11 @@ public final class ScriptManager {
         } catch (CompilationFailedException e) {
             dumpSource(source);
             logCompileErrors(e.errors(), source.scriptName());
-            throw new RuntimeException(
-                    "Compilation failed for script: " + source.scriptName() + " (see error log above for details)", e);
+            StringBuilder msg = new StringBuilder("Compilation failed for script: ").append(source.scriptName()).append("\n");
+            for (CompilationFailedException.CompileError err : e.errors()) {
+                msg.append("Line ").append(err.javaLine()).append(": ").append(err.message()).append("\n");
+            }
+            throw new RuntimeException(msg.toString(), e);
         } catch (Exception e) {
             dumpSource(source);
             LumenLogger.severe("[Script " + source.scriptName() + "] Unexpected compiler error: " + e.getMessage());

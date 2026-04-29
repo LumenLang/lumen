@@ -6,6 +6,7 @@ import dev.lumenlang.lumen.api.emit.transform.TransformContext;
 import dev.lumenlang.lumen.debug.hook.ScriptHooks;
 import net.vansencool.vanta.lexer.Lexer;
 import net.vansencool.vanta.lexer.token.Token;
+import net.vansencool.vanta.lexer.token.TokenType;
 import net.vansencool.vanta.parser.Parser;
 import net.vansencool.vanta.parser.ast.AstNode;
 import net.vansencool.vanta.parser.ast.declaration.ClassDeclaration;
@@ -102,7 +103,28 @@ public final class LineInstrumentTransformer implements CodeTransformer {
     }
 
     private static @NotNull String escapeJava(@NotNull String s) {
-        return s.replace("\\", "\\\\").replace("\"", "\\\"");
+        return s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r");
+    }
+
+    private static int[] findIfParenSpan(@NotNull List<Token> tokens, int astLine) {
+        int depth = 0;
+        int openCol = -1;
+        boolean foundIf = false;
+        for (Token t : tokens) {
+            if (!foundIf) {
+                if (t.line() == astLine && t.type() == TokenType.IF) foundIf = true;
+                continue;
+            }
+            if (t.type() == TokenType.LEFT_PAREN) {
+                if (depth == 0 && t.line() == astLine) openCol = t.column() - 1;
+                depth++;
+            } else if (t.type() == TokenType.RIGHT_PAREN) {
+                depth--;
+                if (depth == 0 && t.line() == astLine) return new int[]{openCol, t.column() - 1};
+                if (depth == 0) return new int[]{openCol, -1};
+            }
+        }
+        return new int[]{-1, -1};
     }
 
     public void enable(@NotNull String scriptName) {
@@ -189,15 +211,10 @@ public final class LineInstrumentTransformer implements CodeTransformer {
         ctx.codegen().addImport(ScriptHooks.class.getName());
         ctx.codegen().addImport("java.util.Map");
 
-        StringBuilder sourceBuilder = new StringBuilder();
-        for (TaggedLine line : lines) {
-            sourceBuilder.append(line.code()).append("\n");
-        }
-        String source = sourceBuilder.toString();
-
         CompilationUnit cu;
+        List<Token> tokens;
         try {
-            List<Token> tokens = new Lexer(source).tokenize();
+            tokens = new Lexer(ctx.fullSource()).tokenize();
             cu = new Parser(tokens).parse();
         } catch (Exception e) {
             return;
@@ -207,7 +224,7 @@ public final class LineInstrumentTransformer implements CodeTransformer {
             if (!(typeDecl instanceof ClassDeclaration cd)) continue;
             for (AstNode member : cd.members()) {
                 if (!(member instanceof MethodDeclaration md) || md.body() == null) continue;
-                instrumentBlock(ctx, scriptName, lines, md.body(), new ArrayList<>());
+                instrumentBlock(ctx, scriptName, md.body(), new ArrayList<>(), tokens);
             }
         }
     }
@@ -220,13 +237,14 @@ public final class LineInstrumentTransformer implements CodeTransformer {
      * delegates to {@link #handleIf}. For everything else, inserts an {@code onLine} call before
      * the statement so the variable snapshot reflects the state at the start of that line.
      */
-    private void instrumentBlock(@NotNull TransformContext ctx, @NotNull String scriptName, @NotNull List<TaggedLine> lines, @NotNull BlockStatement block, @NotNull List<VarInfo> outerVars) {
+    private void instrumentBlock(@NotNull TransformContext ctx, @NotNull String scriptName, @NotNull BlockStatement block, @NotNull List<VarInfo> outerVars, @NotNull List<Token> tokens) {
         List<VarInfo> declaredVars = new ArrayList<>(outerVars);
         int lastScriptLine = -1;
+        List<TaggedLine> lines = ctx.lines();
 
         for (Statement stmt : block.statements()) {
-            int idx = stmt.line() - 1;
-            if (idx < 0 || idx >= lines.size()) continue;
+            int idx = ctx.indexOfFullSourceLine(stmt.line());
+            if (idx < 0) continue;
             TaggedLine line = lines.get(idx);
             int scriptLine = line.scriptLine();
             String scriptSrc = line.scriptSource();
@@ -249,17 +267,17 @@ public final class LineInstrumentTransformer implements CodeTransformer {
                 }
                 if (scriptLine >= 1 && scriptLine != lastScriptLine) {
                     lastScriptLine = scriptLine;
-                    ctx.insertAfter(endLineIndex(lines, stmt), leadingSpaces(line.code()) + "ScriptHooks.onLine(\"" + escapeJava(scriptName) + "\", " + scriptLine + ", " + buildVarsCapture(declaredVars) + ");");
+                    ctx.insertAfter(endLineIndex(ctx, stmt), leadingSpaces(line.code()) + "ScriptHooks.onLine(\"" + escapeJava(scriptName) + "\", " + scriptLine + ", " + buildVarsCapture(declaredVars) + ");");
                 }
             } else if (stmt instanceof IfStatement ifs) {
-                handleIf(ctx, scriptName, lines, ifs, declaredVars);
+                handleIf(ctx, scriptName, ifs, declaredVars, tokens);
                 if (scriptLine >= 1) lastScriptLine = scriptLine;
             } else {
                 if (scriptLine >= 1 && scriptLine != lastScriptLine) {
                     lastScriptLine = scriptLine;
                     ctx.insertBefore(idx, leadingSpaces(line.code()) + "ScriptHooks.onLine(\"" + escapeJava(scriptName) + "\", " + scriptLine + ", " + buildVarsCapture(declaredVars) + ");");
                 }
-                if (stmt instanceof BlockStatement bs) instrumentBlock(ctx, scriptName, lines, bs, declaredVars);
+                if (stmt instanceof BlockStatement bs) instrumentBlock(ctx, scriptName, bs, declaredVars, tokens);
             }
         }
     }
@@ -269,22 +287,23 @@ public final class LineInstrumentTransformer implements CodeTransformer {
      * any condition override and hoisting any pattern variables (e.g. {@code instanceof Foo __x})
      * into local declarations above the if. Recurses into both branches.
      */
-    private void handleIf(@NotNull TransformContext ctx, @NotNull String scriptName, @NotNull List<TaggedLine> lines, @NotNull IfStatement ifs, @NotNull List<VarInfo> vars) {
-        int idx = ifs.line() - 1;
-        if (idx >= 0 && idx < lines.size()) {
-            TaggedLine line = lines.get(idx);
+    private void handleIf(@NotNull TransformContext ctx, @NotNull String scriptName, @NotNull IfStatement ifs, @NotNull List<VarInfo> vars, @NotNull List<Token> tokens) {
+        int idx = ctx.indexOfFullSourceLine(ifs.line());
+        if (idx >= 0) {
+            TaggedLine line = ctx.lines().get(idx);
             int scriptLine = line.scriptLine();
             String scriptSrc = line.scriptSource();
 
-            if (scriptLine >= 1) {
+            if (scriptLine >= 1 && ifs.thenBranch() instanceof BlockStatement) {
                 String condId = scriptName + ":" + scriptLine + ":cond";
                 String src = scriptSrc != null ? scriptSrc : "if";
                 discoveredConditions.put(condId, new CondMeta(condId, src, scriptLine));
                 String override = condOverrides.get(condId);
                 String origCode = line.code();
-                int parenStart = origCode.indexOf('(');
-                int parenEnd = origCode.lastIndexOf(')');
-                if (parenStart >= 0 && parenEnd > parenStart) {
+                int[] parenSpan = findIfParenSpan(tokens, ifs.line());
+                int parenStart = parenSpan[0];
+                int parenEnd = parenSpan[1];
+                if (parenStart >= 0 && parenEnd > parenStart && parenEnd < origCode.length()) {
                     String rawCond = origCode.substring(parenStart + 1, parenEnd);
                     List<String> hoisted = new ArrayList<>();
                     if (ifs.condition() instanceof InstanceofExpression io && io.patternVariable() != null && io.patternVariable().startsWith("__")) {
@@ -302,10 +321,10 @@ public final class LineInstrumentTransformer implements CodeTransformer {
         }
 
         if (ifs.thenBranch() instanceof BlockStatement thenBlock)
-            instrumentBlock(ctx, scriptName, lines, thenBlock, vars);
+            instrumentBlock(ctx, scriptName, thenBlock, vars, tokens);
         if (ifs.elseBranch() instanceof BlockStatement elseBlock)
-            instrumentBlock(ctx, scriptName, lines, elseBlock, vars);
-        else if (ifs.elseBranch() instanceof IfStatement nested) handleIf(ctx, scriptName, lines, nested, vars);
+            instrumentBlock(ctx, scriptName, elseBlock, vars, tokens);
+        else if (ifs.elseBranch() instanceof IfStatement nested) handleIf(ctx, scriptName, nested, vars, tokens);
     }
 
     /**
@@ -313,9 +332,10 @@ public final class LineInstrumentTransformer implements CodeTransformer {
      * multiple lines (e.g. a constructor call broken across several lines). Tracks paren, brace,
      * and bracket depth so the {@code ;} inside a nested expression doesn't terminate early.
      */
-    private int endLineIndex(@NotNull List<TaggedLine> lines, @NotNull Statement stmt) {
-        int start = stmt.line() - 1;
-        if (start < 0 || start >= lines.size()) return -1;
+    private int endLineIndex(@NotNull TransformContext ctx, @NotNull Statement stmt) {
+        int start = ctx.indexOfFullSourceLine(stmt.line());
+        if (start < 0) return -1;
+        List<TaggedLine> lines = ctx.lines();
         int depth = 0;
         boolean started = false;
         for (int i = start; i < lines.size(); i++) {

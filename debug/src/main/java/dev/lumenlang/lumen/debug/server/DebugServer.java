@@ -106,6 +106,7 @@ public final class DebugServer extends WebSocketServer implements DebugListener 
             }
             if (!"hello".equals(msg.get("type"))) {
                 conn.send(DebugProtocol.authFailed("Send hello first"));
+                conn.send(DebugProtocol.error("Not authenticated. Send hello first."));
                 return;
             }
             HandshakeHandler.Outcome outcome = handshake.handle(conn, msg);
