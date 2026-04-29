@@ -9,6 +9,7 @@ import dev.lumenlang.lumen.debug.session.DebugSession;
 import dev.lumenlang.lumen.debug.transform.LineInstrumentTransformer;
 import dev.lumenlang.lumen.pipeline.java.compiled.ScriptSourceMap;
 import dev.lumenlang.lumen.pipeline.language.exceptions.LumenScriptException;
+import dev.lumenlang.lumen.plugin.scripts.ScriptSourceLoader;
 import org.java_websocket.WebSocket;
 import org.jetbrains.annotations.NotNull;
 
@@ -112,7 +113,18 @@ public final class DebugMessageRouter {
     @SuppressWarnings("unchecked")
     private void handleEnable(@NotNull WebSocket conn, @NotNull Map<String, Object> msg) {
         String script = requireString(msg, "script");
-        String source = requireString(msg, "source");
+        Object sourceRaw = msg.get("source");
+        String source;
+        if (sourceRaw instanceof String s && !s.isEmpty()) {
+            source = s;
+        } else {
+            try {
+                source = ScriptSourceLoader.load(script);
+            } catch (RuntimeException e) {
+                send(conn, DebugProtocol.error("Could not load source for " + script + ": " + e.getMessage()));
+                return;
+            }
+        }
         List<Integer> initialLines = (List<Integer>) msg.get("lines");
         if (initialLines != null && !initialLines.isEmpty()) session.breakpoints(script, new HashSet<>(initialLines));
         overrides.source(script, source);
