@@ -93,7 +93,7 @@ public final class DebugMessageRouter {
         switch (type) {
             case "enableDebug" -> handleEnable(conn, msg);
             case "disableDebug" -> handleDisable(msg);
-            case "setBreakpoints" -> handleSetBreakpoints(msg);
+            case "setBreakpoints" -> handleSetBreakpoints(conn, msg);
             case "override" -> handleOverride(conn, msg);
             case "removeOverride" -> handleRemoveOverride(conn, msg);
             case "removeAllOverrides" -> handleRemoveAllOverrides(conn, msg);
@@ -144,8 +144,12 @@ public final class DebugMessageRouter {
     }
 
     @SuppressWarnings("unchecked")
-    private void handleSetBreakpoints(@NotNull Map<String, Object> msg) {
+    private void handleSetBreakpoints(@NotNull WebSocket conn, @NotNull Map<String, Object> msg) {
         String script = requireString(msg, "script");
+        if (!transformer.enabled(script)) {
+            send(conn, DebugProtocol.error("Debug not enabled for " + script + ". Call enableDebug first."));
+            return;
+        }
         List<Integer> lines = (List<Integer>) msg.get("lines");
         Set<Integer> lineSet = lines != null ? new HashSet<>(lines) : Set.of();
         session.breakpoints(script, lineSet);
