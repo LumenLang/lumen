@@ -66,14 +66,14 @@ debug:
   # ============================================================================
   # LUMEN DEBUG SERVICE
   # ============================================================================
-  # Live debug bridge between this server and an external editor (Lumen VSCode).
+  # Control channel for external debug clients (editors, IDEs, etc).
   # Allows breakpoints, variable inspection, expression overrides, snippet
   # execution, and condition tracing.
   #
   # !!!  EXTREME WARNING  !!!
-  # Enabling this service exposes a control channel that can run ARBITRARY
-  # CODE on this machine. A connected client can execute Java snippets,
-  # rewrite running scripts, and access any data the server can access.
+  # Enabling this service exposes a port that can run ARBITRARY CODE on this
+  # machine. Any connected client can execute Java snippets, rewrite running
+  # scripts, and access any data the server can access.
   #
   # Treat enabling debug like opening a remote root shell.
   #
@@ -92,7 +92,7 @@ debug:
     # Local (same machine) connection policy.
     # Connections from 127.0.0.1 / ::1 are considered "same OS".
     same-os:
-      # Allow editors running on the same machine to connect at all.
+      # Allow clients running on the same machine to connect at all.
       allow-same-os-access: true
 
       # Require pairing for same-OS connections. When false, local clients
@@ -116,11 +116,11 @@ debug:
     # remote.allow-remote-access: true and you have a firewall.
     bind-host: "127.0.0.1"
 
-    # WebSocket port the editor connects to.
+    # WebSocket port debug clients connect to.
     port: 7400
 
     # How long an issued session token stays valid, in minutes.
-    # When the token expires, the editor must re-handshake. A previously
+    # When the token expires, the client must re-handshake. A previously
     # paired client skips the pairing code prompt and gets a fresh token
     # automatically. Default: 300 (5 hours).
     session-timeout-minutes: 300

@@ -21,6 +21,7 @@ repositories {
 dependencies {
     api project(':api')
     api project(':pipeline')
+    runtimeOnly project(':debug')
 
     // This can be used for seeing internal fields/methods.
     // However, do not use any of the internals.
@@ -57,7 +58,7 @@ build {
 tasks {
     runServer {
         minecraftVersion("1.20")
-        dependsOn(":debug:deployToAddons")
+        dependsOn(":debug:build")
     }
 }
 

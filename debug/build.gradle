@@ -1,0 +1,32 @@
+plugins {
+    id "com.gradleup.shadow"
+}
+
+repositories {
+    maven {
+        url = "https://repository.vansencool.net"
+    }
+    maven {
+        url = "https://hub.spigotmc.org/nexus/content/repositories/snapshots/"
+    }
+}
+
+dependencies {
+    compileOnly project(':plugin')
+    compileOnly "org.spigotmc:spigot-api:1.20-R0.1-SNAPSHOT"
+    api "org.java-websocket:Java-WebSocket:1.6.0"
+    api "com.google.code.gson:gson:2.13.2"
+    compileOnly "com.google.auto.service:auto-service-annotations:1.1.1"
+    annotationProcessor "com.google.auto.service:auto-service:1.1.1"
+}
+
+shadowJar {
+    archiveClassifier.set('shadow')
+    archiveFileName.set("LumenDebug" + (version.isEmpty() ? "" : "-${version}") + ".jar")
+    archiveBaseName.set(rootProject.name)
+    exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
+}
+
+build {
+    dependsOn(tasks.shadowJar)
+}

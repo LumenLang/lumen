@@ -1,15 +1,17 @@
-name: Build and Upload
+name: Build and Publish
 
 on:
   push:
     branches:
-      - main
+      - '**'
     paths:
       - 'api/**'
       - 'pipeline/**'
       - 'plugin/**'
+      - 'debug/**'
       - 'build.gradle'
       - 'settings.gradle'
+      - 'gradle.properties'
       - 'gradle/**'
       - 'gradlew'
       - 'gradlew.bat'
@@ -29,7 +31,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Build with Gradle
-        run: ./gradlew shadowJar --no-daemon
+        run: ./gradlew shadowJar
 
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
@@ -37,3 +39,30 @@ jobs:
           name: lumen-jar
           path: build/libs/lumen-*.jar
           retention-days: 15
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Publish artifacts
+        env:
+          PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
+        run: |
+          VERSION=$(grep "^[[:space:]]*version = " build.gradle | sed "s/.*version = '//" | sed "s/'.*//")
+          if [[ "$VERSION" == *"SNAPSHOT"* ]]; then
+            BASE_VERSION="${VERSION%-SNAPSHOT}"
+            NEW_VERSION="${BASE_VERSION}-dev.${{ github.run_number }}"
+          else
+            NEW_VERSION="${VERSION}-release.${{ github.run_number }}"
+          fi
+          sed -i "s/version = '$VERSION'/version = '$NEW_VERSION'/" build.gradle
+          ./gradlew publishAll

@@ -26,6 +26,7 @@ import dev.lumenlang.lumen.pipeline.persist.GlobalVars;
 import dev.lumenlang.lumen.pipeline.persist.PersistentVars;
 import dev.lumenlang.lumen.pipeline.persist.impl.FilePersistentStorage;
 import dev.lumenlang.lumen.pipeline.typebinding.TypeRegistry;
+import dev.lumenlang.lumen.plugin.addon.BuiltinAddonRegistry;
 import dev.lumenlang.lumen.plugin.commands.CommandRegistry;
 import dev.lumenlang.lumen.plugin.commands.lumen.LumenCommand;
 import dev.lumenlang.lumen.plugin.compiler.JavaCompilerBackend;
@@ -194,6 +195,7 @@ public final class Lumen extends JavaPlugin {
         LumenProvider.init(lumenApi, addonManager::registerAddon);
         eventBus = new LumenEventBus();
         LumenProvider.initBus(eventBus);
+        BuiltinAddonRegistry.registerAll(addonManager);
         File addonsDir = new File(getDataFolder(), "addons");
         if (!addonsDir.exists() && !addonsDir.mkdirs()) throw new RuntimeException("Failed to create addons directory");
         addonManager.loadAddons(addonsDir);
