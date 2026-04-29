@@ -31,7 +31,7 @@ dependencies {
     api "org.ow2.asm:asm:9.9.1"
     api "org.ow2.asm:asm-commons:9.9.1"
     api "org.vineflower:vineflower:1.11.2"
-    implementation 'net.vansencool:Vanta:1.0.0-BETA'
+    api 'net.vansencool:Vanta:1.0.0-BETA'
 }
 
 processResources {

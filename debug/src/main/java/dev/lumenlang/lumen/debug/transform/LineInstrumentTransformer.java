@@ -4,102 +4,44 @@ import dev.lumenlang.lumen.api.emit.transform.CodeTransformer;
 import dev.lumenlang.lumen.api.emit.transform.TaggedLine;
 import dev.lumenlang.lumen.api.emit.transform.TransformContext;
 import dev.lumenlang.lumen.debug.hook.ScriptHooks;
+import net.vansencool.vanta.lexer.Lexer;
+import net.vansencool.vanta.lexer.token.Token;
+import net.vansencool.vanta.parser.Parser;
+import net.vansencool.vanta.parser.ast.AstNode;
+import net.vansencool.vanta.parser.ast.declaration.ClassDeclaration;
+import net.vansencool.vanta.parser.ast.declaration.CompilationUnit;
+import net.vansencool.vanta.parser.ast.declaration.MethodDeclaration;
+import net.vansencool.vanta.parser.ast.expression.InstanceofExpression;
+import net.vansencool.vanta.parser.ast.expression.NameExpression;
+import net.vansencool.vanta.parser.ast.statement.BlockStatement;
+import net.vansencool.vanta.parser.ast.statement.IfStatement;
+import net.vansencool.vanta.parser.ast.statement.Statement;
+import net.vansencool.vanta.parser.ast.statement.VariableDeclarationStatement;
+import net.vansencool.vanta.parser.ast.statement.VariableDeclarator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
- * Instruments compiled scripts with line-level checkpoint calls and
- * compile-time expression overrides.
- *
- * <p>For each Java line that maps to a script source line, this transformer inserts
- * a call to {@link ScriptHooks#onLine(String, int, Map)} after variable
- * declarations (capturing the new value) and before other executable lines.
+ * Instruments compiled scripts with line-level checkpoint calls and compile-time
+ * expression overrides. Uses Vanta's lexer and parser to produce an AST that
+ * pinpoints proper statement boundaries, avoiding the brittle regex matching that
+ * breaks on multi-line constructor calls or other complex expressions.
  */
 public final class LineInstrumentTransformer implements CodeTransformer {
 
-    private static final Pattern METHOD_SIGNATURE = Pattern.compile("^(public|private|protected)\\s+.*\\{\\s*$");
-    private static final Pattern VAR_DECL = Pattern.compile("^(?:final\\s+)?([\\w.<>\\[\\]]+)\\s+(\\w+)\\s*=\\s*(.+);$");
-    private static final Pattern VAR_SIMPLE = Pattern.compile("^([\\w.<>\\[\\]]+)\\s+(\\w+)\\s*;$");
-    private static final Pattern COND_IF = Pattern.compile("^if\\s*\\((.+)\\)\\s*\\{$");
-    private static final Pattern COND_ELSE_IF = Pattern.compile("^else\\s+if\\s*\\((.+)\\)\\s*\\{$");
-    private static final Pattern COND_ELSE = Pattern.compile("^else\\s*\\{$");
-    private static final Pattern INSTANCEOF_PATTERN_VAR = Pattern.compile("([\\w.()]+)\\s+instanceof\\s+(\\w+(?:<[^>]*>)?)\\s+(__\\w+)");
     private final Set<String> enabledScripts = ConcurrentHashMap.newKeySet();
     private final Map<String, ExprMeta> discoveredExpressions = new ConcurrentHashMap<>();
     private final Map<String, String> overrides = new ConcurrentHashMap<>();
     private final Map<String, CondMeta> discoveredConditions = new ConcurrentHashMap<>();
     private final Map<String, String> condOverrides = new ConcurrentHashMap<>();
-
-    private static @NotNull List<String> extractPatternVars(@NotNull String cond) {
-        List<String> result = new ArrayList<>();
-        Matcher m = INSTANCEOF_PATTERN_VAR.matcher(cond);
-        while (m.find()) {
-            String expr = m.group(1);
-            String type = m.group(2);
-            String var = m.group(3);
-            result.add(type + " " + var + " = " + expr + " instanceof " + type + " ? (" + type + ")(" + expr + ") : null;");
-        }
-        return result;
-    }
-
-    private static @NotNull String replacePatternVars(@NotNull String cond) {
-        return INSTANCEOF_PATTERN_VAR.matcher(cond).replaceAll(m -> m.group(3) + " != null");
-    }
-
-    private static boolean isChainedBlock(@NotNull String trimmed) {
-        return trimmed.startsWith("else") || trimmed.startsWith("} else") || trimmed.startsWith("catch") || trimmed.startsWith("} catch") || trimmed.startsWith("finally") || trimmed.startsWith("} finally");
-    }
-
-    private static int countLeadingCloses(@NotNull String trimmed) {
-        int count = 0;
-        int i = 0;
-        while (i < trimmed.length()) {
-            char c = trimmed.charAt(i);
-            if (c == '}') {
-                count++;
-                i++;
-            } else if (c == ' ') i++;
-            else break;
-        }
-        return count;
-    }
-
-    private static int netBraces(@NotNull String code) {
-        int opens = 0, closes = 0;
-        boolean inString = false;
-        char stringChar = 0;
-        for (int i = 0; i < code.length(); i++) {
-            char c = code.charAt(i);
-            if (inString) {
-                if (c == '\\') {
-                    i++;
-                    continue;
-                }
-                if (c == stringChar) inString = false;
-            } else if (c == '"' || c == '\'') {
-                inString = true;
-                stringChar = c;
-            } else if (c == '{') {
-                opens++;
-            } else if (c == '}') {
-                closes++;
-            }
-        }
-        return opens - closes;
-    }
-
-    private static int trailingOpens(@NotNull String trimmed, int leadingCloses) {
-        return Math.max(0, netBraces(trimmed) + leadingCloses);
-    }
 
     private static @NotNull String buildVarsCapture(@NotNull List<VarInfo> vars) {
         if (vars.isEmpty()) return "Map.of()";
@@ -163,72 +105,33 @@ public final class LineInstrumentTransformer implements CodeTransformer {
         return s.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 
-    /**
-     * Enables instrumentation for the given script.
-     *
-     * @param scriptName the script file name
-     */
     public void enable(@NotNull String scriptName) {
         enabledScripts.add(scriptName);
     }
 
-    /**
-     * Disables instrumentation for the given script.
-     *
-     * @param scriptName the script file name
-     */
     public void disable(@NotNull String scriptName) {
         enabledScripts.remove(scriptName);
     }
 
-    /**
-     * Returns whether instrumentation is enabled for the given script.
-     *
-     * @param scriptName the script file name
-     * @return true if enabled
-     */
     public boolean enabled(@NotNull String scriptName) {
         return enabledScripts.contains(scriptName);
     }
 
-    /**
-     * Sets a compile-time override for an expression. On the next recompilation,
-     * the original assignment is replaced with the hardcoded value.
-     *
-     * @param exprId the expression identifier (script:line:varName)
-     * @param value  the override value as a string
-     */
     public void override(@NotNull String exprId, @NotNull String value) {
         overrides.put(exprId, value);
     }
 
-    /**
-     * Removes a compile-time override.
-     *
-     * @param exprId the expression identifier
-     */
     public void removeOverride(@NotNull String exprId) {
         overrides.remove(exprId);
     }
 
-    /**
-     * Removes all overrides for the given script.
-     *
-     * @param scriptName the script file name
-     */
     public void removeAllOverrides(@NotNull String scriptName) {
         String prefix = scriptName + ":";
         overrides.keySet().removeIf(k -> k.startsWith(prefix));
     }
 
-    /**
-     * Returns all active overrides for the given script.
-     *
-     * @param scriptName the script file name
-     * @return unmodifiable map of expression ID to override value
-     */
     public @NotNull Map<String, String> overrides(@NotNull String scriptName) {
-        ConcurrentHashMap<String, String> result = new ConcurrentHashMap<>();
+        Map<String, String> result = new HashMap<>();
         String prefix = scriptName + ":";
         for (var entry : overrides.entrySet()) {
             if (entry.getKey().startsWith(prefix)) result.put(entry.getKey(), entry.getValue());
@@ -236,14 +139,8 @@ public final class LineInstrumentTransformer implements CodeTransformer {
         return Collections.unmodifiableMap(result);
     }
 
-    /**
-     * Returns all discovered expressions for the given script.
-     *
-     * @param scriptName the script file name
-     * @return unmodifiable map of expression ID to metadata
-     */
     public @NotNull Map<String, ExprMeta> expressions(@NotNull String scriptName) {
-        ConcurrentHashMap<String, ExprMeta> result = new ConcurrentHashMap<>();
+        Map<String, ExprMeta> result = new HashMap<>();
         String prefix = scriptName + ":";
         for (var entry : discoveredExpressions.entrySet()) {
             if (entry.getKey().startsWith(prefix)) result.put(entry.getKey(), entry.getValue());
@@ -251,59 +148,21 @@ public final class LineInstrumentTransformer implements CodeTransformer {
         return Collections.unmodifiableMap(result);
     }
 
-    /**
-     * Sets a compile-time condition override. Supported values are
-     * {@code "true"}, {@code "false"}, and {@code "skip"} (for else blocks).
-     *
-     * @param condId the condition identifier (script:line:cond or script:line:else)
-     * @param mode   the override mode
-     */
     public void overrideCondition(@NotNull String condId, @NotNull String mode) {
         condOverrides.put(condId, mode);
     }
 
-    /**
-     * Removes a condition override.
-     *
-     * @param condId the condition identifier
-     */
     public void removeConditionOverride(@NotNull String condId) {
         condOverrides.remove(condId);
     }
 
-    /**
-     * Removes all condition overrides for the given script.
-     *
-     * @param scriptName the script file name
-     */
     public void removeAllConditionOverrides(@NotNull String scriptName) {
         String prefix = scriptName + ":";
         condOverrides.keySet().removeIf(k -> k.startsWith(prefix));
     }
 
-    /**
-     * Returns all active condition overrides for the given script.
-     *
-     * @param scriptName the script file name
-     * @return unmodifiable map of condition ID to override mode
-     */
-    public @NotNull Map<String, String> conditionOverrides(@NotNull String scriptName) {
-        ConcurrentHashMap<String, String> result = new ConcurrentHashMap<>();
-        String prefix = scriptName + ":";
-        for (var entry : condOverrides.entrySet()) {
-            if (entry.getKey().startsWith(prefix)) result.put(entry.getKey(), entry.getValue());
-        }
-        return Collections.unmodifiableMap(result);
-    }
-
-    /**
-     * Returns all discovered conditions for the given script.
-     *
-     * @param scriptName the script file name
-     * @return unmodifiable map of condition ID to metadata
-     */
     public @NotNull Map<String, CondMeta> conditions(@NotNull String scriptName) {
-        ConcurrentHashMap<String, CondMeta> result = new ConcurrentHashMap<>();
+        Map<String, CondMeta> result = new HashMap<>();
         String prefix = scriptName + ":";
         for (var entry : discoveredConditions.entrySet()) {
             if (entry.getKey().startsWith(prefix)) result.put(entry.getKey(), entry.getValue());
@@ -330,133 +189,165 @@ public final class LineInstrumentTransformer implements CodeTransformer {
         ctx.codegen().addImport(ScriptHooks.class.getName());
         ctx.codegen().addImport("java.util.Map");
 
-        List<VarInfo> declaredVars = new ArrayList<>();
-        int depth = 0;
-        int lastScriptLine = -1;
+        StringBuilder sourceBuilder = new StringBuilder();
+        for (TaggedLine line : lines) {
+            sourceBuilder.append(line.code()).append("\n");
+        }
+        String source = sourceBuilder.toString();
 
-        for (int i = 0; i < lines.size(); i++) {
-            TaggedLine line = lines.get(i);
-            String trimmed = line.code().trim();
+        CompilationUnit cu;
+        try {
+            List<Token> tokens = new Lexer(source).tokenize();
+            cu = new Parser(tokens).parse();
+        } catch (Exception e) {
+            return;
+        }
 
-            int lc = countLeadingCloses(trimmed);
-            if (lc > 0) {
-                depth = Math.max(0, depth - lc);
-                final int maxDepth = depth;
-                declaredVars.removeIf(v -> v.depth > maxDepth);
+        for (AstNode typeDecl : cu.typeDeclarations()) {
+            if (!(typeDecl instanceof ClassDeclaration cd)) continue;
+            for (AstNode member : cd.members()) {
+                if (!(member instanceof MethodDeclaration md) || md.body() == null) continue;
+                instrumentBlock(ctx, scriptName, lines, md.body(), new ArrayList<>());
             }
-
-            Matcher declMatch = VAR_DECL.matcher(trimmed);
-            if (declMatch.matches()) {
-                String varType = declMatch.group(1);
-                String varName = declMatch.group(2);
-                if (!varName.startsWith("$") && !varName.startsWith("__")) {
-                    declaredVars.add(new VarInfo(varName, varType, depth));
-                    if (line.scriptLine() >= 1 && !trimmed.startsWith("final")) {
-                        String exprId = scriptName + ":" + line.scriptLine() + ":" + varName;
-                        String src = line.scriptSource() != null ? line.scriptSource() : varName;
-                        discoveredExpressions.put(exprId, new ExprMeta(exprId, src, varType, line.scriptLine()));
-                        String overrideValue = overrides.get(exprId);
-                        if (overrideValue != null) {
-                            ctx.replace(i, buildOverrideLine(varType, varName, overrideValue));
-                        }
-                    }
-                    if (line.scriptLine() >= 1 && line.scriptLine() != lastScriptLine && line.scriptSource() != null) {
-                        lastScriptLine = line.scriptLine();
-                        ctx.insertAfter(i, "ScriptHooks.onLine(\"" + escapeJava(scriptName) + "\", " + line.scriptLine() + ", " + buildVarsCapture(declaredVars) + ");");
-                    }
-                }
-                depth += trailingOpens(trimmed, lc);
-                continue;
-            }
-
-            Matcher simpleMatch = VAR_SIMPLE.matcher(trimmed);
-            if (simpleMatch.matches()) {
-                String varName = simpleMatch.group(2);
-                if (!varName.startsWith("$") && !varName.startsWith("__")) {
-                    declaredVars.add(new VarInfo(varName, simpleMatch.group(1), depth));
-                }
-                depth += trailingOpens(trimmed, lc);
-                continue;
-            }
-
-            if (METHOD_SIGNATURE.matcher(trimmed).matches()) {
-                depth = 0;
-                declaredVars.clear();
-                lastScriptLine = -1;
-                depth += trailingOpens(trimmed, lc);
-                continue;
-            }
-
-            if (trimmed.isEmpty() || trimmed.equals("{") || trimmed.equals("}") || trimmed.startsWith("//") || trimmed.startsWith("@") || isChainedBlock(trimmed)) {
-                if (line.scriptLine() >= 1) {
-                    Matcher elseIfMatch = COND_ELSE_IF.matcher(trimmed);
-                    if (elseIfMatch.matches()) {
-                        String condId = scriptName + ":" + line.scriptLine() + ":cond";
-                        String src = line.scriptSource() != null ? line.scriptSource() : trimmed;
-                        discoveredConditions.put(condId, new CondMeta(condId, src, line.scriptLine()));
-                        String override = condOverrides.get(condId);
-                        String innerCond = "true".equals(override) ? "true" : "false".equals(override) ? "false" : elseIfMatch.group(1);
-                        ctx.replace(i, "else if (ScriptHooks.onCondition(\"" + escapeJava(condId) + "\", \"" + escapeJava(src) + "\", " + line.scriptLine() + ", (" + innerCond + "))) {");
-                    } else if (COND_ELSE.matcher(trimmed).matches()) {
-                        String condId = scriptName + ":" + line.scriptLine() + ":else";
-                        String src = line.scriptSource() != null ? line.scriptSource() : "else";
-                        discoveredConditions.put(condId, new CondMeta(condId, src, line.scriptLine()));
-                        String override = condOverrides.get(condId);
-                        if ("skip".equals(override)) ctx.replace(i, "else if (false) {");
-                        else
-                            ctx.insertAfter(i, "ScriptHooks.onCondition(\"" + escapeJava(condId) + "\", \"" + escapeJava(src) + "\", " + line.scriptLine() + ", true);");
-                    }
-                }
-                depth += trailingOpens(trimmed, lc);
-                continue;
-            }
-
-            if (line.scriptLine() >= 1) {
-                Matcher ifMatch = COND_IF.matcher(trimmed);
-                if (ifMatch.matches()) {
-                    String condId = scriptName + ":" + line.scriptLine() + ":cond";
-                    String src = line.scriptSource() != null ? line.scriptSource() : trimmed;
-                    discoveredConditions.put(condId, new CondMeta(condId, src, line.scriptLine()));
-                    String override = condOverrides.get(condId);
-                    String rawCond = ifMatch.group(1);
-                    List<String> hoisted = extractPatternVars(rawCond);
-                    String adjustedCond = hoisted.isEmpty() ? rawCond : replacePatternVars(rawCond);
-                    String innerCond = "true".equals(override) ? "true" : "false".equals(override) ? "false" : adjustedCond;
-                    ctx.replace(i, "if (ScriptHooks.onCondition(\"" + escapeJava(condId) + "\", \"" + escapeJava(src) + "\", " + line.scriptLine() + ", (" + innerCond + "))) {");
-                    if (!hoisted.isEmpty()) ctx.insertLinesBefore(i, hoisted);
-                }
-            }
-
-            if (line.scriptLine() >= 1 && line.scriptLine() != lastScriptLine) {
-                lastScriptLine = line.scriptLine();
-                ctx.insertBefore(i, "ScriptHooks.onLine(\"" + escapeJava(scriptName) + "\", " + line.scriptLine() + ", " + buildVarsCapture(declaredVars) + ");");
-            }
-
-            depth += trailingOpens(trimmed, lc);
         }
     }
 
     /**
-     * Metadata about a discovered expression in a compiled script.
+     * Walks a {@link BlockStatement} and instruments each top-level statement.
      *
-     * @param id         the stable expression identifier (script:line:varName)
-     * @param expression the original script source text for this assignment
-     * @param type       the Java type name
-     * @param line       the 1-based script line number
+     * <p>For variable declarations, captures the declarator metadata, applies any expression
+     * override, and emits an {@code onLine} call after the full declaration. For if statements,
+     * delegates to {@link #handleIf}. For everything else, inserts an {@code onLine} call before
+     * the statement so the variable snapshot reflects the state at the start of that line.
      */
-    public record ExprMeta(@NotNull String id, @NotNull String expression, @NotNull String type, int line) {
+    private void instrumentBlock(@NotNull TransformContext ctx, @NotNull String scriptName, @NotNull List<TaggedLine> lines, @NotNull BlockStatement block, @NotNull List<VarInfo> outerVars) {
+        List<VarInfo> declaredVars = new ArrayList<>(outerVars);
+        int lastScriptLine = -1;
+
+        for (Statement stmt : block.statements()) {
+            int idx = stmt.line() - 1;
+            if (idx < 0 || idx >= lines.size()) continue;
+            TaggedLine line = lines.get(idx);
+            int scriptLine = line.scriptLine();
+            String scriptSrc = line.scriptSource();
+
+            if (stmt instanceof VariableDeclarationStatement vds) {
+                String varType = vds.type().toString();
+                for (VariableDeclarator decl : vds.declarators()) {
+                    String varName = decl.name();
+                    if (varName.startsWith("$") || varName.startsWith("__")) continue;
+                    declaredVars.add(new VarInfo(varName, varType));
+                    if (scriptLine >= 1 && decl.initializer() != null) {
+                        String exprId = scriptName + ":" + scriptLine + ":" + varName;
+                        String src = scriptSrc != null ? scriptSrc : varName;
+                        discoveredExpressions.put(exprId, new ExprMeta(exprId, src, varType, scriptLine));
+                        String overrideValue = overrides.get(exprId);
+                        if (overrideValue != null) {
+                            ctx.replace(idx, leadingSpaces(line.code()) + buildOverrideLine(varType, varName, overrideValue));
+                        }
+                    }
+                }
+                if (scriptLine >= 1 && scriptLine != lastScriptLine) {
+                    lastScriptLine = scriptLine;
+                    ctx.insertAfter(endLineIndex(lines, stmt), leadingSpaces(line.code()) + "ScriptHooks.onLine(\"" + escapeJava(scriptName) + "\", " + scriptLine + ", " + buildVarsCapture(declaredVars) + ");");
+                }
+            } else if (stmt instanceof IfStatement ifs) {
+                handleIf(ctx, scriptName, lines, ifs, declaredVars);
+                if (scriptLine >= 1) lastScriptLine = scriptLine;
+            } else {
+                if (scriptLine >= 1 && scriptLine != lastScriptLine) {
+                    lastScriptLine = scriptLine;
+                    ctx.insertBefore(idx, leadingSpaces(line.code()) + "ScriptHooks.onLine(\"" + escapeJava(scriptName) + "\", " + scriptLine + ", " + buildVarsCapture(declaredVars) + ");");
+                }
+                if (stmt instanceof BlockStatement bs) instrumentBlock(ctx, scriptName, lines, bs, declaredVars);
+            }
+        }
     }
 
     /**
-     * Metadata about a discovered condition in a compiled script.
-     *
-     * @param id     the stable condition identifier (script:line:cond or script:line:else)
-     * @param source the original Lumen source text for this condition
-     * @param line   the 1-based script line number
+     * Rewrites the condition of an if statement to invoke {@link ScriptHooks#onCondition}, applying
+     * any condition override and hoisting any pattern variables (e.g. {@code instanceof Foo __x})
+     * into local declarations above the if. Recurses into both branches.
      */
+    private void handleIf(@NotNull TransformContext ctx, @NotNull String scriptName, @NotNull List<TaggedLine> lines, @NotNull IfStatement ifs, @NotNull List<VarInfo> vars) {
+        int idx = ifs.line() - 1;
+        if (idx >= 0 && idx < lines.size()) {
+            TaggedLine line = lines.get(idx);
+            int scriptLine = line.scriptLine();
+            String scriptSrc = line.scriptSource();
+
+            if (scriptLine >= 1) {
+                String condId = scriptName + ":" + scriptLine + ":cond";
+                String src = scriptSrc != null ? scriptSrc : "if";
+                discoveredConditions.put(condId, new CondMeta(condId, src, scriptLine));
+                String override = condOverrides.get(condId);
+                String origCode = line.code();
+                int parenStart = origCode.indexOf('(');
+                int parenEnd = origCode.lastIndexOf(')');
+                if (parenStart >= 0 && parenEnd > parenStart) {
+                    String rawCond = origCode.substring(parenStart + 1, parenEnd);
+                    List<String> hoisted = new ArrayList<>();
+                    if (ifs.condition() instanceof InstanceofExpression io && io.patternVariable() != null && io.patternVariable().startsWith("__")) {
+                        String exprText = io.expression() instanceof NameExpression ne ? ne.name() : io.expression().toString();
+                        String type = io.type().toString();
+                        hoisted.add(type + " " + io.patternVariable() + " = " + exprText + " instanceof " + type + " ? (" + type + ")(" + exprText + ") : null;");
+                    }
+                    String innerCond = "true".equals(override) ? "true" : "false".equals(override) ? "false" : rawCond;
+                    String prefix = origCode.substring(0, parenStart);
+                    String suffix = origCode.substring(parenEnd + 1);
+                    ctx.replace(idx, prefix + "(ScriptHooks.onCondition(\"" + escapeJava(condId) + "\", \"" + escapeJava(src) + "\", " + scriptLine + ", (" + innerCond + ")))" + suffix);
+                    if (!hoisted.isEmpty()) ctx.insertLinesBefore(idx, hoisted);
+                }
+            }
+        }
+
+        if (ifs.thenBranch() instanceof BlockStatement thenBlock)
+            instrumentBlock(ctx, scriptName, lines, thenBlock, vars);
+        if (ifs.elseBranch() instanceof BlockStatement elseBlock)
+            instrumentBlock(ctx, scriptName, lines, elseBlock, vars);
+        else if (ifs.elseBranch() instanceof IfStatement nested) handleIf(ctx, scriptName, lines, nested, vars);
+    }
+
+    /**
+     * Finds the index of the line that contains the closing semicolon of a statement that may span
+     * multiple lines (e.g. a constructor call broken across several lines). Tracks paren, brace,
+     * and bracket depth so the {@code ;} inside a nested expression doesn't terminate early.
+     */
+    private int endLineIndex(@NotNull List<TaggedLine> lines, @NotNull Statement stmt) {
+        int start = stmt.line() - 1;
+        if (start < 0 || start >= lines.size()) return -1;
+        int depth = 0;
+        boolean started = false;
+        for (int i = start; i < lines.size(); i++) {
+            String code = lines.get(i).code();
+            for (int j = 0; j < code.length(); j++) {
+                char c = code.charAt(j);
+                if (c == '(' || c == '{' || c == '[') {
+                    depth++;
+                    started = true;
+                } else if (c == ')' || c == '}' || c == ']') {
+                    depth--;
+                } else if (c == ';' && depth == 0) {
+                    return i;
+                }
+            }
+            if (started && depth == 0 && code.trim().endsWith(";")) return i;
+        }
+        return start;
+    }
+
+    private @NotNull String leadingSpaces(@NotNull String line) {
+        int i = 0;
+        while (i < line.length() && line.charAt(i) == ' ') i++;
+        return line.substring(0, i);
+    }
+
+    public record ExprMeta(@NotNull String id, @NotNull String expression, @NotNull String type, int line) {
+    }
+
     public record CondMeta(@NotNull String id, @NotNull String source, int line) {
     }
 
-    private record VarInfo(@NotNull String name, @NotNull String type, int depth) {
+    private record VarInfo(@NotNull String name, @NotNull String type) {
     }
 }
