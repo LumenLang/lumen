@@ -75,10 +75,10 @@ public final class DebugSession implements ScriptHook {
 
     @Override
     public void onLine(@NotNull String script, int line, @NotNull Map<String, Object> vars) {
+        lastBreakpointVars = new LinkedHashMap<>(vars);
         Set<Integer> bp = breakpoints.get(script);
         if (bp == null || !bp.contains(line)) return;
 
-        lastBreakpointVars = new LinkedHashMap<>(vars);
         List<ScriptHooks.ConditionRecord> trace = ScriptHooks.drainTrace();
         pendingEvents.add(new BreakpointEvent(script, line, new LinkedHashMap<>(vars), List.copyOf(trace)));
 

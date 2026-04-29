@@ -360,7 +360,7 @@ public final class LineInstrumentTransformer implements CodeTransformer {
                             ctx.replace(i, buildOverrideLine(varType, varName, overrideValue));
                         }
                     }
-                    if (line.scriptLine() >= 1 && line.scriptLine() != lastScriptLine) {
+                    if (line.scriptLine() >= 1 && line.scriptLine() != lastScriptLine && line.scriptSource() != null) {
                         lastScriptLine = line.scriptLine();
                         ctx.insertAfter(i, "ScriptHooks.onLine(\"" + escapeJava(scriptName) + "\", " + line.scriptLine() + ", " + buildVarsCapture(declaredVars) + ");");
                     }

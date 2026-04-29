@@ -44,13 +44,13 @@ jobs:
         env:
           PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
         run: |
-          BRANCH=$(echo "${{ github.ref }}" | sed 's#refs/heads/##' | sed 's#/#.#g')
+          HASH=$(echo "${{ github.sha }}" | cut -c1-7)
           VERSION=$(grep "^[[:space:]]*version = " build.gradle | sed "s/.*version = '//" | sed "s/'.*//")
           if [[ "$VERSION" == *"SNAPSHOT"* ]]; then
             BASE_VERSION="${VERSION%-SNAPSHOT}"
-            NEW_VERSION="${BASE_VERSION}-dev.${BRANCH}.${{ github.run_number }}"
+            NEW_VERSION="${BASE_VERSION}-dev.${{ github.run_number }}-${HASH}"
           else
-            NEW_VERSION="${VERSION}-release.${BRANCH}.${{ github.run_number }}"
+            NEW_VERSION="${VERSION}-release.${{ github.run_number }}-${HASH}"
           fi
           sed -i "s/version = '${VERSION}'/version = '${NEW_VERSION}'/" build.gradle
           ./gradlew publishAll
