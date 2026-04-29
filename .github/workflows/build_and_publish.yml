@@ -44,7 +44,7 @@ jobs:
         env:
           PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
         run: |
-          BRANCH=$(echo "${{ github.ref }}" | sed 's#refs/heads/##')
+          BRANCH=$(echo "${{ github.ref }}" | sed 's#refs/heads/##' | sed 's#/#.#g')
           VERSION=$(grep "^[[:space:]]*version = " build.gradle | sed "s/.*version = '//" | sed "s/'.*//")
           if [[ "$VERSION" == *"SNAPSHOT"* ]]; then
             BASE_VERSION="${VERSION%-SNAPSHOT}"
@@ -52,5 +52,5 @@ jobs:
           else
             NEW_VERSION="${VERSION}-release.${BRANCH}.${{ github.run_number }}"
           fi
-          sed -i "s/version = '$VERSION'/version = '$NEW_VERSION'/" build.gradle
+          sed -i "s/version = '${VERSION}'/version = '${NEW_VERSION}'/" build.gradle
           ./gradlew publishAll
