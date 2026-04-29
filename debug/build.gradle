@@ -30,3 +30,25 @@ shadowJar {
 build {
     dependsOn(tasks.shadowJar)
 }
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            groupId = rootProject.group
+            artifactId = 'debug'
+            version = rootProject.version
+        }
+    }
+
+    repositories {
+        maven {
+            name = 'lumenrepo'
+            url = 'https://repo.lumenlang.dev'
+            credentials {
+                username = 'vansen'
+                password = System.getenv('PASSWORD') ?: ''
+            }
+        }
+    }
+}
