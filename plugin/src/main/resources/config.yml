@@ -63,6 +63,68 @@ debug:
   # Useful when diagnostics on long or complex lines are hard to read.
   verbose-diagnostics: false
 
+  # ============================================================================
+  # LUMEN DEBUG SERVICE
+  # ============================================================================
+  # Live debug bridge between this server and an external editor (Lumen VSCode).
+  # Allows breakpoints, variable inspection, expression overrides, snippet
+  # execution, and condition tracing.
+  #
+  # !!!  EXTREME WARNING  !!!
+  # Enabling this service exposes a control channel that can run ARBITRARY
+  # CODE on this machine. A connected client can execute Java snippets,
+  # rewrite running scripts, and access any data the server can access.
+  #
+  # Treat enabling debug like opening a remote root shell.
+  #
+  # Hard rules:
+  #   - never enable on a production server
+  #   - never enable on an untrusted network
+  #   - never share a pairing code with anyone you would not give shell access
+  #   - keep allow-remote-access: false unless you understand the consequences
+  #
+  # If unsure, leave enabled: false.
+  service:
+    # Master switch. When false, the debug service does not start at all and
+    # no port is bound. Default: false.
+    enabled: false
+
+    # Local (same machine) connection policy.
+    # Connections from 127.0.0.1 / ::1 are considered "same OS".
+    same-os:
+      # Allow editors running on the same machine to connect at all.
+      allow-same-os-access: true
+
+      # Require pairing for same-OS connections. When false, local clients
+      # are auto-trusted on first connect. When true, even local clients
+      # must be approved via /lumendebug pair <code>.
+      require-pairing: false
+
+    # Remote (off-machine) connection policy.
+    remote:
+      # Allow non-loopback connections at all. When false, the service
+      # binds to bind-host and rejects any non-loopback peer regardless
+      # of bind. Default: false (recommended).
+      allow-remote-access: false
+
+      # Require pairing for remote connections. Strongly recommended to
+      # leave this true. Only consulted when allow-remote-access is true.
+      require-pairing: true
+
+    # Address to bind on. 127.0.0.1 means same-host only at the OS level.
+    # Use 0.0.0.0 (or a specific public address) only if you also set
+    # remote.allow-remote-access: true and you have a firewall.
+    bind-host: "127.0.0.1"
+
+    # WebSocket port the editor connects to.
+    port: 7400
+
+    # How long an issued session token stays valid, in minutes.
+    # When the token expires, the editor must re-handshake. A previously
+    # paired client skips the pairing code prompt and gets a fresh token
+    # automatically. Default: 300 (5 hours).
+    session-timeout-minutes: 300
+
 # Compilation strategy and performance
 performance:
   # Java compiler backend used to compile generated script classes.

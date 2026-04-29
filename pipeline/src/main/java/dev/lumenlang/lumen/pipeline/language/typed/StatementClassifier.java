@@ -5,7 +5,7 @@ import dev.lumenlang.lumen.pipeline.language.nodes.StatementNode;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.language.pattern.registered.RegisteredExpressionMatch;
 import dev.lumenlang.lumen.pipeline.language.pattern.registered.RegisteredPatternMatch;
-import dev.lumenlang.lumen.pipeline.language.resolve.PatternSimulator;
+import dev.lumenlang.lumen.pipeline.language.simulator.PatternSimulator;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import org.jetbrains.annotations.NotNull;
 

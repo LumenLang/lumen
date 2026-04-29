@@ -205,6 +205,37 @@ public final class LumenConfiguration {
         public boolean FULL_DEBUG = false;
 
         public boolean VERBOSE_DIAGNOSTICS = false;
+
+        public Service SERVICE = new Service();
+
+        public static final class Service {
+
+            public boolean ENABLED = false;
+
+            public SameOS SAME_OS = new SameOS();
+
+            public Remote REMOTE = new Remote();
+
+            public String BIND_HOST = "127.0.0.1";
+
+            public int PORT = 7400;
+
+            public int SESSION_TIMEOUT_MINUTES = 300;
+
+            public static final class SameOS {
+
+                public boolean ALLOW_SAME_OS_ACCESS = true;
+
+                public boolean REQUIRE_PAIRING = false;
+            }
+
+            public static final class Remote {
+
+                public boolean ALLOW_REMOTE_ACCESS = false;
+
+                public boolean REQUIRE_PAIRING = true;
+            }
+        }
     }
 
     public static final class Performance {

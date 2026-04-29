@@ -74,7 +74,7 @@ public final class CommandRegistry {
                 throw new RuntimeException("Server does not support syncCommands. Report this if you are running a supported version of Minecraft. Minecraft: " + Bukkit.getServer().getBukkitVersion() + ", Lumen version: " + Lumen.instance().getDescription().getVersion());
             }
         } catch (Throwable t) {
-            throw new RuntimeException("Failed to access Bukkit CommandMap via reflection. Report this if you are running a supported version of Minecraft!", t);
+            throw new RuntimeException("Failed to access Bukkit CommandMap via reflection. Report this if you are running a supported version of Minecraft. Minecraft: " + Bukkit.getServer().getBukkitVersion() + ", Lumen version: " + Lumen.instance().getDescription().getVersion(), t);
         }
     }
 
@@ -171,20 +171,14 @@ public final class CommandRegistry {
     /**
      * Registers a plugin-internal command (e.g. {@code /lumen}).
      *
-     * <p>These commands are <b>not</b> tracked as script commands and will not be
-     * affected by {@link #unregisterScript(String)}. They can be individually removed
-     * via {@link #unregisterPluginCommand(String)} and are also cleaned up by
-     * {@link #unregisterAll()}.
+     * <p>These commands are <b>not</b> tracked as script commands.
      *
      * @param name      the command name
      * @param aliases   the command aliases
      * @param executor  the command executor
      * @param completer the tab completer, or {@code null}
      */
-    public static void registerPluginCommand(@NotNull String name,
-                                             @NotNull List<String> aliases,
-                                             @NotNull CommandExecutor executor,
-                                             @Nullable TabCompleter completer) {
+    public static void registerPluginCommand(@NotNull String name, @NotNull List<String> aliases, @NotNull CommandExecutor executor, @Nullable TabCompleter completer) {
         ensureCommandMap();
         PluginCmd cmd = new PluginCmd(name, aliases, executor, completer);
         removeFromMap(name, "lumen");
@@ -198,8 +192,7 @@ public final class CommandRegistry {
     }
 
     /**
-     * Unregisters a plugin-internal command by name, removing it and all its
-     * aliases from the command map.
+     * Unregisters a plugin-internal command by name.
      *
      * @param name the command name
      */
@@ -325,11 +318,7 @@ public final class CommandRegistry {
         private volatile Object instance;
         private volatile MethodHandle handler;
 
-        ScriptCommand(@NotNull String name,
-                      @Nullable String description,
-                      @Nullable List<String> aliases,
-                      @NotNull Object instance,
-                      @NotNull MethodHandle handler) {
+        ScriptCommand(@NotNull String name, @Nullable String description, @Nullable List<String> aliases, @NotNull Object instance, @NotNull MethodHandle handler) {
             super(name, description != null ? description : "", "/" + name,
                     aliases != null ? aliases : List.of());
             this.instance = instance;

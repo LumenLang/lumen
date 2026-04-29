@@ -1,4 +1,4 @@
-package dev.lumenlang.lumen.pipeline.language.resolve;
+package dev.lumenlang.lumen.pipeline.language.simulator;
 
 import dev.lumenlang.lumen.api.codegen.JavaOutput;
 import dev.lumenlang.lumen.api.pattern.PatternMeta;
@@ -17,6 +17,8 @@ import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.language.pattern.registered.RegisteredBlock;
 import dev.lumenlang.lumen.pipeline.language.pattern.registered.RegisteredExpression;
 import dev.lumenlang.lumen.pipeline.language.pattern.registered.RegisteredPattern;
+import dev.lumenlang.lumen.pipeline.language.simulator.options.SimulatorOption;
+import dev.lumenlang.lumen.pipeline.language.simulator.options.SimulatorOptions;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.language.tokenization.TokenKind;
 import dev.lumenlang.lumen.pipeline.typebinding.TypeRegistry;
@@ -47,56 +49,17 @@ import java.util.Map;
  *       level 0 to diagnose type binding failures.</li>
  * </ol>
  *
- * <h2>Confidence Scoring</h2>
- * <p>Confidence is computed from a penalty model:
- * <ul>
- *   <li>Start at 1.0 (perfect match)</li>
- *   <li>Subtract {@value #REMOVAL_PENALTY} per removed token</li>
- *   <li>Subtract {@value #TYPO_PENALTY} per typo correction</li>
- *   <li>Multiply by {@value #FIRST_TOKEN_MISS_MULTIPLIER} if the first required literal
- *       does not match the first input token</li>
- * </ul>
- *
  * <h2>Configuration</h2>
- * <p>Configurable via system properties:
- * <ul>
- *   <li>{@code lumen.suggestion.maxRemovalDepth}: maximum BFS removal depth (default 3)</li>
- *   <li>{@code lumen.suggestion.maxCandidates}: number of pre-filter candidates to analyze (default 10)</li>
- * </ul>
+ * <p>Tunable via {@link SimulatorOptions}. Each {@code suggest*} method exposes an
+ * overload accepting custom options; the no-options form uses {@link SimulatorOptions#defaults()}.
  */
 public final class PatternSimulator {
-
-    private static final int DEFAULT_MAX_REMOVAL_DEPTH = 3;
-    private static final int DEFAULT_MAX_CANDIDATES = 10;
-    private static final int DEFAULT_MAX_SUGGESTIONS = 2;
-    private static final double MIN_PREFILTER_CONFIDENCE = 0.15;
-    private static final int SHAPE_MATCH_TOKEN_LIMIT = 20;
-    private static final int MAX_COMBINATIONS_PER_LEVEL = 300;
-
-    private static final double WEIGHT_LITERAL_COVERAGE = 0.40;
-    private static final double WEIGHT_EXACTNESS = 0.25;
-    private static final double WEIGHT_POSITION = 0.20;
-    private static final double WEIGHT_TOKEN_COVERAGE = 0.15;
-
-    private static final double REMOVAL_PENALTY = 0.08;
-    private static final double TYPO_PENALTY = 0.05;
-    private static final double FIRST_TOKEN_MISS_MULTIPLIER = 0.5;
-    private static final double VALIDATED_REORDER_FLOOR = 0.75;
-    private static final double SANDBOX_REJECTED_PENALTY = 0.75;
 
     private PatternSimulator() {
     }
 
-    private static int maxRemovalDepth() {
-        return Integer.getInteger("lumen.suggestion.maxRemovalDepth", DEFAULT_MAX_REMOVAL_DEPTH);
-    }
-
-    private static int maxCandidates() {
-        return Integer.getInteger("lumen.suggestion.maxCandidates", DEFAULT_MAX_CANDIDATES);
-    }
-
-    private static int effectiveMaxK(int tokenCount) {
-        int base = maxRemovalDepth();
+    private static int effectiveMaxK(int tokenCount, @NotNull SimulatorOptions opts) {
+        int base = opts.intValue(SimulatorOption.MAX_REMOVAL_DEPTH);
         if (tokenCount > 25) return Math.min(base, 1);
         if (tokenCount > 20) return Math.min(base, 2);
         return base;
@@ -108,16 +71,28 @@ public final class PatternSimulator {
      * @param tokens the tokens that failed expression matching
      * @param reg    the pattern registry
      * @param env    the type environment
-     * @return ranked suggestions (at most 2), or empty if nothing is close
      */
     public static @NotNull List<Suggestion> suggestExpressions(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnv env) {
+        return suggestExpressions(tokens, reg, env, SimulatorOptions.defaults());
+    }
+
+    /**
+     * Finds the closest matching expression patterns for unrecognized input tokens
+     * using custom simulator options.
+     *
+     * @param tokens the tokens that failed expression matching
+     * @param reg    the pattern registry
+     * @param env    the type environment
+     * @param opts   the simulator options to apply
+     */
+    public static @NotNull List<Suggestion> suggestExpressions(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnv env, @NotNull SimulatorOptions opts) {
         if (tokens.isEmpty()) return List.of();
         List<PreFilterScore> scored = new ArrayList<>();
         for (RegisteredExpression re : reg.getExpressions()) {
-            PreFilterScore pfs = preFilter(tokens, re.pattern(), re.meta(), re);
+            PreFilterScore pfs = preFilter(tokens, re.pattern(), re.meta(), re, opts);
             if (pfs != null) scored.add(pfs);
         }
-        return analyze(scored, tokens, reg.getTypeRegistry(), env);
+        return analyze(scored, tokens, reg.getTypeRegistry(), env, opts);
     }
 
     /**
@@ -126,16 +101,28 @@ public final class PatternSimulator {
      * @param tokens the tokens that failed condition matching
      * @param reg    the pattern registry
      * @param env    the type environment
-     * @return ranked suggestions (at most 2), or empty if nothing is close
      */
     public static @NotNull List<Suggestion> suggestConditions(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnv env) {
+        return suggestConditions(tokens, reg, env, SimulatorOptions.defaults());
+    }
+
+    /**
+     * Finds the closest matching condition patterns for unrecognized input tokens
+     * using custom simulator options.
+     *
+     * @param tokens the tokens that failed condition matching
+     * @param reg    the pattern registry
+     * @param env    the type environment
+     * @param opts   the simulator options to apply
+     */
+    public static @NotNull List<Suggestion> suggestConditions(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnv env, @NotNull SimulatorOptions opts) {
         if (tokens.isEmpty()) return List.of();
         List<PreFilterScore> scored = new ArrayList<>();
         for (RegisteredCondition rc : reg.getConditionRegistry().getConditions()) {
-            PreFilterScore pfs = preFilter(tokens, rc.pattern(), rc.meta(), null);
+            PreFilterScore pfs = preFilter(tokens, rc.pattern(), rc.meta(), null, opts);
             if (pfs != null) scored.add(pfs);
         }
-        return analyze(scored, tokens, reg.getTypeRegistry(), env);
+        return analyze(scored, tokens, reg.getTypeRegistry(), env, opts);
     }
 
     /**
@@ -144,16 +131,28 @@ public final class PatternSimulator {
      * @param tokens the tokens that failed block matching
      * @param reg    the pattern registry
      * @param env    the type environment
-     * @return ranked suggestions (at most 2), or empty if nothing is close
      */
     public static @NotNull List<Suggestion> suggestBlocks(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnv env) {
+        return suggestBlocks(tokens, reg, env, SimulatorOptions.defaults());
+    }
+
+    /**
+     * Finds the closest matching block patterns for unrecognized input tokens
+     * using custom simulator options.
+     *
+     * @param tokens the tokens that failed block matching
+     * @param reg    the pattern registry
+     * @param env    the type environment
+     * @param opts   the simulator options to apply
+     */
+    public static @NotNull List<Suggestion> suggestBlocks(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnv env, @NotNull SimulatorOptions opts) {
         if (tokens.isEmpty()) return List.of();
         List<PreFilterScore> scored = new ArrayList<>();
         for (RegisteredBlock rb : reg.getBlocks()) {
-            PreFilterScore pfs = preFilter(tokens, rb.pattern(), rb.meta(), null);
+            PreFilterScore pfs = preFilter(tokens, rb.pattern(), rb.meta(), null, opts);
             if (pfs != null) scored.add(pfs);
         }
-        return analyze(scored, tokens, reg.getTypeRegistry(), env);
+        return analyze(scored, tokens, reg.getTypeRegistry(), env, opts);
     }
 
     /**
@@ -162,28 +161,40 @@ public final class PatternSimulator {
      * @param tokens the tokens that failed all matching
      * @param reg    the pattern registry
      * @param env    the type environment
-     * @return ranked suggestions (at most 2), or empty if nothing is close
      */
     public static @NotNull List<Suggestion> suggestStatementsAndExpressions(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnv env) {
+        return suggestStatementsAndExpressions(tokens, reg, env, SimulatorOptions.defaults());
+    }
+
+    /**
+     * Finds the closest matching patterns across both statements and expressions
+     * using custom simulator options.
+     *
+     * @param tokens the tokens that failed all matching
+     * @param reg    the pattern registry
+     * @param env    the type environment
+     * @param opts   the simulator options to apply
+     */
+    public static @NotNull List<Suggestion> suggestStatementsAndExpressions(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnv env, @NotNull SimulatorOptions opts) {
         if (tokens.isEmpty()) return List.of();
         List<PreFilterScore> scored = new ArrayList<>();
         for (RegisteredPattern rp : reg.getStatements()) {
-            PreFilterScore pfs = preFilter(tokens, rp.pattern(), rp.meta(), rp);
+            PreFilterScore pfs = preFilter(tokens, rp.pattern(), rp.meta(), rp, opts);
             if (pfs != null) scored.add(pfs);
         }
         for (RegisteredExpression re : reg.getExpressions()) {
-            PreFilterScore pfs = preFilter(tokens, re.pattern(), re.meta(), re);
+            PreFilterScore pfs = preFilter(tokens, re.pattern(), re.meta(), re, opts);
             if (pfs != null) scored.add(pfs);
         }
-        return analyze(scored, tokens, reg.getTypeRegistry(), env);
+        return analyze(scored, tokens, reg.getTypeRegistry(), env, opts);
     }
 
-    private static @NotNull List<Suggestion> analyze(@NotNull List<PreFilterScore> scored, @NotNull List<Token> tokens, @NotNull TypeRegistry types, @NotNull TypeEnv env) {
+    private static @NotNull List<Suggestion> analyze(@NotNull List<PreFilterScore> scored, @NotNull List<Token> tokens, @NotNull TypeRegistry types, @NotNull TypeEnv env, @NotNull SimulatorOptions opts) {
         scored.sort(Comparator.comparingDouble((PreFilterScore p) -> p.confidence).reversed());
-        int limit = Math.min(maxCandidates(), scored.size());
+        int limit = Math.min(opts.intValue(SimulatorOption.MAX_CANDIDATES), scored.size());
         Map<Pattern, Suggestion> best = new LinkedHashMap<>();
         for (int i = 0; i < limit; i++) {
-            Suggestion s = tryMatch(tokens, scored.get(i), types, env);
+            Suggestion s = tryMatch(tokens, scored.get(i), types, env, opts);
             if (s == null) continue;
             Suggestion existing = best.get(s.pattern());
             if (existing == null || s.confidence() > existing.confidence()) {
@@ -192,14 +203,16 @@ public final class PatternSimulator {
         }
         List<Suggestion> results = new ArrayList<>(best.values());
         results.sort(Comparator.comparingDouble(Suggestion::confidence).reversed());
-        int max = Math.min(DEFAULT_MAX_SUGGESTIONS, results.size());
+        int max = Math.min(opts.intValue(SimulatorOption.MAX_SUGGESTIONS), results.size());
         return List.copyOf(results.subList(0, max));
     }
 
-    private static @Nullable Suggestion tryMatch(@NotNull List<Token> tokens, @NotNull PreFilterScore cs, @NotNull TypeRegistry types, @NotNull TypeEnv env) {
+    private static @Nullable Suggestion tryMatch(@NotNull List<Token> tokens, @NotNull PreFilterScore cs, @NotNull TypeRegistry types, @NotNull TypeEnv env, @NotNull SimulatorOptions opts) {
         Pattern pattern = cs.pattern;
         List<LiteralInfo> literals = extractLiterals(pattern);
-        int maxK = Math.min(effectiveMaxK(tokens.size()), tokens.size() - 1);
+        int maxK = Math.min(effectiveMaxK(tokens.size(), opts), tokens.size() - 1);
+        int maxCombosPerLevel = opts.intValue(SimulatorOption.MAX_COMBINATIONS_PER_LEVEL);
+        double sandboxRejectedPenalty = opts.doubleValue(SimulatorOption.SANDBOX_REJECTED_PENALTY);
         MatchProgress level0Progress = null;
         TypoFix bestPartialTypo = null;
         MatchProgress bestPartialProgress = null;
@@ -223,12 +236,12 @@ public final class PatternSimulator {
                     }
                     if (!sandboxRejected && corrProgress.succeeded()) {
                         boolean firstMatch = firstTokenMatches(tokens, literals) || isFirstLiteralToken(typo, tokens, literals);
-                        double confidence = computeConfidence(0, 1, firstMatch);
+                        double confidence = computeConfidence(0, 1, firstMatch, opts);
                         return new Suggestion(pattern, confidence, List.of(new SuggestionIssue.Typo(typo.token, typo.expected)), corrProgress);
                     }
                     if (sandboxRejected && corrProgress.succeeded()) {
                         boolean firstMatch = firstTokenMatches(tokens, literals) || isFirstLiteralToken(typo, tokens, literals);
-                        double confidence = computeConfidence(0, 1, firstMatch) * SANDBOX_REJECTED_PENALTY;
+                        double confidence = computeConfidence(0, 1, firstMatch, opts) * sandboxRejectedPenalty;
                         return new Suggestion(pattern, confidence, List.of(new SuggestionIssue.Typo(typo.token, typo.expected)), corrProgress);
                     }
                     if (corrProgress.furthestTokenIndex() >= progress.furthestTokenIndex()) {
@@ -243,7 +256,7 @@ public final class PatternSimulator {
             for (int ci = 0; ci < k; ci++) combo[ci] = ci;
             int combinationsChecked = 0;
             do {
-                if (combinationsChecked++ >= MAX_COMBINATIONS_PER_LEVEL) break;
+                if (combinationsChecked++ >= maxCombosPerLevel) break;
                 List<Token> reduced = removeIndices(tokens, combo);
                 List<Token> removed = extractIndices(tokens, combo);
                 MatchProgress progress = PatternMatcher.matchWithProgress(reduced, pattern, types, env);
@@ -254,7 +267,7 @@ public final class PatternSimulator {
                 }
                 if (progress != null && progress.succeeded()) {
                     boolean firstMatch = firstTokenMatches(tokens, literals) || firstTokenMatches(reduced, literals);
-                    double confidence = computeConfidence(k, 0, firstMatch);
+                    double confidence = computeConfidence(k, 0, firstMatch, opts);
                     levelResults.add(new Suggestion(pattern, confidence, List.of(new SuggestionIssue.ExtraTokens(List.copyOf(removed))), progress));
                     continue;
                 }
@@ -269,7 +282,7 @@ public final class PatternSimulator {
                     }
                     if (corrProgress != null && corrProgress.succeeded()) {
                         boolean firstMatch = firstTokenMatches(tokens, literals) || isFirstLiteralToken(typo, tokens, literals);
-                        double confidence = computeConfidence(k, 1, firstMatch);
+                        double confidence = computeConfidence(k, 1, firstMatch, opts);
                         List<SuggestionIssue> issues = List.of(new SuggestionIssue.ExtraTokens(List.copyOf(removed)), new SuggestionIssue.Typo(typo.token, typo.expected));
                         levelResults.add(new Suggestion(pattern, confidence, issues, corrProgress));
                         continue;
@@ -334,7 +347,7 @@ public final class PatternSimulator {
             }
             boolean firstMatch = firstTokenMatches(tokens, literals) || isFirstLiteralToken(primaryTypo, tokens, literals);
             int totalTypos = 1 + (int) bestPartialProgress.literalTypos().stream().filter(lt -> !lt.token().text().equals(primaryTypo.token.text())).count();
-            double confidence = Math.min(computeConfidence(0, totalTypos, firstMatch), computeTypeMatchConfidence(bestPartialProgress, tokens.size()));
+            double confidence = Math.min(computeConfidence(0, totalTypos, firstMatch, opts), computeTypeMatchConfidence(bestPartialProgress, tokens.size()));
             return new Suggestion(pattern, confidence, List.copyOf(issues), bestPartialProgress);
         }
         if (level0Progress != null && (level0Progress.failedBindingId() != null || !level0Progress.bindingFailures().isEmpty())) {
@@ -365,10 +378,10 @@ public final class PatternSimulator {
             double confidence = computeTypeMatchConfidence(level0Progress, tokens.size());
             return new Suggestion(pattern, confidence, List.copyOf(issues), level0Progress);
         }
-        return tryReorderMatch(tokens, cs, types, env, literals);
+        return tryReorderMatch(tokens, cs, types, env, literals, opts);
     }
 
-    private static @Nullable PreFilterScore preFilter(@NotNull List<Token> tokens, @NotNull Pattern pattern, @NotNull PatternMeta meta, @Nullable Object handler) {
+    private static @Nullable PreFilterScore preFilter(@NotNull List<Token> tokens, @NotNull Pattern pattern, @NotNull PatternMeta meta, @Nullable Object handler, @NotNull SimulatorOptions opts) {
         List<LiteralInfo> literals = extractLiterals(pattern);
         if (literals.isEmpty()) return null;
         boolean[] tokenUsed = new boolean[tokens.size()];
@@ -412,10 +425,10 @@ public final class PatternSimulator {
             }
             positionAccuracy = ordered / (double) (positions.size() - 1);
         }
-        double base = literalCoverage * WEIGHT_LITERAL_COVERAGE + exactness * WEIGHT_EXACTNESS + positionAccuracy * WEIGHT_POSITION + tokenCoverage * WEIGHT_TOKEN_COVERAGE;
-        double firstMultiplier = computeFirstTokenMultiplier(tokens, literals, matches);
+        double base = literalCoverage * opts.doubleValue(SimulatorOption.WEIGHT_LITERAL_COVERAGE) + exactness * opts.doubleValue(SimulatorOption.WEIGHT_EXACTNESS) + positionAccuracy * opts.doubleValue(SimulatorOption.WEIGHT_POSITION) + tokenCoverage * opts.doubleValue(SimulatorOption.WEIGHT_TOKEN_COVERAGE);
+        double firstMultiplier = computeFirstTokenMultiplier(tokens, literals, matches, opts);
         double confidence = Math.min(1.0, base * firstMultiplier);
-        if (confidence < MIN_PREFILTER_CONFIDENCE) return null;
+        if (confidence < opts.doubleValue(SimulatorOption.MIN_PREFILTER_CONFIDENCE)) return null;
         return new PreFilterScore(pattern, confidence, matches, meta, handler);
     }
 
@@ -428,7 +441,8 @@ public final class PatternSimulator {
         return best;
     }
 
-    private static double computeFirstTokenMultiplier(@NotNull List<Token> tokens, @NotNull List<LiteralInfo> literals, @NotNull List<LiteralMatchResult> matches) {
+    private static double computeFirstTokenMultiplier(@NotNull List<Token> tokens, @NotNull List<LiteralInfo> literals, @NotNull List<LiteralMatchResult> matches, @NotNull SimulatorOptions opts) {
+        double miss = opts.doubleValue(SimulatorOption.FIRST_TOKEN_MISS_MULTIPLIER);
         LiteralInfo firstRequired = null;
         for (LiteralInfo lit : literals) {
             if (!lit.optional) {
@@ -436,7 +450,7 @@ public final class PatternSimulator {
                 break;
             }
         }
-        if (firstRequired == null) return FIRST_TOKEN_MISS_MULTIPLIER;
+        if (firstRequired == null) return miss;
         int firstInputIdx = -1;
         for (int i = 0; i < tokens.size(); i++) {
             if (tokens.get(i).kind() != TokenKind.SYMBOL) {
@@ -444,13 +458,13 @@ public final class PatternSimulator {
                 break;
             }
         }
-        if (firstInputIdx < 0) return FIRST_TOKEN_MISS_MULTIPLIER;
+        if (firstInputIdx < 0) return miss;
         for (LiteralMatchResult m : matches) {
             if (m.literal == firstRequired && m.tokenIndex == firstInputIdx) {
                 return m.distance == 0 ? 1.0 : 0.85;
             }
         }
-        return FIRST_TOKEN_MISS_MULTIPLIER;
+        return miss;
     }
 
     private static @Nullable TypoFix findBestTypoFix(@NotNull List<Token> tokens, @NotNull List<LiteralInfo> literals) {
@@ -522,9 +536,9 @@ public final class PatternSimulator {
         return typo.tokenIndex == firstInputIdx && firstRequired.forms.stream().anyMatch(f -> f.equalsIgnoreCase(typo.expected));
     }
 
-    private static double computeConfidence(int removals, int typos, boolean firstTokenMatches) {
-        double base = 1.0 - (removals * REMOVAL_PENALTY) - (typos * TYPO_PENALTY);
-        if (!firstTokenMatches) base *= FIRST_TOKEN_MISS_MULTIPLIER;
+    private static double computeConfidence(int removals, int typos, boolean firstTokenMatches, @NotNull SimulatorOptions opts) {
+        double base = 1.0 - (removals * opts.doubleValue(SimulatorOption.REMOVAL_PENALTY)) - (typos * opts.doubleValue(SimulatorOption.TYPO_PENALTY));
+        if (!firstTokenMatches) base *= opts.doubleValue(SimulatorOption.FIRST_TOKEN_MISS_MULTIPLIER);
         return Math.max(0.0, Math.min(1.0, base));
     }
 
@@ -568,17 +582,17 @@ public final class PatternSimulator {
         return true;
     }
 
-    private static @Nullable Suggestion tryReorderMatch(@NotNull List<Token> tokens, @NotNull PreFilterScore cs, @NotNull TypeRegistry types, @NotNull TypeEnv env, @NotNull List<LiteralInfo> literals) {
+    private static @Nullable Suggestion tryReorderMatch(@NotNull List<Token> tokens, @NotNull PreFilterScore cs, @NotNull TypeRegistry types, @NotNull TypeEnv env, @NotNull List<LiteralInfo> literals, @NotNull SimulatorOptions opts) {
         List<LiteralMatchResult> matchDetails = cs.matchDetails;
         long anchoredCount = matchDetails.stream().filter(m -> m.tokenIndex >= 0).count();
-        if (tokens.size() > SHAPE_MATCH_TOKEN_LIMIT || anchoredCount < 1) return null;
+        if (tokens.size() > opts.intValue(SimulatorOption.SHAPE_MATCH_TOKEN_LIMIT) || anchoredCount < 1) return null;
         MatchProgress shaped = tryShapeMatch(tokens, cs.pattern, matchDetails, types, env);
         if (shaped == null || !shaped.succeeded()) return null;
         if (isBuiltin(cs.meta) && shaped.match() != null && !tryHandlerSandbox(cs.handler, shaped.match(), env)) return null;
         List<Token> reordered = findReorderedFromAnchors(tokens, matchDetails);
         if (reordered.isEmpty()) return null;
         boolean firstMatch = firstTokenMatches(tokens, literals);
-        double confidence = Math.max(VALIDATED_REORDER_FLOOR, computeConfidence(0, 0, firstMatch));
+        double confidence = Math.max(opts.doubleValue(SimulatorOption.VALIDATED_REORDER_FLOOR), computeConfidence(0, 0, firstMatch, opts));
         return new Suggestion(cs.pattern, confidence, List.of(new SuggestionIssue.Reorder(reordered)), shaped);
     }
 

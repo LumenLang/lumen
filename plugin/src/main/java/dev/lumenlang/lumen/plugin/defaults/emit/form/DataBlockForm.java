@@ -13,7 +13,7 @@ import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.pipeline.data.DataSchema;
 import dev.lumenlang.lumen.pipeline.java.compiled.DataInstance;
-import dev.lumenlang.lumen.pipeline.language.resolve.SuggestionDiagnostics;
+import dev.lumenlang.lumen.pipeline.language.simulator.suggestions.SuggestionDiagnostics;
 import dev.lumenlang.lumen.pipeline.type.TypeAnnotationParser;
 import org.jetbrains.annotations.NotNull;
 

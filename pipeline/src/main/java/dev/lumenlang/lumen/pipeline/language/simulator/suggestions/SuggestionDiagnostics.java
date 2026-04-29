@@ -1,4 +1,4 @@
-package dev.lumenlang.lumen.pipeline.language.resolve;
+package dev.lumenlang.lumen.pipeline.language.simulator.suggestions;
 
 import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
@@ -7,6 +7,8 @@ import dev.lumenlang.lumen.api.type.NullableType;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
 import dev.lumenlang.lumen.pipeline.language.match.MatchProgress;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
+import dev.lumenlang.lumen.pipeline.language.resolve.ExprResolver;
+import dev.lumenlang.lumen.pipeline.language.simulator.PatternSimulator;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.language.tokenization.TokenKind;
 import dev.lumenlang.lumen.pipeline.type.TypeAnnotationParser;

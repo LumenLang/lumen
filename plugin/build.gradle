@@ -57,6 +57,7 @@ build {
 tasks {
     runServer {
         minecraftVersion("1.20")
+        dependsOn(":debug:deployToAddons")
     }
 }
 
