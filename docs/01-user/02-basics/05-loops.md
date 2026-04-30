@@ -11,7 +11,7 @@ Loops let you iterate over collections of items and run code for each one. Lumen
 Use `loop <var> in <list>:` to iterate over every item in a list:
 
 ```luma
-set fruits to new list
+set fruits to new list of string
 add "apple" to fruits
 add "banana" to fruits
 add "cherry" to fruits

@@ -4,7 +4,9 @@ import dev.lumenlang.lumen.api.codegen.CodegenAccess;
 import dev.lumenlang.lumen.api.emit.transform.CodeTransformer;
 import dev.lumenlang.lumen.api.emit.transform.TaggedLine;
 import dev.lumenlang.lumen.api.emit.transform.TransformContext;
+import dev.lumenlang.lumen.pipeline.codegen.CodegenContext;
 import dev.lumenlang.lumen.pipeline.java.JavaBuilder;
+import dev.lumenlang.lumen.pipeline.java.compiled.ClassBuilder;
 import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -130,7 +132,7 @@ public final class TransformerRegistry {
                     lineSnapshot.add(new TaggedLineImpl(lines.get(i), tags.get(i), i, scriptLine, scriptSource));
                 }
 
-                TransformContextImpl ctx = new TransformContextImpl(Collections.unmodifiableList(lineSnapshot), codegen);
+                TransformContextImpl ctx = new TransformContextImpl(Collections.unmodifiableList(lineSnapshot), codegen, builder);
                 transformer.transform(ctx);
 
                 if (applyModifications(builder, transformer.tags(), ctx)) {
@@ -251,13 +253,17 @@ public final class TransformerRegistry {
     private static final class TransformContextImpl implements TransformContext {
         private final List<TaggedLine> snapshot;
         private final CodegenAccess codegen;
+        private final JavaBuilder builder;
         private final List<Integer> removals = new ArrayList<>();
         private final Map<Integer, String> replacements = new HashMap<>();
         private final List<Insertion> insertions = new ArrayList<>();
+        private String cachedFullSource;
+        private int cachedBodyOffset = -1;
 
-        private TransformContextImpl(@NotNull List<TaggedLine> snapshot, @NotNull CodegenAccess codegen) {
+        private TransformContextImpl(@NotNull List<TaggedLine> snapshot, @NotNull CodegenAccess codegen, @NotNull JavaBuilder builder) {
             this.snapshot = snapshot;
             this.codegen = codegen;
+            this.builder = builder;
         }
 
         @Override
@@ -268,6 +274,35 @@ public final class TransformerRegistry {
         @Override
         public @NotNull List<TaggedLine> lines() {
             return snapshot;
+        }
+
+        @Override
+        public @NotNull String fullSource() {
+            buildIfNeeded();
+            return cachedFullSource;
+        }
+
+        @Override
+        public int indexOfFullSourceLine(int fullSourceLine) {
+            buildIfNeeded();
+            int idx = fullSourceLine - 1 - cachedBodyOffset;
+            if (idx < 0 || idx >= snapshot.size()) return -1;
+            return idx;
+        }
+
+        private void buildIfNeeded() {
+            if (cachedFullSource != null) return;
+            CodegenContext ctx = (CodegenContext) codegen;
+            cachedFullSource = ClassBuilder.buildClass(ctx.className(), ctx, builder, false);
+            cachedBodyOffset = builder.lines().isEmpty() ? 0 : preambleLineCount(cachedFullSource, builder.lines().get(0));
+        }
+
+        private static int preambleLineCount(@NotNull String fullSource, @NotNull String firstBodyLine) {
+            int idx = fullSource.indexOf("\n" + firstBodyLine + "\n");
+            if (idx < 0) return 0;
+            int count = 0;
+            for (int i = 0; i <= idx; i++) if (fullSource.charAt(i) == '\n') count++;
+            return count;
         }
 
         @Override

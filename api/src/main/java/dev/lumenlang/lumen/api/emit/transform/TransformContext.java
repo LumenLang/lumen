@@ -38,6 +38,17 @@ public interface TransformContext {
     @NotNull List<TaggedLine> lines();
 
     /**
+     * Returns the assembled Java source as it will be compiled.
+     */
+    @NotNull String fullSource();
+
+    /**
+     * Maps a 1-based line in {@link #fullSource()} to its 0-based index in {@link #lines()},
+     * or {@code -1} if the line falls outside the script body.
+     */
+    int indexOfFullSourceLine(int fullSourceLine);
+
+    /**
      * Marks a line for removal.
      *
      * <p>The line must be owned by the calling transformer (its tag must match

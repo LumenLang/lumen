@@ -18,9 +18,11 @@ import java.util.TreeMap;
  */
 public final class ClassBuilder {
 
-    public static String buildClass(@NotNull String className,
-                                    @NotNull CodegenContext ctx,
-                                    @NotNull JavaBuilder code) {
+    public static String buildClass(@NotNull String className, @NotNull CodegenContext ctx, @NotNull JavaBuilder code) {
+        return buildClass(className, ctx, code, true);
+    }
+
+    public static String buildClass(@NotNull String className, @NotNull CodegenContext ctx, @NotNull JavaBuilder code, boolean formatted) {
 
         StringBuilder sb = new StringBuilder();
 
@@ -46,9 +48,14 @@ public final class ClassBuilder {
             sb.append("\n");
         }
 
-        List<String> bodyLines = formatBody(code);
-        for (String line : bodyLines) {
-            sb.append(line).append("\n");
+        if (formatted) {
+            for (String line : formatBody(code)) {
+                sb.append(line).append("\n");
+            }
+        } else {
+            for (String line : code.lines()) {
+                sb.append(line).append("\n");
+            }
         }
 
         for (String method : ctx.methodLines()) {

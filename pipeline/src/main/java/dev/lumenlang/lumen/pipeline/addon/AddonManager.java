@@ -2,7 +2,6 @@ package dev.lumenlang.lumen.pipeline.addon;
 
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.LumenAddon;
-import dev.lumenlang.lumen.pipeline.documentation.LumenDoc;
 import dev.lumenlang.lumen.pipeline.java.compiler.CompilerClasspath;
 import dev.lumenlang.lumen.pipeline.java.compiler.ScriptClassLoader;
 import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
@@ -41,7 +40,6 @@ public final class AddonManager {
         addons.add(addon);
         registerClasspath(addon);
         callOnLoad(addon);
-        validateDocumentation(addon.getClass().getClassLoader(), addon);
         if (api != null) {
             enableSingle(addon);
         }
@@ -72,7 +70,6 @@ public final class AddonManager {
                 for (LumenAddon addon : sl) {
                     addons.add(addon);
                     callOnLoad(addon);
-                    validateDocumentation(loader, addon);
                     LumenLogger.info("Discovered addon jar: " + addon.name()
                             + " v" + addon.version()
                             + " (" + addon.description() + ")");
@@ -190,18 +187,5 @@ public final class AddonManager {
         } catch (Throwable e) {
             LumenLogger.warning("Error calling onLoad for addon " + addon.name() + " v" + addon.version() + ": " + e.getMessage());
         }
-    }
-
-    private void validateDocumentation(@NotNull ClassLoader loader, @NotNull LumenAddon addon) {
-        String expected = LumenDoc.resourceName(addon.name());
-        if (loader.getResource(expected) != null) return;
-        LumenLogger.severe("=================================================");
-        LumenLogger.severe("Addon '" + addon.name() + "' v" + addon.version() + " is missing its documentation file!");
-        LumenLogger.severe("Expected resource: " + expected);
-        LumenLogger.severe("If you are the addon developer, enable the documentation tool in Lumen's config.yml");
-        LumenLogger.severe("run the server, and include the generated " + expected + " file in your addon jar.");
-        LumenLogger.severe(" ");
-        LumenLogger.severe("If you are a user, please report this to the addon developer.");
-        LumenLogger.severe("=================================================");
     }
 }
