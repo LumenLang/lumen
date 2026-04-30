@@ -12,18 +12,6 @@ import java.util.List;
 /**
  * Thrown when a Lumen script contains an error that is detected during parsing or code generation.
  *
- * <p>This exception carries the source line number and (when available) the raw source text so
- * that error messages include precise location information:
- *
- * <pre>
- * Script error on line 5: Variable 'whatever' does not exist
- *   5 | if whatever:
- *        ~~~~~~~~
- * </pre>
- *
- * <p>When token position information is available, a squiggly underline is shown under the
- * offending tokens to make the error location visually clear.
- *
  * <p>Handlers should throw a plain {@link RuntimeException} with a descriptive message; the
  * code generation loop in {@link CodeEmitter} will catch it and wrap it in a
  * {@code LumenScriptException} that includes line context automatically.
@@ -70,8 +58,7 @@ public final class LumenScriptException extends RuntimeException {
      * @param colStart the 0-based starting column of the error
      * @param colEnd   the 0-based ending column (exclusive) of the error
      */
-    public LumenScriptException(int line, @Nullable String rawLine, @NotNull String detail,
-                                int colStart, int colEnd) {
+    public LumenScriptException(int line, @Nullable String rawLine, @NotNull String detail, int colStart, int colEnd) {
         super(formatMessage(line, rawLine, detail, colStart, colEnd));
         this.line = line;
         this.rawLine = rawLine;
@@ -87,8 +74,7 @@ public final class LumenScriptException extends RuntimeException {
      * @param detail  a human-readable description of the error
      * @param tokens  the tokens to underline
      */
-    public LumenScriptException(int line, @Nullable String rawLine, @NotNull String detail,
-                                @NotNull List<Token> tokens) {
+    public LumenScriptException(int line, @Nullable String rawLine, @NotNull String detail, @NotNull List<Token> tokens) {
         super(formatMessage(line, rawLine, detail,
                 tokens.isEmpty() ? -1 : tokens.get(0).start(),
                 tokens.isEmpty() ? -1 : tokens.get(tokens.size() - 1).end()));
@@ -109,8 +95,7 @@ public final class LumenScriptException extends RuntimeException {
         this.rawLine = null;
     }
 
-    private static @NotNull String formatMessage(int line, @Nullable String rawLine,
-                                                 @NotNull String detail, int colStart, int colEnd) {
+    private static @NotNull String formatMessage(int line, @Nullable String rawLine, @NotNull String detail, int colStart, int colEnd) {
         StringBuilder sb = new StringBuilder();
         sb.append("Script error on line ").append(line).append(": ").append(detail);
         if (rawLine != null) {
