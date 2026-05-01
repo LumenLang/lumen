@@ -3,7 +3,7 @@ package dev.lumenlang.lumen.plugin.defaults.statement.entity;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
-import dev.lumenlang.lumen.api.codegen.EnvironmentAccess.VarHandle;
+import dev.lumenlang.lumen.api.codegen.TypeEnv.VarHandle;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.plugin.defaults.util.AttributeNames;
 import dev.lumenlang.lumen.plugin.util.EntityValidation;

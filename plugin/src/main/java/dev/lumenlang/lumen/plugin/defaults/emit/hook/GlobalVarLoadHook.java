@@ -3,14 +3,14 @@ package dev.lumenlang.lumen.plugin.defaults.emit.hook;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
-import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.codegen.HandlerContext;
+import dev.lumenlang.lumen.api.codegen.TypeEnv;
 import dev.lumenlang.lumen.api.emit.BlockEnterHook;
 import dev.lumenlang.lumen.api.type.CollectionType;
 import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.NullableType;
 import dev.lumenlang.lumen.api.type.ObjectType;
-import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
+import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.persist.GlobalVars;
 import dev.lumenlang.lumen.pipeline.persist.PersistentVars;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
@@ -39,11 +39,11 @@ public final class GlobalVarLoadHook implements BlockEnterHook {
 
     @Override
     public void onBlockEnter(@NotNull HandlerContext ctx) {
-        TypeEnv env = (TypeEnv) ctx.env();
-        List<? extends EnvironmentAccess.VarHandle> globals = env.allGlobals();
+        TypeEnvImpl env = (TypeEnvImpl) ctx.env();
+        List<? extends TypeEnv.VarHandle> globals = env.allGlobals();
 
-        for (EnvironmentAccess.VarHandle g : globals) {
-            EnvironmentAccess.GlobalInfo info = g.globalInfo();
+        for (TypeEnv.VarHandle g : globals) {
+            TypeEnv.GlobalInfo info = g.globalInfo();
             if (info == null) continue;
             if (info.scoped()) continue;
             String name = g.name();

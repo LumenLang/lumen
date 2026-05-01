@@ -3,7 +3,7 @@ package dev.lumenlang.lumen.plugin.defaults.statement;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
-import dev.lumenlang.lumen.api.codegen.CodegenAccess;
+import dev.lumenlang.lumen.api.codegen.CodegenContext;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.potion.PotionEffect;
@@ -24,12 +24,12 @@ public final class PotionEffectStatements {
     private static final String POTION_EFFECT_TYPE = PotionEffectType.class.getName();
     private static final String LIVING_ENTITY = LivingEntity.class.getName();
 
-    private static void potionImports(@NotNull CodegenAccess c) {
+    private static void potionImports(@NotNull CodegenContext c) {
         c.addImport(POTION_EFFECT);
         c.addImport(POTION_EFFECT_TYPE);
     }
 
-    private static void entityPotionImports(@NotNull CodegenAccess c) {
+    private static void entityPotionImports(@NotNull CodegenContext c) {
         potionImports(c);
         c.addImport(LIVING_ENTITY);
     }

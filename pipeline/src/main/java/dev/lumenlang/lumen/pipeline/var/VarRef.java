@@ -1,10 +1,10 @@
 package dev.lumenlang.lumen.pipeline.var;
 
-import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
+import dev.lumenlang.lumen.api.codegen.TypeEnv;
 import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.api.type.TypeUtils;
-import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
+import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +29,7 @@ import java.util.Map;
  * @param metadata   an unmodifiable map of compile-time metadata entries
  * @param globalInfo the global declaration info, or {@code null} for locals and root variables
  * @see LumenType
- * @see TypeEnv
+ * @see TypeEnvImpl
  */
 @SuppressWarnings("unused")
 public record VarRef(
@@ -37,8 +37,8 @@ public record VarRef(
         @NotNull LumenType type,
         @Nullable String java,
         @NotNull Map<String, Object> metadata,
-        @Nullable EnvironmentAccess.GlobalInfo globalInfo
-) implements EnvironmentAccess.VarHandle {
+        @Nullable TypeEnv.GlobalInfo globalInfo
+) implements TypeEnv.VarHandle {
 
     public VarRef(@NotNull String name, @NotNull LumenType type, @NotNull String java) {
         this(name, type, java, Map.of(), null);

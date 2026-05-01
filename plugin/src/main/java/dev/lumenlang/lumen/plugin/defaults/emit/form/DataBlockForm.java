@@ -10,7 +10,7 @@ import dev.lumenlang.lumen.api.emit.BlockFormHandler;
 import dev.lumenlang.lumen.api.emit.ScriptLine;
 import dev.lumenlang.lumen.api.emit.ScriptToken;
 import dev.lumenlang.lumen.api.type.LumenType;
-import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
+import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.data.DataSchema;
 import dev.lumenlang.lumen.pipeline.java.compiled.DataInstance;
 import dev.lumenlang.lumen.pipeline.language.simulator.suggestions.SuggestionDiagnostics;
@@ -58,7 +58,7 @@ public final class DataBlockForm implements BlockFormHandler {
                        @NotNull List<? extends ScriptLine> children,
                        @NotNull HandlerContext ctx) {
         String typeName = headTokens.get(1).text().toLowerCase();
-        TypeEnv env = (TypeEnv) ctx.env();
+        TypeEnvImpl env = (TypeEnvImpl) ctx.env();
         ScriptToken typeNameToken = headTokens.get(1);
         int headLineNum = children.isEmpty() ? 1 : children.get(0).lineNumber() - 1;
 

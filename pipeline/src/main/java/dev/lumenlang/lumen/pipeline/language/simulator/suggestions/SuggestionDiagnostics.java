@@ -1,10 +1,10 @@
 package dev.lumenlang.lumen.pipeline.language.simulator.suggestions;
 
-import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
+import dev.lumenlang.lumen.api.codegen.TypeEnv;
 import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.emit.ScriptToken;
 import dev.lumenlang.lumen.api.type.NullableType;
-import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
+import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.language.match.MatchProgress;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.language.resolve.ExprResolver;
@@ -51,7 +51,7 @@ public final class SuggestionDiagnostics {
      * @param env         the type environment for nullable variable detection
      * @return a fully constructed diagnostic with nullable hints if applicable
      */
-    public static @NotNull LumenDiagnostic build(@NotNull String title, int line, @NotNull String raw, @NotNull List<Token> tokens, @NotNull List<PatternSimulator.Suggestion> suggestions, @Nullable TypeEnv env) {
+    public static @NotNull LumenDiagnostic build(@NotNull String title, int line, @NotNull String raw, @NotNull List<Token> tokens, @NotNull List<PatternSimulator.Suggestion> suggestions, @Nullable TypeEnvImpl env) {
         return build(title, line, raw, tokens, suggestions.get(0), suggestions.size() > 1 ? suggestions.get(1) : null, env);
     }
 
@@ -69,7 +69,7 @@ public final class SuggestionDiagnostics {
         return build(title, line, raw, tokens, top, null, null);
     }
 
-    private static @NotNull LumenDiagnostic build(@NotNull String title, int line, @NotNull String raw, @NotNull List<Token> tokens, @NotNull PatternSimulator.Suggestion top, @Nullable PatternSimulator.Suggestion second, @Nullable TypeEnv env) {
+    private static @NotNull LumenDiagnostic build(@NotNull String title, int line, @NotNull String raw, @NotNull List<Token> tokens, @NotNull PatternSimulator.Suggestion top, @Nullable PatternSimulator.Suggestion second, @Nullable TypeEnvImpl env) {
         LumenDiagnostic unsupported = detectUnsupportedSyntax(line, raw, tokens);
         if (unsupported != null) return unsupported;
         TypeRegistry types = PatternRegistry.instance().getTypeRegistry();
@@ -150,7 +150,7 @@ public final class SuggestionDiagnostics {
      * @param env    the type environment for nullable variable detection
      * @return a fully constructed diagnostic with nullable hints if applicable
      */
-    public static @NotNull LumenDiagnostic buildNoSuggestion(@NotNull String title, int line, @NotNull String raw, @NotNull List<Token> tokens, @Nullable TypeEnv env) {
+    public static @NotNull LumenDiagnostic buildNoSuggestion(@NotNull String title, int line, @NotNull String raw, @NotNull List<Token> tokens, @Nullable TypeEnvImpl env) {
         LumenDiagnostic unsupported = detectUnsupportedSyntax(line, raw, tokens);
         if (unsupported != null) return unsupported;
         LumenDiagnostic.Builder builder = LumenDiagnostic.error(title).at(line, raw);
@@ -162,15 +162,15 @@ public final class SuggestionDiagnostics {
         return builder.build();
     }
 
-    private static void appendNullableHints(@NotNull LumenDiagnostic.Builder builder, @NotNull List<Token> tokens, @Nullable TypeEnv env) {
+    private static void appendNullableHints(@NotNull LumenDiagnostic.Builder builder, @NotNull List<Token> tokens, @Nullable TypeEnvImpl env) {
         if (env == null) return;
         for (Token t : tokens) {
             if (t.kind() != TokenKind.IDENT) continue;
-            EnvironmentAccess.VarHandle ref = env.lookupVar(t.text());
+            TypeEnv.VarHandle ref = env.lookupVar(t.text());
             if (ref == null) continue;
             if (!(ref.type() instanceof NullableType)) continue;
-            TypeEnv.NullState state = env.nullState(ref.java());
-            if (state == TypeEnv.NullState.NON_NULL) {
+            TypeEnvImpl.NullState state = env.nullState(ref.java());
+            if (state == TypeEnvImpl.NullState.NON_NULL) {
                 builder.note("'" + t.text() + "' has type '" + ref.type().displayName() + "' but is narrowed to non-null in this scope");
                 continue;
             }

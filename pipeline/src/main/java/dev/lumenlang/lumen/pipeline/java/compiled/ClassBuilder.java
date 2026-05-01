@@ -1,6 +1,6 @@
 package dev.lumenlang.lumen.pipeline.java.compiled;
 
-import dev.lumenlang.lumen.pipeline.codegen.CodegenContext;
+import dev.lumenlang.lumen.pipeline.codegen.CodegenContextImpl;
 import dev.lumenlang.lumen.pipeline.java.JavaBuilder;
 import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
 import org.jetbrains.annotations.NotNull;
@@ -18,11 +18,11 @@ import java.util.TreeMap;
  */
 public final class ClassBuilder {
 
-    public static String buildClass(@NotNull String className, @NotNull CodegenContext ctx, @NotNull JavaBuilder code) {
+    public static String buildClass(@NotNull String className, @NotNull CodegenContextImpl ctx, @NotNull JavaBuilder code) {
         return buildClass(className, ctx, code, true);
     }
 
-    public static String buildClass(@NotNull String className, @NotNull CodegenContext ctx, @NotNull JavaBuilder code, boolean formatted) {
+    public static String buildClass(@NotNull String className, @NotNull CodegenContextImpl ctx, @NotNull JavaBuilder code, boolean formatted) {
 
         StringBuilder sb = new StringBuilder();
 

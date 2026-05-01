@@ -1,8 +1,8 @@
 package dev.lumenlang.lumen.pipeline.conditions;
 
-import dev.lumenlang.lumen.pipeline.codegen.CodegenContext;
+import dev.lumenlang.lumen.pipeline.codegen.CodegenContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.HandlerContextImpl;
-import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
+import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.conditions.registry.ConditionRegistry;
 import dev.lumenlang.lumen.pipeline.conditions.registry.RegisteredConditionMatch;
 import dev.lumenlang.lumen.pipeline.language.exceptions.TokenCarryingException;
@@ -17,7 +17,7 @@ import java.util.List;
  *
  * <p>A {@code ConditionAtom} wraps one {@link RegisteredConditionMatch}: the result of matching
  * a script condition fragment against a registered condition pattern. Its
- * {@link #toJava(TypeEnv, CodegenContext)} implementation simply calls through to the handler.
+ * {@link #toJava(TypeEnvImpl, CodegenContextImpl)} implementation simply calls through to the handler.
  *
  * @see ConditionAnd
  * @see ConditionOr
@@ -37,7 +37,7 @@ public final class ConditionAtom implements ConditionExpr {
     }
 
     @Override
-    public String toJava(TypeEnv env, CodegenContext ctx) {
+    public String toJava(TypeEnvImpl env, CodegenContextImpl ctx) {
         try {
             HandlerContextImpl hctx = new HandlerContextImpl(match.match(), env, ctx, null, null, 0, "");
             return match.reg().handler().handle(hctx);

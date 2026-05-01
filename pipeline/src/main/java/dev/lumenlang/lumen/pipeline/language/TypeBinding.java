@@ -1,8 +1,8 @@
 package dev.lumenlang.lumen.pipeline.language;
 
 import dev.lumenlang.lumen.api.exceptions.ParseFailureException;
-import dev.lumenlang.lumen.pipeline.codegen.CodegenContext;
-import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
+import dev.lumenlang.lumen.pipeline.codegen.CodegenContextImpl;
+import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.language.pattern.Pattern;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.typebinding.TypeRegistry;
@@ -31,7 +31,7 @@ import java.util.List;
  *
  * <h2>Token Consumption</h2>
  * <p>
- * The {@link #consumeCount(List, TypeEnv)} method is critical for correct
+ * The {@link #consumeCount(List, TypeEnvImpl)} method is critical for correct
  * pattern matching
  * when multiple placeholders appear consecutively without literals between
  * them. For example,
@@ -42,7 +42,7 @@ import java.util.List;
  * are available for MATERIAL and INT.
  *
  * <p>
- * If {@link #consumeCount(List, TypeEnv)} returns -1, the type binding will
+ * If {@link #consumeCount(List, TypeEnvImpl)} returns -1, the type binding will
  * consume all
  * tokens until the next literal in the pattern or until the end of the token
  * stream. This is
@@ -61,12 +61,12 @@ import java.util.List;
  *     // Uses the default consumeCount which throws ParseFailureException
  *     // when tokens are empty and returns 1 otherwise.
  *
- *     public Object parse(List<Token> tokens, TypeEnv env) {
+ *     public Object parse(List<Token> tokens, TypeEnvImpl env) {
  *         String name = tokens.get(0).text();
  *         return env.lookupVar(name); // Find player variable
  *     }
  *
- *     public String toJava(Object value, CodegenContext ctx, TypeEnv env) {
+ *     public String toJava(Object value, CodegenContextImpl ctx, TypeEnvImpl env) {
  *         VarRef ref = (VarRef) value;
  *         return ref.java(); // Generate Java code: "player"
  *     }
@@ -95,7 +95,7 @@ public interface TypeBinding {
      *
      * <p>
      * <b>Important:</b> The number of tokens passed to this method is determined by
-     * {@link #consumeCount(List, TypeEnv)}. This method should not make assumptions
+     * {@link #consumeCount(List, TypeEnvImpl)}. This method should not make assumptions
      * about
      * receiving all remaining tokens unless consumeCount returns -1.
      *
@@ -104,7 +104,7 @@ public interface TypeBinding {
      *               references
      * @return the parsed value (type depends on the binding implementation)
      */
-    Object parse(@NotNull List<Token> tokens, @NotNull TypeEnv env);
+    Object parse(@NotNull List<Token> tokens, @NotNull TypeEnvImpl env);
 
     /**
      * Converts the parsed value into Java code that will be inserted into the
@@ -121,14 +121,14 @@ public interface TypeBinding {
      * <li>STRING might generate: {@code "\"Hello World\""} (with quotes)</li>
      * </ul>
      *
-     * @param value the value previously returned by {@link #parse(List, TypeEnv)}
+     * @param value the value previously returned by {@link #parse(List, TypeEnvImpl)}
      * @param ctx   the code generation context for managing imports and class
      *              metadata
      * @param env   the current type environment
      * @return valid Java source code representing this value
      */
     @NotNull
-    String toJava(Object value, @NotNull CodegenContext ctx, @NotNull TypeEnv env);
+    String toJava(Object value, @NotNull CodegenContextImpl ctx, @NotNull TypeEnvImpl env);
 
     /**
      * Determines how many tokens this type binding should consume from the input
@@ -181,7 +181,7 @@ public interface TypeBinding {
      * @return number of tokens to consume, or -1 to consume until next literal
      * @throws ParseFailureException if this binding cannot match the given tokens
      */
-    default int consumeCount(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
+    default int consumeCount(@NotNull List<Token> tokens, @NotNull TypeEnvImpl env) {
         if (tokens.isEmpty())
             throw new ParseFailureException("expected a value here");
         return 1;

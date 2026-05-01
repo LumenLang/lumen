@@ -3,9 +3,9 @@ package dev.lumenlang.lumen.plugin.defaults.type;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
-import dev.lumenlang.lumen.api.codegen.CodegenAccess;
-import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
-import dev.lumenlang.lumen.api.codegen.EnvironmentAccess.VarHandle;
+import dev.lumenlang.lumen.api.codegen.CodegenContext;
+import dev.lumenlang.lumen.api.codegen.TypeEnv;
+import dev.lumenlang.lumen.api.codegen.TypeEnv.VarHandle;
 import dev.lumenlang.lumen.api.exceptions.ParseFailureException;
 import dev.lumenlang.lumen.api.type.AddonTypeBinding;
 import dev.lumenlang.lumen.api.type.BuiltinLumenTypes;
@@ -163,7 +163,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public int consumeCount(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
+            public int consumeCount(@NotNull List<String> tokens, @NotNull TypeEnv env) {
                 if (tokens.isEmpty())
                     throw new ParseFailureException("expected an integer value here");
                 if (tokens.size() >= 2 && tokens.get(1).equals("%"))
@@ -172,7 +172,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
+            public Object parse(@NotNull List<String> tokens, @NotNull TypeEnv env) {
                 String text = tokens.get(0);
                 try {
                     return Integer.parseInt(text);
@@ -185,7 +185,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object value, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
                 if (value instanceof VarHandle ref) {
                     return ref.java();
                 }
@@ -213,7 +213,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
+            public Object parse(@NotNull List<String> tokens, @NotNull TypeEnv env) {
                 String text = tokens.get(0);
                 if (text.endsWith("L") || text.endsWith("l")) {
                     text = text.substring(0, text.length() - 1);
@@ -229,7 +229,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object value, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
                 if (value instanceof VarHandle ref) {
                     return "((long) " + ref.java() + ")";
                 }
@@ -257,7 +257,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
+            public Object parse(@NotNull List<String> tokens, @NotNull TypeEnv env) {
                 String text = tokens.get(0);
                 try {
                     return Double.parseDouble(text);
@@ -270,7 +270,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object value, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
                 if (value instanceof VarHandle ref) {
                     return "((double) " + ref.java() + ")";
                 }
@@ -298,7 +298,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
+            public Object parse(@NotNull List<String> tokens, @NotNull TypeEnv env) {
                 String text = tokens.get(0);
                 if (text.endsWith("L") || text.endsWith("l")) {
                     try {
@@ -327,7 +327,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object value, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
                 if (value instanceof VarHandle ref) {
                     return "((double) " + ref.java() + ")";
                 }
@@ -361,7 +361,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
+            public Object parse(@NotNull List<String> tokens, @NotNull TypeEnv env) {
                 String raw = tokens.get(0).replace("\"", "").toLowerCase(Locale.ROOT);
                 if (raw.equals("true") || raw.equals("yes") || raw.equals("on")) return Boolean.TRUE;
                 if (raw.equals("false") || raw.equals("no") || raw.equals("off")) return Boolean.FALSE;
@@ -371,7 +371,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object value, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
                 if (value instanceof VarHandle ref) {
                     return "Boolean.parseBoolean(String.valueOf(" + ref.java() + "))";
                 }
@@ -405,7 +405,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
+            public Object parse(@NotNull List<String> tokens, @NotNull TypeEnv env) {
                 String normalized = tokens.get(0).toUpperCase(Locale.ROOT);
                 if (frozenMats.contains(normalized)) return normalized;
                 VarHandle ref = env.lookupVar(tokens.get(0));
@@ -414,7 +414,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object value, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
                 ctx.addImport(Material.class.getName());
                 if (value instanceof VarHandle ref) {
                     return "Material.valueOf(String.valueOf(" + ref.java() + ").toUpperCase())";
@@ -443,7 +443,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
+            public Object parse(@NotNull List<String> tokens, @NotNull TypeEnv env) {
                 String raw = tokens.get(0);
                 if (raw.endsWith("'s"))
                     throw new ParseFailureException("'" + raw + "' should not use possessive form here");
@@ -457,7 +457,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object v, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null player reference");
                 return ((VarHandle) v).java();
@@ -486,7 +486,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
+            public Object parse(@NotNull List<String> tokens, @NotNull TypeEnv env) {
                 String raw = tokens.get(0);
                 if (!raw.endsWith("'s"))
                     throw new ParseFailureException("'" + raw + "' must use possessive form (e.g. player's)");
@@ -501,7 +501,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object v, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null player reference");
                 return ((VarHandle) v).java();
@@ -532,7 +532,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
+            public Object parse(@NotNull List<String> tokens, @NotNull TypeEnv env) {
                 String raw = tokens.get(0);
                 if (raw.endsWith("'s"))
                     throw new ParseFailureException("'" + raw + "' should not use possessive form here");
@@ -546,7 +546,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object v, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null offline player reference");
                 return ((VarHandle) v).java();
@@ -575,7 +575,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
+            public Object parse(@NotNull List<String> tokens, @NotNull TypeEnv env) {
                 String raw = tokens.get(0);
                 if (!raw.endsWith("'s"))
                     throw new ParseFailureException("'" + raw + "' must use possessive form (e.g. player's)");
@@ -590,7 +590,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object v, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null offline player reference");
                 return ((VarHandle) v).java();
@@ -621,17 +621,17 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
+            public Object parse(@NotNull List<String> tokens, @NotNull TypeEnv env) {
                 return String.join(" ", tokens);
             }
 
             @Override
-            public int consumeCount(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
+            public int consumeCount(@NotNull List<String> tokens, @NotNull TypeEnv env) {
                 return -1;
             }
 
             @Override
-            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object v, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
                 return (String) v;
             }
         });
@@ -656,7 +656,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public int consumeCount(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
+            public int consumeCount(@NotNull List<String> tokens, @NotNull TypeEnv env) {
                 if (tokens.isEmpty())
                     throw new ParseFailureException("expected an operator here");
                 String first = tokens.get(0).toLowerCase(Locale.ROOT);
@@ -716,7 +716,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
+            public Object parse(@NotNull List<String> tokens, @NotNull TypeEnv env) {
                 if (tokens.size() == 2) {
                     String combined = tokens.get(0) + tokens.get(1);
                     if (combined.equals(">=") || combined.equals("<=") || combined.equals("==")
@@ -742,7 +742,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object v, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
                 return (String) v;
             }
         });
@@ -767,7 +767,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
+            public Object parse(@NotNull List<String> tokens, @NotNull TypeEnv env) {
                 String raw = tokens.get(0);
                 if (raw.endsWith("'s"))
                     throw new ParseFailureException("'" + raw + "' should not use possessive form here");
@@ -781,7 +781,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object v, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null entity reference");
                 return ((VarHandle) v).java();
@@ -810,7 +810,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
+            public Object parse(@NotNull List<String> tokens, @NotNull TypeEnv env) {
                 String raw = tokens.get(0);
                 if (!raw.endsWith("'s"))
                     throw new ParseFailureException("'" + raw + "' must use possessive form (e.g. entity's)");
@@ -825,7 +825,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object v, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null entity reference");
                 return ((VarHandle) v).java();
@@ -866,7 +866,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
+            public Object parse(@NotNull List<String> tokens, @NotNull TypeEnv env) {
                 String raw = tokens.get(0);
                 String normalized = raw.toUpperCase(Locale.ROOT)
                         .replace(' ', '_').replace('-', '_');
@@ -879,7 +879,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object value, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
                 if (value instanceof VarHandle ref) {
                     ctx.addImport(EntityType.class.getName());
                     return "EntityType.valueOf(String.valueOf(" + ref.java() + ").toUpperCase())";
@@ -921,7 +921,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
+            public Object parse(@NotNull List<String> tokens, @NotNull TypeEnv env) {
                 String raw = tokens.get(0);
                 String normalized = raw.toUpperCase(Locale.ROOT)
                         .replace(' ', '_').replace('-', '_');
@@ -937,7 +937,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object value, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
                 ctx.addImport(ItemStack.class.getName());
                 ctx.addImport(Material.class.getName());
                 if (value instanceof VarHandle ref) {
@@ -968,7 +968,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
+            public Object parse(@NotNull List<String> tokens, @NotNull TypeEnv env) {
                 String raw = tokens.get(0);
                 if (raw.endsWith("'s"))
                     throw new ParseFailureException("'" + raw + "' should not use possessive form here");
@@ -981,7 +981,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object v, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null item stack reference");
                 return ((VarHandle) v).java();
@@ -1010,7 +1010,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
+            public Object parse(@NotNull List<String> tokens, @NotNull TypeEnv env) {
                 String raw = tokens.get(0);
                 if (!raw.endsWith("'s"))
                     throw new ParseFailureException("'" + raw + "' must use possessive form (e.g. item's)");
@@ -1024,7 +1024,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object v, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null item stack reference");
                 return ((VarHandle) v).java();
@@ -1055,7 +1055,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
+            public Object parse(@NotNull List<String> tokens, @NotNull TypeEnv env) {
                 String name = tokens.get(0);
                 VarHandle ref = env.lookupVar(name);
                 if (ref == null)
@@ -1066,7 +1066,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object v, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
                 return ((VarHandle) v).java();
             }
 
@@ -1095,7 +1095,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
+            public Object parse(@NotNull List<String> tokens, @NotNull TypeEnv env) {
                 String name = tokens.get(0);
                 VarHandle ref = env.lookupVar(name);
                 if (ref == null)
@@ -1106,7 +1106,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object v, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
                 return ((VarHandle) v).java();
             }
 
@@ -1135,7 +1135,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
+            public Object parse(@NotNull List<String> tokens, @NotNull TypeEnv env) {
                 String name = tokens.get(0);
                 VarHandle ref = env.lookupVar(name);
                 if (ref == null)
@@ -1146,7 +1146,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object v, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
                 if (v instanceof VarHandle ref) {
                     if (ref.globalInfo() != null && ref.globalInfo().scoped()) return ref.name();
                     return ref.java();
@@ -1179,7 +1179,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
+            public Object parse(@NotNull List<String> tokens, @NotNull TypeEnv env) {
                 String name = tokens.get(0);
                 VarHandle ref = env.lookupVar(name);
                 if (ref == null)
@@ -1190,7 +1190,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object v, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
                 if (v instanceof VarHandle ref) {
                     if (ref.globalInfo() != null && ref.globalInfo().scoped()) return ref.name();
                     return ref.java();
@@ -1223,7 +1223,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
+            public Object parse(@NotNull List<String> tokens, @NotNull TypeEnv env) {
                 String name = tokens.get(0);
                 VarHandle ref = env.lookupVar(name);
                 if (ref == null)
@@ -1234,7 +1234,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object v, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null data reference");
                 return ((VarHandle) v).java();
@@ -1265,7 +1265,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
+            public Object parse(@NotNull List<String> tokens, @NotNull TypeEnv env) {
                 String name = tokens.get(0);
                 VarHandle ref = env.lookupVar(name);
                 if (ref == null)
@@ -1276,7 +1276,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object v, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null block reference");
                 return ((VarHandle) v).java();
@@ -1307,7 +1307,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
+            public Object parse(@NotNull List<String> tokens, @NotNull TypeEnv env) {
                 String name = tokens.get(0);
                 VarHandle ref = env.lookupVar(name);
                 if (ref == null)
@@ -1318,7 +1318,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object v, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null inventory reference");
                 return ((VarHandle) v).java();
@@ -1349,7 +1349,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
+            public Object parse(@NotNull List<String> tokens, @NotNull TypeEnv env) {
                 String name = tokens.get(0);
                 VarHandle ref = env.lookupVar(name);
                 if (ref == null)
@@ -1358,7 +1358,7 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object v, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
                 return ((VarHandle) v).java();
             }
         });
@@ -1383,19 +1383,19 @@ public final class DefaultTypeBindings {
             }
 
             @Override
-            public int consumeCount(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
+            public int consumeCount(@NotNull List<String> tokens, @NotNull TypeEnv env) {
                 return -1;
             }
 
             @Override
-            public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
+            public Object parse(@NotNull List<String> tokens, @NotNull TypeEnv env) {
                 if (tokens.isEmpty())
                     throw new ParseFailureException("expected a comma separated list here");
                 return String.join(" ", tokens);
             }
 
             @Override
-            public @NotNull String toJava(Object v, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object v, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
                 return (String) v;
             }
         });

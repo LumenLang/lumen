@@ -3,10 +3,10 @@ package dev.lumenlang.lumen.pipeline.language.simulator;
 import dev.lumenlang.lumen.api.codegen.JavaOutput;
 import dev.lumenlang.lumen.api.pattern.PatternMeta;
 import dev.lumenlang.lumen.api.util.FuzzyMatch;
-import dev.lumenlang.lumen.pipeline.codegen.BlockContext;
-import dev.lumenlang.lumen.pipeline.codegen.CodegenContext;
+import dev.lumenlang.lumen.pipeline.codegen.BlockContextImpl;
+import dev.lumenlang.lumen.pipeline.codegen.CodegenContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.HandlerContextImpl;
-import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
+import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.conditions.registry.RegisteredCondition;
 import dev.lumenlang.lumen.pipeline.language.match.Match;
 import dev.lumenlang.lumen.pipeline.language.match.MatchProgress;
@@ -72,7 +72,7 @@ public final class PatternSimulator {
      * @param reg    the pattern registry
      * @param env    the type environment
      */
-    public static @NotNull List<Suggestion> suggestExpressions(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnv env) {
+    public static @NotNull List<Suggestion> suggestExpressions(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnvImpl env) {
         return suggestExpressions(tokens, reg, env, SimulatorOptions.defaults());
     }
 
@@ -85,7 +85,7 @@ public final class PatternSimulator {
      * @param env    the type environment
      * @param opts   the simulator options to apply
      */
-    public static @NotNull List<Suggestion> suggestExpressions(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnv env, @NotNull SimulatorOptions opts) {
+    public static @NotNull List<Suggestion> suggestExpressions(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnvImpl env, @NotNull SimulatorOptions opts) {
         if (tokens.isEmpty()) return List.of();
         List<PreFilterScore> scored = new ArrayList<>();
         for (RegisteredExpression re : reg.getExpressions()) {
@@ -102,7 +102,7 @@ public final class PatternSimulator {
      * @param reg    the pattern registry
      * @param env    the type environment
      */
-    public static @NotNull List<Suggestion> suggestConditions(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnv env) {
+    public static @NotNull List<Suggestion> suggestConditions(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnvImpl env) {
         return suggestConditions(tokens, reg, env, SimulatorOptions.defaults());
     }
 
@@ -115,7 +115,7 @@ public final class PatternSimulator {
      * @param env    the type environment
      * @param opts   the simulator options to apply
      */
-    public static @NotNull List<Suggestion> suggestConditions(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnv env, @NotNull SimulatorOptions opts) {
+    public static @NotNull List<Suggestion> suggestConditions(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnvImpl env, @NotNull SimulatorOptions opts) {
         if (tokens.isEmpty()) return List.of();
         List<PreFilterScore> scored = new ArrayList<>();
         for (RegisteredCondition rc : reg.getConditionRegistry().getConditions()) {
@@ -132,7 +132,7 @@ public final class PatternSimulator {
      * @param reg    the pattern registry
      * @param env    the type environment
      */
-    public static @NotNull List<Suggestion> suggestBlocks(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnv env) {
+    public static @NotNull List<Suggestion> suggestBlocks(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnvImpl env) {
         return suggestBlocks(tokens, reg, env, SimulatorOptions.defaults());
     }
 
@@ -145,7 +145,7 @@ public final class PatternSimulator {
      * @param env    the type environment
      * @param opts   the simulator options to apply
      */
-    public static @NotNull List<Suggestion> suggestBlocks(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnv env, @NotNull SimulatorOptions opts) {
+    public static @NotNull List<Suggestion> suggestBlocks(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnvImpl env, @NotNull SimulatorOptions opts) {
         if (tokens.isEmpty()) return List.of();
         List<PreFilterScore> scored = new ArrayList<>();
         for (RegisteredBlock rb : reg.getBlocks()) {
@@ -162,7 +162,7 @@ public final class PatternSimulator {
      * @param reg    the pattern registry
      * @param env    the type environment
      */
-    public static @NotNull List<Suggestion> suggestStatementsAndExpressions(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnv env) {
+    public static @NotNull List<Suggestion> suggestStatementsAndExpressions(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnvImpl env) {
         return suggestStatementsAndExpressions(tokens, reg, env, SimulatorOptions.defaults());
     }
 
@@ -175,7 +175,7 @@ public final class PatternSimulator {
      * @param env    the type environment
      * @param opts   the simulator options to apply
      */
-    public static @NotNull List<Suggestion> suggestStatementsAndExpressions(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnv env, @NotNull SimulatorOptions opts) {
+    public static @NotNull List<Suggestion> suggestStatementsAndExpressions(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnvImpl env, @NotNull SimulatorOptions opts) {
         if (tokens.isEmpty()) return List.of();
         List<PreFilterScore> scored = new ArrayList<>();
         for (RegisteredPattern rp : reg.getStatements()) {
@@ -189,7 +189,7 @@ public final class PatternSimulator {
         return analyze(scored, tokens, reg.getTypeRegistry(), env, opts);
     }
 
-    private static @NotNull List<Suggestion> analyze(@NotNull List<PreFilterScore> scored, @NotNull List<Token> tokens, @NotNull TypeRegistry types, @NotNull TypeEnv env, @NotNull SimulatorOptions opts) {
+    private static @NotNull List<Suggestion> analyze(@NotNull List<PreFilterScore> scored, @NotNull List<Token> tokens, @NotNull TypeRegistry types, @NotNull TypeEnvImpl env, @NotNull SimulatorOptions opts) {
         scored.sort(Comparator.comparingDouble((PreFilterScore p) -> p.confidence).reversed());
         int limit = Math.min(opts.intValue(SimulatorOption.MAX_CANDIDATES), scored.size());
         Map<Pattern, Suggestion> best = new LinkedHashMap<>();
@@ -207,7 +207,7 @@ public final class PatternSimulator {
         return List.copyOf(results.subList(0, max));
     }
 
-    private static @Nullable Suggestion tryMatch(@NotNull List<Token> tokens, @NotNull PreFilterScore cs, @NotNull TypeRegistry types, @NotNull TypeEnv env, @NotNull SimulatorOptions opts) {
+    private static @Nullable Suggestion tryMatch(@NotNull List<Token> tokens, @NotNull PreFilterScore cs, @NotNull TypeRegistry types, @NotNull TypeEnvImpl env, @NotNull SimulatorOptions opts) {
         Pattern pattern = cs.pattern;
         List<LiteralInfo> literals = extractLiterals(pattern);
         int maxK = Math.min(effectiveMaxK(tokens.size(), opts), tokens.size() - 1);
@@ -582,7 +582,7 @@ public final class PatternSimulator {
         return true;
     }
 
-    private static @Nullable Suggestion tryReorderMatch(@NotNull List<Token> tokens, @NotNull PreFilterScore cs, @NotNull TypeRegistry types, @NotNull TypeEnv env, @NotNull List<LiteralInfo> literals, @NotNull SimulatorOptions opts) {
+    private static @Nullable Suggestion tryReorderMatch(@NotNull List<Token> tokens, @NotNull PreFilterScore cs, @NotNull TypeRegistry types, @NotNull TypeEnvImpl env, @NotNull List<LiteralInfo> literals, @NotNull SimulatorOptions opts) {
         List<LiteralMatchResult> matchDetails = cs.matchDetails;
         long anchoredCount = matchDetails.stream().filter(m -> m.tokenIndex >= 0).count();
         if (tokens.size() > opts.intValue(SimulatorOption.SHAPE_MATCH_TOKEN_LIMIT) || anchoredCount < 1) return null;
@@ -596,7 +596,7 @@ public final class PatternSimulator {
         return new Suggestion(cs.pattern, confidence, List.of(new SuggestionIssue.Reorder(reordered)), shaped);
     }
 
-    private static @Nullable MatchProgress tryShapeMatch(@NotNull List<Token> tokens, @NotNull Pattern pattern, @NotNull List<LiteralMatchResult> matchDetails, @NotNull TypeRegistry types, @NotNull TypeEnv env) {
+    private static @Nullable MatchProgress tryShapeMatch(@NotNull List<Token> tokens, @NotNull Pattern pattern, @NotNull List<LiteralMatchResult> matchDetails, @NotNull TypeRegistry types, @NotNull TypeEnvImpl env) {
         List<LiteralMatchResult> anchored = matchDetails.stream().filter(m -> m.tokenIndex >= 0).sorted(Comparator.comparingInt(m -> m.literal.partIndex)).toList();
         if (anchored.isEmpty()) return null;
         boolean[] used = new boolean[tokens.size()];
@@ -686,7 +686,7 @@ public final class PatternSimulator {
         return "Lumen".equals(meta.by());
     }
 
-    private static boolean tryHandlerSandbox(@Nullable Object handler, @NotNull Match match, @NotNull TypeEnv env) {
+    private static boolean tryHandlerSandbox(@Nullable Object handler, @NotNull Match match, @NotNull TypeEnvImpl env) {
         if (handler instanceof RegisteredPattern rp) {
             return tryStatementHandler(rp, match, env);
         } else if (handler instanceof RegisteredExpression re) {
@@ -703,10 +703,10 @@ public final class PatternSimulator {
      * @param env     the type environment
      * @return true if the handler executed without throwing
      */
-    public static boolean tryStatementHandler(@NotNull RegisteredPattern handler, @NotNull Match match, @NotNull TypeEnv env) {
+    public static boolean tryStatementHandler(@NotNull RegisteredPattern handler, @NotNull Match match, @NotNull TypeEnvImpl env) {
         try {
-            CodegenContext codegenCtx = new CodegenContext("__simulation__.luma");
-            BlockContext blockCtx = new BlockContext(null, null, List.of(), 0);
+            CodegenContextImpl codegenCtx = new CodegenContextImpl("__simulation__.luma");
+            BlockContextImpl blockCtx = new BlockContextImpl(null, null, List.of(), 0);
             HandlerContextImpl hctx = new HandlerContextImpl(match, env, codegenCtx, blockCtx, new NoopJavaOutput(), 0, "");
             handler.handler().handle(hctx);
             return true;
@@ -723,10 +723,10 @@ public final class PatternSimulator {
      * @param env     the type environment
      * @return true if the handler executed without throwing
      */
-    public static boolean tryExpressionHandler(@NotNull RegisteredExpression handler, @NotNull Match match, @NotNull TypeEnv env) {
+    public static boolean tryExpressionHandler(@NotNull RegisteredExpression handler, @NotNull Match match, @NotNull TypeEnvImpl env) {
         try {
-            CodegenContext codegenCtx = new CodegenContext("__simulation__.luma");
-            BlockContext blockCtx = new BlockContext(null, null, List.of(), 0);
+            CodegenContextImpl codegenCtx = new CodegenContextImpl("__simulation__.luma");
+            BlockContextImpl blockCtx = new BlockContextImpl(null, null, List.of(), 0);
             HandlerContextImpl hctx = new HandlerContextImpl(match, env, codegenCtx, blockCtx, null, 0, "");
             handler.handler().handle(hctx);
             return true;

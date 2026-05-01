@@ -95,6 +95,20 @@ public final class LumenScriptException extends RuntimeException {
         this.rawLine = null;
     }
 
+    /**
+     * Creates a script exception with a pre-formatted message used verbatim. No source line or
+     * caret prelude is added.
+     */
+    public static @NotNull LumenScriptException raw(@NotNull String message) {
+        return new LumenScriptException(message);
+    }
+
+    private LumenScriptException(@NotNull String message) {
+        super(message);
+        this.line = 1;
+        this.rawLine = null;
+    }
+
     private static @NotNull String formatMessage(int line, @Nullable String rawLine, @NotNull String detail, int colStart, int colEnd) {
         StringBuilder sb = new StringBuilder();
         sb.append("Script error on line ").append(line).append(": ").append(detail);

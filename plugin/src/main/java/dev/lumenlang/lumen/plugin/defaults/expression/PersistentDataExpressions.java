@@ -3,7 +3,7 @@ package dev.lumenlang.lumen.plugin.defaults.expression;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
-import dev.lumenlang.lumen.api.codegen.CodegenAccess;
+import dev.lumenlang.lumen.api.codegen.CodegenContext;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.api.type.PrimitiveType;
@@ -23,7 +23,7 @@ public final class PersistentDataExpressions {
     private static final String PDC_TYPE = PersistentDataType.class.getName();
     private static final String LUMEN = Lumen.class.getName();
 
-    private static void pdcImports(@NotNull CodegenAccess c) {
+    private static void pdcImports(@NotNull CodegenContext c) {
         c.addImport(NAMESPACED_KEY);
         c.addImport(PDC_TYPE);
         c.addImport(LUMEN);

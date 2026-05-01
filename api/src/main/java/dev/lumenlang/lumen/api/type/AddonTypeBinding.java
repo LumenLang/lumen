@@ -1,7 +1,7 @@
 package dev.lumenlang.lumen.api.type;
 
-import dev.lumenlang.lumen.api.codegen.CodegenAccess;
-import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
+import dev.lumenlang.lumen.api.codegen.CodegenContext;
+import dev.lumenlang.lumen.api.codegen.TypeEnv;
 import dev.lumenlang.lumen.api.exceptions.ParseFailureException;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,30 +12,6 @@ import java.util.List;
  * a new placeholders type.
  *
  * <p>Register instances with {@link TypeRegistrar#register(AddonTypeBinding)}.
- * If the binding works with a custom object type, register that type first via
- * {@link LumenTypeRegistry} so it participates in type checking.
- *
- * <h2>Example</h2>
- * <pre>{@code
- * api.types().register(new AddonTypeBinding() {
- *     public @NotNull String id() { return "ENTITY"; }
- *
- *     // Uses the default consumeCount which throws ParseFailureException
- *     // when tokens are empty and returns 1 otherwise.
- *
- *     public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
- *         return env.lookupVar(tokens.get(0));
- *     }
- *
- *     public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx,
- *                                    @NotNull EnvironmentAccess env) {
- *         return ((EnvironmentAccess.VarHandle) value).java();
- *     }
- * });
- * }</pre>
- *
- * @see TypeRegistrar
- * @see LumenTypeRegistry
  */
 public interface AddonTypeBinding {
 
@@ -57,7 +33,7 @@ public interface AddonTypeBinding {
      * @param env    the current type environment
      * @return the parsed value
      */
-    Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env);
+    Object parse(@NotNull List<String> tokens, @NotNull TypeEnv env);
 
     /**
      * Converts the parsed value into a Java source expression.
@@ -67,7 +43,7 @@ public interface AddonTypeBinding {
      * @param env   the current type environment
      * @return valid Java source code representing this value
      */
-    @NotNull String toJava(Object value, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env);
+    @NotNull String toJava(Object value, @NotNull CodegenContext ctx, @NotNull TypeEnv env);
 
     /**
      * Determines how many tokens this type binding should consume.
@@ -96,7 +72,7 @@ public interface AddonTypeBinding {
      * @return number of tokens to consume, or {@code -1} for all remaining
      * @throws ParseFailureException if this binding cannot match the given tokens
      */
-    default int consumeCount(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
+    default int consumeCount(@NotNull List<String> tokens, @NotNull TypeEnv env) {
         if (tokens.isEmpty())
             throw new ParseFailureException("expected a value here");
         return 1;

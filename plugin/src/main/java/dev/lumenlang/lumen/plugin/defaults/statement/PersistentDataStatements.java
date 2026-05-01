@@ -3,7 +3,7 @@ package dev.lumenlang.lumen.plugin.defaults.statement;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
-import dev.lumenlang.lumen.api.codegen.CodegenAccess;
+import dev.lumenlang.lumen.api.codegen.CodegenContext;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.plugin.Lumen;
 import org.bukkit.NamespacedKey;
@@ -25,18 +25,18 @@ public final class PersistentDataStatements {
     private static final String ITEM_META = ItemMeta.class.getName();
     private static final String BLOCK_STATE = BlockState.class.getName();
 
-    private static void pdcImports(@NotNull CodegenAccess c) {
+    private static void pdcImports(@NotNull CodegenContext c) {
         c.addImport(NAMESPACED_KEY);
         c.addImport(PDC_TYPE);
         c.addImport(LUMEN);
     }
 
-    private static void pdcItemImports(@NotNull CodegenAccess c) {
+    private static void pdcItemImports(@NotNull CodegenContext c) {
         pdcImports(c);
         c.addImport(ITEM_META);
     }
 
-    private static void pdcBlockImports(@NotNull CodegenAccess c) {
+    private static void pdcBlockImports(@NotNull CodegenContext c) {
         pdcImports(c);
         c.addImport(BLOCK_STATE);
     }

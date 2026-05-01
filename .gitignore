@@ -24,6 +24,9 @@
 !debug/
 !debug/**
 
+!console-utils/
+!console-utils/**
+
 !docs/
 !docs/**
 

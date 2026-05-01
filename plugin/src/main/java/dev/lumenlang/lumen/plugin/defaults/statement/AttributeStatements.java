@@ -3,9 +3,9 @@ package dev.lumenlang.lumen.plugin.defaults.statement;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
-import dev.lumenlang.lumen.api.codegen.CodegenAccess;
-import dev.lumenlang.lumen.api.codegen.EnvironmentAccess.VarHandle;
+import dev.lumenlang.lumen.api.codegen.CodegenContext;
 import dev.lumenlang.lumen.api.codegen.HandlerContext;
+import dev.lumenlang.lumen.api.codegen.TypeEnv.VarHandle;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.plugin.util.EntityValidation;
 import org.bukkit.attribute.Attribute;
@@ -30,7 +30,7 @@ public final class AttributeStatements {
         }
     }
 
-    private static void imports(@NotNull CodegenAccess codegen) {
+    private static void imports(@NotNull CodegenContext codegen) {
         codegen.addImport(LIVING);
         codegen.addImport(Attribute.class.getName());
         codegen.addImport(AttributeInstance.class.getName());

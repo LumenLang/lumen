@@ -2,7 +2,7 @@ package dev.lumenlang.lumen.pipeline.loop;
 
 import dev.lumenlang.lumen.api.handler.LoopHandler;
 import dev.lumenlang.lumen.api.pattern.PatternMeta;
-import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
+import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.language.compile.PatternCompiler;
 import dev.lumenlang.lumen.pipeline.language.match.InlineExprValidator;
 import dev.lumenlang.lumen.pipeline.language.match.Match;
@@ -123,7 +123,7 @@ public class LoopRegistry {
      * @param env    the current type environment
      * @return a {@link RegisteredLoopMatch} on success, or {@code null} if no pattern matched
      */
-    public @Nullable RegisteredLoopMatch match(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
+    public @Nullable RegisteredLoopMatch match(@NotNull List<Token> tokens, @NotNull TypeEnvImpl env) {
         for (RegisteredLoop rl : ensureIndex().candidates(tokens)) {
             Match m = PatternMatcher.match(tokens, rl.pattern(), types, env);
             if (m != null) return new RegisteredLoopMatch(rl, m);
@@ -139,7 +139,7 @@ public class LoopRegistry {
      * @param env    the current type environment
      * @return a {@link RegisteredLoopMatch} on success, or {@code null} if no pattern matched
      */
-    public @Nullable RegisteredLoopMatch matchSlow(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
+    public @Nullable RegisteredLoopMatch matchSlow(@NotNull List<Token> tokens, @NotNull TypeEnvImpl env) {
         if (validator == null) return null;
         for (RegisteredLoop rl : ensureIndex().candidates(tokens)) {
             Match m = PatternMatcher.match(tokens, rl.pattern(), types, env, validator);

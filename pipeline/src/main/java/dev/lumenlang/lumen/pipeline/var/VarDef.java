@@ -1,7 +1,7 @@
 package dev.lumenlang.lumen.pipeline.var;
 
 import dev.lumenlang.lumen.api.type.LumenType;
-import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
+import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.events.def.EventDef;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
  * <ol>
  *   <li>Emit a local variable declaration of type {@link #javaType()} initialised with
  *       {@link #expr()} at the top of the generated handler method.</li>
- *   <li>Register a {@link VarRef} into the {@link TypeEnv} so that
+ *   <li>Register a {@link VarRef} into the {@link TypeEnvImpl} so that
  *       type bindings can resolve it by name during pattern matching.</li>
  * </ol>
  *

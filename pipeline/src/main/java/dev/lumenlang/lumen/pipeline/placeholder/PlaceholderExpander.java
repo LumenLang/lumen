@@ -4,7 +4,7 @@ import dev.lumenlang.lumen.api.placeholder.PlaceholderType;
 import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.api.type.PrimitiveType;
-import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
+import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +40,7 @@ public final class PlaceholderExpander {
      * @param env the type environment for variable lookups
      * @return a Java expression string (may use concatenation for embedded placeholders)
      */
-    public static @NotNull String expand(@NotNull String raw, @NotNull TypeEnv env) {
+    public static @NotNull String expand(@NotNull String raw, @NotNull TypeEnvImpl env) {
         if (!raw.contains("{") || !raw.contains("}")) {
             return "\"" + escapeJava(raw) + "\"";
         }
@@ -90,7 +90,7 @@ public final class PlaceholderExpander {
      * @param env         the type environment for variable lookups
      * @return the raw Java expression, or {@code null} if the placeholder cannot be resolved
      */
-    public static @Nullable String resolveForExpression(@NotNull String placeholder, @NotNull TypeEnv env) {
+    public static @Nullable String resolveForExpression(@NotNull String placeholder, @NotNull TypeEnvImpl env) {
         return resolveInternal(placeholder, env);
     }
 
@@ -102,7 +102,7 @@ public final class PlaceholderExpander {
      * @param env         the type environment for variable lookups
      * @return the placeholder type, or {@code null} if unresolvable
      */
-    public static @Nullable PlaceholderType resolveType(@NotNull String placeholder, @NotNull TypeEnv env) {
+    public static @Nullable PlaceholderType resolveType(@NotNull String placeholder, @NotNull TypeEnvImpl env) {
         placeholder = placeholder.replace(' ', '_');
         int underscore = placeholder.indexOf('_');
         if (underscore == -1) return null;
@@ -125,7 +125,7 @@ public final class PlaceholderExpander {
      * @param env         the type environment for variable lookups
      * @return the lumen type
      */
-    public static @NotNull LumenType resolveExpressionType(@NotNull String placeholder, @NotNull TypeEnv env) {
+    public static @NotNull LumenType resolveExpressionType(@NotNull String placeholder, @NotNull TypeEnvImpl env) {
         PlaceholderType phType = resolveType(placeholder, env);
         if (phType == null) return PrimitiveType.STRING;
         return switch (phType) {
@@ -139,7 +139,7 @@ public final class PlaceholderExpander {
      * Resolves a placeholder for string context. Numeric results are wrapped in
      * {@code String.valueOf()} so they can be concatenated with strings.
      */
-    private static @NotNull String resolveForString(@NotNull String placeholder, @NotNull TypeEnv env) {
+    private static @NotNull String resolveForString(@NotNull String placeholder, @NotNull TypeEnvImpl env) {
         String java = resolveInternal(placeholder, env);
         if (java == null) {
             return "\"<unknown:" + placeholder + ">\"";
@@ -155,7 +155,7 @@ public final class PlaceholderExpander {
     /**
      * Core resolution logic shared by string and expression contexts.
      */
-    private static @Nullable String resolveInternal(@NotNull String placeholder, @NotNull TypeEnv env) {
+    private static @Nullable String resolveInternal(@NotNull String placeholder, @NotNull TypeEnvImpl env) {
         placeholder = placeholder.replace(' ', '_');
         VarRef fullRef = env.lookupVar(placeholder);
         if (fullRef != null) {

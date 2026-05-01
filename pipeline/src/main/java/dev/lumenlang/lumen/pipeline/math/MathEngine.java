@@ -5,7 +5,7 @@ import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.placeholder.PlaceholderType;
 import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.PrimitiveType;
-import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
+import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.language.tokenization.TokenKind;
 import dev.lumenlang.lumen.pipeline.placeholder.PlaceholderExpander;
@@ -26,19 +26,19 @@ import java.util.List;
  * </ol>
  *
  * <p>Operands may be integer literals ({@link TokenKind#NUMBER}), variable
- * references ({@link TokenKind#IDENT}) that are resolved against a {@link TypeEnv},
+ * references ({@link TokenKind#IDENT}) that are resolved against a {@link TypeEnvImpl},
  * or placeholder expressions like {@code {player_y}} that are resolved via
  * {@link PlaceholderExpander}.
  */
 public final class MathEngine {
 
     private final List<Token> tokens;
-    private final TypeEnv env;
+    private final TypeEnvImpl env;
     private final int line;
     private final @NotNull String rawLine;
     private int pos;
 
-    private MathEngine(@NotNull List<Token> tokens, @NotNull TypeEnv env, int line, @NotNull String rawLine) {
+    private MathEngine(@NotNull List<Token> tokens, @NotNull TypeEnvImpl env, int line, @NotNull String rawLine) {
         this.tokens = tokens;
         this.env = env;
         this.line = line;
@@ -54,7 +54,7 @@ public final class MathEngine {
      * @return a Java source expression string
      * @throws DiagnosticException if the expression is malformed or references an unknown variable
      */
-    public static @NotNull String compile(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
+    public static @NotNull String compile(@NotNull List<Token> tokens, @NotNull TypeEnvImpl env) {
         return compile(tokens, env, 0, "");
     }
 
@@ -68,7 +68,7 @@ public final class MathEngine {
      * @return a Java source expression string
      * @throws DiagnosticException if the expression is malformed or references non-numeric operands
      */
-    public static @NotNull String compile(@NotNull List<Token> tokens, @NotNull TypeEnv env, int line, @NotNull String rawLine) {
+    public static @NotNull String compile(@NotNull List<Token> tokens, @NotNull TypeEnvImpl env, int line, @NotNull String rawLine) {
         MathEngine engine = new MathEngine(tokens, env, line, rawLine);
         String result = engine.parseExpr();
         if (engine.pos < engine.tokens.size()) {
@@ -93,7 +93,7 @@ public final class MathEngine {
      * @return a typed result containing the Java expression and its resolved type
      * @throws DiagnosticException if the expression is malformed or references non-numeric operands
      */
-    public static @NotNull TypedResult compileTyped(@NotNull List<Token> tokens, @NotNull TypeEnv env, int line, @NotNull String rawLine) {
+    public static @NotNull TypedResult compileTyped(@NotNull List<Token> tokens, @NotNull TypeEnvImpl env, int line, @NotNull String rawLine) {
         MathEngine engine = new MathEngine(tokens, env, line, rawLine);
         TypedFragment fragment = engine.parseExprTyped();
         if (engine.pos < engine.tokens.size()) {
@@ -122,7 +122,7 @@ public final class MathEngine {
      * @param env    the type environment for placeholder type checking
      * @return {@code true} if the tokens form a math expression
      */
-    public static boolean isMathExpression(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
+    public static boolean isMathExpression(@NotNull List<Token> tokens, @NotNull TypeEnvImpl env) {
         if (tokens.size() < 3) return false;
         boolean hasOperator = false;
         for (int i = 0; i < tokens.size(); i++) {

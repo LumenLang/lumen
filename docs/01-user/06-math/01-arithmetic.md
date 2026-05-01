@@ -54,13 +54,13 @@ command earn:
 
 Use these to compare numbers in conditions:
 
-| Operator | Meaning |
-|---|---|
-| `==` | Equal to |
-| `>` | Greater than |
-| `<` | Less than |
-| `>=` | Greater than or equal to |
-| `<=` | Less than or equal to |
+| Operator | Meaning                  |
+|----------|--------------------------|
+| `==`     | Equal to                 |
+| `>`      | Greater than             |
+| `<`      | Less than                |
+| `>=`     | Greater than or equal to |
+| `<=`     | Less than or equal to    |
 
 ```luma
 if score >= 100:

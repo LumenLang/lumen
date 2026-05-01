@@ -3,8 +3,8 @@ package dev.lumenlang.lumen.plugin.defaults.expression;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
-import dev.lumenlang.lumen.api.codegen.CodegenAccess;
-import dev.lumenlang.lumen.api.codegen.EnvironmentAccess.VarHandle;
+import dev.lumenlang.lumen.api.codegen.CodegenContext;
+import dev.lumenlang.lumen.api.codegen.TypeEnv.VarHandle;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.api.type.PrimitiveType;
@@ -20,7 +20,7 @@ public final class AttributeExpressions {
 
     private static final String LIVING = LivingEntity.class.getName();
 
-    private static void imports(@NotNull CodegenAccess codegen) {
+    private static void imports(@NotNull CodegenContext codegen) {
         codegen.addImport(LIVING);
         codegen.addImport(Attribute.class.getName());
         codegen.addImport(AttributeInstance.class.getName());

@@ -1,7 +1,7 @@
 package dev.lumenlang.lumen.pipeline.conditions;
 
-import dev.lumenlang.lumen.pipeline.codegen.CodegenContext;
-import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
+import dev.lumenlang.lumen.pipeline.codegen.CodegenContextImpl;
+import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.java.compiled.Truthiness;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,7 +41,7 @@ public final class ConditionInline implements ConditionExpr {
     }
 
     @Override
-    public String toJava(TypeEnv env, CodegenContext ctx) {
+    public String toJava(TypeEnvImpl env, CodegenContextImpl ctx) {
         ctx.addImport(Truthiness.class.getName());
         return "Truthiness.check(" + javaExpr + ")";
     }

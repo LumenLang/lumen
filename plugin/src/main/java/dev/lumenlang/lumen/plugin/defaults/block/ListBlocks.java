@@ -3,8 +3,8 @@ package dev.lumenlang.lumen.plugin.defaults.block;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
-import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.codegen.HandlerContext;
+import dev.lumenlang.lumen.api.codegen.TypeEnv;
 import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
 import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.handler.BlockHandler;
@@ -43,7 +43,7 @@ public class ListBlocks {
      * @return the element type from the list's type arguments
      */
     private static @NotNull LumenType resolveElementType(@NotNull HandlerContext ctx) {
-        EnvironmentAccess.VarHandle listRef = (EnvironmentAccess.VarHandle) ctx.value("list");
+        TypeEnv.VarHandle listRef = (TypeEnv.VarHandle) ctx.value("list");
         CollectionType listType = TypeUtils.asCollection(listRef.type());
         return listType.typeArguments().get(0);
     }
@@ -56,7 +56,7 @@ public class ListBlocks {
      */
     private static @Nullable Map<String, Object> resolveElementMetadata(@NotNull HandlerContext ctx) {
         Object listValue = ctx.value("list");
-        if (!(listValue instanceof EnvironmentAccess.VarHandle listRef)) return null;
+        if (!(listValue instanceof TypeEnv.VarHandle listRef)) return null;
         if (!listRef.hasMeta("element_type")) return null;
 
         String elementType = String.valueOf(listRef.meta("element_type"));
@@ -136,7 +136,7 @@ public class ListBlocks {
                                     .help("place 'loop' inside an event, command, or other block")
                                     .build());
                         }
-                        EnvironmentAccess env = ctx.env();
+                        TypeEnv env = ctx.env();
                         String varName = ctx.java("var");
                         if (env.lookupVar(varName) != null) {
                             throw new DiagnosticException(LumenDiagnostic.error("Loop variable '" + varName + "' is already defined")
@@ -148,7 +148,7 @@ public class ListBlocks {
 
                         String listVarName = ctx.tokens("list").get(0);
                         String scopeVarName = ctx.java("scope");
-                        EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(listVarName);
+                        TypeEnv.GlobalInfo info = env.getGlobalInfo(listVarName);
                         if (info == null) {
                             throw new DiagnosticException(LumenDiagnostic.error("'" + listVarName + "' is not a global variable")
                                     .at(ctx.block().line(), ctx.block().raw())
@@ -163,7 +163,7 @@ public class ListBlocks {
                                     .help("declare it inside a 'global:' block with 'scoped to <type> " + listVarName + ": list of <type>' for per-entity access")
                                     .build());
                         }
-                        EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
+                        TypeEnv.VarHandle scopeRef = env.lookupVar(scopeVarName);
                         if (scopeRef == null) {
                             throw new DiagnosticException(LumenDiagnostic.error("Scope variable '" + scopeVarName + "' not found")
                                     .at(ctx.block().line(), ctx.block().raw())
@@ -172,7 +172,7 @@ public class ListBlocks {
                                     .build());
                         }
                         LumenType scopeType = scopeRef.type();
-                        EnvironmentAccess.VarHandle listRef = env.lookupVar(listVarName);
+                        TypeEnv.VarHandle listRef = env.lookupVar(listVarName);
                         CollectionType listType = TypeUtils.asCollection(listRef.type());
                         LumenType elementType = listType.typeArguments().get(0);
                         ctx.codegen().addImport(List.class.getName());

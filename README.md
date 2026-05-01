@@ -21,8 +21,7 @@
 > The scripting side will change heavily. Patterns and syntax will be reworked, and many existing patterns may be
 > modified or removed as part of this transition.
 >
-> A lot of internal systems will also be updated to improve consistency, remove limitations, and better support future
-> features such as advanced tooling for humans and AI.
+> A lot of internal systems will also be updated to improve consistency, diagnostics, and remove limitations.
 >
 > Because of this, things may break between versions for a while. This is expected during this phase.
 
@@ -84,6 +83,35 @@ Lumen is currently in beta.
 If you encounter compilation failures, incorrect behavior, patterns not working as expected, or any unexpected issues, please report them through the issue tracker. Even if the script can be manually fixed, those cases are still valuable to report.
 
 We also appreciate any feedback on the syntax, features, or anything else related to the project. The goal is to make Lumen as user-friendly and powerful as possible, and your input is crucial in achieving that.
+
+---
+
+## Real Comparison Vs Skript
+| Category                    | Skript                                                  | Lumen                                                                                                         |
+|-----------------------------|---------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
+| **🔧 Developer Experience** |                                                         |                                                                                                               |
+| Hot Reload                  | 🟡 Requires manual command                              | 🟢 **Instant on save (no command needed)**                                                                    |
+| GUI Iteration               | ❌ Reopen / re-trigger required                          | 🟢 **Edit → Save → Instantly visible in-game with no closing (state can be preserved)**                       |
+| IDE Support                 | 🟡 Basic / limited                                      | 🟢 **Advanced autocomplete, hover docs, real errors**                                                         |
+| Error Feedback              | 🟡 Mostly runtime                                       | 🟢 **Same parse/compile errors as runtime, shown directly in the IDE**                                        |
+| Migration Path              | ❌ Manual rewrite required                               | 🟢 **AI-assisted conversion + validation + runtime verification**                                             |
+| **🤖 AI Capabilities**      |                                                         |                                                                                                               |
+| Hallucinations              | ❌ Very common                                           | 🟢 **Low (validated using real docs, patterns, and identical errors to the plugin)**                          |
+| Validation                  | ❌ You must run and test manually                        | 🟢 **Automatic, real compiler validation (via MCP tools)**                                                    |
+| Large Script Generation     | ❌ Breaks past ~50–100 lines                             | 🟢 **Can make or handle large systems using the MCP, including once with over 1-5K+ lines (model-dependent)** |
+| Iteration Loop              | ❌ Manual: copy errors, paste, retry, often breaks again | 🟢 **AI generates → validates → fixes automatically using MCP**                                               |
+| Live Execution              | ❌ Not possible                                          | 🟢 **Run snippets dynamically through the MCP and inspect real behavior via the Debugger**                    |
+| Runtime Understanding       | ❌ Guesswork                                             | 🟢 **Debugger designed for AI, execute snippets dynamically, see value of variables, and modify logic live**  |
+| Environment Interaction     | ❌ None                                                  | 🟢 **AI can interact with the minecraft server (players, worlds, etc.) through the MCP and snippets**         |
+| **⚙️ Core Experience**      |                                                         |                                                                                                               |
+| Runtime Surprises           | ❌ Common                                                | 🟢 **Far less unexpected runtime behavior (mainly caused by external plugins)**                               |
+| Syntax                      | ❌ Can get messy                                         | 🟢 **Readable and structured**                                                                                |
+| Performance                 | ❌ Interpreted and dynamic, many times slower than Java  | 🟢 **Compiled to Java, meaning near native speed**                                                            |
+| Ecosystem                   | 🟢 **Large ecosystem**                                  | ❌ Much more limited ecosystem                                                                                 |
+| Stability                   | 🟢 **Matured over a decade**                            | ❌ Relatively new, but next-gen                                                                                |
+| Iteration Speed             | 🟡 Decent                                               | 🟢 **Instant feedback**                                                                                       |
+All of the following AI claims above are based on real testing and experience with the models, and are not just theoretical.
+Check out https://docs.lumenlang.dev/01-user/01-migration/01-skript-to-lumen for more information on why-so.
 
 ---
 

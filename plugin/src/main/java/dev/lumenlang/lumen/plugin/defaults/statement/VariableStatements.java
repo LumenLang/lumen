@@ -3,9 +3,9 @@ package dev.lumenlang.lumen.plugin.defaults.statement;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
-import dev.lumenlang.lumen.api.codegen.BlockAccess;
-import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
+import dev.lumenlang.lumen.api.codegen.BlockContext;
 import dev.lumenlang.lumen.api.codegen.HandlerContext;
+import dev.lumenlang.lumen.api.codegen.TypeEnv;
 import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
 import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
@@ -30,7 +30,7 @@ public final class VariableStatements {
      * can be mutated freely. Only variables captured from an outer scope must be
      * effectively final (unless they are class-level global fields).
      */
-    private static void rejectLocalMutationInsideLambda(@NotNull BlockAccess block, @NotNull EnvironmentAccess env, @NotNull String varName) {
+    private static void rejectLocalMutationInsideLambda(@NotNull BlockContext block, @NotNull TypeEnv env, @NotNull String varName) {
         if (block.getEnvFromParents("__lambda_block") == null) return;
         if (env.isGlobalField(varName)) return;
         if (!env.isVarCapturedByLambda(varName)) return;
@@ -40,16 +40,16 @@ public final class VariableStatements {
                         + "Tip: declare '" + varName + "' inside a 'global:' block to make it a class-level field instead.");
     }
 
-    private static void emitAutoSave(@NotNull HandlerContext ctx, @NotNull String varName, @NotNull EnvironmentAccess.VarHandle ref) {
-        EnvironmentAccess env = ctx.env();
+    private static void emitAutoSave(@NotNull HandlerContext ctx, @NotNull String varName, @NotNull TypeEnv.VarHandle ref) {
+        TypeEnv env = ctx.env();
         if (env.isStored(varName)) {
             ctx.out().line(env.storedClassName(varName) + ".set(" + env.getStoredKey(varName) + ", " + ref.java() + ");");
         }
     }
 
-    private static @NotNull String buildScopedKey(@NotNull HandlerContext ctx, @NotNull String varName, @NotNull String scopeVarName, @NotNull EnvironmentAccess.GlobalInfo info) {
-        EnvironmentAccess env = ctx.env();
-        EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
+    private static @NotNull String buildScopedKey(@NotNull HandlerContext ctx, @NotNull String varName, @NotNull String scopeVarName, @NotNull TypeEnv.GlobalInfo info) {
+        TypeEnv env = ctx.env();
+        TypeEnv.VarHandle scopeRef = env.lookupVar(scopeVarName);
         if (scopeRef == null) {
             throw new RuntimeException("Scope variable not found: " + scopeVarName);
         }
@@ -68,13 +68,13 @@ public final class VariableStatements {
         return "\"" + info.className() + "." + varName + ".\" + " + scopeKeyPart;
     }
 
-    private static @NotNull String resolveStorageClass(@NotNull EnvironmentAccess.GlobalInfo info) {
+    private static @NotNull String resolveStorageClass(@NotNull TypeEnv.GlobalInfo info) {
         return info.stored() ? "PersistentVars" : "GlobalVars";
     }
 
     private static void emitScopedMath(@NotNull HandlerContext ctx, @NotNull String varName, @NotNull String scopeVarName, @NotNull String operand, @NotNull String op) {
-        EnvironmentAccess env = ctx.env();
-        EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(varName);
+        TypeEnv env = ctx.env();
+        TypeEnv.GlobalInfo info = env.getGlobalInfo(varName);
         if (info == null) {
             throw new RuntimeException("Variable '" + varName
                     + "' is not a global variable. Scoped operations (for ...) are only supported on global vars.");
@@ -93,8 +93,8 @@ public final class VariableStatements {
     }
 
     private static void emitScopedDelete(@NotNull HandlerContext ctx, @NotNull String varName, @Nullable String scopeVarName) {
-        EnvironmentAccess env = ctx.env();
-        EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(varName);
+        TypeEnv env = ctx.env();
+        TypeEnv.GlobalInfo info = env.getGlobalInfo(varName);
         if (info == null) {
             throw new RuntimeException("Variable '" + varName
                     + "' is not a global variable. Scoped operations (for ...) are only supported on global vars.");
@@ -133,10 +133,10 @@ public final class VariableStatements {
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
                 .handler(ctx -> {
-                    EnvironmentAccess env = ctx.env();
+                    TypeEnv env = ctx.env();
                     String varName = ctx.java("name");
                     rejectLocalMutationInsideLambda(ctx.block(), env, varName);
-                    EnvironmentAccess.VarHandle ref = env.lookupVar(varName);
+                    TypeEnv.VarHandle ref = env.lookupVar(varName);
                     if (ref == null)
                         throw new RuntimeException("Variable not found: " + varName);
                     ctx.out().line(ref.java() + " += " + ctx.java("n") + ";");
@@ -161,10 +161,10 @@ public final class VariableStatements {
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
                 .handler(ctx -> {
-                    EnvironmentAccess env = ctx.env();
+                    TypeEnv env = ctx.env();
                     String varName = ctx.java("name");
                     rejectLocalMutationInsideLambda(ctx.block(), env, varName);
-                    EnvironmentAccess.VarHandle ref = env.lookupVar(varName);
+                    TypeEnv.VarHandle ref = env.lookupVar(varName);
                     if (ref == null)
                         throw new RuntimeException("Variable not found: " + varName);
                     ctx.out().line(ref.java() + " -= " + ctx.java("n") + ";");
@@ -189,10 +189,10 @@ public final class VariableStatements {
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
                 .handler(ctx -> {
-                    EnvironmentAccess env = ctx.env();
+                    TypeEnv env = ctx.env();
                     String varName = ctx.java("name");
                     rejectLocalMutationInsideLambda(ctx.block(), env, varName);
-                    EnvironmentAccess.VarHandle ref = env.lookupVar(varName);
+                    TypeEnv.VarHandle ref = env.lookupVar(varName);
                     if (ref == null)
                         throw new RuntimeException("Variable not found: " + varName);
                     ctx.out().line(ref.java() + " *= " + ctx.java("n") + ";");
@@ -217,10 +217,10 @@ public final class VariableStatements {
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
                 .handler(ctx -> {
-                    EnvironmentAccess env = ctx.env();
+                    TypeEnv env = ctx.env();
                     String varName = ctx.java("name");
                     rejectLocalMutationInsideLambda(ctx.block(), env, varName);
-                    EnvironmentAccess.VarHandle ref = env.lookupVar(varName);
+                    TypeEnv.VarHandle ref = env.lookupVar(varName);
                     if (ref == null)
                         throw new RuntimeException("Variable not found: " + varName);
                     ctx.out().line(ref.java() + " /= " + ctx.java("n") + ";");
@@ -244,7 +244,7 @@ public final class VariableStatements {
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
                 .handler(ctx -> {
-                    EnvironmentAccess env = ctx.env();
+                    TypeEnv env = ctx.env();
                     String varName = ctx.java("name");
                     if (env.isStored(varName)) {
                         String scopeVar = env.getStoredScopeVar(varName);
@@ -257,7 +257,7 @@ public final class VariableStatements {
                         }
                         ctx.out().line(env.storedClassName(varName) + ".delete(" + env.getStoredKey(varName) + ");");
                     } else {
-                        EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(varName);
+                        TypeEnv.GlobalInfo info = env.getGlobalInfo(varName);
                         if (info != null) {
                             ctx.codegen().addImport(GlobalVars.class.getName());
                             if (info.scoped()) {
@@ -281,9 +281,9 @@ public final class VariableStatements {
                 .category(Categories.VARIABLE)
                 .handler(ctx -> {
                     String varName = ctx.java("name");
-                    EnvironmentAccess env = ctx.env();
-                    EnvironmentAccess.VarHandle handle = env.lookupVar(varName);
-                    EnvironmentAccess.GlobalInfo info = handle != null ? handle.globalInfo() : null;
+                    TypeEnv env = ctx.env();
+                    TypeEnv.VarHandle handle = env.lookupVar(varName);
+                    TypeEnv.GlobalInfo info = handle != null ? handle.globalInfo() : null;
                     if (info == null) {
                         throw new RuntimeException("'" + varName + "' is not a global variable.");
                     }

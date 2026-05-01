@@ -10,10 +10,10 @@ import dev.lumenlang.lumen.api.handler.BlockHandler;
 import dev.lumenlang.lumen.api.handler.LoopHandler;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.api.type.PrimitiveType;
-import dev.lumenlang.lumen.pipeline.codegen.BlockContext;
-import dev.lumenlang.lumen.pipeline.codegen.CodegenContext;
+import dev.lumenlang.lumen.pipeline.codegen.BlockContextImpl;
+import dev.lumenlang.lumen.pipeline.codegen.CodegenContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.HandlerContextImpl;
-import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
+import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.loop.LoopRegistry;
@@ -68,7 +68,7 @@ public final class LoopSourceBlock {
                                     .build());
                         }
                         HandlerContextImpl hctx = (HandlerContextImpl) ctx;
-                        TypeEnv env = (TypeEnv) ctx.env();
+                        TypeEnvImpl env = (TypeEnvImpl) ctx.env();
                         RegisteredLoopMatch loopMatch = PatternRegistry.instance().matchLoop(hctx.bound("source").tokens(), env);
                         if (loopMatch == null) {
                             loopMatch = PatternRegistry.instance().matchLoopSlow(hctx.bound("source").tokens(), env);
@@ -85,7 +85,7 @@ public final class LoopSourceBlock {
                                     .help("see https://lumenlang.dev/loops for available loop sources, or use a list variable, e.g. 'loop x in myList'")
                                     .build());
                         }
-                        HandlerContextImpl loopCtx = new HandlerContextImpl(loopMatch.match(), env, (CodegenContext) ctx.codegen(), (BlockContext) ctx.block(), null, 0, "");
+                        HandlerContextImpl loopCtx = new HandlerContextImpl(loopMatch.match(), env, (CodegenContextImpl) ctx.codegen(), (BlockContextImpl) ctx.block(), null, 0, "");
                         LoopHandler.LoopResult result = loopMatch.reg().handler().handle(loopCtx);
                         ctx.out().line("for (var " + varName + " : " + result.iterableJava() + ") {");
                         ctx.env().defineVar(varName, result.elementType(), varName);

@@ -3,7 +3,7 @@ package dev.lumenlang.lumen.plugin.defaults.expression;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
-import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
+import dev.lumenlang.lumen.api.codegen.TypeEnv;
 import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
 import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
@@ -14,7 +14,7 @@ import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.pipeline.codegen.HandlerContextImpl;
-import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
+import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.language.simulator.suggestions.SuggestionDiagnostics;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.type.TypeAnnotationParser;
@@ -61,7 +61,7 @@ public final class ListExpressions {
                 .handler(ctx -> {
                     ctx.codegen().addImport(ArrayList.class.getName());
                     HandlerContextImpl hctx = (HandlerContextImpl) ctx;
-                    TypeEnv env = (TypeEnv) ctx.env();
+                    TypeEnvImpl env = (TypeEnvImpl) ctx.env();
                     List<Token> typeTokens = hctx.bound("type").tokens();
                     TypeAnnotationParser.ParseResult result = TypeAnnotationParser.parseDetailed(typeTokens, 0, env::lookupDataSchema);
                     if (result instanceof TypeAnnotationParser.ParseResult.Failure f) {
@@ -112,7 +112,7 @@ public final class ListExpressions {
                     ctx.codegen().addImport(List.class.getName());
                     Object listVal = ctx.value("list");
                     LumenType elementType = PrimitiveType.STRING;
-                    if (listVal instanceof EnvironmentAccess.VarHandle ref && ref.type() instanceof CollectionType ct && !ct.typeArguments().isEmpty()) {
+                    if (listVal instanceof TypeEnv.VarHandle ref && ref.type() instanceof CollectionType ct && !ct.typeArguments().isEmpty()) {
                         elementType = ct.typeArguments().get(0);
                     }
                     String castType = (elementType instanceof PrimitiveType pt) ? pt.boxedName() : elementType.javaTypeName();
@@ -143,9 +143,9 @@ public final class ListExpressions {
                 .since("1.0.0")
                 .category(Categories.LIST)
                 .handler(ctx -> {
-                    EnvironmentAccess env = ctx.env();
+                    TypeEnv env = ctx.env();
                     String listVarName = ctx.tokens("list").get(0);
-                    EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(listVarName);
+                    TypeEnv.GlobalInfo info = env.getGlobalInfo(listVarName);
                     if (info == null) {
                         throw new DiagnosticException(LumenDiagnostic.error("'" + listVarName + "' is not a global variable")
                                 .at(ctx.block().line(), ctx.block().raw())
@@ -161,7 +161,7 @@ public final class ListExpressions {
                                 .build());
                     }
                     String scopeVarName = ctx.java("scope");
-                    EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
+                    TypeEnv.VarHandle scopeRef = env.lookupVar(scopeVarName);
                     if (scopeRef == null) {
                         throw new DiagnosticException(LumenDiagnostic.error("Scope variable '" + scopeVarName + "' not found")
                                 .at(ctx.block().line(), ctx.block().raw())
@@ -184,9 +184,9 @@ public final class ListExpressions {
                 .since("1.0.0")
                 .category(Categories.LIST)
                 .handler(ctx -> {
-                    EnvironmentAccess env = ctx.env();
+                    TypeEnv env = ctx.env();
                     String listVarName = ctx.tokens("list").get(0);
-                    EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(listVarName);
+                    TypeEnv.GlobalInfo info = env.getGlobalInfo(listVarName);
                     if (info == null) {
                         throw new DiagnosticException(LumenDiagnostic.error("'" + listVarName + "' is not a global variable")
                                 .at(ctx.block().line(), ctx.block().raw())
@@ -202,7 +202,7 @@ public final class ListExpressions {
                                 .build());
                     }
                     String scopeVarName = ctx.java("scope");
-                    EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
+                    TypeEnv.VarHandle scopeRef = env.lookupVar(scopeVarName);
                     if (scopeRef == null) {
                         throw new DiagnosticException(LumenDiagnostic.error("Scope variable '" + scopeVarName + "' not found")
                                 .at(ctx.block().line(), ctx.block().raw())

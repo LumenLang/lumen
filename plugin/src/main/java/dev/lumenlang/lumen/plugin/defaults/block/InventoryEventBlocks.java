@@ -3,7 +3,7 @@ package dev.lumenlang.lumen.plugin.defaults.block;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
-import dev.lumenlang.lumen.api.codegen.CodegenAccess;
+import dev.lumenlang.lumen.api.codegen.CodegenContext;
 import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import dev.lumenlang.lumen.api.handler.BlockHandler;
 import dev.lumenlang.lumen.api.pattern.Categories;
@@ -44,7 +44,7 @@ public final class InventoryEventBlocks {
                 .replaceAll("^\"|\"$", "");
     }
 
-    private static void clickImports(@NotNull CodegenAccess jctx) {
+    private static void clickImports(@NotNull CodegenContext jctx) {
         jctx.addImport(InventoryClickEvent.class.getName());
         jctx.addImport(Material.class.getName());
         jctx.addImport(INVENTORY);
@@ -53,7 +53,7 @@ public final class InventoryEventBlocks {
         jctx.addImport(LumenInventoryHolder.class.getName());
     }
 
-    private static void closeOpenImports(@NotNull CodegenAccess jctx, @NotNull Class<?> eventClass) {
+    private static void closeOpenImports(@NotNull CodegenContext jctx, @NotNull Class<?> eventClass) {
         jctx.addImport(eventClass.getName());
         jctx.addImport(INVENTORY);
         jctx.addImport(WORLD);
@@ -157,7 +157,7 @@ public final class InventoryEventBlocks {
                 .handler(new BlockHandler() {
                     @Override
                     public void begin(@NotNull HandlerContext ctx) {
-                        CodegenAccess jctx = ctx.codegen();
+                        CodegenContext jctx = ctx.codegen();
                         String inv = ctx.java("inv");
                         String slotJava = ctx.java("slot");
 
@@ -223,7 +223,7 @@ public final class InventoryEventBlocks {
                 .handler(new BlockHandler() {
                     @Override
                     public void begin(@NotNull HandlerContext ctx) {
-                        CodegenAccess jctx = ctx.codegen();
+                        CodegenContext jctx = ctx.codegen();
                         String inv = ctx.java("inv");
 
                         if (!ctx.block().isRoot()) {
@@ -273,7 +273,7 @@ public final class InventoryEventBlocks {
                 .handler(new BlockHandler() {
                     @Override
                     public void begin(@NotNull HandlerContext ctx) {
-                        CodegenAccess jctx = ctx.codegen();
+                        CodegenContext jctx = ctx.codegen();
                         String inv = ctx.java("inv");
 
                         if (!ctx.block().isRoot()) {
@@ -322,7 +322,7 @@ public final class InventoryEventBlocks {
                 .handler(new BlockHandler() {
                     @Override
                     public void begin(@NotNull HandlerContext ctx) {
-                        CodegenAccess jctx = ctx.codegen();
+                        CodegenContext jctx = ctx.codegen();
                         String inv = ctx.java("inv");
 
                         if (!ctx.block().isRoot()) {

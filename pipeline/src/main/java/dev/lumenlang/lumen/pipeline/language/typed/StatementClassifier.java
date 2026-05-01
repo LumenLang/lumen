@@ -1,6 +1,6 @@
 package dev.lumenlang.lumen.pipeline.language.typed;
 
-import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
+import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.language.nodes.StatementNode;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.language.pattern.registered.RegisteredExpressionMatch;
@@ -32,7 +32,7 @@ public final class StatementClassifier {
     public static @NotNull TypedStatement classify(
             @NotNull StatementNode st,
             @NotNull PatternRegistry reg,
-            @NotNull TypeEnv env) {
+            @NotNull TypeEnvImpl env) {
         List<Token> t = st.head();
 
         RegisteredPatternMatch m = reg.matchStatement(t, env);

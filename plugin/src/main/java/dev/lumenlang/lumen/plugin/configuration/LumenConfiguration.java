@@ -59,6 +59,7 @@ public final class LumenConfiguration {
                 LumenConfiguration.DEBUG.LOG_WARNINGS
         );
         LumenDiagnostic.configureVerbose(LumenConfiguration.DEBUG.VERBOSE_DIAGNOSTICS);
+        LumenDiagnostic.configureStyled(LumenConfiguration.EXTRA.FANCY_LOGGING);
         if (LumenConfiguration.EXTRA.ENABLE_CONFIG_FILE_WATCHER)
             ConfigWatcher.watch(LumenConfiguration.class, WatcherOptions.builder().listener(((file, action) -> {
                 if (action == WatchAction.DELETED)
@@ -284,6 +285,8 @@ public final class LumenConfiguration {
     }
 
     public static final class Extra {
+
+        public boolean FANCY_LOGGING = true;
 
         public boolean ENABLE_CONFIG_FILE_WATCHER = true;
 

@@ -1,8 +1,8 @@
 package dev.lumenlang.lumen.pipeline.codegen;
 
-import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import dev.lumenlang.lumen.api.codegen.JavaOutput;
+import dev.lumenlang.lumen.api.codegen.TypeEnv;
 import dev.lumenlang.lumen.api.emit.ScriptToken;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.type.LumenType;
@@ -44,14 +44,14 @@ import java.util.stream.Collectors;
 public final class HandlerContextImpl implements HandlerContext {
 
     private final @Nullable Match match;
-    private final TypeEnv env;
-    private final CodegenContext ctx;
-    private final @Nullable BlockContext block;
+    private final TypeEnvImpl env;
+    private final CodegenContextImpl ctx;
+    private final @Nullable BlockContextImpl block;
     private final @Nullable JavaOutput out;
     private final int line;
     private final @NotNull String raw;
 
-    public HandlerContextImpl(@Nullable Match match, @NotNull TypeEnv env, @NotNull CodegenContext ctx, @Nullable BlockContext block, @Nullable JavaOutput out, int line, @NotNull String raw) {
+    public HandlerContextImpl(@Nullable Match match, @NotNull TypeEnvImpl env, @NotNull CodegenContextImpl ctx, @Nullable BlockContextImpl block, @Nullable JavaOutput out, int line, @NotNull String raw) {
         this.match = match;
         this.env = env;
         this.ctx = ctx;
@@ -89,11 +89,11 @@ public final class HandlerContextImpl implements HandlerContext {
     }
 
     /**
-     * Returns the internal {@link CodegenContext} for handlers that need pipeline-level access.
+     * Returns the internal {@link CodegenContextImpl} for handlers that need pipeline-level access.
      *
      * @return the codegen context
      */
-    public @NotNull CodegenContext codegenContext() {
+    public @NotNull CodegenContextImpl codegenContext() {
         return ctx;
     }
 
@@ -154,17 +154,17 @@ public final class HandlerContextImpl implements HandlerContext {
     }
 
     @Override
-    public @NotNull TypeEnv env() {
+    public @NotNull TypeEnvImpl env() {
         return env;
     }
 
     @Override
-    public @NotNull CodegenContext codegen() {
+    public @NotNull CodegenContextImpl codegen() {
         return ctx;
     }
 
     @Override
-    public @NotNull BlockContext block() {
+    public @NotNull BlockContextImpl block() {
         if (block == null) throw new IllegalStateException("No block context available");
         return block;
     }
@@ -219,7 +219,7 @@ public final class HandlerContextImpl implements HandlerContext {
     @Override
     public @Nullable LumenType resolvedType(@NotNull String name) {
         Object val = value(name);
-        if (val instanceof EnvironmentAccess.VarHandle vh) return vh.type();
+        if (val instanceof TypeEnv.VarHandle vh) return vh.type();
         BoundValue bv = bound(name);
         if (bv == null) return null;
         ExpressionResult result = ExprResolver.resolveWithType(bv.tokens(), ctx, env);
@@ -266,7 +266,7 @@ public final class HandlerContextImpl implements HandlerContext {
         return value;
     }
 
-    private static EnvironmentAccess.@NotNull VarHandle toSyntheticHandle(@NotNull ExpressionResult result) {
+    private static TypeEnv.@NotNull VarHandle toSyntheticHandle(@NotNull ExpressionResult result) {
         return Match.syntheticHandle(result.java(), result.type(), result.metadata());
     }
 }

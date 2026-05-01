@@ -1,6 +1,6 @@
 package dev.lumenlang.lumen.pipeline.language.match;
 
-import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
+import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,5 +28,5 @@ public interface InlineExprValidator {
      * @param env    the current type environment
      * @return true if the token sequence is a valid expression
      */
-    boolean canResolve(@NotNull List<Token> tokens, @NotNull TypeEnv env);
+    boolean canResolve(@NotNull List<Token> tokens, @NotNull TypeEnvImpl env);
 }

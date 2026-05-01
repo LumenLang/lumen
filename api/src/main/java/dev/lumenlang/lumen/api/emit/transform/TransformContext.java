@@ -1,6 +1,6 @@
 package dev.lumenlang.lumen.api.emit.transform;
 
-import dev.lumenlang.lumen.api.codegen.CodegenAccess;
+import dev.lumenlang.lumen.api.codegen.CodegenContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -25,7 +25,7 @@ public interface TransformContext {
      *
      * @return the codegen access
      */
-    @NotNull CodegenAccess codegen();
+    @NotNull CodegenContext codegen();
 
     /**
      * Returns an unmodifiable snapshot of all emitted lines.

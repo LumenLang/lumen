@@ -231,6 +231,11 @@ features:
 
 # Miscellaneous settings that don't fit into other categories
 extra:
+  # When enabled, Lumen renders log output and diagnostics with rich ANSI styling: colored boxes,
+  # glyphs, and accent borders. Disable on terminals that do not support truecolor or when log
+  # output is captured into tools that mangle ANSI escapes.
+  fancy-logging: true
+
   # Weather to enable the file watcher for the confguration file.
   # When enabled, changes to the config.yml file will be detected and applied without restarting or doing the /lumen reload command.
   enable-config-file-watcher: true

@@ -1,6 +1,6 @@
 package dev.lumenlang.lumen.plugin.inject.handler;
 
-import dev.lumenlang.lumen.api.codegen.CodegenAccess;
+import dev.lumenlang.lumen.api.codegen.CodegenContext;
 import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.plugin.inject.bytecode.ExtractedBody;
 import dev.lumenlang.lumen.plugin.inject.bytecode.InjectableMethod;
@@ -35,7 +35,7 @@ public final class InjectableHandlerSupport {
     private final ExtractedBody extractedBody;
     private final String returnType;
     private final boolean methodBased;
-    private final Set<CodegenAccess> emittedContexts = Collections.synchronizedSet(Collections.newSetFromMap(new WeakHashMap<>()));
+    private final Set<CodegenContext> emittedContexts = Collections.synchronizedSet(Collections.newSetFromMap(new WeakHashMap<>()));
     private String methodName;
     private volatile @Nullable MethodDecompiler.DecompiledInlineBody inlineBody;
     private volatile boolean inlineResolved;
@@ -176,7 +176,7 @@ public final class InjectableHandlerSupport {
     /**
      * Adds imports required by the inline body to the codegen context.
      */
-    public void addInlineImports(@NotNull CodegenAccess codegen) {
+    public void addInlineImports(@NotNull CodegenContext codegen) {
         MethodDecompiler.DecompiledInlineBody body = inlineBody();
         if (body == null) return;
         for (String imp : body.imports()) {
@@ -230,7 +230,7 @@ public final class InjectableHandlerSupport {
      * Returns the parameter binding list for building the call expression.
      * Used in method based mode.
      */
-    public @NotNull List<ExtractedBody.FakeBinding> emitIfNeeded(@NotNull CodegenAccess codegen) {
+    public @NotNull List<ExtractedBody.FakeBinding> emitIfNeeded(@NotNull CodegenContext codegen) {
         List<ExtractedBody.FakeBinding> bindings = extractedBody.fakeBindings();
 
         if (emittedContexts.add(codegen)) {

@@ -2,7 +2,7 @@ package dev.lumenlang.lumen.pipeline.language.match;
 
 import dev.lumenlang.lumen.api.exceptions.ParseFailureException;
 import dev.lumenlang.lumen.api.util.FuzzyMatch;
-import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
+import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.language.TypeBinding;
 import dev.lumenlang.lumen.pipeline.language.pattern.Pattern;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternPart;
@@ -54,7 +54,7 @@ public final class PatternMatcher {
             @NotNull List<Token> tokens,
             @NotNull Pattern p,
             @NotNull TypeRegistry types,
-            @NotNull TypeEnv env) {
+            @NotNull TypeEnvImpl env) {
         return match(tokens, p, types, env, null);
     }
 
@@ -77,7 +77,7 @@ public final class PatternMatcher {
             @NotNull List<Token> tokens,
             @NotNull Pattern p,
             @NotNull TypeRegistry types,
-            @NotNull TypeEnv env,
+            @NotNull TypeEnvImpl env,
             @Nullable InlineExprValidator validator) {
         if (LumenLogger.isFullDebug()) {
             LumenLogger.debug("PatternMatcher.match", "Matching pattern: '" + p.raw() + "'");
@@ -118,7 +118,7 @@ public final class PatternMatcher {
      * @param env    the type environment for variable and reference lookups
      * @return a {@link MatchProgress} describing the match attempt (check {@link MatchProgress#succeeded()})
      */
-    public static @NotNull MatchProgress matchWithProgress(@NotNull List<Token> tokens, @NotNull Pattern p, @NotNull TypeRegistry types, @NotNull TypeEnv env) {
+    public static @NotNull MatchProgress matchWithProgress(@NotNull List<Token> tokens, @NotNull Pattern p, @NotNull TypeRegistry types, @NotNull TypeEnvImpl env) {
         return matchWithProgress(tokens, p, types, env, null);
     }
 
@@ -134,7 +134,7 @@ public final class PatternMatcher {
      * @param validator validator for InlineExpr candidates, or null to disable InlineExpr
      * @return a {@link MatchProgress} describing the match attempt (check {@link MatchProgress#succeeded()})
      */
-    public static @NotNull MatchProgress matchWithProgress(@NotNull List<Token> tokens, @NotNull Pattern p, @NotNull TypeRegistry types, @NotNull TypeEnv env, @Nullable InlineExprValidator validator) {
+    public static @NotNull MatchProgress matchWithProgress(@NotNull List<Token> tokens, @NotNull Pattern p, @NotNull TypeRegistry types, @NotNull TypeEnvImpl env, @Nullable InlineExprValidator validator) {
         MatchProgress progress = new MatchProgress();
         Map<String, BoundValue> map = new LinkedHashMap<>();
         List<String> choices = new ArrayList<>();
@@ -158,7 +158,7 @@ public final class PatternMatcher {
             @NotNull List<PatternPart> parts,
             int pi,
             @NotNull TypeRegistry types,
-            @NotNull TypeEnv env,
+            @NotNull TypeEnvImpl env,
             @NotNull Map<String, BoundValue> map,
             @NotNull List<String> choices,
             @Nullable InlineExprValidator validator,
@@ -380,7 +380,7 @@ public final class PatternMatcher {
         }
     }
 
-    private static @NotNull ConsumeOutcome safeConsumeCount(@NotNull TypeBinding binding, @NotNull List<Token> tokens, @NotNull TypeEnv env) {
+    private static @NotNull ConsumeOutcome safeConsumeCount(@NotNull TypeBinding binding, @NotNull List<Token> tokens, @NotNull TypeEnvImpl env) {
         try {
             return new ConsumeOutcome(binding.consumeCount(tokens, env), null);
         } catch (ParseFailureException e) {
@@ -391,7 +391,7 @@ public final class PatternMatcher {
         }
     }
 
-    private static @NotNull ParseOutcome safeParse(@NotNull TypeBinding binding, @NotNull List<Token> tokens, @NotNull TypeEnv env) {
+    private static @NotNull ParseOutcome safeParse(@NotNull TypeBinding binding, @NotNull List<Token> tokens, @NotNull TypeEnvImpl env) {
         try {
             return new ParseOutcome(binding.parse(tokens, env), null);
         } catch (ParseFailureException e) {
@@ -475,7 +475,7 @@ public final class PatternMatcher {
         return -1;
     }
 
-    private static void discoverDownstreamFailures(@NotNull List<Token> tokens, int ti, @NotNull List<PatternPart> parts, int pi, @NotNull TypeRegistry types, @NotNull TypeEnv env, @NotNull MatchProgress progress) {
+    private static void discoverDownstreamFailures(@NotNull List<Token> tokens, int ti, @NotNull List<PatternPart> parts, int pi, @NotNull TypeRegistry types, @NotNull TypeEnvImpl env, @NotNull MatchProgress progress) {
         for (int p = pi; p < parts.size(); p++) {
             PatternPart part = parts.get(p);
             if (part instanceof PatternPart.Literal lit) {

@@ -3,8 +3,8 @@ package dev.lumenlang.lumen.plugin.scripts;
 import dev.lumenlang.lumen.api.annotations.LumenLoad;
 import dev.lumenlang.lumen.api.annotations.LumenPreload;
 import dev.lumenlang.lumen.pipeline.binder.ScriptBinder;
-import dev.lumenlang.lumen.pipeline.codegen.CodegenContext;
-import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
+import dev.lumenlang.lumen.pipeline.codegen.CodegenContextImpl;
+import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.java.JavaBuilder;
 import dev.lumenlang.lumen.pipeline.java.compiled.ClassBuilder;
 import dev.lumenlang.lumen.pipeline.java.compiled.ScriptSourceMap;
@@ -118,7 +118,7 @@ public final class ScriptManager {
         if (s == null)
             return;
 
-        String normalized = ClassBuilder.normalize(new CodegenContext(name).className());
+        String normalized = ClassBuilder.normalize(new CodegenContextImpl(name).className());
         String fqcn = "dev.lumenlang.lumen.java.compiled." + normalized;
         ScriptSourceMap.unregisterByClassName(normalized);
         ScriptBinder.unbindAll(s.instance());
@@ -140,7 +140,7 @@ public final class ScriptManager {
         if (s == null)
             return false;
 
-        String normalized = ClassBuilder.normalize(new CodegenContext(name).className());
+        String normalized = ClassBuilder.normalize(new CodegenContextImpl(name).className());
         String fqcn = "dev.lumenlang.lumen.java.compiled." + normalized;
         ScriptSourceMap.unregisterByClassName(normalized);
         ScriptBinder.unbindAll(s.instance());
@@ -190,7 +190,7 @@ public final class ScriptManager {
                         Map<String, byte[]> cached = CompiledClassCache.load(name, src);
                         if (cached != null) {
                             String fqcn = "dev.lumenlang.lumen.java.compiled." +
-                                    ClassBuilder.normalize(new CodegenContext(name).className());
+                                    ClassBuilder.normalize(new CodegenContextImpl(name).className());
                             String cachedJavaSource = CompiledClassCache.loadJavaSource(name);
                             if (cachedJavaSource != null) {
                                 ScriptSourceMap.register(fqcn, cachedJavaSource);
@@ -301,7 +301,7 @@ public final class ScriptManager {
                 if (cacheEnabled) {
                     Map<String, byte[]> cached = CompiledClassCache.load(name, src);
                     if (cached != null) {
-                        String fqcn = "dev.lumenlang.lumen.java.compiled." + ClassBuilder.normalize(new CodegenContext(name).className());
+                        String fqcn = "dev.lumenlang.lumen.java.compiled." + ClassBuilder.normalize(new CodegenContextImpl(name).className());
                         String cachedJavaSource = CompiledClassCache.loadJavaSource(name);
                         if (cachedJavaSource != null) {
                             ScriptSourceMap.register(fqcn, cachedJavaSource);
@@ -417,7 +417,7 @@ public final class ScriptManager {
             Map<String, byte[]> cached = CompiledClassCache.load(name, source);
             if (cached != null) {
                 String fqcn = "dev.lumenlang.lumen.java.compiled." +
-                        ClassBuilder.normalize(new CodegenContext(name).className());
+                        ClassBuilder.normalize(new CodegenContextImpl(name).className());
 
                 if (LumenConfiguration.DEBUG.LOG_COMPILATION) {
                     LumenLogger.info("[Compilation] Loaded " + name + " from cache");
@@ -459,11 +459,11 @@ public final class ScriptManager {
     }
 
     private static @NotNull GeneratedSource parse(@NotNull String name, @NotNull String source) {
-        CodegenContext gen = new CodegenContext(name);
+        CodegenContextImpl gen = new CodegenContextImpl(name);
         gen.setRawJavaEnabled(LumenConfiguration.LANGUAGE.EXPERIMENTAL.RAW_JAVA);
         CodeEmitter.setParallelParseThreads(LumenConfiguration.PERFORMANCE.PARALLEL_PARSE_THREADS);
         JavaBuilder output = new JavaBuilder();
-        TypeEnv env = new TypeEnv();
+        TypeEnvImpl env = new TypeEnvImpl();
 
         CodeEmitter.generate(source, PatternRegistry.instance(), env, gen, output);
 
@@ -485,7 +485,7 @@ public final class ScriptManager {
             try {
                 generated.add(parse(ss.name(), ss.source()));
             } catch (LumenScriptException e) {
-                if (e.diagnostic() != null) {
+                if (e.diagnostic() != null || e.getMessage().contains("\n")) {
                     LumenLogger.severe("Script error in " + ss.name() + ":\n" + e.getMessage());
                 } else {
                     LumenLogger.severe("Script error in " + ss.name() + ": " + e.getMessage());

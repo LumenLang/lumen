@@ -2,7 +2,7 @@ package dev.lumenlang.lumen.plugin.util;
 
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.LumenProvider;
-import dev.lumenlang.lumen.api.codegen.EnvironmentAccess.VarHandle;
+import dev.lumenlang.lumen.api.codegen.TypeEnv.VarHandle;
 import dev.lumenlang.lumen.api.handler.ConditionHandler;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;

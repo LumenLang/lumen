@@ -1,6 +1,6 @@
 package dev.lumenlang.lumen.pipeline.conditions.parser;
 
-import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
+import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.conditions.ConditionAnd;
 import dev.lumenlang.lumen.pipeline.conditions.ConditionAtom;
 import dev.lumenlang.lumen.pipeline.conditions.ConditionExpr;
@@ -125,7 +125,7 @@ public final class ConditionParser {
      * @return the parsed condition expression
      * @throws RuntimeException if any atom segment does not match a registered condition pattern
      */
-    public ConditionExpr parse(List<Token> tokens, TypeEnv env) {
+    public ConditionExpr parse(List<Token> tokens, TypeEnvImpl env) {
         List<List<Token>> orSegments = splitOn(tokens, "or");
 
         if (orSegments.size() == 1) {
@@ -139,7 +139,7 @@ public final class ConditionParser {
         return new ConditionOr(orParts);
     }
 
-    private ConditionExpr parseAndChain(List<Token> tokens, TypeEnv env) {
+    private ConditionExpr parseAndChain(List<Token> tokens, TypeEnvImpl env) {
         List<List<Token>> andSegments = splitOn(tokens, "and");
 
         if (andSegments.size() == 1) {
@@ -153,7 +153,7 @@ public final class ConditionParser {
         return new ConditionAnd(andParts);
     }
 
-    private ConditionExpr parseAtom(List<Token> tokens, TypeEnv env) {
+    private ConditionExpr parseAtom(List<Token> tokens, TypeEnvImpl env) {
         RegisteredConditionMatch m = registry.match(tokens, env);
         if (m != null) {
             return new ConditionAtom(m);

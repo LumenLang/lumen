@@ -1,6 +1,6 @@
 package dev.lumenlang.lumen.pipeline.codegen;
 
-import dev.lumenlang.lumen.api.codegen.BlockAccess;
+import dev.lumenlang.lumen.api.codegen.BlockContext;
 import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.pipeline.language.nodes.BlockNode;
 import dev.lumenlang.lumen.pipeline.language.nodes.Node;
@@ -8,26 +8,27 @@ import dev.lumenlang.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 /**
- * Represents a single scope frame on the {@link TypeEnv} scope stack.
+ * Represents a single scope frame on the {@link TypeEnvImpl} scope stack.
  *
- * <p>A new {@code BlockContext} is pushed onto the stack every time a block node (such as
+ * <p>A new {@code BlockContextImpl} is pushed onto the stack every time a block node (such as
  * {@code on join:} or {@code if ...:}) starts being processed, and is popped when the block
  * ends. This gives inner blocks access to variables defined in outer blocks while keeping their
  * own definitions isolated.
  *
- * @see TypeEnv
+ * @see TypeEnvImpl
  */
 @SuppressWarnings("unused")
-public final class BlockContext implements BlockAccess {
+public final class BlockContextImpl implements BlockContext {
 
     private final Node node;
-    private final BlockContext parent;
+    private final BlockContextImpl parent;
     private final List<Node> siblings;
     private final int index;
 
@@ -35,14 +36,14 @@ public final class BlockContext implements BlockAccess {
     private final Map<String, Object> env = new HashMap<>();
 
     /**
-     * Creates a new {@code BlockContext}.
+     * Creates a new {@code BlockContextImpl}.
      *
      * @param node     the AST node that opened this scope
      * @param parent   the enclosing scope frame, or {@code null} for the root frame
      * @param siblings the list of nodes at the same level as {@code node}
      * @param index    the position of {@code node} within {@code siblings}
      */
-    public BlockContext(Node node, BlockContext parent, List<Node> siblings, int index) {
+    public BlockContextImpl(Node node, BlockContextImpl parent, List<Node> siblings, int index) {
         this.node = node;
         this.parent = parent;
         this.siblings = siblings;
@@ -63,7 +64,7 @@ public final class BlockContext implements BlockAccess {
      *
      * @return the parent context
      */
-    public BlockContext parent() {
+    public BlockContextImpl parent() {
         return parent;
     }
 
@@ -342,7 +343,7 @@ public final class BlockContext implements BlockAccess {
     @Override
     @SuppressWarnings("unchecked")
     public <T> @Nullable T getEnvFromParents(@NotNull String key) {
-        for (BlockContext c = this; c != null; c = c.parent) {
+        for (BlockContextImpl c = this; c != null; c = c.parent) {
             Object v = c.env.get(key);
             if (v != null) return (T) v;
         }
@@ -363,7 +364,7 @@ public final class BlockContext implements BlockAccess {
     @SuppressWarnings("unchecked")
     public <T> @Nullable T getEnvUpTo(@NotNull String key, int maxDepth) {
         int depth = 0;
-        for (BlockContext c = this; c != null && depth <= maxDepth; c = c.parent, depth++) {
+        for (BlockContextImpl c = this; c != null && depth <= maxDepth; c = c.parent, depth++) {
             Object v = c.env.get(key);
             if (v != null) return (T) v;
         }
@@ -378,5 +379,46 @@ public final class BlockContext implements BlockAccess {
     @Override
     public @NotNull String raw() {
         return node != null ? node.raw() : "";
+    }
+
+    @Override
+    public @NotNull List<SiblingInfo> subsequentSiblings() {
+        List<SiblingInfo> result = new ArrayList<>();
+        for (int i = index + 1; i < siblings.size(); i++) {
+            Node n = siblings.get(i);
+            result.add(new SiblingInfo(n.line(), n.raw()));
+        }
+        return result;
+    }
+
+    @Override
+    public @NotNull List<SiblingInfo> precedingSiblings() {
+        List<SiblingInfo> result = new ArrayList<>();
+        for (int i = 0; i < index; i++) {
+            Node n = siblings.get(i);
+            result.add(new SiblingInfo(n.line(), n.raw()));
+        }
+        return result;
+    }
+
+    @Override
+    public @NotNull List<SiblingInfo> allSiblings() {
+        List<SiblingInfo> result = new ArrayList<>();
+        for (Node n : siblings) {
+            result.add(new SiblingInfo(n.line(), n.raw()));
+        }
+        return result;
+    }
+
+    /**
+     * Returns a deep copy of this block context, including its variable map, env map, and a
+     * recursively cloned parent chain. AST node references are shared because they are immutable.
+     */
+    public @NotNull BlockContextImpl deepClone() {
+        BlockContextImpl clonedParent = parent == null ? null : parent.deepClone();
+        BlockContextImpl c = new BlockContextImpl(node, clonedParent, siblings, index);
+        c.vars.putAll(this.vars);
+        c.env.putAll(this.env);
+        return c;
     }
 }

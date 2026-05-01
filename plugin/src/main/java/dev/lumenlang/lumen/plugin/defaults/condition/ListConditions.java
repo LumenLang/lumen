@@ -3,7 +3,7 @@ package dev.lumenlang.lumen.plugin.defaults.condition;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
-import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
+import dev.lumenlang.lumen.api.codegen.TypeEnv;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.ObjectType;
@@ -56,16 +56,16 @@ public final class ListConditions {
                 .category(Categories.LIST)
                 .handler(ctx -> {
                     Object listVal = ctx.value("list");
-                    if (listVal instanceof EnvironmentAccess.VarHandle) {
+                    if (listVal instanceof TypeEnv.VarHandle) {
                         throw new RuntimeException("Cannot use 'for <scope>' with a local list variable. Use '<list> is empty' instead, or declare the list inside a 'global:' block with 'scoped to <type>'.");
                     }
                     String listVarName = (String) listVal;
-                    EnvironmentAccess.GlobalInfo info = ctx.env().getGlobalInfo(listVarName);
+                    TypeEnv.GlobalInfo info = ctx.env().getGlobalInfo(listVarName);
                     if (info == null) throw new RuntimeException("'" + listVarName + "' is not a global variable.");
                     if (!info.scoped())
                         throw new RuntimeException("'" + listVarName + "' is not a scoped global. Declare it inside a 'global:' block with 'scoped to <type> " + listVarName + ": list of <type>' for per-entity access.");
                     String scopeVarName = ctx.java("scope");
-                    EnvironmentAccess.VarHandle scopeRef = ctx.env().lookupVar(scopeVarName);
+                    TypeEnv.VarHandle scopeRef = ctx.env().lookupVar(scopeVarName);
                     if (scopeRef == null) throw new RuntimeException("Scope variable not found: " + scopeVarName);
                     LumenType scopeType = scopeRef.type();
                     ctx.codegen().addImport(List.class.getName());

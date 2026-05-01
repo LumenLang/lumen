@@ -10,7 +10,7 @@ import dev.lumenlang.lumen.api.emit.ScriptToken;
 import dev.lumenlang.lumen.api.emit.StatementValidator;
 import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.NullableType;
-import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
+import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.type.TypeChecker;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +31,7 @@ public final class NullSafetyValidator implements StatementValidator {
 
     @Override
     public void validate(@NotNull List<? extends ScriptToken> tokens, @NotNull HandlerContext ctx) {
-        TypeEnv env = (TypeEnv) ctx.env();
+        TypeEnvImpl env = (TypeEnvImpl) ctx.env();
         boolean isSetStatement = isSetStatement(tokens);
         for (ScriptToken t : tokens) {
             if (t.tokenType() != ScriptToken.TokenType.IDENT) continue;
@@ -39,11 +39,11 @@ public final class NullSafetyValidator implements StatementValidator {
             if (ref == null) continue;
             LumenType type = ref.type();
             if (!(type instanceof NullableType)) continue;
-            TypeEnv.NullState state = env.nullState(t.text());
-            if (state != TypeEnv.NullState.NULL) continue;
+            TypeEnvImpl.NullState state = env.nullState(t.text());
+            if (state != TypeEnvImpl.NullState.NULL) continue;
             if (isSetStatement && isAssignmentTarget(tokens, t)) continue;
-            TypeEnv.NullableVarInfo info = env.nullableVarInfo(t.text());
-            TypeEnv.NullAssignmentInfo nullInfo = env.nullAssignmentInfo(t.text());
+            TypeEnvImpl.NullableVarInfo info = env.nullableVarInfo(t.text());
+            TypeEnvImpl.NullAssignmentInfo nullInfo = env.nullAssignmentInfo(t.text());
             int declLine = info != null ? info.declarationLine() : -1;
             String declRaw = info != null ? info.declarationRaw() : null;
             int nullLine = nullInfo != null ? nullInfo.line() : -1;

@@ -4,10 +4,10 @@ import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.PrimitiveType;
-import dev.lumenlang.lumen.pipeline.codegen.BlockContext;
-import dev.lumenlang.lumen.pipeline.codegen.CodegenContext;
+import dev.lumenlang.lumen.pipeline.codegen.BlockContextImpl;
+import dev.lumenlang.lumen.pipeline.codegen.CodegenContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.HandlerContextImpl;
-import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
+import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.language.pattern.registered.RegisteredExpressionMatch;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
@@ -39,10 +39,7 @@ public final class ExprResolver {
      * @param env    the type environment
      * @return the generated Java source expression, or null if not resolvable
      */
-    public static @Nullable String resolve(
-            @NotNull List<Token> tokens,
-            @NotNull CodegenContext ctx,
-            @NotNull TypeEnv env) {
+    public static @Nullable String resolve(@NotNull List<Token> tokens, @NotNull CodegenContextImpl ctx, @NotNull TypeEnvImpl env) {
         ExpressionResult result = resolveRecursive(tokens, ctx, env, 0, false);
         return result != null ? result.java() : null;
     }
@@ -56,17 +53,11 @@ public final class ExprResolver {
      * @param env    the type environment
      * @return the full expression result with type info, or null if not resolvable
      */
-    public static @Nullable ExpressionResult resolveWithType(
-            @NotNull List<Token> tokens,
-            @NotNull CodegenContext ctx,
-            @NotNull TypeEnv env) {
+    public static @Nullable ExpressionResult resolveWithType(@NotNull List<Token> tokens, @NotNull CodegenContextImpl ctx, @NotNull TypeEnvImpl env) {
         return resolveRecursive(tokens, ctx, env, 0, false);
     }
 
-    public static @Nullable ExpressionResult resolveWithTypeNoDirectMatch(
-            @NotNull List<Token> tokens,
-            @NotNull CodegenContext ctx,
-            @NotNull TypeEnv env) {
+    public static @Nullable ExpressionResult resolveWithTypeNoDirectMatch(@NotNull List<Token> tokens, @NotNull CodegenContextImpl ctx, @NotNull TypeEnvImpl env) {
         return resolveRecursive(tokens, ctx, env, 0, true);
     }
 
@@ -97,12 +88,7 @@ public final class ExprResolver {
      * @param depth  the current recursion depth
      * @return the full expression result, or null if not resolvable
      */
-    private static @Nullable ExpressionResult resolveRecursive(
-            @NotNull List<Token> tokens,
-            @NotNull CodegenContext ctx,
-            @NotNull TypeEnv env,
-            int depth,
-            boolean skipDirectMatch) {
+    private static @Nullable ExpressionResult resolveRecursive(@NotNull List<Token> tokens, @NotNull CodegenContextImpl ctx, @NotNull TypeEnvImpl env, int depth, boolean skipDirectMatch) {
         if (depth > MAX_RESOLVE_DEPTH || tokens.isEmpty()) return null;
 
         if (tokens.size() >= 3
@@ -124,7 +110,7 @@ public final class ExprResolver {
             RegisteredExpressionMatch match = reg.matchExpression(tokens, env);
             if (match != null) {
                 try {
-                    BlockContext block = env.blockContext();
+                    BlockContextImpl block = env.blockContext();
                     HandlerContextImpl hctx = new HandlerContextImpl(match.match(), env, ctx, block, null, 0, "");
                     return match.reg().handler().handle(hctx);
                 } catch (DiagnosticException e) {
@@ -152,12 +138,7 @@ public final class ExprResolver {
      * @param depth  the current recursion depth
      * @return the resolved expression result, or null
      */
-    private static @Nullable ExpressionResult tryNestedSubExpressions(
-            @NotNull List<Token> tokens,
-            @NotNull CodegenContext ctx,
-            @NotNull TypeEnv env,
-            @NotNull PatternRegistry reg,
-            int depth) {
+    private static @Nullable ExpressionResult tryNestedSubExpressions(@NotNull List<Token> tokens, @NotNull CodegenContextImpl ctx, @NotNull TypeEnvImpl env, @NotNull PatternRegistry reg, int depth) {
         for (int start = 0; start < tokens.size(); start++) {
             for (int end = tokens.size(); end > start + 1; end--) {
                 if (start == 0 && end == tokens.size()) continue;
@@ -168,7 +149,7 @@ public final class ExprResolver {
 
                 ExpressionResult subResult;
                 try {
-                    BlockContext block = env.blockContext();
+                    BlockContextImpl block = env.blockContext();
                     HandlerContextImpl hctx = new HandlerContextImpl(subMatch.match(), env, ctx, block, null, 0, "");
                     subResult = subMatch.reg().handler().handle(hctx);
                 } catch (DiagnosticException e) {
@@ -180,14 +161,13 @@ public final class ExprResolver {
                 String synthName = "$sub" + depth + "$" + start;
                 VarRef synthRef = new VarRef(synthName, subResult.type(), subResult.java());
 
-                BlockContext tempBlock = new BlockContext(null, env.blockContext(), List.of(), 0);
+                BlockContextImpl tempBlock = new BlockContextImpl(null, env.blockContext(), List.of(), 0);
                 env.enterBlock(tempBlock);
                 env.defineVar(synthName, synthRef);
 
                 try {
                     List<Token> newTokens = new ArrayList<>(tokens.subList(0, start));
-                    newTokens.add(new Token(TokenKind.IDENT, synthName,
-                            sub.get(0).line(), sub.get(0).start(), sub.get(0).end()));
+                    newTokens.add(new Token(TokenKind.IDENT, synthName, sub.get(0).line(), sub.get(0).start(), sub.get(0).end()));
                     newTokens.addAll(tokens.subList(end, tokens.size()));
 
                     ExpressionResult resolved = resolveRecursive(newTokens, ctx, env, depth + 1, false);
@@ -211,11 +191,7 @@ public final class ExprResolver {
      * @param depth  the current recursion depth
      * @return the compiled Java math expression, or null if not resolvable
      */
-    private static @Nullable ExpressionResult tryMathSplit(
-            @NotNull List<Token> tokens,
-            @NotNull CodegenContext ctx,
-            @NotNull TypeEnv env,
-            int depth) {
+    private static @Nullable ExpressionResult tryMathSplit(@NotNull List<Token> tokens, @NotNull CodegenContextImpl ctx, @NotNull TypeEnvImpl env, int depth) {
         List<List<Token>> operands = new ArrayList<>();
         List<String> operators = new ArrayList<>();
         List<Token> current = new ArrayList<>();
@@ -228,8 +204,7 @@ public final class ExprResolver {
             } else if (t.kind() == TokenKind.SYMBOL && t.text().equals(")")) {
                 parenDepth--;
                 current.add(t);
-            } else if (parenDepth == 0 && t.kind() == TokenKind.SYMBOL
-                    && isArithmeticOp(t.text()) && !current.isEmpty()) {
+            } else if (parenDepth == 0 && t.kind() == TokenKind.SYMBOL && isArithmeticOp(t.text()) && !current.isEmpty()) {
                 operands.add(current);
                 operators.add(t.text());
                 current = new ArrayList<>();
@@ -267,11 +242,7 @@ public final class ExprResolver {
      * @param depth  the current recursion depth
      * @return the resolved operand with type, or null
      */
-    private static @Nullable TypedOperand resolveMathOperand(
-            @NotNull List<Token> tokens,
-            @NotNull CodegenContext ctx,
-            @NotNull TypeEnv env,
-            int depth) {
+    private static @Nullable TypedOperand resolveMathOperand(@NotNull List<Token> tokens, @NotNull CodegenContextImpl ctx, @NotNull TypeEnvImpl env, int depth) {
         if (tokens.isEmpty()) return null;
 
         if (tokens.size() == 1) {

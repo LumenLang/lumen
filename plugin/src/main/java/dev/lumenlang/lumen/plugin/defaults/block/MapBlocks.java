@@ -3,8 +3,8 @@ package dev.lumenlang.lumen.plugin.defaults.block;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
-import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.codegen.HandlerContext;
+import dev.lumenlang.lumen.api.codegen.TypeEnv;
 import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
 import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.handler.BlockHandler;
@@ -73,7 +73,7 @@ public final class MapBlocks {
                                     .help("use a different variable name")
                                     .build());
                         }
-                        EnvironmentAccess.VarHandle mapRef = (EnvironmentAccess.VarHandle) ctx.value("map");
+                        TypeEnv.VarHandle mapRef = (TypeEnv.VarHandle) ctx.value("map");
                         CollectionType mapType = TypeUtils.asCollection(mapRef.type());
                         LumenType keyType = mapType.typeArguments().get(0);
                         LumenType valType = mapType.typeArguments().get(1);
@@ -113,7 +113,7 @@ public final class MapBlocks {
                                     .help("place 'loop' inside an event, command, or other block")
                                     .build());
                         }
-                        EnvironmentAccess env = ctx.env();
+                        TypeEnv env = ctx.env();
                         String keyName = ctx.java("key");
                         String valName = ctx.java("val");
                         if (env.lookupVar(keyName) != null) {
@@ -133,7 +133,7 @@ public final class MapBlocks {
 
                         String mapVarName = ctx.tokens("map").get(0);
                         String scopeVarName = ctx.java("scope");
-                        EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(mapVarName);
+                        TypeEnv.GlobalInfo info = env.getGlobalInfo(mapVarName);
                         if (info == null) {
                             throw new DiagnosticException(LumenDiagnostic.error("'" + mapVarName + "' is not a global variable")
                                     .at(ctx.block().line(), ctx.block().raw())
@@ -148,7 +148,7 @@ public final class MapBlocks {
                                     .help("declare it inside a 'global:' block with 'scoped to <type> " + mapVarName + ": map of <key> to <value>' for per-entity access")
                                     .build());
                         }
-                        EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
+                        TypeEnv.VarHandle scopeRef = env.lookupVar(scopeVarName);
                         if (scopeRef == null) {
                             throw new DiagnosticException(LumenDiagnostic.error("Scope variable '" + scopeVarName + "' not found")
                                     .at(ctx.block().line(), ctx.block().raw())
@@ -160,7 +160,7 @@ public final class MapBlocks {
 
                         ctx.codegen().addImport(Map.class.getName());
                         ctx.codegen().addImport(HashMap.class.getName());
-                        EnvironmentAccess.VarHandle mapRef = env.lookupVar(mapVarName);
+                        TypeEnv.VarHandle mapRef = env.lookupVar(mapVarName);
                         CollectionType mapType = TypeUtils.asCollection(mapRef.type());
                         LumenType keyType = mapType.typeArguments().get(0);
                         LumenType valType = mapType.typeArguments().get(1);

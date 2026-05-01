@@ -1,8 +1,8 @@
 package dev.lumenlang.lumen.pipeline.addon.bridge;
 
 import dev.lumenlang.lumen.api.type.AddonTypeBinding;
-import dev.lumenlang.lumen.pipeline.codegen.CodegenContext;
-import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
+import dev.lumenlang.lumen.pipeline.codegen.CodegenContextImpl;
+import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.language.TypeBinding;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +27,7 @@ public final class TypeBindingBridge implements TypeBinding {
     }
 
     @Override
-    public Object parse(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
+    public Object parse(@NotNull List<Token> tokens, @NotNull TypeEnvImpl env) {
         List<String> texts = tokens.stream()
                 .map(Token::text)
                 .collect(Collectors.toList());
@@ -35,12 +35,12 @@ public final class TypeBindingBridge implements TypeBinding {
     }
 
     @Override
-    public @NotNull String toJava(Object value, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
+    public @NotNull String toJava(Object value, @NotNull CodegenContextImpl ctx, @NotNull TypeEnvImpl env) {
         return apiBinding.toJava(value, ctx, env);
     }
 
     @Override
-    public int consumeCount(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
+    public int consumeCount(@NotNull List<Token> tokens, @NotNull TypeEnvImpl env) {
         List<String> texts = tokens.stream()
                 .map(Token::text)
                 .collect(Collectors.toList());

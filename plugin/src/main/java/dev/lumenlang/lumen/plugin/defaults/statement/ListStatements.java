@@ -3,8 +3,8 @@ package dev.lumenlang.lumen.plugin.defaults.statement;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
-import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.codegen.HandlerContext;
+import dev.lumenlang.lumen.api.codegen.TypeEnv;
 import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
 import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.pattern.Categories;
@@ -28,14 +28,14 @@ public final class ListStatements {
 
     private static @Nullable String listVarName(@NotNull HandlerContext ctx) {
         Object val = ctx.value("list");
-        if (val instanceof EnvironmentAccess.VarHandle ref) {
+        if (val instanceof TypeEnv.VarHandle ref) {
             return ref.java();
         }
         return null;
     }
 
     private static void validateElementType(@NotNull HandlerContext ctx, @NotNull String paramName) {
-        EnvironmentAccess.VarHandle listRef = ctx.varHandle("list");
+        TypeEnv.VarHandle listRef = ctx.varHandle("list");
         if (listRef == null) return;
         CollectionType ct = TypeUtils.asCollection(listRef.type());
         if (ct == null || ct.typeArguments().isEmpty()) return;
@@ -50,16 +50,16 @@ public final class ListStatements {
     }
 
     private static void flushIfStored(@NotNull HandlerContext ctx, @NotNull String listJava, @Nullable String varName) {
-        EnvironmentAccess env = ctx.env();
+        TypeEnv env = ctx.env();
         if (varName != null && env.isStored(varName)) {
             ctx.out().line(env.storedClassName(varName) + ".set(" + env.getStoredKey(varName) + ", "
                     + listJava + ");");
         }
     }
 
-    private static @NotNull String buildScopedKey(@NotNull HandlerContext ctx, @NotNull String varName, @NotNull String scopeVarName, @NotNull EnvironmentAccess.GlobalInfo info) {
-        EnvironmentAccess env = ctx.env();
-        EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
+    private static @NotNull String buildScopedKey(@NotNull HandlerContext ctx, @NotNull String varName, @NotNull String scopeVarName, @NotNull TypeEnv.GlobalInfo info) {
+        TypeEnv env = ctx.env();
+        TypeEnv.VarHandle scopeRef = env.lookupVar(scopeVarName);
         if (scopeRef == null) {
             throw new DiagnosticException(LumenDiagnostic.error("Scope variable '" + scopeVarName + "' not found")
                     .at(ctx.block().line(), ctx.block().raw())
@@ -72,7 +72,7 @@ public final class ListStatements {
     }
 
     private static void emitScopedMutation(@NotNull HandlerContext ctx, @NotNull String listVarName, @NotNull String scopeVarName, @NotNull Function<String, String> mutation) {
-        EnvironmentAccess.GlobalInfo info = ctx.env().getGlobalInfo(listVarName);
+        TypeEnv.GlobalInfo info = ctx.env().getGlobalInfo(listVarName);
         if (info == null) {
             throw new DiagnosticException(LumenDiagnostic.error("'" + listVarName + "' is not a global variable")
                     .at(ctx.block().line(), ctx.block().raw())

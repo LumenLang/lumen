@@ -3,8 +3,8 @@ package dev.lumenlang.lumen.plugin.defaults.condition;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
-import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.codegen.NarrowingFact;
+import dev.lumenlang.lumen.api.codegen.TypeEnv;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,7 +23,7 @@ import java.util.concurrent.ThreadLocalRandom;
 public final class GenericConditions {
 
     private static void validateExprIdentifier(@NotNull String java,
-                                               @NotNull EnvironmentAccess env) {
+                                               @NotNull TypeEnv env) {
         if (java.matches("[a-zA-Z_][a-zA-Z0-9_]*") && env.lookupVar(java) == null) {
             throw new RuntimeException("Variable '" + java + "' does not exist");
         }

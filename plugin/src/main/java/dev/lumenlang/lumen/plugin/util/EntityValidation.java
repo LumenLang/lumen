@@ -1,6 +1,6 @@
 package dev.lumenlang.lumen.plugin.util;
 
-import dev.lumenlang.lumen.api.codegen.EnvironmentAccess.VarHandle;
+import dev.lumenlang.lumen.api.codegen.TypeEnv.VarHandle;
 import dev.lumenlang.lumen.api.exceptions.ParseFailureException;
 import dev.lumenlang.lumen.api.type.LumenType;
 import org.jetbrains.annotations.NotNull;

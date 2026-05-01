@@ -8,7 +8,7 @@ import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.pipeline.codegen.HandlerContextImpl;
-import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
+import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.language.exceptions.LumenScriptException;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.language.pattern.registered.RegisteredExpressionMatch;
@@ -60,7 +60,7 @@ public final class LoadStatementForm {
 
     private static void emitLoadVar(@NotNull String name, @Nullable String scopeVar, @NotNull HandlerContext ctx) {
         HandlerContextImpl emitCtx = (HandlerContextImpl) ctx;
-        TypeEnv env = (TypeEnv) ctx.env();
+        TypeEnvImpl env = (TypeEnvImpl) ctx.env();
         List<Token> exprTokens = emitCtx.bound("val").tokens();
 
         String nameError = VarNameValidator.validate(name);

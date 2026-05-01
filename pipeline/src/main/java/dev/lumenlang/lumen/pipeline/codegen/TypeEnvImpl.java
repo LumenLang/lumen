@@ -1,7 +1,7 @@
 package dev.lumenlang.lumen.pipeline.codegen;
 
-import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.codegen.NarrowingFact;
+import dev.lumenlang.lumen.api.codegen.TypeEnv;
 import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.ObjectType;
@@ -24,13 +24,13 @@ import java.util.Set;
 /**
  * The compile-time symbol table for a Lumen script.
  *
- * <p>{@code TypeEnv} tracks what variable names are in scope and what Java expressions they
+ * <p>{@code TypeEnvImpl} tracks what variable names are in scope and what Java expressions they
  * correspond to. It does <em>not</em> track runtime values, all information here is used
  * solely to generate correct Java source code.
  *
  * <h2>Scope Stack</h2>
- * <p>Scope is managed through a stack of {@link BlockContext} objects. Each time a block begins
- * (e.g. {@code on join:}), a new {@link BlockContext} is pushed via {@link #enterBlock(BlockContext)}.
+ * <p>Scope is managed through a stack of {@link BlockContextImpl} objects. Each time a block begins
+ * (e.g. {@code on join:}), a new {@link BlockContextImpl} is pushed via {@link #enterBlock(BlockContextImpl)}.
  * When the block ends it is popped via {@link #leaveBlock()}. Lookups via
  * {@link #lookupVar(String)} walk the stack from innermost to outermost scope.
  *
@@ -38,11 +38,11 @@ import java.util.Set;
  * <p>Block handlers can store arbitrary data across their {@code begin} and {@code end} calls
  * using {@link #put(String, Object)} and {@link #get(String)}. These globals are not scoped.
  *
- * @see BlockContext
+ * @see BlockContextImpl
  * @see VarRef
  */
 @SuppressWarnings("unused")
-public final class TypeEnv implements EnvironmentAccess {
+public final class TypeEnvImpl implements TypeEnv {
     private final Map<String, Object> globals = new HashMap<>();
     private final Map<String, String> storedKeys = new HashMap<>();
     private final Map<String, String> storedBaseKeys = new HashMap<>();
@@ -60,7 +60,7 @@ public final class TypeEnv implements EnvironmentAccess {
     private final Map<String, DeclarationInfo> declarationInfos = new HashMap<>();
     private final List<LumenDiagnostic> warnings = new ArrayList<>();
     private final List<NarrowingFact> pendingNarrowings = new ArrayList<>();
-    private BlockContext currentBlock;
+    private BlockContextImpl currentBlock;
 
     /**
      * Tracks whether a nullable variable is currently known to be null or non-null.
@@ -230,23 +230,23 @@ public final class TypeEnv implements EnvironmentAccess {
      */
     public @NotNull Set<String> allVisibleVarNames() {
         Set<String> names = new HashSet<>(rootVars.keySet());
-        for (BlockContext c = currentBlock; c != null; c = c.parent()) {
+        for (BlockContextImpl c = currentBlock; c != null; c = c.parent()) {
             names.addAll(c.varNames());
         }
         return names;
     }
 
     /**
-     * Pushes a new {@link BlockContext} onto the scope stack, making it the active scope.
+     * Pushes a new {@link BlockContextImpl} onto the scope stack, making it the active scope.
      *
      * @param ctx the new block context to enter
      */
-    public void enterBlock(BlockContext ctx) {
+    public void enterBlock(BlockContextImpl ctx) {
         this.currentBlock = ctx;
     }
 
     /**
-     * Pops the current {@link BlockContext} from the scope stack, restoring the parent scope.
+     * Pops the current {@link BlockContextImpl} from the scope stack, restoring the parent scope.
      *
      * <p>Does nothing if the stack is already empty.
      */
@@ -256,16 +256,16 @@ public final class TypeEnv implements EnvironmentAccess {
     }
 
     /**
-     * Returns the currently active {@link BlockContext}, or {@code null} if not inside any block.
+     * Returns the currently active {@link BlockContextImpl}, or {@code null} if not inside any block.
      *
      * @return the current block context
      */
-    public BlockContext blockContext() {
+    public BlockContextImpl blockContext() {
         return currentBlock;
     }
 
     @Override
-    public BlockContext block() {
+    public BlockContextImpl block() {
         return currentBlock;
     }
 
@@ -327,7 +327,7 @@ public final class TypeEnv implements EnvironmentAccess {
      */
     @Override
     public VarRef lookupVar(@NotNull String name) {
-        for (BlockContext c = currentBlock; c != null; c = c.parent()) {
+        for (BlockContextImpl c = currentBlock; c != null; c = c.parent()) {
             VarRef v = c.getVarLocal(name);
             if (v != null) return v;
         }
@@ -337,7 +337,7 @@ public final class TypeEnv implements EnvironmentAccess {
     }
 
     public boolean hasLocalBinding(@NotNull String name) {
-        for (BlockContext c = currentBlock; c != null; c = c.parent()) {
+        for (BlockContextImpl c = currentBlock; c != null; c = c.parent()) {
             if (c.getVarLocal(name) != null) return true;
         }
         return rootVars.containsKey(name);
@@ -396,7 +396,7 @@ public final class TypeEnv implements EnvironmentAccess {
      * @return the first matching variable, or {@code null} if none found
      */
     public @Nullable VarRef lookupVarByType(@NotNull ObjectType type) {
-        for (BlockContext c = currentBlock; c != null; c = c.parent()) {
+        for (BlockContextImpl c = currentBlock; c != null; c = c.parent()) {
             VarRef found = c.findVarByType(type);
             if (found != null) return found;
         }
@@ -616,7 +616,7 @@ public final class TypeEnv implements EnvironmentAccess {
     @Override
     public boolean isVarCapturedByLambda(@NotNull String name) {
         boolean passedLambdaBoundary = false;
-        for (BlockContext c = currentBlock; c != null; c = c.parent()) {
+        for (BlockContextImpl c = currentBlock; c != null; c = c.parent()) {
             VarRef local = c.getVarLocal(name);
             if (!passedLambdaBoundary) {
                 if (local != null) return false;
@@ -687,20 +687,14 @@ public final class TypeEnv implements EnvironmentAccess {
     /**
      * Information about a script-wide variable declared with {@code global}.
      *
-     * @param name         the variable name
      * @param defaultJava  the Java expression for the default value
      * @param className    the script class name at the time of declaration
      * @param scoped       whether the global is scoped per entity rather than server-wide
      * @param stored       whether the variable is persisted to disk ({@code true}) or in-memory only ({@code false})
-     * @param exprMetadata compile-time metadata from the default expression, or {@code null}
-     * @param type         the declared compile-time type
      * @param scopeType    the scope type for scoped globals, or {@code null} if not scoped
      */
-    public record GlobalVarInfo(@NotNull String defaultJava,
-                                @NotNull String className, boolean scoped,
-                                boolean stored,
-                                @Nullable LumenType scopeType)
-            implements EnvironmentAccess.GlobalInfo {
+    public record GlobalVarInfo(@NotNull String defaultJava, @NotNull String className, boolean scoped, boolean stored, @Nullable LumenType scopeType)
+            implements TypeEnv.GlobalInfo {
     }
 
     /**
@@ -721,10 +715,10 @@ public final class TypeEnv implements EnvironmentAccess {
      *
      * <p>Mutable per-block state (scope stack, globals map, null states) starts fresh.
      *
-     * @return a new TypeEnv suitable for independent block emission
+     * @return a new TypeEnvImpl suitable for independent block emission
      */
-    public @NotNull TypeEnv fork() {
-        TypeEnv forked = new TypeEnv();
+    public @NotNull TypeEnvImpl fork() {
+        TypeEnvImpl forked = new TypeEnvImpl();
         forked.rootVars.putAll(this.rootVars);
         forked.globalVars.addAll(this.globalVars);
         forked.globals.putAll(this.globals);
@@ -737,5 +731,32 @@ public final class TypeEnv implements EnvironmentAccess {
         forked.globalFields.addAll(this.globalFields);
         forked.experimental.addAll(this.experimental);
         return forked;
+    }
+
+    /**
+     * Returns a full deep copy: every collection, every per-block flow tracker, the warning list,
+     * and the current block context. Mutations on the clone do not affect the original.
+     */
+    public @NotNull TypeEnvImpl deepClone() {
+        TypeEnvImpl c = new TypeEnvImpl();
+        c.globals.putAll(this.globals);
+        c.storedKeys.putAll(this.storedKeys);
+        c.storedBaseKeys.putAll(this.storedBaseKeys);
+        c.storedScopeVars.putAll(this.storedScopeVars);
+        c.runtimeGlobals.addAll(this.runtimeGlobals);
+        c.globalFields.addAll(this.globalFields);
+        c.experimental.addAll(this.experimental);
+        c.globalVars.addAll(this.globalVars);
+        c.configEntries.addAll(this.configEntries);
+        c.rootVars.putAll(this.rootVars);
+        c.dataSchemas.putAll(this.dataSchemas);
+        c.nullStates.putAll(this.nullStates);
+        c.nullableVarInfos.putAll(this.nullableVarInfos);
+        c.nullAssignments.putAll(this.nullAssignments);
+        c.declarationInfos.putAll(this.declarationInfos);
+        c.warnings.addAll(this.warnings);
+        c.pendingNarrowings.addAll(this.pendingNarrowings);
+        c.currentBlock = this.currentBlock == null ? null : this.currentBlock.deepClone();
+        return c;
     }
 }

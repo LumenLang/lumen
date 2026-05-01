@@ -1,10 +1,10 @@
 package dev.lumenlang.lumen.pipeline.language.emit;
 
-import dev.lumenlang.lumen.api.codegen.CodegenAccess;
+import dev.lumenlang.lumen.api.codegen.CodegenContext;
 import dev.lumenlang.lumen.api.emit.transform.CodeTransformer;
 import dev.lumenlang.lumen.api.emit.transform.TaggedLine;
 import dev.lumenlang.lumen.api.emit.transform.TransformContext;
-import dev.lumenlang.lumen.pipeline.codegen.CodegenContext;
+import dev.lumenlang.lumen.pipeline.codegen.CodegenContextImpl;
 import dev.lumenlang.lumen.pipeline.java.JavaBuilder;
 import dev.lumenlang.lumen.pipeline.java.compiled.ClassBuilder;
 import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
@@ -95,7 +95,7 @@ public final class TransformerRegistry {
      * @param builder the Java builder to transform
      * @param codegen the class-level metadata for the script being transformed
      */
-    public void transform(@NotNull JavaBuilder builder, @NotNull CodegenAccess codegen) {
+    public void transform(@NotNull JavaBuilder builder, @NotNull CodegenContext codegen) {
         if (transformers.isEmpty()) {
             return;
         }
@@ -252,7 +252,7 @@ public final class TransformerRegistry {
 
     private static final class TransformContextImpl implements TransformContext {
         private final List<TaggedLine> snapshot;
-        private final CodegenAccess codegen;
+        private final CodegenContext codegen;
         private final JavaBuilder builder;
         private final List<Integer> removals = new ArrayList<>();
         private final Map<Integer, String> replacements = new HashMap<>();
@@ -260,14 +260,14 @@ public final class TransformerRegistry {
         private String cachedFullSource;
         private int cachedBodyOffset = -1;
 
-        private TransformContextImpl(@NotNull List<TaggedLine> snapshot, @NotNull CodegenAccess codegen, @NotNull JavaBuilder builder) {
+        private TransformContextImpl(@NotNull List<TaggedLine> snapshot, @NotNull CodegenContext codegen, @NotNull JavaBuilder builder) {
             this.snapshot = snapshot;
             this.codegen = codegen;
             this.builder = builder;
         }
 
         @Override
-        public @NotNull CodegenAccess codegen() {
+        public @NotNull CodegenContext codegen() {
             return codegen;
         }
 
@@ -292,7 +292,7 @@ public final class TransformerRegistry {
 
         private void buildIfNeeded() {
             if (cachedFullSource != null) return;
-            CodegenContext ctx = (CodegenContext) codegen;
+            CodegenContextImpl ctx = (CodegenContextImpl) codegen;
             cachedFullSource = ClassBuilder.buildClass(ctx.className(), ctx, builder, false);
             cachedBodyOffset = builder.lines().isEmpty() ? 0 : preambleLineCount(cachedFullSource, builder.lines().get(0));
         }

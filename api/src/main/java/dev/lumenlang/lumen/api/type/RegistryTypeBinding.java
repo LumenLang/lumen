@@ -1,8 +1,8 @@
 package dev.lumenlang.lumen.api.type;
 
-import dev.lumenlang.lumen.api.codegen.CodegenAccess;
-import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
-import dev.lumenlang.lumen.api.codegen.EnvironmentAccess.VarHandle;
+import dev.lumenlang.lumen.api.codegen.CodegenContext;
+import dev.lumenlang.lumen.api.codegen.TypeEnv;
+import dev.lumenlang.lumen.api.codegen.TypeEnv.VarHandle;
 import dev.lumenlang.lumen.api.exceptions.ParseFailureException;
 import dev.lumenlang.lumen.api.util.FuzzyMatch;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +47,7 @@ public final class RegistryTypeBinding {
      *
      * <p>The token is normalized to {@code UPPER_CASE} with spaces and hyphens replaced by
      * underscores. The generated Java code uses the short class name (imported via
-     * {@link CodegenAccess#addImport(String)}).
+     * {@link CodegenContext#addImport(String)}).
      *
      * @param typeId        the unique type binding identifier (e.g. {@code "VILLAGER_TYPE"})
      * @param constantNames the set of valid constant names in {@code UPPER_CASE} format
@@ -82,7 +82,7 @@ public final class RegistryTypeBinding {
             }
 
             @Override
-            public @NotNull Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
+            public @NotNull Object parse(@NotNull List<String> tokens, @NotNull TypeEnv env) {
                 String normalized = normalize(tokens.get(0));
                 if (frozen.contains(normalized)) return normalized;
                 VarHandle ref = env.lookupVar(tokens.get(0));
@@ -91,7 +91,7 @@ public final class RegistryTypeBinding {
             }
 
             @Override
-            public @NotNull String toJava(@NotNull Object value, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(@NotNull Object value, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
                 if (value instanceof VarHandle ref) {
                     ctx.addImport(fqcn);
                     return fqcn + ".valueOf(String.valueOf(" + ref.java() + ").toUpperCase().replace(' ', '_').replace('-', '_'))";

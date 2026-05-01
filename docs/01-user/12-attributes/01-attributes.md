@@ -91,20 +91,20 @@ Some attributes were added in later versions. If your server is older than the v
 
 ### Since 1.20
 
-| Name |
-|------|
-| `max_health` |
-| `follow_range` |
+| Name                   |
+|------------------------|
+| `max_health`           |
+| `follow_range`         |
 | `knockback_resistance` |
-| `movement_speed` |
-| `flying_speed` |
-| `attack_damage` |
-| `attack_knockback` |
-| `attack_speed` |
-| `armor` |
-| `armor_toughness` |
-| `luck` |
-| `jump_strength` |
+| `movement_speed`       |
+| `flying_speed`         |
+| `attack_damage`        |
+| `attack_knockback`     |
+| `attack_speed`         |
+| `armor`                |
+| `armor_toughness`      |
+| `luck`                 |
+| `jump_strength`        |
 | `spawn_reinforcements` |
 
 ### Since 1.20.5

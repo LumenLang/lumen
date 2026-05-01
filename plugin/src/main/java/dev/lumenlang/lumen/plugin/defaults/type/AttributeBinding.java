@@ -3,8 +3,8 @@ package dev.lumenlang.lumen.plugin.defaults.type;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
-import dev.lumenlang.lumen.api.codegen.CodegenAccess;
-import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
+import dev.lumenlang.lumen.api.codegen.CodegenContext;
+import dev.lumenlang.lumen.api.codegen.TypeEnv;
 import dev.lumenlang.lumen.api.exceptions.ParseFailureException;
 import dev.lumenlang.lumen.api.type.AddonTypeBinding;
 import dev.lumenlang.lumen.api.type.TypeBindingMeta;
@@ -44,7 +44,7 @@ public final class AttributeBinding {
             }
 
             @Override
-            public int consumeCount(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
+            public int consumeCount(@NotNull List<String> tokens, @NotNull TypeEnv env) {
                 if (tokens.isEmpty())
                     return 0;
                 String candidate = tokens.get(0);
@@ -69,7 +69,7 @@ public final class AttributeBinding {
             }
 
             @Override
-            public Object parse(@NotNull List<String> tokens, @NotNull EnvironmentAccess env) {
+            public Object parse(@NotNull List<String> tokens, @NotNull TypeEnv env) {
                 if (tokens.isEmpty())
                     throw new ParseFailureException("expected an attribute name here");
 
@@ -94,7 +94,7 @@ public final class AttributeBinding {
             }
 
             @Override
-            public @NotNull String toJava(Object value, @NotNull CodegenAccess ctx, @NotNull EnvironmentAccess env) {
+            public @NotNull String toJava(Object value, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
                 ctx.addImport(Attribute.class.getName());
                 return "Attribute." + value;
             }

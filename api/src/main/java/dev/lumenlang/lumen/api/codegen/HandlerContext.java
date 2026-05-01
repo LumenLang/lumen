@@ -1,6 +1,6 @@
 package dev.lumenlang.lumen.api.codegen;
 
-import dev.lumenlang.lumen.api.codegen.EnvironmentAccess.VarHandle;
+import dev.lumenlang.lumen.api.codegen.TypeEnv.VarHandle;
 import dev.lumenlang.lumen.api.emit.ScriptToken;
 import dev.lumenlang.lumen.api.handler.BlockHandler;
 import dev.lumenlang.lumen.api.handler.ConditionHandler;
@@ -78,21 +78,21 @@ public interface HandlerContext {
      *
      * @return the environment access
      */
-    @NotNull EnvironmentAccess env();
+    @NotNull TypeEnv env();
 
     /**
      * Returns the code generation context for managing imports and class metadata.
      *
      * @return the codegen access
      */
-    @NotNull CodegenAccess codegen();
+    @NotNull CodegenContext codegen();
 
     /**
      * Returns the block context for inspecting sibling blocks and scope position.
      *
      * @return the block access
      */
-    @NotNull BlockAccess block();
+    @NotNull BlockContext block();
 
     /**
      * Returns the Java source output builder.

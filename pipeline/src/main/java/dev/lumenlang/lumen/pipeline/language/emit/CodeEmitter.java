@@ -7,10 +7,10 @@ import dev.lumenlang.lumen.api.emit.BlockFormHandler;
 import dev.lumenlang.lumen.api.emit.ScriptLine;
 import dev.lumenlang.lumen.api.emit.StatementValidator;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
-import dev.lumenlang.lumen.pipeline.codegen.BlockContext;
-import dev.lumenlang.lumen.pipeline.codegen.CodegenContext;
+import dev.lumenlang.lumen.pipeline.codegen.BlockContextImpl;
+import dev.lumenlang.lumen.pipeline.codegen.CodegenContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.HandlerContextImpl;
-import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
+import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.java.JavaBuilder;
 import dev.lumenlang.lumen.pipeline.language.exceptions.LumenScriptException;
 import dev.lumenlang.lumen.pipeline.language.exceptions.TokenCarryingException;
@@ -94,8 +94,8 @@ public final class CodeEmitter {
     public static void generate(
             @NotNull String src,
             @NotNull PatternRegistry reg,
-            @NotNull TypeEnv env,
-            @NotNull CodegenContext ctx,
+            @NotNull TypeEnvImpl env,
+            @NotNull CodegenContextImpl ctx,
             @NotNull JavaBuilder out) {
         Tokenizer tokenizer = new Tokenizer();
         LumenParser parser = new LumenParser();
@@ -121,26 +121,33 @@ public final class CodeEmitter {
     public static void generate(
             @NotNull Node root,
             @NotNull PatternRegistry reg,
-            @NotNull TypeEnv env,
-            @NotNull CodegenContext ctx,
+            @NotNull TypeEnvImpl env,
+            @NotNull CodegenContextImpl ctx,
             @NotNull JavaBuilder out) {
         List<LumenScriptException> errors = new ArrayList<>();
         emitChildren(root, null, reg, env, ctx, out, errors);
 
-        for (LumenDiagnostic warning : env.warnings()) {
-            LumenLogger.warning("[Script " + ctx.scriptName() + "] " + warning.format());
-        }
-
         if (!errors.isEmpty()) {
-            if (errors.size() == 1) {
+            if (errors.size() == 1 && env.warnings().isEmpty()) {
                 throw errors.get(0);
+            }
+            List<LumenDiagnostic> diagnostics = new ArrayList<>(env.warnings());
+            for (LumenScriptException e : errors) {
+                LumenDiagnostic d = e.diagnostic();
+                if (d != null) diagnostics.add(d);
+            }
+            if (diagnostics.size() == errors.size() + env.warnings().size()) {
+                throw LumenScriptException.raw(LumenDiagnostic.formatGroup(diagnostics));
             }
             StringBuilder sb = new StringBuilder();
             sb.append(errors.size()).append(" error(s) found:\n");
             for (LumenScriptException e : errors) {
                 sb.append('\n').append(e.getMessage());
             }
-            throw new LumenScriptException(errors.get(0).line(), null, sb.toString());
+            throw LumenScriptException.raw(sb.toString());
+        }
+        for (LumenDiagnostic warning : env.warnings()) {
+            LumenLogger.warning("[Script " + ctx.scriptName() + "] " + warning.format());
         }
     }
 
@@ -154,10 +161,10 @@ public final class CodeEmitter {
      */
     private static void emitChildren(
             @NotNull Node parent,
-            @Nullable BlockContext parentBlock,
+            @Nullable BlockContextImpl parentBlock,
             @NotNull PatternRegistry reg,
-            @NotNull TypeEnv env,
-            @NotNull CodegenContext ctx,
+            @NotNull TypeEnvImpl env,
+            @NotNull CodegenContextImpl ctx,
             @NotNull JavaBuilder out,
             @NotNull List<LumenScriptException> errors) {
         List<Node> children = parent.children();
@@ -170,10 +177,10 @@ public final class CodeEmitter {
 
     private static void emitChildrenSequential(
             @NotNull List<Node> children,
-            @Nullable BlockContext parentBlock,
+            @Nullable BlockContextImpl parentBlock,
             @NotNull PatternRegistry reg,
-            @NotNull TypeEnv env,
-            @NotNull CodegenContext ctx,
+            @NotNull TypeEnvImpl env,
+            @NotNull CodegenContextImpl ctx,
             @NotNull JavaBuilder out,
             @NotNull List<LumenScriptException> errors) {
         for (int i = 0; i < children.size(); i++) {
@@ -206,8 +213,8 @@ public final class CodeEmitter {
     private static void emitChildrenParallel(
             @NotNull List<Node> children,
             @NotNull PatternRegistry reg,
-            @NotNull TypeEnv env,
-            @NotNull CodegenContext ctx,
+            @NotNull TypeEnvImpl env,
+            @NotNull CodegenContextImpl ctx,
             @NotNull JavaBuilder out,
             @NotNull List<LumenScriptException> errors) {
         List<Integer> importantIndices = new ArrayList<>();
@@ -255,7 +262,7 @@ public final class CodeEmitter {
         for (int idx : independentIndices) {
             final int blockIndex = idx;
             futures.add(pool.submit(() -> {
-                TypeEnv forkedEnv = env.fork();
+                TypeEnvImpl forkedEnv = env.fork();
                 JavaBuilder blockOut = new JavaBuilder();
                 List<LumenScriptException> blockErrors = new ArrayList<>();
                 try {
@@ -295,15 +302,15 @@ public final class CodeEmitter {
      */
     private static void emit(
             @NotNull Node node,
-            @Nullable BlockContext parentBlock,
+            @Nullable BlockContextImpl parentBlock,
             @NotNull List<Node> siblings,
             int index,
             @NotNull PatternRegistry reg,
-            @NotNull TypeEnv env,
-            @NotNull CodegenContext ctx,
+            @NotNull TypeEnvImpl env,
+            @NotNull CodegenContextImpl ctx,
             @NotNull JavaBuilder out,
             @NotNull List<LumenScriptException> errors) {
-        BlockContext blockCtx = new BlockContext(node, parentBlock, siblings, index);
+        BlockContextImpl blockCtx = new BlockContextImpl(node, parentBlock, siblings, index);
         env.enterBlock(blockCtx);
 
         try {
@@ -331,8 +338,8 @@ public final class CodeEmitter {
      */
     private static void emitRawBlock(
             @NotNull RawBlockNode rb,
-            @NotNull TypeEnv env,
-            @NotNull CodegenContext ctx,
+            @NotNull TypeEnvImpl env,
+            @NotNull CodegenContextImpl ctx,
             @NotNull JavaBuilder out) {
         if (!ctx.rawJavaEnabled()) {
             throw new LumenScriptException(
@@ -360,10 +367,10 @@ public final class CodeEmitter {
      */
     private static void emitBlock(
             @NotNull BlockNode b,
-            @NotNull BlockContext blockCtx,
+            @NotNull BlockContextImpl blockCtx,
             @NotNull PatternRegistry reg,
-            @NotNull TypeEnv env,
-            @NotNull CodegenContext ctx,
+            @NotNull TypeEnvImpl env,
+            @NotNull CodegenContextImpl ctx,
             @NotNull JavaBuilder out,
             @NotNull List<LumenScriptException> errors) {
         EmitRegistry emitReg = EmitRegistry.instance();
@@ -433,10 +440,10 @@ public final class CodeEmitter {
      */
     private static void emitStatement(
             @NotNull StatementNode st,
-            @NotNull BlockContext blockCtx,
+            @NotNull BlockContextImpl blockCtx,
             @NotNull PatternRegistry reg,
-            @NotNull TypeEnv env,
-            @NotNull CodegenContext ctx,
+            @NotNull TypeEnvImpl env,
+            @NotNull CodegenContextImpl ctx,
             @NotNull JavaBuilder out) {
         EmitRegistry emitReg = EmitRegistry.instance();
         List<Token> tokens = st.head();

@@ -3,8 +3,8 @@ package dev.lumenlang.lumen.plugin.defaults.expression;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
-import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.codegen.HandlerContext;
+import dev.lumenlang.lumen.api.codegen.TypeEnv;
 import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
 import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.emit.ScriptToken;
@@ -15,7 +15,7 @@ import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.api.util.FuzzyMatch;
 import dev.lumenlang.lumen.pipeline.codegen.HandlerContextImpl;
-import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
+import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.data.DataSchema;
 import dev.lumenlang.lumen.pipeline.java.compiled.DataInstance;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
@@ -71,7 +71,7 @@ public final class DataExpressions {
         List<String> objTokens = ctx.tokens("obj");
         if (objTokens.size() != 1) return null;
 
-        EnvironmentAccess.VarHandle varHandle = ctx.env().lookupVar(objTokens.get(0));
+        TypeEnv.VarHandle varHandle = ctx.env().lookupVar(objTokens.get(0));
         if (varHandle == null || !varHandle.hasMeta("data_type")) return null;
 
         String dataType = String.valueOf(varHandle.meta("data_type"));
@@ -88,8 +88,8 @@ public final class DataExpressions {
      * Resolves a single token to a Java expression using the environment.
      * Checks for variable references first, then string literals, booleans, and numeric literals.
      */
-    private static @NotNull String resolveToken(@NotNull String token, @NotNull EnvironmentAccess env) {
-        EnvironmentAccess.VarHandle ref = env.lookupVar(token);
+    private static @NotNull String resolveToken(@NotNull String token, @NotNull TypeEnv env) {
+        TypeEnv.VarHandle ref = env.lookupVar(token);
         if (ref != null) return ref.java();
 
         if (token.startsWith("\"") && token.endsWith("\"")) {
@@ -154,7 +154,7 @@ public final class DataExpressions {
 
         ScriptToken typeToken = bodyTokens.get(0);
         String typeName = typeToken.text().toLowerCase();
-        TypeEnv env = (TypeEnv) ctx.env();
+        TypeEnvImpl env = (TypeEnvImpl) ctx.env();
         DataSchema schema = env.get("data_schema_" + typeName);
         if (schema == null) {
             LumenDiagnostic.Builder diag = LumenDiagnostic.error("Unknown data type '" + typeToken.text() + "'")
@@ -198,7 +198,7 @@ public final class DataExpressions {
     }
 
     private static @NotNull ExpressionResult buildWithFields(@NotNull HandlerContext ctx, @NotNull DataSchema schema, @NotNull String typeName, @NotNull List<? extends ScriptToken> tokens, int line, @NotNull String raw) {
-        TypeEnv env = (TypeEnv) ctx.env();
+        TypeEnvImpl env = (TypeEnvImpl) ctx.env();
         HandlerContextImpl hctxImpl = (HandlerContextImpl) ctx;
         StringJoiner entries = new StringJoiner(", ");
         List<FieldIssue> issues = new ArrayList<>();
@@ -332,7 +332,7 @@ public final class DataExpressions {
         return j;
     }
 
-    private static @NotNull ValueResolution resolveSmallestValue(@NotNull HandlerContextImpl ctx, @NotNull List<? extends ScriptToken> tokens, int start, int maxEnd, @NotNull TypeEnv env) {
+    private static @NotNull ValueResolution resolveSmallestValue(@NotNull HandlerContextImpl ctx, @NotNull List<? extends ScriptToken> tokens, int start, int maxEnd, @NotNull TypeEnvImpl env) {
         for (int end = start + 1; end <= maxEnd; end++) {
             ResolvedValue rv = resolveValueExpression(ctx, tokens.subList(start, end), env);
             if (rv != null) return new ValueResolution(rv, end);
@@ -340,7 +340,7 @@ public final class DataExpressions {
         return new ValueResolution(null, maxEnd);
     }
 
-    private static @Nullable ResolvedValue resolveValueExpression(@NotNull HandlerContextImpl ctx, @NotNull List<? extends ScriptToken> valueTokens, @NotNull TypeEnv env) {
+    private static @Nullable ResolvedValue resolveValueExpression(@NotNull HandlerContextImpl ctx, @NotNull List<? extends ScriptToken> valueTokens, @NotNull TypeEnvImpl env) {
         List<Token> pipelineTokens = HandlerContextImpl.toPipelineTokens(valueTokens);
         if (pipelineTokens.size() == 1) {
             ResolvedValue lit = resolveSingleTokenLiteral(pipelineTokens.get(0), env);
@@ -362,7 +362,7 @@ public final class DataExpressions {
         return null;
     }
 
-    private static @Nullable ResolvedValue resolveSingleTokenLiteral(@NotNull Token token, @NotNull TypeEnv env) {
+    private static @Nullable ResolvedValue resolveSingleTokenLiteral(@NotNull Token token, @NotNull TypeEnvImpl env) {
         if (token.kind() == TokenKind.STRING) {
             return new ResolvedValue("\"" + escapeJavaString(token.text()) + "\"", PrimitiveType.STRING);
         }

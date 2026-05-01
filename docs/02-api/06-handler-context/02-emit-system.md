@@ -48,20 +48,6 @@ The `handle` method receives:
 A `BlockEnterHook` runs after every pattern matched block's `begin()` method and before its children are processed. This
 lets you inject code at the start of any block.
 
-```java
-api.emitters().
-
-blockEnterHook(emitCtx ->{
-        emitCtx.
-
-out().
-
-line(
-        "// Block started at line "+emitCtx.line()
-    );
-            });
-```
-
 Block enter hooks are called for all pattern matched blocks, not just specific ones. To filter, check `raw()` or other
 context from `EmitContext`.
 

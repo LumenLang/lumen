@@ -3,7 +3,7 @@ package dev.lumenlang.lumen.plugin.defaults.block;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
-import dev.lumenlang.lumen.api.codegen.BlockAccess;
+import dev.lumenlang.lumen.api.codegen.BlockContext;
 import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import dev.lumenlang.lumen.api.codegen.NarrowingFact;
 import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
@@ -213,7 +213,7 @@ public final class ControlBlocks {
     }
 
     private static void validateElseBranch(@NotNull HandlerContext ctx, @NotNull String keyword) {
-        BlockAccess block = ctx.block();
+        BlockContext block = ctx.block();
         if (block.isRoot()) {
             throw new DiagnosticException(LumenDiagnostic.error("'" + keyword + "' without matching 'if'")
                     .at(block.line(), block.raw())
@@ -225,7 +225,7 @@ public final class ControlBlocks {
             LumenDiagnostic.Builder diag = LumenDiagnostic.error("'" + keyword + "' without matching 'if'")
                     .at(block.line(), block.raw())
                     .label("no preceding 'if' or 'else if' block at the same indentation level");
-            BlockAccess.SiblingInfo nearestIf = block.findSiblingBlock("if");
+            BlockContext.SiblingInfo nearestIf = block.findSiblingBlock("if");
             if (nearestIf != null) {
                 diag.note("found 'if' at line " + nearestIf.line() + ", but it is not the direct predecessor");
             }

@@ -3,8 +3,8 @@ package dev.lumenlang.lumen.plugin.defaults.statement;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
-import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
 import dev.lumenlang.lumen.api.codegen.HandlerContext;
+import dev.lumenlang.lumen.api.codegen.TypeEnv;
 import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
 import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.pattern.Categories;
@@ -28,14 +28,14 @@ public final class MapStatements {
 
     private static @Nullable String mapVarName(@NotNull HandlerContext ctx) {
         Object val = ctx.value("map");
-        if (val instanceof EnvironmentAccess.VarHandle ref) {
+        if (val instanceof TypeEnv.VarHandle ref) {
             return ref.java();
         }
         return null;
     }
 
     private static void flushIfStored(@NotNull HandlerContext ctx, @NotNull String mapJava, @Nullable String varName) {
-        EnvironmentAccess env = ctx.env();
+        TypeEnv env = ctx.env();
         if (varName != null && env.isStored(varName)) {
             ctx.out().line(env.storedClassName(varName) + ".set(" + env.getStoredKey(varName) + ", "
                     + mapJava + ");");
@@ -43,7 +43,7 @@ public final class MapStatements {
     }
 
     private static void emitScopedMutation(@NotNull HandlerContext ctx, @NotNull String mapVarName, @NotNull String scopeVarName, @NotNull Function<String, String> mutation) {
-        EnvironmentAccess.GlobalInfo info = ctx.env().getGlobalInfo(mapVarName);
+        TypeEnv.GlobalInfo info = ctx.env().getGlobalInfo(mapVarName);
         if (info == null) {
             throw new DiagnosticException(LumenDiagnostic.error("'" + mapVarName + "' is not a global variable")
                     .at(ctx.block().line(), ctx.block().raw())
@@ -68,9 +68,9 @@ public final class MapStatements {
         ctx.out().line(storageClass + ".set(" + scopeKey + ", " + tmp + ");");
     }
 
-    private static @NotNull String buildScopedKey(@NotNull HandlerContext ctx, @NotNull String varName, @NotNull String scopeVarName, @NotNull EnvironmentAccess.GlobalInfo info) {
-        EnvironmentAccess env = ctx.env();
-        EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
+    private static @NotNull String buildScopedKey(@NotNull HandlerContext ctx, @NotNull String varName, @NotNull String scopeVarName, @NotNull TypeEnv.GlobalInfo info) {
+        TypeEnv env = ctx.env();
+        TypeEnv.VarHandle scopeRef = env.lookupVar(scopeVarName);
         if (scopeRef == null) {
             throw new DiagnosticException(LumenDiagnostic.error("Scope variable '" + scopeVarName + "' not found")
                     .at(ctx.block().line(), ctx.block().raw())
@@ -84,7 +84,7 @@ public final class MapStatements {
     }
 
     private static void validateMapEntry(@NotNull HandlerContext ctx) {
-        EnvironmentAccess.VarHandle mapRef = ctx.varHandle("map");
+        TypeEnv.VarHandle mapRef = ctx.varHandle("map");
         if (mapRef == null) return;
         CollectionType ct = TypeUtils.asCollection(mapRef.type());
         if (ct == null || ct.typeArguments().size() < 2) return;
@@ -109,7 +109,7 @@ public final class MapStatements {
     }
 
     private static void validateMapKey(@NotNull HandlerContext ctx) {
-        EnvironmentAccess.VarHandle mapRef = ctx.varHandle("map");
+        TypeEnv.VarHandle mapRef = ctx.varHandle("map");
         if (mapRef == null) return;
         CollectionType ct = TypeUtils.asCollection(mapRef.type());
         if (ct == null || ct.typeArguments().isEmpty()) return;

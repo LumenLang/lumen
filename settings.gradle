@@ -4,4 +4,4 @@ plugins {
 
 rootProject.name = 'lumen'
 
-include 'api', 'pipeline', 'plugin', 'debug'
+include 'api', 'pipeline', 'plugin', 'debug', 'console-utils'

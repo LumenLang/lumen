@@ -3,7 +3,7 @@ package dev.lumenlang.lumen.plugin.defaults.condition;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
-import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
+import dev.lumenlang.lumen.api.codegen.TypeEnv;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.ObjectType;
@@ -56,16 +56,16 @@ public final class MapConditions {
                 .category(Categories.MAP)
                 .handler(ctx -> {
                     Object mapVal = ctx.value("map");
-                    if (mapVal instanceof EnvironmentAccess.VarHandle) {
+                    if (mapVal instanceof TypeEnv.VarHandle) {
                         throw new RuntimeException("Cannot use 'for <scope>' with a local map variable. Use '<map> is empty' instead, or declare the map inside a 'global:' block with 'scoped to <type>'.");
                     }
                     String mapVarName = (String) mapVal;
-                    EnvironmentAccess.GlobalInfo info = ctx.env().getGlobalInfo(mapVarName);
+                    TypeEnv.GlobalInfo info = ctx.env().getGlobalInfo(mapVarName);
                     if (info == null) throw new RuntimeException("'" + mapVarName + "' is not a global variable.");
                     if (!info.scoped())
                         throw new RuntimeException("'" + mapVarName + "' is not a scoped global. Declare it inside a 'global:' block with 'scoped to <type> " + mapVarName + ": map of <key> to <value>' for per-entity access.");
                     String scopeVarName = ctx.java("scope");
-                    EnvironmentAccess.VarHandle scopeRef = ctx.env().lookupVar(scopeVarName);
+                    TypeEnv.VarHandle scopeRef = ctx.env().lookupVar(scopeVarName);
                     if (scopeRef == null) throw new RuntimeException("Scope variable not found: " + scopeVarName);
                     LumenType scopeType = scopeRef.type();
                     ctx.codegen().addImport(Map.class.getName());

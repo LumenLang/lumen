@@ -17,7 +17,7 @@ import java.util.Map;
  * @see HandlerContext
  */
 @SuppressWarnings("unused")
-public interface EnvironmentAccess {
+public interface TypeEnv {
 
     /**
      * Looks up a named variable by walking the scope stack from innermost
@@ -256,7 +256,7 @@ public interface EnvironmentAccess {
      *
      * @return the block access for the current scope
      */
-    @Nullable BlockAccess block();
+    @Nullable BlockContext block();
 
     /**
      * Marks a variable as definitively non-null at this point in the code.

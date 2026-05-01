@@ -11,7 +11,7 @@ import dev.lumenlang.lumen.api.pattern.builder.ConditionBuilder;
 import dev.lumenlang.lumen.api.pattern.builder.ExpressionBuilder;
 import dev.lumenlang.lumen.api.pattern.builder.LoopBuilder;
 import dev.lumenlang.lumen.api.pattern.builder.StatementBuilder;
-import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
+import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.conditions.registry.ConditionRegistry;
 import dev.lumenlang.lumen.pipeline.inject.InjectableHandlers;
 import dev.lumenlang.lumen.pipeline.inject.PatternHinted;
@@ -429,7 +429,7 @@ public final class PatternRegistry {
      * @param env    the current type environment
      * @return a match on success, or null
      */
-    public @Nullable RegisteredLoopMatch matchLoop(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
+    public @Nullable RegisteredLoopMatch matchLoop(@NotNull List<Token> tokens, @NotNull TypeEnvImpl env) {
         return loopRegistry.match(tokens, env);
     }
 
@@ -440,7 +440,7 @@ public final class PatternRegistry {
      * @param env    the type environment for variable lookups
      * @return a RegisteredLoopMatch if successful, null otherwise
      */
-    public @Nullable RegisteredLoopMatch matchLoopSlow(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
+    public @Nullable RegisteredLoopMatch matchLoopSlow(@NotNull List<Token> tokens, @NotNull TypeEnvImpl env) {
         return loopRegistry.matchSlow(tokens, env);
     }
 
@@ -499,7 +499,7 @@ public final class PatternRegistry {
      * @param env    the type environment for variable lookups
      * @return a RegisteredBlockMatch if successful, null otherwise
      */
-    public RegisteredBlockMatch matchBlock(List<Token> tokens, TypeEnv env) {
+    public RegisteredBlockMatch matchBlock(List<Token> tokens, TypeEnvImpl env) {
         for (RegisteredBlock rb : blocks) {
             Match m = PatternMatcher.match(tokens, rb.pattern(), types, env);
             if (m != null)
@@ -515,7 +515,7 @@ public final class PatternRegistry {
      * @param env    the type environment for variable lookups
      * @return a RegisteredPatternMatch if successful, null otherwise
      */
-    public RegisteredPatternMatch matchStatement(List<Token> tokens, TypeEnv env) {
+    public RegisteredPatternMatch matchStatement(List<Token> tokens, TypeEnvImpl env) {
         for (RegisteredPattern rp : ensureStatementIndex().candidates(tokens)) {
             Match m = PatternMatcher.match(tokens, rp.pattern(), types, env);
             if (m != null) return new RegisteredPatternMatch(rp, m);
@@ -530,7 +530,7 @@ public final class PatternRegistry {
      * @param env    the type environment for variable lookups
      * @return a RegisteredPatternMatch if successful, null otherwise
      */
-    public @Nullable RegisteredPatternMatch matchStatementSlow(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
+    public @Nullable RegisteredPatternMatch matchStatementSlow(@NotNull List<Token> tokens, @NotNull TypeEnvImpl env) {
         InlineExprValidator validator = (toks, e) -> matchExpressionFast(toks, e) != null;
         for (RegisteredPattern rp : ensureStatementIndex().candidates(tokens)) {
             Match m = PatternMatcher.match(tokens, rp.pattern(), types, env, validator);
@@ -559,7 +559,7 @@ public final class PatternRegistry {
      * @param env    the type environment for variable lookups
      * @return a RegisteredExpressionMatch if successful, null otherwise
      */
-    public @Nullable RegisteredExpressionMatch matchExpression(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
+    public @Nullable RegisteredExpressionMatch matchExpression(@NotNull List<Token> tokens, @NotNull TypeEnvImpl env) {
         for (RegisteredExpression re : ensureExpressionIndex().candidates(tokens)) {
             Match m = PatternMatcher.match(tokens, re.pattern(), types, env);
             if (m != null) return new RegisteredExpressionMatch(re, m);
@@ -574,7 +574,7 @@ public final class PatternRegistry {
      * @param env    the type environment for variable lookups
      * @return a RegisteredExpressionMatch if successful, null otherwise
      */
-    public @Nullable RegisteredExpressionMatch matchExpressionSlow(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
+    public @Nullable RegisteredExpressionMatch matchExpressionSlow(@NotNull List<Token> tokens, @NotNull TypeEnvImpl env) {
         InlineExprValidator validator = (toks, e) -> matchExpressionFast(toks, e) != null;
         for (RegisteredExpression re : ensureExpressionIndex().candidates(tokens)) {
             Match m = PatternMatcher.match(tokens, re.pattern(), types, env, validator);
@@ -604,7 +604,7 @@ public final class PatternRegistry {
      * @param env    the type environment for variable lookups
      * @return a RegisteredExpressionMatch if successful, null otherwise
      */
-    private @Nullable RegisteredExpressionMatch matchExpressionFast(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
+    private @Nullable RegisteredExpressionMatch matchExpressionFast(@NotNull List<Token> tokens, @NotNull TypeEnvImpl env) {
         for (RegisteredExpression re : ensureExpressionIndex().candidates(tokens)) {
             Match m = PatternMatcher.match(tokens, re.pattern(), types, env);
             if (m != null) return new RegisteredExpressionMatch(re, m);

@@ -2,8 +2,8 @@ package dev.lumenlang.lumen.plugin.defaults.type;
 
 import dev.lumenlang.lumen.api.exceptions.ParseFailureException;
 import dev.lumenlang.lumen.api.type.TypeBindingMeta;
-import dev.lumenlang.lumen.pipeline.codegen.CodegenContext;
-import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
+import dev.lumenlang.lumen.pipeline.codegen.CodegenContextImpl;
+import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.language.TypeBinding;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.language.tokenization.TokenKind;
@@ -76,7 +76,7 @@ public final class BuiltinTypeBindings {
             }
 
             @Override
-            public Object parse(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
+            public Object parse(@NotNull List<Token> tokens, @NotNull TypeEnvImpl env) {
                 if (tokens.isEmpty()) {
                     throw new ParseFailureException("expected an expression here");
                 }
@@ -84,12 +84,12 @@ public final class BuiltinTypeBindings {
             }
 
             @Override
-            public int consumeCount(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
+            public int consumeCount(@NotNull List<Token> tokens, @NotNull TypeEnvImpl env) {
                 return -1;
             }
 
             @Override
-            public @NotNull String toJava(Object value, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
+            public @NotNull String toJava(Object value, @NotNull CodegenContextImpl ctx, @NotNull TypeEnvImpl env) {
                 TokenList tl = (TokenList) value;
                 return tl.tokens().stream()
                         .map(t -> t.kind() == TokenKind.STRING
@@ -108,14 +108,14 @@ public final class BuiltinTypeBindings {
             }
 
             @Override
-            public int consumeCount(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
+            public int consumeCount(@NotNull List<Token> tokens, @NotNull TypeEnvImpl env) {
                 if (tokens.isEmpty())
                     throw new ParseFailureException("expected a string value here");
                 return 1;
             }
 
             @Override
-            public Object parse(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
+            public Object parse(@NotNull List<Token> tokens, @NotNull TypeEnvImpl env) {
                 if (tokens.size() == 1) {
                     Token t = tokens.get(0);
                     if (t.kind() != TokenKind.STRING) {
@@ -128,7 +128,7 @@ public final class BuiltinTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object value, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
+            public @NotNull String toJava(Object value, @NotNull CodegenContextImpl ctx, @NotNull TypeEnvImpl env) {
                 if (value instanceof VarRef ref) {
                     return "String.valueOf(" + ref.java() + ")";
                 }
@@ -147,7 +147,7 @@ public final class BuiltinTypeBindings {
             }
 
             @Override
-            public int consumeCount(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
+            public int consumeCount(@NotNull List<Token> tokens, @NotNull TypeEnvImpl env) {
                 if (tokens.isEmpty())
                     throw new ParseFailureException("expected a quoted string value here");
                 Token first = tokens.get(0);
@@ -158,7 +158,7 @@ public final class BuiltinTypeBindings {
             }
 
             @Override
-            public Object parse(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
+            public Object parse(@NotNull List<Token> tokens, @NotNull TypeEnvImpl env) {
                 if (tokens.size() == 1) {
                     Token t = tokens.get(0);
                     if (t.kind() != TokenKind.STRING) {
@@ -171,7 +171,7 @@ public final class BuiltinTypeBindings {
             }
 
             @Override
-            public @NotNull String toJava(Object value, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
+            public @NotNull String toJava(Object value, @NotNull CodegenContextImpl ctx, @NotNull TypeEnvImpl env) {
                 if (value instanceof VarRef ref) {
                     return "String.valueOf(" + ref.java() + ")";
                 }
@@ -198,19 +198,19 @@ public final class BuiltinTypeBindings {
             }
 
             @Override
-            public int consumeCount(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
+            public int consumeCount(@NotNull List<Token> tokens, @NotNull TypeEnvImpl env) {
                 if (tokens.isEmpty()) throw new ParseFailureException("expected an identifier");
                 if (tokens.get(0).kind() != TokenKind.IDENT) throw new ParseFailureException("expected an identifier");
                 return 1;
             }
 
             @Override
-            public Object parse(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
+            public Object parse(@NotNull List<Token> tokens, @NotNull TypeEnvImpl env) {
                 return tokens.get(0).text();
             }
 
             @Override
-            public @NotNull String toJava(Object value, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
+            public @NotNull String toJava(Object value, @NotNull CodegenContextImpl ctx, @NotNull TypeEnvImpl env) {
                 return (String) value;
             }
         });

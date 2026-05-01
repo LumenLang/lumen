@@ -3,8 +3,8 @@ package dev.lumenlang.lumen.plugin.defaults.condition;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
-import dev.lumenlang.lumen.api.codegen.CodegenAccess;
-import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
+import dev.lumenlang.lumen.api.codegen.CodegenContext;
+import dev.lumenlang.lumen.api.codegen.TypeEnv;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.ObjectType;
@@ -31,11 +31,11 @@ public final class ScopedVariableConditions {
      * @param scopeVarName the scope variable name (e.g. "target")
      * @return a Java expression that reads the scoped value
      */
-    private static @NotNull String buildScopedRead(@NotNull EnvironmentAccess env,
-                                                   @NotNull CodegenAccess ctx,
+    private static @NotNull String buildScopedRead(@NotNull TypeEnv env,
+                                                   @NotNull CodegenContext ctx,
                                                    @NotNull String varName,
                                                    @NotNull String scopeVarName) {
-        EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(varName);
+        TypeEnv.GlobalInfo info = env.getGlobalInfo(varName);
         if (info == null) {
             throw new RuntimeException("Variable '" + varName
                     + "' is not a global variable. Scoped reads (for ...) are only supported on global vars.");
@@ -44,7 +44,7 @@ public final class ScopedVariableConditions {
             throw new RuntimeException("Variable '" + varName
                     + "' is not a scoped global. Declare it inside a 'global:' block with 'scoped to <type> " + varName + ": <type>' for per-entity access.");
         }
-        EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
+        TypeEnv.VarHandle scopeRef = env.lookupVar(scopeVarName);
         if (scopeRef == null) {
             throw new RuntimeException("Scope variable not found: " + scopeVarName);
         }

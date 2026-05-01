@@ -16,7 +16,7 @@ import dev.lumenlang.lumen.api.type.NullableType;
 import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.api.util.FuzzyMatch;
 import dev.lumenlang.lumen.pipeline.codegen.HandlerContextImpl;
-import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
+import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.language.pattern.registered.RegisteredExpressionMatch;
 import dev.lumenlang.lumen.pipeline.language.simulator.PatternSimulator;
@@ -73,7 +73,7 @@ public final class GlobalBlock implements BlockFormHandler {
 
     @Override
     public void handle(@NotNull List<? extends ScriptToken> headTokens, @NotNull List<? extends ScriptLine> children, @NotNull HandlerContext ctx) {
-        TypeEnv env = (TypeEnv) ctx.env();
+        TypeEnvImpl env = (TypeEnvImpl) ctx.env();
 
         if (env.has(GLOBAL_BLOCK_KEY)) {
             throw new DiagnosticException(LumenDiagnostic.error("Duplicate global block")
@@ -91,7 +91,7 @@ public final class GlobalBlock implements BlockFormHandler {
         }
     }
 
-    private void parseGlobalLine(@NotNull List<Token> tokens, int line, @NotNull String raw, @NotNull TypeEnv env, @NotNull HandlerContext ctx) {
+    private void parseGlobalLine(@NotNull List<Token> tokens, int line, @NotNull String raw, @NotNull TypeEnvImpl env, @NotNull HandlerContext ctx) {
         int idx = 0;
 
         boolean stored = false;
@@ -245,7 +245,7 @@ public final class GlobalBlock implements BlockFormHandler {
             }
         }
 
-        TypeEnv.GlobalVarInfo info = new TypeEnv.GlobalVarInfo(defaultJava, className, scoped, stored, scopeType);
+        TypeEnvImpl.GlobalVarInfo info = new TypeEnvImpl.GlobalVarInfo(defaultJava, className, scoped, stored, scopeType);
         String javaExpr = scoped ? null : name;
         VarRef handle = new VarRef(name, declaredType, javaExpr, exprMetadata != null ? exprMetadata : Map.of(), info);
         env.registerGlobal(handle);
@@ -290,7 +290,7 @@ public final class GlobalBlock implements BlockFormHandler {
         }
     }
 
-    private @NotNull String resolveDefault(@NotNull LumenType declaredType, @Nullable List<Token> exprTokens, @NotNull String name, int line, @NotNull String raw, boolean stored, @NotNull TypeEnv env, @NotNull HandlerContext ctx) {
+    private @NotNull String resolveDefault(@NotNull LumenType declaredType, @Nullable List<Token> exprTokens, @NotNull String name, int line, @NotNull String raw, boolean stored, @NotNull TypeEnvImpl env, @NotNull HandlerContext ctx) {
         if (exprTokens != null) {
             validateDefaultType(declaredType, exprTokens, name, line, raw, env, ctx);
             return resolveExprJava(exprTokens, line, raw, env, ctx);
@@ -315,7 +315,7 @@ public final class GlobalBlock implements BlockFormHandler {
                 .build());
     }
 
-    private void validateDefaultType(@NotNull LumenType declaredType, @NotNull List<Token> exprTokens, @NotNull String name, int line, @NotNull String raw, @NotNull TypeEnv env, @NotNull HandlerContext ctx) {
+    private void validateDefaultType(@NotNull LumenType declaredType, @NotNull List<Token> exprTokens, @NotNull String name, int line, @NotNull String raw, @NotNull TypeEnvImpl env, @NotNull HandlerContext ctx) {
         Expr expr = ExprParser.parse(exprTokens, env);
         LumenType exprType;
         if (expr instanceof Expr.RawExpr) {
@@ -336,7 +336,7 @@ public final class GlobalBlock implements BlockFormHandler {
         }
     }
 
-    private @NotNull String resolveExprJava(@NotNull List<Token> exprTokens, int line, @NotNull String raw, @NotNull TypeEnv env, @NotNull HandlerContext ctx) {
+    private @NotNull String resolveExprJava(@NotNull List<Token> exprTokens, int line, @NotNull String raw, @NotNull TypeEnvImpl env, @NotNull HandlerContext ctx) {
         Expr expr = ExprParser.parse(exprTokens, env);
         if (!(expr instanceof Expr.RawExpr)) return resolveSimpleExprJava(expr, env);
 
@@ -355,7 +355,7 @@ public final class GlobalBlock implements BlockFormHandler {
         throw new DiagnosticException(SuggestionDiagnostics.buildNoSuggestion("Cannot resolve default expression", line, raw, rawTokens));
     }
 
-    private @Nullable Map<String, Object> resolveExprMetadata(@Nullable List<Token> exprTokens, @NotNull TypeEnv env, @NotNull HandlerContext ctx) {
+    private @Nullable Map<String, Object> resolveExprMetadata(@Nullable List<Token> exprTokens, @NotNull TypeEnvImpl env, @NotNull HandlerContext ctx) {
         if (exprTokens == null) return null;
         Expr expr = ExprParser.parse(exprTokens, env);
         if (!(expr instanceof Expr.RawExpr)) return null;
@@ -366,7 +366,7 @@ public final class GlobalBlock implements BlockFormHandler {
         return result.metadata();
     }
 
-    private @NotNull String resolveSimpleExprJava(@NotNull Expr expr, @NotNull TypeEnv env) {
+    private @NotNull String resolveSimpleExprJava(@NotNull Expr expr, @NotNull TypeEnvImpl env) {
         if (expr instanceof Expr.Literal l) {
             if (l.value() == null) return "null";
             return l.value() instanceof String s ? PlaceholderExpander.expand(s, env) : l.value().toString();

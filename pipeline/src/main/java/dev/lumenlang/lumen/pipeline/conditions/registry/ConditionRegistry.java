@@ -2,7 +2,7 @@ package dev.lumenlang.lumen.pipeline.conditions.registry;
 
 import dev.lumenlang.lumen.api.handler.ConditionHandler;
 import dev.lumenlang.lumen.api.pattern.PatternMeta;
-import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
+import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.language.compile.PatternCompiler;
 import dev.lumenlang.lumen.pipeline.language.match.InlineExprValidator;
 import dev.lumenlang.lumen.pipeline.language.match.Match;
@@ -125,7 +125,7 @@ public class ConditionRegistry {
      * @param env    the current type environment
      * @return a {@link RegisteredConditionMatch} on success, or {@code null} if no pattern matched
      */
-    public RegisteredConditionMatch match(List<Token> tokens, TypeEnv env) {
+    public RegisteredConditionMatch match(List<Token> tokens, TypeEnvImpl env) {
         for (RegisteredCondition rc : ensureIndex().candidates(tokens)) {
             Match m = PatternMatcher.match(tokens, rc.pattern(), types, env);
             if (m != null) return new RegisteredConditionMatch(rc, m);
@@ -141,7 +141,7 @@ public class ConditionRegistry {
      * @param env    the current type environment
      * @return a {@link RegisteredConditionMatch} on success, or {@code null} if no pattern matched
      */
-    public @Nullable RegisteredConditionMatch matchSlow(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
+    public @Nullable RegisteredConditionMatch matchSlow(@NotNull List<Token> tokens, @NotNull TypeEnvImpl env) {
         if (validator == null) return null;
         for (RegisteredCondition rc : ensureIndex().candidates(tokens)) {
             Match m = PatternMatcher.match(tokens, rc.pattern(), types, env, validator);

@@ -4,7 +4,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * A compile-time assertion that a condition proves about a variable at its point
- * of evaluation. Conditions push facts via {@link EnvironmentAccess#pushNarrowing}
+ * of evaluation. Conditions push facts via {@link TypeEnv#pushNarrowing}
  * and block handlers consume them to narrow variable state in the enclosed body.
  */
 public record NarrowingFact(@NotNull Kind kind, @NotNull String javaName) {

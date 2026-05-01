@@ -1,7 +1,7 @@
 package dev.lumenlang.lumen.pipeline.conditions;
 
-import dev.lumenlang.lumen.pipeline.codegen.CodegenContext;
-import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
+import dev.lumenlang.lumen.pipeline.codegen.CodegenContextImpl;
+import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.conditions.parser.ConditionParser;
 
 import java.util.List;
@@ -33,7 +33,7 @@ public final class ConditionAnd implements ConditionExpr {
     }
 
     @Override
-    public String toJava(TypeEnv env, CodegenContext ctx) {
+    public String toJava(TypeEnvImpl env, CodegenContextImpl ctx) {
         return parts.stream()
                 .map(p -> "(" + p.toJava(env, ctx) + ")")
                 .reduce((a, b) -> a + " && " + b)

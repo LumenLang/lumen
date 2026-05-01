@@ -1,6 +1,6 @@
 package dev.lumenlang.lumen.pipeline.codegen;
 
-import dev.lumenlang.lumen.api.codegen.CodegenAccess;
+import dev.lumenlang.lumen.api.codegen.CodegenContext;
 import dev.lumenlang.lumen.pipeline.java.compiled.ClassBuilder;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Holds per-script class-level metadata that is shared across all handlers during code generation.
  *
- * <p>A single {@code CodegenContext} is created for each script file being compiled. It tracks:
+ * <p>A single {@code CodegenContextImpl} is created for each script file being compiled. It tracks:
  * <ul>
  *   <li>The generated Java class name, derived from the script file name.</li>
  *   <li>The set of fully-qualified type imports that handlers have requested via
@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * @see ClassBuilder
  */
-public final class CodegenContext implements CodegenAccess {
+public final class CodegenContextImpl implements CodegenContext {
 
     private final String scriptName;
     private final String className;
@@ -39,14 +39,14 @@ public final class CodegenContext implements CodegenAccess {
     private boolean rawJavaEnabled = false;
 
     /**
-     * Creates a new {@code CodegenContext} for the given script file name.
+     * Creates a new {@code CodegenContextImpl} for the given script file name.
      *
      * <p>The class name is normalised from the script name via
      * {@link ClassBuilder#normalize(String)}.
      *
      * @param scriptName the raw script file name (e.g. {@code "hello.luma"})
      */
-    public CodegenContext(@NotNull String scriptName) {
+    public CodegenContextImpl(@NotNull String scriptName) {
         this.scriptName = scriptName;
         this.className = ClassBuilder.normalize(scriptName);
     }

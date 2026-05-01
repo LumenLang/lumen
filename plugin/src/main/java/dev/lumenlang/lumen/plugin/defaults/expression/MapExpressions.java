@@ -3,7 +3,7 @@ package dev.lumenlang.lumen.plugin.defaults.expression;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
-import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
+import dev.lumenlang.lumen.api.codegen.TypeEnv;
 import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
 import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
@@ -14,7 +14,7 @@ import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.pipeline.codegen.HandlerContextImpl;
-import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
+import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.language.simulator.suggestions.SuggestionDiagnostics;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.type.TypeAnnotationParser;
@@ -32,7 +32,7 @@ import java.util.Map;
 @SuppressWarnings("unused")
 public final class MapExpressions {
 
-    private static @NotNull String buildScopedKey(@NotNull EnvironmentAccess.VarHandle scopeRef, @NotNull String varName, @NotNull EnvironmentAccess.GlobalInfo info) {
+    private static @NotNull String buildScopedKey(@NotNull TypeEnv.VarHandle scopeRef, @NotNull String varName, @NotNull TypeEnv.GlobalInfo info) {
         return "\"" + info.className() + "." + varName + ".\" + " + ((ObjectType) scopeRef.type()).keyExpression(scopeRef.java());
     }
 
@@ -65,7 +65,7 @@ public final class MapExpressions {
                 .handler(ctx -> {
                     ctx.codegen().addImport(HashMap.class.getName());
                     HandlerContextImpl hctx = (HandlerContextImpl) ctx;
-                    TypeEnv env = (TypeEnv) ctx.env();
+                    TypeEnvImpl env = (TypeEnvImpl) ctx.env();
                     List<Token> keyTokens = hctx.bound("keyType").tokens();
                     TypeAnnotationParser.ParseResult keyResult = TypeAnnotationParser.parseDetailed(keyTokens, 0, env::lookupDataSchema);
                     if (keyResult instanceof TypeAnnotationParser.ParseResult.Failure f) {
@@ -92,8 +92,8 @@ public final class MapExpressions {
                     String keyJava = ctx.java("key");
                     String scopeVarName = ctx.java("scope");
                     String mapVarName = ctx.tokens("map").get(0);
-                    EnvironmentAccess env = ctx.env();
-                    EnvironmentAccess.GlobalInfo info = env.getGlobalInfo(mapVarName);
+                    TypeEnv env = ctx.env();
+                    TypeEnv.GlobalInfo info = env.getGlobalInfo(mapVarName);
                     if (info == null) {
                         throw new DiagnosticException(LumenDiagnostic.error("'" + mapVarName + "' is not a global variable")
                                 .at(ctx.block().line(), ctx.block().raw())
@@ -108,7 +108,7 @@ public final class MapExpressions {
                                 .help("declare it inside a 'global:' block with 'scoped to <type> " + mapVarName + ": map of <key> to <value>' for per-entity access")
                                 .build());
                     }
-                    EnvironmentAccess.VarHandle scopeRef = env.lookupVar(scopeVarName);
+                    TypeEnv.VarHandle scopeRef = env.lookupVar(scopeVarName);
                     if (scopeRef == null) {
                         throw new DiagnosticException(LumenDiagnostic.error("Scope variable '" + scopeVarName + "' not found")
                                 .at(ctx.block().line(), ctx.block().raw())
@@ -137,7 +137,7 @@ public final class MapExpressions {
                     ctx.codegen().addImport(Map.class.getName());
                     Object mapVal = ctx.value("map");
                     LumenType valueType = PrimitiveType.STRING;
-                    if (mapVal instanceof EnvironmentAccess.VarHandle ref && ref.type() instanceof CollectionType ct && ct.typeArguments().size() >= 2) {
+                    if (mapVal instanceof TypeEnv.VarHandle ref && ref.type() instanceof CollectionType ct && ct.typeArguments().size() >= 2) {
                         valueType = ct.typeArguments().get(1);
                     }
                     String castType = (valueType instanceof PrimitiveType pt) ? pt.boxedName() : valueType.javaTypeName();
@@ -201,7 +201,7 @@ public final class MapExpressions {
                     ctx.codegen().addImport(ArrayList.class.getName());
                     Object mapVal = ctx.value("map");
                     LumenType valueType = PrimitiveType.STRING;
-                    if (mapVal instanceof EnvironmentAccess.VarHandle ref && ref.type() instanceof CollectionType ct && ct.typeArguments().size() >= 2) {
+                    if (mapVal instanceof TypeEnv.VarHandle ref && ref.type() instanceof CollectionType ct && ct.typeArguments().size() >= 2) {
                         valueType = ct.typeArguments().get(1);
                     }
                     return new ExpressionResult(

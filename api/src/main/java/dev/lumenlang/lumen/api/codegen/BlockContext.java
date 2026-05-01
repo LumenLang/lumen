@@ -3,6 +3,8 @@ package dev.lumenlang.lumen.api.codegen;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * Provides contextual information about the current block's position in the AST.
  *
@@ -12,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
  * @see HandlerContext#block()
  */
 @SuppressWarnings("unused")
-public interface BlockAccess {
+public interface BlockContext {
 
     /**
      * Returns {@code true} if this block has no enclosing parent block (i.e. it is at the
@@ -170,6 +172,23 @@ public interface BlockAccess {
      * @return the matching sibling info, or {@code null}
      */
     @Nullable SiblingInfo findSiblingBlock(@NotNull String literal);
+
+    /**
+     * Returns all sibling nodes that follow this block at the same indentation level, in order.
+     * Each entry is a snapshot of the sibling's source line and raw text.
+     */
+    @NotNull List<SiblingInfo> subsequentSiblings();
+
+    /**
+     * Returns all sibling nodes that precede this block at the same indentation level, in order.
+     */
+    @NotNull List<SiblingInfo> precedingSiblings();
+
+    /**
+     * Returns every sibling at this indentation level, in order. The current block's own entry
+     * is included.
+     */
+    @NotNull List<SiblingInfo> allSiblings();
 
     /**
      * A snapshot of a sibling block's location and source text.

@@ -3,9 +3,9 @@ package dev.lumenlang.lumen.plugin.defaults.block;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
-import dev.lumenlang.lumen.api.codegen.CodegenAccess;
-import dev.lumenlang.lumen.api.codegen.EnvironmentAccess;
+import dev.lumenlang.lumen.api.codegen.CodegenContext;
 import dev.lumenlang.lumen.api.codegen.HandlerContext;
+import dev.lumenlang.lumen.api.codegen.TypeEnv;
 import dev.lumenlang.lumen.api.event.AdvancedEventDefinition;
 import dev.lumenlang.lumen.api.event.EventDefinition;
 import dev.lumenlang.lumen.api.handler.BlockHandler;
@@ -52,8 +52,8 @@ public final class EventBlocks {
                 .handler(new BlockHandler() {
                     @Override
                     public void begin(@NotNull HandlerContext ctx) {
-                        EnvironmentAccess env = ctx.env();
-                        CodegenAccess jctx = ctx.codegen();
+                        TypeEnv env = ctx.env();
+                        CodegenContext jctx = ctx.codegen();
 
                         if (!ctx.block().isRoot()) {
                             throw new RuntimeException(
@@ -187,8 +187,8 @@ public final class EventBlocks {
                             throw new RuntimeException(
                                     "Command blocks must be top-level (not nested inside other blocks)");
                         }
-                        EnvironmentAccess env = ctx.env();
-                        CodegenAccess jctx = ctx.codegen();
+                        TypeEnv env = ctx.env();
+                        CodegenContext jctx = ctx.codegen();
 
                         String cmd = ctx.java("name");
                         CommandMeta meta = new CommandMeta(cmd);
@@ -276,7 +276,7 @@ public final class EventBlocks {
                                     "Inventory registration blocks must be top-level (not nested inside other blocks)");
                         }
 
-                        EnvironmentAccess env = ctx.env();
+                        TypeEnv env = ctx.env();
 
                         String name = ctx.java("name");
                         String safeName = name.replaceAll("[^a-zA-Z0-9_]", "_")

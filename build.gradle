@@ -35,5 +35,5 @@ subprojects {
 }
 
 tasks.register("publishAll") {
-    dependsOn ':pipeline:publish', ':api:publish', ':plugin:publish', ':debug:publish'
+    dependsOn ':pipeline:publish', ':api:publish', ':plugin:publish', ':debug:publish', ':console-utils:publish'
 }

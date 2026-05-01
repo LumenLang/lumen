@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @see StatementHandler
  */
-public interface CodegenAccess {
+public interface CodegenContext {
 
     /**
      * Returns the normalised Java class name for the script being compiled.

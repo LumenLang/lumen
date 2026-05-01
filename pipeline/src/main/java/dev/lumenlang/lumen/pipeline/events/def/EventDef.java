@@ -1,6 +1,6 @@
 package dev.lumenlang.lumen.pipeline.events.def;
 
-import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
+import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.events.EventDefRegistry;
 import dev.lumenlang.lumen.pipeline.var.VarDef;
 
@@ -16,7 +16,7 @@ import java.util.Map;
  *   <li>The fully-qualified Bukkit {@link #className} of the event class to listen for.</li>
  *   <li>A map of {@link VarDef} entries that are injected as local variables at the top of the
  *       generated handler method and registered into the
- *       {@link TypeEnv} scope.</li>
+ *       {@link TypeEnvImpl} scope.</li>
  * </ul>
  *
  * <h2>Example</h2>

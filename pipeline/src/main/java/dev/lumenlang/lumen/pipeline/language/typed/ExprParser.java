@@ -2,7 +2,7 @@ package dev.lumenlang.lumen.pipeline.language.typed;
 
 import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.PrimitiveType;
-import dev.lumenlang.lumen.pipeline.codegen.TypeEnv;
+import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.language.tokenization.TokenKind;
 import dev.lumenlang.lumen.pipeline.math.MathEngine;
@@ -35,7 +35,7 @@ public final class ExprParser {
      * @return the parsed expression
      * @throws RuntimeException if the token list is empty
      */
-    public static @NotNull Expr parse(@NotNull List<Token> tokens, @NotNull TypeEnv env) {
+    public static @NotNull Expr parse(@NotNull List<Token> tokens, @NotNull TypeEnvImpl env) {
         return parse(tokens, env, 0, "");
     }
 
@@ -49,7 +49,7 @@ public final class ExprParser {
      * @return the parsed expression
      * @throws RuntimeException if the token list is empty
      */
-    public static @NotNull Expr parse(@NotNull List<Token> tokens, @NotNull TypeEnv env, int line, @NotNull String rawLine) {
+    public static @NotNull Expr parse(@NotNull List<Token> tokens, @NotNull TypeEnvImpl env, int line, @NotNull String rawLine) {
         if (tokens.isEmpty())
             throw new RuntimeException("Empty expression");
 
