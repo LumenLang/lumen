@@ -13,7 +13,7 @@ public final class DiagnosticException extends RuntimeException {
     private final @NotNull LumenDiagnostic diagnostic;
 
     public DiagnosticException(@NotNull LumenDiagnostic diagnostic) {
-        super(diagnostic.format());
+        super(diagnostic.title());
         this.diagnostic = diagnostic;
     }
 

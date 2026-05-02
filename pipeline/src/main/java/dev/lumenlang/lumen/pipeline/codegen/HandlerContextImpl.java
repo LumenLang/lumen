@@ -3,6 +3,7 @@ package dev.lumenlang.lumen.pipeline.codegen;
 import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import dev.lumenlang.lumen.api.codegen.JavaOutput;
 import dev.lumenlang.lumen.api.codegen.TypeEnv;
+import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
 import dev.lumenlang.lumen.api.emit.ScriptToken;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.type.LumenType;
@@ -236,21 +237,23 @@ public final class HandlerContextImpl implements HandlerContext {
     public @NotNull String parseCondition(@NotNull String paramName) {
         List<Token> tokens = bound(paramName).tokens();
         ConditionParser cp = new ConditionParser(PatternRegistry.instance().conditionRegistry());
-        ConditionExpr expr = cp.parse(tokens, env);
+        ConditionExpr expr;
         try {
-            return expr.toJava(env, ctx);
+            expr = cp.parse(tokens, env);
         } catch (TokenCarryingException e) {
             List<PatternSimulator.Suggestion> suggestions = PatternSimulator.suggestConditions(tokens, PatternRegistry.instance(), env);
             if (!suggestions.isEmpty()) {
                 throw new TokenCarryingException("Unknown condition: " + ExprResolver.joinTokens(tokens), tokens, suggestions);
             }
             throw new TokenCarryingException(e.getMessage(), tokens);
+        }
+        try {
+            return expr.toJava(env, ctx);
+        } catch (DiagnosticException | TokenCarryingException e) {
+            throw e;
         } catch (RuntimeException e) {
-            List<PatternSimulator.Suggestion> suggestions = PatternSimulator.suggestConditions(tokens, PatternRegistry.instance(), env);
-            if (!suggestions.isEmpty()) {
-                throw new TokenCarryingException("Unknown condition: " + ExprResolver.joinTokens(tokens), tokens, suggestions);
-            }
-            throw new TokenCarryingException(e.getMessage() != null ? e.getMessage() : "Condition failed", tokens);
+            String msg = e.getMessage() != null ? e.getMessage() : "Condition failed";
+            throw new TokenCarryingException(msg, tokens);
         }
     }
 

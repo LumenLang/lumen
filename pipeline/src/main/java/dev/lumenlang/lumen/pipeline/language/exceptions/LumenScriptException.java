@@ -90,7 +90,7 @@ public final class LumenScriptException extends RuntimeException {
      * @param diagnostic the diagnostic exception to wrap
      */
     public LumenScriptException(@NotNull DiagnosticException diagnostic) {
-        super(diagnostic.getMessage(), diagnostic);
+        super(diagnostic.diagnostic().format(), diagnostic);
         this.line = diagnostic.diagnostic().line();
         this.rawLine = null;
     }

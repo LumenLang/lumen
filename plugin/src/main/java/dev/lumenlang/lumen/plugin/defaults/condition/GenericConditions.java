@@ -3,11 +3,15 @@ package dev.lumenlang.lumen.plugin.defaults.condition;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
+import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import dev.lumenlang.lumen.api.codegen.NarrowingFact;
-import dev.lumenlang.lumen.api.codegen.TypeEnv;
+import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
+import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
+import dev.lumenlang.lumen.api.emit.ScriptToken;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -22,11 +26,19 @@ import java.util.concurrent.ThreadLocalRandom;
 @SuppressWarnings({"unused", "DataFlowIssue"})
 public final class GenericConditions {
 
-    private static void validateExprIdentifier(@NotNull String java,
-                                               @NotNull TypeEnv env) {
-        if (java.matches("[a-zA-Z_][a-zA-Z0-9_]*") && env.lookupVar(java) == null) {
-            throw new RuntimeException("Variable '" + java + "' does not exist");
+    private static void validateExprIdentifier(@NotNull HandlerContext ctx, @NotNull String paramName) {
+        String java = ctx.java(paramName);
+        if (!java.matches("[a-zA-Z_][a-zA-Z0-9_]*")) return;
+        if (ctx.env().lookupVar(java) != null) return;
+        List<? extends ScriptToken> tokens = ctx.scriptTokens(paramName);
+        String message = "Variable '" + java + "' does not exist";
+        LumenDiagnostic.Builder b = LumenDiagnostic.error(message).at(ctx.line(), ctx.raw());
+        if (!tokens.isEmpty()) {
+            ScriptToken first = tokens.get(0);
+            ScriptToken last = tokens.get(tokens.size() - 1);
+            b.highlight(first.start(), last.end()).label(message);
         }
+        throw new DiagnosticException(b.build());
     }
 
     @Call
@@ -51,8 +63,8 @@ public final class GenericConditions {
                 .since("1.0.0")
                 .category(Categories.VARIABLE)
                 .handler(ctx -> {
+                    validateExprIdentifier(ctx, "v");
                     String java = ctx.java("v");
-                    validateExprIdentifier(java, ctx.env());
                     boolean negated = ctx.choice(0).equals("is not");
                     ctx.env().pushNarrowing(negated ? NarrowingFact.nullable(java) : NarrowingFact.nonNull(java));
                     return java + (negated ? " == null" : " != null");
@@ -60,18 +72,18 @@ public final class GenericConditions {
 
         api.patterns().condition(b -> b
                 .by("Lumen")
-                .pattern("%val:EXPR% (is|is not) between %min:EXPR% and %max:EXPR%")
+                .pattern("%val:EXPR% (is|is not) between %min:NUMBER% and %max:NUMBER%")
                 .description("Checks if a value is between or outside a minimum and maximum range (inclusive).")
                 .examples("if player's x is between 100 and 200:", "if player's y is not between 60 and 120:")
                 .since("1.0.0")
                 .category(Categories.MATH)
                 .handler(ctx -> {
+                    validateExprIdentifier(ctx, "val");
+                    validateExprIdentifier(ctx, "min");
+                    validateExprIdentifier(ctx, "max");
                     String val = ctx.java("val");
                     String min = ctx.java("min");
                     String max = ctx.java("max");
-                    validateExprIdentifier(val, ctx.env());
-                    validateExprIdentifier(min, ctx.env());
-                    validateExprIdentifier(max, ctx.env());
                     boolean negated = ctx.choice(0).equals("is not");
                     if (negated) return "(" + val + " < " + min + " || " + val + " > " + max + ")";
                     return "(" + val + " >= " + min + " && " + val + " <= " + max + ")";

@@ -1,5 +1,7 @@
 package dev.lumenlang.lumen.pipeline.conditions.parser;
 
+import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
+import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.conditions.ConditionAnd;
 import dev.lumenlang.lumen.pipeline.conditions.ConditionAtom;
@@ -15,9 +17,13 @@ import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.language.tokenization.TokenKind;
 import dev.lumenlang.lumen.pipeline.placeholder.PlaceholderExpander;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 import static dev.lumenlang.lumen.pipeline.language.resolve.ExprResolver.joinTokens;
 
@@ -65,24 +71,46 @@ public final class ConditionParser {
         this.registry = registry;
     }
 
-    private static List<List<Token>> splitOn(List<Token> tokens, String keyword) {
+    private List<List<Token>> splitOn(List<Token> tokens, String keyword) {
         List<List<Token>> segments = new ArrayList<>();
         List<Token> current = new ArrayList<>();
         int braceDepth = 0;
+        int pendingAbsorbed = 0;
+        Map<String, ConditionRegistry.KeywordAbsorption> protectedMap = registry.splitProtectedKeywords();
+        boolean isAndSplit = keyword.equalsIgnoreCase("and");
+        boolean isOrSplit = keyword.equalsIgnoreCase("or");
 
         for (Token token : tokens) {
             if (token.kind() == TokenKind.SYMBOL && token.text().equals("{")) {
                 braceDepth++;
                 current.add(token);
-            } else if (token.kind() == TokenKind.SYMBOL && token.text().equals("}")) {
+                continue;
+            }
+            if (token.kind() == TokenKind.SYMBOL && token.text().equals("}")) {
                 braceDepth = Math.max(0, braceDepth - 1);
                 current.add(token);
-            } else if (braceDepth == 0 && token.text().equalsIgnoreCase(keyword)) {
-                segments.add(current);
-                current = new ArrayList<>();
-            } else {
-                current.add(token);
+                continue;
             }
+            if (braceDepth != 0) {
+                current.add(token);
+                continue;
+            }
+            String lower = token.text().toLowerCase(Locale.ROOT);
+            if (token.text().equalsIgnoreCase(keyword)) {
+                if (pendingAbsorbed > 0) {
+                    pendingAbsorbed--;
+                    current.add(token);
+                } else {
+                    segments.add(current);
+                    current = new ArrayList<>();
+                }
+                continue;
+            }
+            ConditionRegistry.KeywordAbsorption absorption = protectedMap.get(lower);
+            if (absorption != null) {
+                pendingAbsorbed += isAndSplit ? absorption.absorbsAnd() : isOrSplit ? absorption.absorbsOr() : 0;
+            }
+            current.add(token);
         }
         segments.add(current);
         return segments;
@@ -132,6 +160,7 @@ public final class ConditionParser {
             return parseAndChain(orSegments.get(0), env);
         }
 
+        validateNonEmptySegments(tokens, orSegments, "or", env);
         List<ConditionExpr> orParts = new ArrayList<>();
         for (List<Token> segment : orSegments) {
             orParts.add(parseAndChain(segment, env));
@@ -146,11 +175,61 @@ public final class ConditionParser {
             return parseAtom(andSegments.get(0), env);
         }
 
+        validateNonEmptySegments(tokens, andSegments, "and", env);
         List<ConditionExpr> andParts = new ArrayList<>();
         for (List<Token> segment : andSegments) {
             andParts.add(parseAtom(segment, env));
         }
         return new ConditionAnd(andParts);
+    }
+
+    private void validateNonEmptySegments(@NotNull List<Token> tokens, @NotNull List<List<Token>> segments, @NotNull String keyword, @NotNull TypeEnvImpl env) {
+        for (int i = 0; i < segments.size(); i++) {
+            if (!segments.get(i).isEmpty()) continue;
+            Token sepToken = findSeparatorToken(tokens, keyword, i, segments.size());
+            int line = env.blockContext().line();
+            String raw = env.blockContext().raw();
+            String message;
+            String label;
+            if (i == 0) {
+                message = "Missing condition before '" + keyword + "'";
+                label = "expected a condition before this '" + keyword + "'";
+            } else if (i == segments.size() - 1) {
+                message = "Missing condition after '" + keyword + "'";
+                label = "expected a condition after this '" + keyword + "'";
+            } else {
+                message = "Missing condition between two '" + keyword + "' keywords";
+                label = "expected a condition before this '" + keyword + "'";
+            }
+            LumenDiagnostic.Builder builder = LumenDiagnostic.error(message)
+                    .at(line, raw);
+            if (sepToken != null) builder.highlight(sepToken.start(), sepToken.end());
+            builder.label(label);
+            List<PatternSimulator.Suggestion> suggestions = PatternSimulator.suggestConditions(tokens, PatternRegistry.instance(), env);
+            if (!suggestions.isEmpty()) {
+                String top = suggestions.get(0).pattern().raw();
+                builder.help("did you mean to use a condition like: " + top);
+                if (suggestions.size() >= 2) builder.help("also consider: " + suggestions.get(1).pattern().raw());
+            } else {
+                builder.help("write a condition such as 'x > 0' or 'player has permission \"...\"'");
+            }
+            throw new DiagnosticException(builder.build());
+        }
+    }
+
+    private static @Nullable Token findSeparatorToken(@NotNull List<Token> tokens, @NotNull String keyword, int segmentIndex, int totalSegments) {
+        int seen = 0;
+        int targetSep = segmentIndex == totalSegments - 1 ? segmentIndex - 1 : segmentIndex;
+        int braceDepth = 0;
+        for (Token t : tokens) {
+            if (t.kind() == TokenKind.SYMBOL && t.text().equals("{")) braceDepth++;
+            else if (t.kind() == TokenKind.SYMBOL && t.text().equals("}")) braceDepth = Math.max(0, braceDepth - 1);
+            else if (braceDepth == 0 && t.text().equalsIgnoreCase(keyword)) {
+                if (seen == targetSep) return t;
+                seen++;
+            }
+        }
+        return null;
     }
 
     private ConditionExpr parseAtom(List<Token> tokens, TypeEnvImpl env) {

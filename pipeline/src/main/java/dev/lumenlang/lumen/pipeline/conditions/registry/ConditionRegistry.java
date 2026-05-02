@@ -18,7 +18,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * Registry for all condition patterns available in a Lumen script.
@@ -38,7 +41,17 @@ public class ConditionRegistry {
     private final List<RegisteredCondition> conditions = new ArrayList<>();
     private final TypeRegistry types;
     private volatile PatternIndex<RegisteredCondition> conditionIndex;
+    private volatile @Nullable Map<String, KeywordAbsorption> splitProtectedKeywords;
     private @Nullable InlineExprValidator validator;
+
+    /**
+     * Describes how many top-level connector keywords (and/or) are absorbed by a protected
+     * keyword's surrounding pattern.
+     *
+     * @param absorbsAnd how many subsequent {@code and} tokens belong to the pattern
+     * @param absorbsOr  how many subsequent {@code or} tokens belong to the pattern
+     */
+    public record KeywordAbsorption(int absorbsAnd, int absorbsOr) {}
 
     /**
      * Creates a new registry backed by the given type registry.
@@ -80,6 +93,7 @@ public class ConditionRegistry {
         validateTypes(compiled);
         conditions.add(new RegisteredCondition(compiled, handler, meta));
         conditionIndex = null;
+        splitProtectedKeywords = null;
     }
 
     private void validateTypes(@NotNull Pattern pattern) {
@@ -148,6 +162,70 @@ public class ConditionRegistry {
             if (m != null) return new RegisteredConditionMatch(rc, m);
         }
         return null;
+    }
+
+    /**
+     * Returns a map of literal keywords that, when present in a condition's input tokens,
+     * absorb a number of subsequent top-level {@code and}/{@code or} tokens.
+     *
+     * <p>Computed by scanning every registered condition pattern. For each pattern whose
+     * literal sequence contains an {@code and} or {@code or}, the literals appearing
+     * BEFORE the connector are recorded as protected markers, mapped to the count of
+     * connectors of each kind that follow them inside the same pattern.
+     *
+     * <p>Example: {@code is between %min% and %max%} registers {@code between} with
+     * {@code absorbsAnd=1}. When the parser sees {@code between} in the input, it knows
+     * to skip splitting on the next top-level {@code and}.
+     */
+    public @NotNull Map<String, KeywordAbsorption> splitProtectedKeywords() {
+        Map<String, KeywordAbsorption> cached = splitProtectedKeywords;
+        if (cached != null) return cached;
+        synchronized (conditions) {
+            cached = splitProtectedKeywords;
+            if (cached != null) return cached;
+            Map<String, KeywordAbsorption> built = new HashMap<>();
+            for (RegisteredCondition rc : conditions) {
+                List<String> literals = collectLiterals(rc.pattern().parts());
+                int firstConnector = -1;
+                for (int i = 0; i < literals.size(); i++) {
+                    String l = literals.get(i);
+                    if (l.equals("and") || l.equals("or")) {
+                        firstConnector = i;
+                        break;
+                    }
+                }
+                if (firstConnector <= 0) continue;
+                int andCount = 0;
+                int orCount = 0;
+                for (int i = firstConnector; i < literals.size(); i++) {
+                    String l = literals.get(i);
+                    if (l.equals("and")) andCount++;
+                    else if (l.equals("or")) orCount++;
+                }
+                String marker = literals.get(firstConnector - 1);
+                if (marker.equals("and") || marker.equals("or")) continue;
+                KeywordAbsorption existing = built.get(marker);
+                int a = Math.max(existing == null ? 0 : existing.absorbsAnd(), andCount);
+                int o = Math.max(existing == null ? 0 : existing.absorbsOr(), orCount);
+                built.put(marker, new KeywordAbsorption(a, o));
+            }
+            splitProtectedKeywords = Map.copyOf(built);
+            return splitProtectedKeywords;
+        }
+    }
+
+    private static @NotNull List<String> collectLiterals(@NotNull List<PatternPart> parts) {
+        List<String> out = new ArrayList<>();
+        for (PatternPart p : parts) {
+            if (p instanceof PatternPart.Literal lit) {
+                out.add(lit.text().toLowerCase(Locale.ROOT));
+            } else if (p instanceof PatternPart.FlexLiteral flex) {
+                for (String form : flex.forms()) out.add(form.toLowerCase(Locale.ROOT));
+            } else if (p instanceof PatternPart.Group g) {
+                for (List<PatternPart> alt : g.alternatives()) out.addAll(collectLiterals(alt));
+            }
+        }
+        return out;
     }
 
     private @NotNull PatternIndex<RegisteredCondition> ensureIndex() {

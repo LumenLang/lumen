@@ -547,6 +547,14 @@ public final class CodeEmitter {
             return new LumenScriptException(de);
         }
         if (e instanceof TokenCarryingException tce) {
+            String msg = tce.getMessage();
+            boolean hasSemanticMessage = msg != null && !msg.isBlank() && !msg.startsWith("Unknown condition: ");
+            if (hasSemanticMessage) {
+                LumenDiagnostic.Builder b = LumenDiagnostic.error(msg).at(line, raw);
+                List<Token> ts = tce.tokens();
+                if (!ts.isEmpty()) b.highlight(ts.get(0).start(), ts.get(ts.size() - 1).end()).label(msg);
+                return new LumenScriptException(new DiagnosticException(b.build()));
+            }
             if (!tce.suggestions().isEmpty()) {
                 return new LumenScriptException(new DiagnosticException(SuggestionDiagnostics.build("Unknown condition", line, raw, tce.tokens(), tce.suggestions())));
             }
