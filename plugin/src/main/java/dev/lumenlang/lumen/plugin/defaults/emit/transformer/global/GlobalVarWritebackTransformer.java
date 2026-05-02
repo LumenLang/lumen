@@ -1,4 +1,4 @@
-package dev.lumenlang.lumen.plugin.defaults.emit.transformer;
+package dev.lumenlang.lumen.plugin.defaults.emit.transformer.global;
 
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
@@ -14,10 +14,12 @@ import net.vansencool.vanta.parser.ast.declaration.ClassDeclaration;
 import net.vansencool.vanta.parser.ast.declaration.CompilationUnit;
 import net.vansencool.vanta.parser.ast.declaration.MethodDeclaration;
 import net.vansencool.vanta.parser.ast.expression.AssignmentExpression;
+import net.vansencool.vanta.parser.ast.expression.CastExpression;
 import net.vansencool.vanta.parser.ast.expression.Expression;
 import net.vansencool.vanta.parser.ast.expression.LambdaExpression;
 import net.vansencool.vanta.parser.ast.expression.MethodCallExpression;
 import net.vansencool.vanta.parser.ast.expression.NameExpression;
+import net.vansencool.vanta.parser.ast.expression.ParenExpression;
 import net.vansencool.vanta.parser.ast.expression.UnaryExpression;
 import net.vansencool.vanta.parser.ast.statement.BlockStatement;
 import net.vansencool.vanta.parser.ast.statement.ExpressionStatement;
@@ -251,7 +253,9 @@ public final class GlobalVarWritebackTransformer implements CodeTransformer {
 
     private static void scanExpression(@NotNull Expression e, @NotNull Set<String> targets, @NotNull Set<String> mutated) {
         if (e instanceof AssignmentExpression ae) {
-            if (ae.target() instanceof NameExpression ne && targets.contains(ne.name())) mutated.add(ne.name());
+            if (ae.target() instanceof NameExpression ne && targets.contains(ne.name()) && !isStorageReload(ae.value())) {
+                mutated.add(ne.name());
+            }
             scanExpression(ae.value(), targets, mutated);
         } else if (e instanceof UnaryExpression ue) {
             String op = ue.operator();
@@ -259,6 +263,42 @@ public final class GlobalVarWritebackTransformer implements CodeTransformer {
                 if (ue.operand() instanceof NameExpression ne && targets.contains(ne.name())) mutated.add(ne.name());
             }
             scanExpression(ue.operand(), targets, mutated);
+        } else if (e instanceof MethodCallExpression mc) {
+            Expression target = mc.target();
+            if (target != null && unwrap(target) instanceof NameExpression tn && targets.contains(tn.name()) && isMutatingMethod(mc.methodName())) {
+                mutated.add(tn.name());
+            }
+            if (target != null) scanExpression(target, targets, mutated);
+            for (Expression arg : mc.arguments()) scanExpression(arg, targets, mutated);
+        }
+    }
+
+    private static boolean isMutatingMethod(@NotNull String name) {
+        return switch (name) {
+            case "add", "addAll", "remove", "removeAll", "removeIf", "clear", "put", "putAll", "putIfAbsent", "set", "compute", "computeIfAbsent", "computeIfPresent", "merge", "replace", "replaceAll", "sort", "reverse", "shuffle" -> true;
+            default -> false;
+        };
+    }
+
+    private static boolean isStorageReload(@NotNull Expression e) {
+        Expression unwrapped = unwrap(e);
+        if (!(unwrapped instanceof MethodCallExpression mc)) return false;
+        if (!"get".equals(mc.methodName())) return false;
+        if (!(mc.target() instanceof NameExpression tn)) return false;
+        return "GlobalVars".equals(tn.name()) || "Storage".equals(tn.name()) || "PersistentVars".equals(tn.name());
+    }
+
+    private static @NotNull Expression unwrap(@NotNull Expression e) {
+        while (true) {
+            if (e instanceof CastExpression ce) {
+                e = ce.expression();
+                continue;
+            }
+            if (e instanceof ParenExpression pe) {
+                e = pe.expression();
+                continue;
+            }
+            return e;
         }
     }
 
