@@ -20,20 +20,12 @@ import java.util.regex.Pattern;
 /**
  * Transformer that removes unused local variable assignments from
  * any method body.
- *
- * <p>This inspects all untagged lines in the emitted code. Any variable
- * assignment where the variable is never referenced in the rest of the
- * enclosing method is marked for removal.
- *
- * <p>This transformer is dependency aware.
  */
 @Registration(order = -2000)
 @SuppressWarnings("unused")
 public final class UnusedVarTransformer implements CodeTransformer {
-    private static final Pattern VAR_DECL = Pattern.compile(
-            "^(?:final\\s+)?\\w+(?:<[^>]+>)?(?:\\[])?\\s+(\\w+)\\s*=\\s*.+;$");
-    private static final Pattern VAR_ASSIGN = Pattern.compile(
-            "^(\\w+)\\s*=\\s*.+;$");
+    private static final Pattern VAR_DECL = Pattern.compile("^(?:final\\s+)?\\w+(?:<[^>]+>)?(?:\\[])?\\s+(\\w+)\\s*=\\s*.+;$");
+    private static final Pattern VAR_ASSIGN = Pattern.compile("^(\\w+)\\s*=\\s*.+;$");
 
     @Call
     public void register(@NotNull LumenAPI api) {
@@ -55,9 +47,7 @@ public final class UnusedVarTransformer implements CodeTransformer {
         }
     }
 
-    private static void transformBlock(@NotNull List<TaggedLine> allLines,
-                                       int start, int end,
-                                       @NotNull TransformContext ctx) {
+    private static void transformBlock(@NotNull List<TaggedLine> allLines, int start, int end, @NotNull TransformContext ctx) {
         List<TaggedLine> candidates = new ArrayList<>();
         for (int i = start; i <= end; i++) {
             TaggedLine line = allLines.get(i);
