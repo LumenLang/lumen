@@ -112,6 +112,9 @@ public final class Tokenizer {
                     do j++;
                     while (j < s.length() && Character.isDigit(s.charAt(j)));
                 }
+                if (j < s.length() && (s.charAt(j) == 'L' || s.charAt(j) == 'l') && (j + 1 >= s.length() || !isIdentPart(s.charAt(j + 1)))) {
+                    j++;
+                }
                 out.add(new Token(TokenKind.NUMBER, s.substring(i, j), line, start, offset + j));
                 i = j;
                 continue;

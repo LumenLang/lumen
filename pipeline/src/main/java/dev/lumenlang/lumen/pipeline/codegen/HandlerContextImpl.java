@@ -7,6 +7,7 @@ import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
 import dev.lumenlang.lumen.api.emit.ScriptToken;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.pipeline.conditions.ConditionExpr;
 import dev.lumenlang.lumen.pipeline.conditions.parser.ConditionParser;
 import dev.lumenlang.lumen.pipeline.language.exceptions.TokenCarryingException;
@@ -139,6 +140,13 @@ public final class HandlerContextImpl implements HandlerContext {
     }
 
     @Override
+    public @NotNull String java(@NotNull String name, @NotNull LumenType targetType) {
+        String raw = java(name);
+        LumenType actual = resolvedType(name);
+        return TypeWiden.widen(raw, actual, targetType);
+    }
+
+    @Override
     public @NotNull Object value(@NotNull String name) {
         return resolveDeferred(bound(name).value());
     }
@@ -223,6 +231,15 @@ public final class HandlerContextImpl implements HandlerContext {
         if (val instanceof TypeEnv.VarHandle vh) return vh.type();
         BoundValue bv = bound(name);
         if (bv == null) return null;
+        if (bv.tokens().size() == 1) {
+            Token t = bv.tokens().get(0);
+            if (t.kind() == TokenKind.NUMBER) {
+                String text = t.text();
+                if (text.endsWith("L") || text.endsWith("l")) return PrimitiveType.LONG;
+                if (text.contains(".")) return PrimitiveType.DOUBLE;
+                return PrimitiveType.INT;
+            }
+        }
         ExpressionResult result = ExprResolver.resolveWithType(bv.tokens(), ctx, env);
         return result != null ? result.type() : null;
     }

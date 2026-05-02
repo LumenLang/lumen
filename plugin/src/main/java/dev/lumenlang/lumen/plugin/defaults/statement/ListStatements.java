@@ -11,6 +11,7 @@ import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.api.type.CollectionType;
 import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.ObjectType;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.api.type.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +33,16 @@ public final class ListStatements {
             return ref.java();
         }
         return null;
+    }
+
+    private static @NotNull LumenType listElementType(@NotNull HandlerContext ctx) {
+        TypeEnv.VarHandle listRef = ctx.varHandle("list");
+        if (listRef != null) {
+            CollectionType ct = TypeUtils.asCollection(listRef.type());
+            if (ct != null && !ct.typeArguments().isEmpty()) return ct.typeArguments().get(0);
+        }
+        LumenType actual = ctx.resolvedType("val");
+        return actual != null ? actual : PrimitiveType.STRING;
     }
 
     private static void validateElementType(@NotNull HandlerContext ctx, @NotNull String paramName) {
@@ -93,7 +104,8 @@ public final class ListStatements {
                 .category(Categories.LIST)
                 .handler(ctx -> {
                     validateElementType(ctx, "val");
-                    emitScopedMutation(ctx, ctx.tokens("list").get(0), ctx.java("scope"), tmp -> "((List) " + tmp + ").add(" + ctx.java("val") + ");");
+                    String val = ctx.java("val", listElementType(ctx));
+                    emitScopedMutation(ctx, ctx.tokens("list").get(0), ctx.java("scope"), tmp -> "((List) " + tmp + ").add(" + val + ");");
                 }));
 
         api.patterns().statement(b -> b
@@ -137,7 +149,7 @@ public final class ListStatements {
                     String listJava = ctx.java("list");
                     validateElementType(ctx, "val");
                     ctx.codegen().addImport(List.class.getName());
-                    ctx.out().line("((List) " + listJava + ").add(" + ctx.java("val") + ");");
+                    ctx.out().line("((List) " + listJava + ").add(" + ctx.java("val", listElementType(ctx)) + ");");
                 }));
 
         api.patterns().statement(b -> b

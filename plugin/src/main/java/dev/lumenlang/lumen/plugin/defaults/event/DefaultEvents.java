@@ -368,13 +368,8 @@ public final class DefaultEvents {
                 .cancellable(true)
                 .addImport(Material.class.getName())
                 .addImport(LumenInventoryHolder.class.getName())
-                .addVar("player", MinecraftTypes.PLAYER,
-                        """
-                                if (event.getWhoClicked() instanceof Player __inv_p) {
-                                    player = __inv_p;
-                                }""")
+                .addVar("player", MinecraftTypes.PLAYER, "(Player) event.getWhoClicked()")
                 .varDescription("The player who clicked")
-                .withMeta("nullable", false)
                 .addVar("inventory", MinecraftTypes.INVENTORY, "event.getView().getTopInventory()")
                 .varDescription("The top inventory being viewed")
                 .addVar("name", PrimitiveType.STRING,
@@ -423,15 +418,8 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.INVENTORY)
                 .cancellable(false)
-                .addVar("player", MinecraftTypes.PLAYER,
-                        """
-                                if (event.getPlayer() instanceof Player __inv_p) {
-                                    player = __inv_p;
-                                } else {
-                                    player = null;
-                                }""")
-                .varDescription("The player who closed the inventory, or null if the viewer is not a player (unlikely)")
-                .withMeta("nullable", true)
+                .addVar("player", MinecraftTypes.PLAYER, "(Player) event.getPlayer()")
+                .varDescription("The player who closed the inventory")
                 .addImport(LumenInventoryHolder.class.getName())
                 .addVar("inventory", MinecraftTypes.INVENTORY, "event.getView().getTopInventory()")
                 .varDescription("The top inventory that was closed")
@@ -455,15 +443,8 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.INVENTORY)
                 .cancellable(true)
-                .addVar("player", MinecraftTypes.PLAYER,
-                        """
-                                if (event.getPlayer() instanceof Player __inv_p) {
-                                    player = __inv_p;
-                                } else {
-                                    player = null;
-                                }""")
-                .varDescription("The player who opened the inventory, or null if the viewer is not a player (unlikely)")
-                .withMeta("nullable", true)
+                .addVar("player", MinecraftTypes.PLAYER, "(Player) event.getPlayer()")
+                .varDescription("The player who opened the inventory")
                 .addImport(LumenInventoryHolder.class.getName())
                 .addVar("inventory", MinecraftTypes.INVENTORY, "event.getView().getTopInventory()")
                 .varDescription("The top inventory that was opened")
@@ -487,15 +468,8 @@ public final class DefaultEvents {
                 .since("1.0.0")
                 .category(Categories.INVENTORY)
                 .cancellable(true)
-                .addVar("player", MinecraftTypes.PLAYER,
-                        """
-                                if (event.getWhoClicked() instanceof Player __inv_p) {
-                                    player = __inv_p;
-                                } else {
-                                    player = null;
-                                }""")
-                .varDescription("The player who dragged items, or null if the dragger is not a player (unlikely)")
-                .withMeta("nullable", true)
+                .addVar("player", MinecraftTypes.PLAYER, "(Player) event.getWhoClicked()")
+                .varDescription("The player who dragged items")
                 .addImport(LumenInventoryHolder.class.getName())
                 .addVar("inventory", MinecraftTypes.INVENTORY, "event.getView().getTopInventory()")
                 .varDescription("The top inventory being viewed")

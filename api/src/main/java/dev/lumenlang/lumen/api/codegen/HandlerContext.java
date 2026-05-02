@@ -49,6 +49,22 @@ public interface HandlerContext {
     @NotNull String java(@NotNull String name);
 
     /**
+     * Generates Java code for the specified parameter, widened or narrowed to a target type.
+     *
+     * <p>
+     * Statement and form handlers should call this overload whenever the target slot has a known
+     * declared type (map value, list element, var declaration, scoped store). The returned Java
+     * expression includes any necessary widening cast (e.g. {@code int} to {@code long}) so that
+     * the caller never has to remember to widen by hand. If no widening is needed, returns the
+     * same string as {@link #java(String)}.
+     *
+     * @param name       the parameter name from the pattern
+     * @param targetType the type the value will be assigned into
+     * @return Java source code, cast to the target type if necessary
+     */
+    @NotNull String java(@NotNull String name, @NotNull LumenType targetType);
+
+    /**
      * Retrieves the parsed runtime value for the specified parameter.
      *
      * @param name the parameter name from the pattern

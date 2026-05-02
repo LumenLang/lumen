@@ -11,6 +11,7 @@ import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.api.type.CollectionType;
 import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.ObjectType;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.api.type.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,6 +76,16 @@ public final class MapStatements {
         return "\"" + info.className() + "." + varName + ".\" + " + scopeKeyPart;
     }
 
+    private static @NotNull LumenType mapValueType(@NotNull HandlerContext ctx) {
+        TypeEnv.VarHandle mapRef = ctx.varHandle("map");
+        if (mapRef != null) {
+            CollectionType ct = TypeUtils.asCollection(mapRef.type());
+            if (ct != null && ct.typeArguments().size() >= 2) return ct.typeArguments().get(1);
+        }
+        LumenType actual = ctx.resolvedType("val");
+        return actual != null ? actual : PrimitiveType.STRING;
+    }
+
     private static void validateMapEntry(@NotNull HandlerContext ctx) {
         TypeEnv.VarHandle mapRef = ctx.varHandle("map");
         if (mapRef == null) return;
@@ -126,7 +137,8 @@ public final class MapStatements {
                 .category(Categories.MAP)
                 .handler(ctx -> {
                     validateMapEntry(ctx);
-                    emitScopedMutation(ctx, ctx.tokens("map").get(0), ctx.java("scope"), tmp -> "((Map) " + tmp + ").put(" + ctx.java("key") + ", " + ctx.java("val") + ");");
+                    String val = ctx.java("val", mapValueType(ctx));
+                    emitScopedMutation(ctx, ctx.tokens("map").get(0), ctx.java("scope"), tmp -> "((Map) " + tmp + ").put(" + ctx.java("key") + ", " + val + ");");
                 }));
 
         api.patterns().statement(b -> b
@@ -140,7 +152,7 @@ public final class MapStatements {
                     String mapJava = ctx.java("map");
                     validateMapEntry(ctx);
                     ctx.codegen().addImport(Map.class.getName());
-                    ctx.out().line("((Map) " + mapJava + ").put(" + ctx.java("key") + ", " + ctx.java("val") + ");");
+                    ctx.out().line("((Map) " + mapJava + ").put(" + ctx.java("key") + ", " + ctx.java("val", mapValueType(ctx)) + ");");
                 }));
 
         api.patterns().statement(b -> b

@@ -237,6 +237,8 @@ public final class VarDeclarationForm {
                 java = PlaceholderExpander.expand(s, env);
             } else if (l.value() instanceof Boolean b) {
                 java = b.toString();
+            } else if (l.value() instanceof Long lv) {
+                java = lv + "L";
             } else {
                 java = l.value().toString();
             }
@@ -425,6 +427,8 @@ public final class VarDeclarationForm {
                 java = PlaceholderExpander.expand(s, env);
             } else if (l.value() instanceof Boolean b) {
                 java = b.toString();
+            } else if (l.value() instanceof Long lv) {
+                java = lv + "L";
             } else {
                 java = l.value().toString();
             }

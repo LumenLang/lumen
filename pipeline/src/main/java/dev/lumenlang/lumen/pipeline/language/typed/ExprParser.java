@@ -60,10 +60,14 @@ public final class ExprParser {
                 return new Expr.Literal(t.text(), PrimitiveType.STRING);
 
             if (t.kind() == TokenKind.NUMBER) {
-                if (t.text().contains(".")) {
-                    return new Expr.Literal(Double.parseDouble(t.text()), PrimitiveType.DOUBLE);
+                String text = t.text();
+                if (text.endsWith("L") || text.endsWith("l")) {
+                    return new Expr.Literal(Long.parseLong(text.substring(0, text.length() - 1)), PrimitiveType.LONG);
                 }
-                return new Expr.Literal(Integer.parseInt(t.text()), PrimitiveType.INT);
+                if (text.contains(".")) {
+                    return new Expr.Literal(Double.parseDouble(text), PrimitiveType.DOUBLE);
+                }
+                return new Expr.Literal(Integer.parseInt(text), PrimitiveType.INT);
             }
 
             if (t.kind() == TokenKind.IDENT) {

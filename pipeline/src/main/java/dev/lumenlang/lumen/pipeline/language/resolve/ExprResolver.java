@@ -248,9 +248,16 @@ public final class ExprResolver {
         if (tokens.size() == 1) {
             Token t = tokens.get(0);
             if (t.kind() == TokenKind.NUMBER) {
-                LumenType type = t.text().contains(".")
-                        ? PrimitiveType.DOUBLE : PrimitiveType.INT;
-                return new TypedOperand(t.text(), type);
+                String text = t.text();
+                LumenType type;
+                if (text.endsWith("L") || text.endsWith("l")) {
+                    type = PrimitiveType.LONG;
+                } else if (text.contains(".")) {
+                    type = PrimitiveType.DOUBLE;
+                } else {
+                    type = PrimitiveType.INT;
+                }
+                return new TypedOperand(text, type);
             }
             if (t.kind() == TokenKind.IDENT) {
                 VarRef ref = env.lookupVar(t.text());
