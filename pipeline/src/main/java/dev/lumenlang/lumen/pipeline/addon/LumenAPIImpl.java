@@ -3,6 +3,7 @@ package dev.lumenlang.lumen.pipeline.addon;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.binder.ScriptBinderRegistrar;
 import dev.lumenlang.lumen.api.emit.BlockEnterHook;
+import dev.lumenlang.lumen.api.emit.BlockExitHook;
 import dev.lumenlang.lumen.api.emit.BlockFormHandler;
 import dev.lumenlang.lumen.api.emit.EmitRegistrar;
 import dev.lumenlang.lumen.api.emit.StatementValidator;
@@ -285,6 +286,11 @@ public final class LumenAPIImpl implements LumenAPI {
             @Override
             public void blockEnterHook(@NotNull BlockEnterHook hook) {
                 emitRegistry.addBlockEnterHook(hook);
+            }
+
+            @Override
+            public void blockExitHook(@NotNull BlockExitHook hook) {
+                emitRegistry.addBlockExitHook(hook);
             }
 
             @Override

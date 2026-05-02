@@ -1,6 +1,7 @@
 package dev.lumenlang.lumen.pipeline.language.emit;
 
 import dev.lumenlang.lumen.api.emit.BlockEnterHook;
+import dev.lumenlang.lumen.api.emit.BlockExitHook;
 import dev.lumenlang.lumen.api.emit.BlockFormHandler;
 import dev.lumenlang.lumen.api.emit.StatementValidator;
 import org.jetbrains.annotations.NotNull;
@@ -10,9 +11,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Stores registered emit handlers (block forms and block enter hooks).
- *
- * <p>All built-in language features and addon-registered extensions are stored here.
+ * Stores registered emit handlers (such as block forms and block enter hooks).
  */
 public final class EmitRegistry {
 
@@ -20,6 +19,7 @@ public final class EmitRegistry {
 
     private final List<BlockFormHandler> blockForms = new ArrayList<>();
     private final List<BlockEnterHook> blockEnterHooks = new ArrayList<>();
+    private final List<BlockExitHook> blockExitHooks = new ArrayList<>();
     private final List<StatementValidator> statementValidators = new ArrayList<>();
 
     /**
@@ -63,6 +63,15 @@ public final class EmitRegistry {
     }
 
     /**
+     * Registers a block exit hook.
+     *
+     * @param hook the hook to register
+     */
+    public void addBlockExitHook(@NotNull BlockExitHook hook) {
+        blockExitHooks.add(hook);
+    }
+
+    /**
      * Registers a statement validator.
      *
      * @param validator the validator to register
@@ -87,6 +96,15 @@ public final class EmitRegistry {
      */
     public @NotNull List<BlockEnterHook> blockEnterHooks() {
         return Collections.unmodifiableList(blockEnterHooks);
+    }
+
+    /**
+     * Returns an unmodifiable view of all registered block exit hooks.
+     *
+     * @return the block exit hooks
+     */
+    public @NotNull List<BlockExitHook> blockExitHooks() {
+        return Collections.unmodifiableList(blockExitHooks);
     }
 
     /**

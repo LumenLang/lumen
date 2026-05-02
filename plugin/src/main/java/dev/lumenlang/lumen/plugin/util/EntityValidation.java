@@ -4,7 +4,6 @@ import dev.lumenlang.lumen.api.codegen.TypeEnv.VarHandle;
 import dev.lumenlang.lumen.api.exceptions.ParseFailureException;
 import dev.lumenlang.lumen.api.type.LumenType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Utility for validating entity variable metadata at parse time.
@@ -27,18 +26,14 @@ public final class EntityValidation {
     /**
      * Returns the Java class name for a VarHandle.
      *
-     * <p>Checks the {@code "javaClass"} metadata first, then falls back to the
-     * variable's {@link LumenType#javaType()} if available.
-     *
      * @param handle the variable handle
-     * @return the fully-qualified java class name, or {@code null} if unknown
+     * @return the fully-qualified java class name
      */
-    public static @Nullable String javaClass(@NotNull VarHandle handle) {
+    public static @NotNull String javaClass(@NotNull VarHandle handle) {
         Object val = handle.meta("javaClass");
         if (val instanceof String s) return s;
         LumenType type = handle.type();
-        if (type != null) return type.javaType();
-        return null;
+        return type.javaType();
     }
 
     /**
@@ -54,8 +49,7 @@ public final class EntityValidation {
      * {@code false} if it is unknown (safe instanceof guard needed)
      * @throws ParseFailureException if the entity is known to be incompatible
      */
-    public static boolean requireLivingEntity(@NotNull VarHandle handle,
-                                              @NotNull String patternDesc) {
+    public static boolean requireLivingEntity(@NotNull VarHandle handle, @NotNull String patternDesc) {
         return requireSubtype(handle, "org.bukkit.entity.LivingEntity", patternDesc);
     }
 

@@ -3,6 +3,8 @@ package dev.lumenlang.console.element.impl.basic;
 import dev.lumenlang.console.element.Element;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+
 /**
  * Empty filler with explicit dimensions. Use {@code -1} for either dimension to flex.
  */
@@ -58,7 +60,7 @@ public final class Spacer implements Element {
     public @NotNull String @NotNull [] render(int width, int height) {
         String blank = " ".repeat(width);
         String[] out = new String[height];
-        for (int i = 0; i < height; i++) out[i] = blank;
+        Arrays.fill(out, blank);
         return out;
     }
 }

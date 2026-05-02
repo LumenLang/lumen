@@ -29,6 +29,15 @@ public interface EmitRegistrar {
     void blockEnterHook(@NotNull BlockEnterHook hook);
 
     /**
+     * Registers a block exit hook.
+     *
+     * <p>Hooks run after a pattern-matched block's children are emitted and before its {@code end}.
+     *
+     * @param hook the hook to register
+     */
+    void blockExitHook(@NotNull BlockExitHook hook);
+
+    /**
      * Registers a statement validator.
      *
      * @param validator the validator to register

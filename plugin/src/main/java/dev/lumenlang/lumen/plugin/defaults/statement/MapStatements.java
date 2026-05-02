@@ -34,14 +34,6 @@ public final class MapStatements {
         return null;
     }
 
-    private static void flushIfStored(@NotNull HandlerContext ctx, @NotNull String mapJava, @Nullable String varName) {
-        TypeEnv env = ctx.env();
-        if (varName != null && env.isStored(varName)) {
-            ctx.out().line(env.storedClassName(varName) + ".set(" + env.getStoredKey(varName) + ", "
-                    + mapJava + ");");
-        }
-    }
-
     private static void emitScopedMutation(@NotNull HandlerContext ctx, @NotNull String mapVarName, @NotNull String scopeVarName, @NotNull Function<String, String> mutation) {
         TypeEnv.GlobalInfo info = ctx.env().getGlobalInfo(mapVarName);
         if (info == null) {
@@ -149,7 +141,6 @@ public final class MapStatements {
                     validateMapEntry(ctx);
                     ctx.codegen().addImport(Map.class.getName());
                     ctx.out().line("((Map) " + mapJava + ").put(" + ctx.java("key") + ", " + ctx.java("val") + ");");
-                    flushIfStored(ctx, mapJava, mapVarName(ctx));
                 }));
 
         api.patterns().statement(b -> b
@@ -176,7 +167,6 @@ public final class MapStatements {
                     validateMapKey(ctx);
                     ctx.codegen().addImport(Map.class.getName());
                     ctx.out().line("((Map<?, ?>) " + mapJava + ").remove(" + ctx.java("key") + ");");
-                    flushIfStored(ctx, mapJava, mapVarName(ctx));
                 }));
 
         api.patterns().statement(b -> b
@@ -199,7 +189,6 @@ public final class MapStatements {
                     String mapJava = ctx.java("map");
                     ctx.codegen().addImport(Map.class.getName());
                     ctx.out().line("((Map<?, ?>) " + mapJava + ").clear();");
-                    flushIfStored(ctx, mapJava, mapVarName(ctx));
                 }));
     }
 }

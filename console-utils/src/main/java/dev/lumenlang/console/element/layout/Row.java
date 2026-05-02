@@ -5,6 +5,7 @@ import dev.lumenlang.console.element.Element;
 import dev.lumenlang.console.element.util.VisibleLength;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -84,7 +85,7 @@ public final class Row implements Element {
         int flexExtra = flexCount > 0 ? flexBudget - flexEach * flexCount : 0;
 
         String[] out = new String[height];
-        for (int row = 0; row < height; row++) out[row] = "";
+        Arrays.fill(out, "");
 
         for (int i = 0; i < children.size(); i++) {
             Element c = children.get(i);

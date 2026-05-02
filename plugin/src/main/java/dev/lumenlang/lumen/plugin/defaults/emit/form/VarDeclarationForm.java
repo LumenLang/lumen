@@ -186,9 +186,6 @@ public final class VarDeclarationForm {
             }
             ctx.out().line(ref.java() + " = null;");
             env.markNullState(name, TypeEnvImpl.NullState.NULL, ctx.line(), ctx.raw());
-            if (env.isStored(name)) {
-                ctx.out().line(env.storedClassName(name) + ".set(" + env.getStoredKey(name) + ", " + ref.java() + ");");
-            }
             return true;
         }
         TypedExpression resolved = resolveExpressionTyped(exprTokens, ctx, env);
@@ -200,7 +197,8 @@ public final class VarDeclarationForm {
         int colEnd = exprTokens.get(exprTokens.size() - 1).end();
         LumenDiagnostic diag = TypeChecker.checkAssignment(varType, resolved.type, name, ctx.line(), ctx.raw(), colStart, colEnd);
         if (diag != null) throw new DiagnosticException(diag);
-        ctx.out().line(ref.java() + " = " + resolved.java + ";");
+        String widened = widenLiteralToTarget(resolved.java, resolved.type, varType);
+        ctx.out().line(ref.java() + " = " + widened + ";");
         env.recordDeclaration(name, ctx.line(), ctx.raw());
         if (varType instanceof NullableType) {
             if (resolved.type instanceof NullableType) {
@@ -208,9 +206,6 @@ public final class VarDeclarationForm {
             } else {
                 env.markNullState(name, TypeEnvImpl.NullState.NON_NULL, ctx.line(), ctx.raw());
             }
-        }
-        if (env.isStored(name)) {
-            ctx.out().line(env.storedClassName(name) + ".set(" + env.getStoredKey(name) + ", " + ref.java() + ");");
         }
         return true;
     }
@@ -350,8 +345,9 @@ public final class VarDeclarationForm {
             java = resolveNullableDefault(nullableType, isNone, ctx);
             nullState = isNone || java.equals("null") ? TypeEnvImpl.NullState.NULL : TypeEnvImpl.NullState.NON_NULL;
         } else {
-            java = resolveExpressionJava(valueTokens, ctx, env);
-            if (java == null) throw new DiagnosticException(buildExpressionDiagnostic(valueTokens, ctx.line(), ctx.raw(), env));
+            TypedExpression typed = resolveExpressionTyped(valueTokens, ctx, env);
+            if (typed == null) throw new DiagnosticException(buildExpressionDiagnostic(valueTokens, ctx.line(), ctx.raw(), env));
+            java = widenLiteralToTarget(typed.java(), typed.type(), nullableType.inner());
             nullState = TypeEnvImpl.NullState.NON_NULL;
         }
         ctx.out().line(nullableType.javaTypeName() + " " + name + " = " + java + ";");
@@ -467,6 +463,35 @@ public final class VarDeclarationForm {
     }
 
     private record TypedExpression(@NotNull String java, @NotNull LumenType type) {
+    }
+
+    private static @NotNull String widenLiteralToTarget(@NotNull String java, @NotNull LumenType source, @NotNull LumenType target) {
+        LumenType src = source.unwrap();
+        LumenType tgt = target.unwrap();
+        if (!(src instanceof PrimitiveType sp) || !(tgt instanceof PrimitiveType tp)) return java;
+        if (sp == tp) return java;
+        if (sp == PrimitiveType.INT && tp == PrimitiveType.LONG && isIntLiteral(java)) return java + "L";
+        if (sp == PrimitiveType.INT && tp == PrimitiveType.DOUBLE && isIntLiteral(java)) return java + ".0";
+        if (sp == PrimitiveType.INT && tp == PrimitiveType.FLOAT && isIntLiteral(java)) return java + ".0f";
+        if (sp == PrimitiveType.LONG && tp == PrimitiveType.DOUBLE && isLongLiteral(java)) {
+            String trimmed = java.endsWith("L") || java.endsWith("l") ? java.substring(0, java.length() - 1) : java;
+            return trimmed + ".0";
+        }
+        return java;
+    }
+
+    private static boolean isIntLiteral(@NotNull String s) {
+        if (s.isEmpty()) return false;
+        int i = s.charAt(0) == '-' ? 1 : 0;
+        if (i >= s.length()) return false;
+        for (; i < s.length(); i++) if (!Character.isDigit(s.charAt(i))) return false;
+        return true;
+    }
+
+    private static boolean isLongLiteral(@NotNull String s) {
+        if (s.isEmpty()) return false;
+        String body = s.endsWith("L") || s.endsWith("l") ? s.substring(0, s.length() - 1) : s;
+        return isIntLiteral(body);
     }
 
     private static @NotNull LumenDiagnostic buildExpressionDiagnostic(@NotNull List<Token> tokens, int line, @NotNull String raw, @NotNull TypeEnvImpl env) {

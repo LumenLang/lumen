@@ -40,13 +40,6 @@ public final class VariableStatements {
                         + "Tip: declare '" + varName + "' inside a 'global:' block to make it a class-level field instead.");
     }
 
-    private static void emitAutoSave(@NotNull HandlerContext ctx, @NotNull String varName, @NotNull TypeEnv.VarHandle ref) {
-        TypeEnv env = ctx.env();
-        if (env.isStored(varName)) {
-            ctx.out().line(env.storedClassName(varName) + ".set(" + env.getStoredKey(varName) + ", " + ref.java() + ");");
-        }
-    }
-
     private static @NotNull String buildScopedKey(@NotNull HandlerContext ctx, @NotNull String varName, @NotNull String scopeVarName, @NotNull TypeEnv.GlobalInfo info) {
         TypeEnv env = ctx.env();
         TypeEnv.VarHandle scopeRef = env.lookupVar(scopeVarName);
@@ -140,7 +133,6 @@ public final class VariableStatements {
                     if (ref == null)
                         throw new RuntimeException("Variable not found: " + varName);
                     ctx.out().line(ref.java() + " += " + ctx.java("n") + ";");
-                    emitAutoSave(ctx, varName, ref);
                 }));
 
         api.patterns().statement(b -> b
@@ -168,7 +160,6 @@ public final class VariableStatements {
                     if (ref == null)
                         throw new RuntimeException("Variable not found: " + varName);
                     ctx.out().line(ref.java() + " -= " + ctx.java("n") + ";");
-                    emitAutoSave(ctx, varName, ref);
                 }));
 
         api.patterns().statement(b -> b
@@ -196,7 +187,6 @@ public final class VariableStatements {
                     if (ref == null)
                         throw new RuntimeException("Variable not found: " + varName);
                     ctx.out().line(ref.java() + " *= " + ctx.java("n") + ";");
-                    emitAutoSave(ctx, varName, ref);
                 }));
 
         api.patterns().statement(b -> b
@@ -224,7 +214,6 @@ public final class VariableStatements {
                     if (ref == null)
                         throw new RuntimeException("Variable not found: " + varName);
                     ctx.out().line(ref.java() + " /= " + ctx.java("n") + ";");
-                    emitAutoSave(ctx, varName, ref);
                 }));
 
         api.patterns().statement(b -> b

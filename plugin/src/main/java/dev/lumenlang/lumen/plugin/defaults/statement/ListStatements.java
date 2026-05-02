@@ -49,14 +49,6 @@ public final class ListStatements {
                 .build());
     }
 
-    private static void flushIfStored(@NotNull HandlerContext ctx, @NotNull String listJava, @Nullable String varName) {
-        TypeEnv env = ctx.env();
-        if (varName != null && env.isStored(varName)) {
-            ctx.out().line(env.storedClassName(varName) + ".set(" + env.getStoredKey(varName) + ", "
-                    + listJava + ");");
-        }
-    }
-
     private static @NotNull String buildScopedKey(@NotNull HandlerContext ctx, @NotNull String varName, @NotNull String scopeVarName, @NotNull TypeEnv.GlobalInfo info) {
         TypeEnv env = ctx.env();
         TypeEnv.VarHandle scopeRef = env.lookupVar(scopeVarName);
@@ -146,7 +138,6 @@ public final class ListStatements {
                     validateElementType(ctx, "val");
                     ctx.codegen().addImport(List.class.getName());
                     ctx.out().line("((List) " + listJava + ").add(" + ctx.java("val") + ");");
-                    flushIfStored(ctx, listJava, listVarName(ctx));
                 }));
 
         api.patterns().statement(b -> b
@@ -161,7 +152,6 @@ public final class ListStatements {
                     validateElementType(ctx, "val");
                     ctx.codegen().addImport(List.class.getName());
                     ctx.out().line("((List<?>) " + listJava + ").remove(" + ctx.java("val") + ");");
-                    flushIfStored(ctx, listJava, listVarName(ctx));
                 }));
 
         api.patterns().statement(b -> b
@@ -175,7 +165,6 @@ public final class ListStatements {
                     String listJava = ctx.java("list");
                     ctx.codegen().addImport(List.class.getName());
                     ctx.out().line("((List<?>) " + listJava + ").remove(" + ctx.java("i") + ");");
-                    flushIfStored(ctx, listJava, listVarName(ctx));
                 }));
 
         api.patterns().statement(b -> b
@@ -189,7 +178,6 @@ public final class ListStatements {
                     String listJava = ctx.java("list");
                     ctx.codegen().addImport(List.class.getName());
                     ctx.out().line("((List<?>) " + listJava + ").clear();");
-                    flushIfStored(ctx, listJava, listVarName(ctx));
                 }));
 
         api.patterns().statement(b -> b
@@ -204,7 +192,6 @@ public final class ListStatements {
                     validateElementType(ctx, "val");
                     ctx.codegen().addImport(List.class.getName());
                     ctx.out().line("((List) " + listJava + ").set(" + ctx.java("i") + ", " + ctx.java("val") + ");");
-                    flushIfStored(ctx, listJava, listVarName(ctx));
                 }));
     }
 }

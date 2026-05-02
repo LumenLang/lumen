@@ -3,6 +3,7 @@ package dev.lumenlang.lumen.pipeline.language.emit;
 import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
 import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.emit.BlockEnterHook;
+import dev.lumenlang.lumen.api.emit.BlockExitHook;
 import dev.lumenlang.lumen.api.emit.BlockFormHandler;
 import dev.lumenlang.lumen.api.emit.ScriptLine;
 import dev.lumenlang.lumen.api.emit.StatementValidator;
@@ -425,6 +426,16 @@ public final class CodeEmitter {
         }
 
         emitChildren(b, blockCtx, reg, env, ctx, out, errors);
+
+        for (BlockExitHook hook : emitReg.blockExitHooks()) {
+            try {
+                hook.onBlockExit(hookCtx);
+            } catch (LumenScriptException e) {
+                throw e;
+            } catch (RuntimeException e) {
+                throw wrapRuntimeException(b.line(), b.raw(), e);
+            }
+        }
 
         try {
             bm.reg().handler().end(hctx);

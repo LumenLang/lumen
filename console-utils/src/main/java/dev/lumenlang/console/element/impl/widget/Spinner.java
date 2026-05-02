@@ -77,7 +77,7 @@ public final class Spinner implements Element {
         String glyph = frames[Math.floorMod(frame, frames.length)];
         String styled = style.apply(glyph);
         StringBuilder sb = new StringBuilder(styled);
-        for (int i = 1; i < width; i++) sb.append(' ');
+        sb.append(" ".repeat(Math.max(0, width - 1)));
         String[] out = new String[Math.max(1, height)];
         out[0] = sb.toString();
         for (int i = 1; i < out.length; i++) out[i] = " ".repeat(width);

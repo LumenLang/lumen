@@ -166,14 +166,15 @@ public final class DefaultTypeBindings {
             public int consumeCount(@NotNull List<String> tokens, @NotNull TypeEnv env) {
                 if (tokens.isEmpty())
                     throw new ParseFailureException("expected an integer value here");
-                if (tokens.size() >= 2 && tokens.get(1).equals("%"))
-                    return 2;
-                return 1;
+                int count = hasNegativeLiteral(tokens) ? 2 : 1;
+                if (tokens.size() > count && tokens.get(count).equals("%"))
+                    count++;
+                return count;
             }
 
             @Override
             public Object parse(@NotNull List<String> tokens, @NotNull TypeEnv env) {
-                String text = tokens.get(0);
+                String text = joinNegative(tokens);
                 try {
                     return Integer.parseInt(text);
                 } catch (NumberFormatException e) {
@@ -213,18 +214,26 @@ public final class DefaultTypeBindings {
             }
 
             @Override
+            public int consumeCount(@NotNull List<String> tokens, @NotNull TypeEnv env) {
+                if (tokens.isEmpty())
+                    throw new ParseFailureException("expected a long value here");
+                return hasNegativeLiteral(tokens) ? 2 : 1;
+            }
+
+            @Override
             public Object parse(@NotNull List<String> tokens, @NotNull TypeEnv env) {
-                String text = tokens.get(0);
-                if (text.endsWith("L") || text.endsWith("l")) {
-                    text = text.substring(0, text.length() - 1);
+                String text = joinNegative(tokens);
+                String stripped = text;
+                if (stripped.endsWith("L") || stripped.endsWith("l")) {
+                    stripped = stripped.substring(0, stripped.length() - 1);
                 }
                 try {
-                    return Long.parseLong(text);
+                    return Long.parseLong(stripped);
                 } catch (NumberFormatException e) {
-                    VarHandle ref = env.lookupVar(tokens.get(0));
+                    VarHandle ref = env.lookupVar(text);
                     if (ref != null)
                         return ref;
-                    throw new ParseFailureException("'" + tokens.get(0) + "' is not a valid long");
+                    throw new ParseFailureException("'" + text + "' is not a valid long");
                 }
             }
 
@@ -257,8 +266,15 @@ public final class DefaultTypeBindings {
             }
 
             @Override
+            public int consumeCount(@NotNull List<String> tokens, @NotNull TypeEnv env) {
+                if (tokens.isEmpty())
+                    throw new ParseFailureException("expected a number here");
+                return hasNegativeLiteral(tokens) ? 2 : 1;
+            }
+
+            @Override
             public Object parse(@NotNull List<String> tokens, @NotNull TypeEnv env) {
-                String text = tokens.get(0);
+                String text = joinNegative(tokens);
                 try {
                     return Double.parseDouble(text);
                 } catch (NumberFormatException e) {
@@ -298,8 +314,15 @@ public final class DefaultTypeBindings {
             }
 
             @Override
+            public int consumeCount(@NotNull List<String> tokens, @NotNull TypeEnv env) {
+                if (tokens.isEmpty())
+                    throw new ParseFailureException("expected a number here");
+                return hasNegativeLiteral(tokens) ? 2 : 1;
+            }
+
+            @Override
             public Object parse(@NotNull List<String> tokens, @NotNull TypeEnv env) {
-                String text = tokens.get(0);
+                String text = joinNegative(tokens);
                 if (text.endsWith("L") || text.endsWith("l")) {
                     try {
                         return Long.parseLong(text.substring(0, text.length() - 1));
@@ -1417,5 +1440,27 @@ public final class DefaultTypeBindings {
         String closest = FuzzyMatch.closest(token.toUpperCase(Locale.ROOT).replace(' ', '_').replace('-', '_'), known);
         if (closest != null) return "'" + token + "' is not a valid item, did you mean '" + closest.toLowerCase(Locale.ROOT) + "'?";
         return "'" + token + "' is not a valid item";
+    }
+
+    private static boolean isNumericText(@NotNull String s) {
+        if (s.isEmpty()) return false;
+        boolean dot = false;
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (c == '.') {
+                if (dot) return false;
+                dot = true;
+            } else if (!Character.isDigit(c)) return false;
+        }
+        return true;
+    }
+
+    private static boolean hasNegativeLiteral(@NotNull List<String> tokens) {
+        return tokens.size() >= 2 && tokens.get(0).equals("-") && isNumericText(tokens.get(1));
+    }
+
+    private static @NotNull String joinNegative(@NotNull List<String> tokens) {
+        if (hasNegativeLiteral(tokens)) return "-" + tokens.get(1);
+        return tokens.get(0);
     }
 }
