@@ -33,9 +33,15 @@ public final class MissingLiterals {
                 .expectContainsPattern("(heal|restore) %e:ENTITY%");
     }
 
-    @SimCase(name = "missing literal: send title without 'to' before recipient")
+    /**
+     * Buggy lock-in. {@code send title "hi" p} should suggest
+     * {@code send title %title:STRING% to %who:PLAYER%} with a missing-literal {@code to}
+     * issue. Sim emits no suggestions today.
+     */
+    @SimCase(name = "missing literal: send title without 'to' before recipient (BUG locked)")
     public static SimulatorCase sendNoTo() {
         return SimulatorCase.statement("send title \"hi\" p")
-                .env(EnvSimulator.create().withVar("p", MinecraftTypes.PLAYER));
+                .env(EnvSimulator.create().withVar("p", MinecraftTypes.PLAYER))
+                .expectNoSuggestions();
     }
 }

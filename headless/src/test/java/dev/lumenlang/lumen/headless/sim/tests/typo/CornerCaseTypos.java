@@ -17,9 +17,14 @@ public final class CornerCaseTypos {
     private CornerCaseTypos() {
     }
 
-    @SimCase(name = "block typo: 'reapt' for 'repeat'")
+    /**
+     * Buggy lock-in. {@code reapt 5 times} should suggest {@code repeat %n:INT% [time|times]}
+     * with a Typo issue on {@code reapt}. Sim emits no suggestions today.
+     */
+    @SimCase(name = "block typo: 'reapt' for 'repeat' (BUG locked)")
     public static SimulatorCase reaptForRepeat() {
-        return SimulatorCase.block("reapt 5 times");
+        return SimulatorCase.block("reapt 5 times")
+                .expectNoSuggestions();
     }
 
     /**
@@ -37,18 +42,10 @@ public final class CornerCaseTypos {
                 .expectSuggestionCount(2, 2);
     }
 
-    /**
-     * Buggy lock-in. Capitalised {@code Set} should still match {@code set}; sim falls back to
-     * the BLOCK pattern.
-     */
-    @SimCase(name = "typo: capitalised 'Set x to 5' (BUG locked)")
+    @SimCase(name = "typo: capitalised 'Set x to 5'")
     public static SimulatorCase capitalised() {
         return SimulatorCase.statement("Set x to 5")
-                .expectTopPattern("set %b:BLOCK% data [to] %data:STRING%")
-                .expectPrimaryIssue(SuggestionIssue.TypeMismatch.class)
-                .expectAnyIssue(SuggestionIssue.TypeMismatch.class)
-                .expectConfidenceAtLeast(0.63)
-                .expectSuggestionCount(2, 2);
+                .expectCleanTop("set %name:IDENT% to %val:EXPR%");
     }
 
     /**

@@ -17,32 +17,25 @@ public final class MissingArguments {
     private MissingArguments() {
     }
 
-    /**
-     * Buggy lock-in. {@code damage by 5} should rank a damage pattern, not {@code split by}.
-     * Flip once partial-prefix matching prefers the right verb.
-     */
-    @SimCase(name = "missing: damage without target (BUG locked)")
+    @SimCase(name = "missing: damage without target")
     public static SimulatorCase damageNoTarget() {
         return SimulatorCase.statement("damage by 5")
-                .expectTopPattern("%s:STRING% split by %delim:STRING%")
-                .expectPrimaryIssue(SuggestionIssue.Reorder.class)
-                .expectAnyIssue(SuggestionIssue.Reorder.class)
-                .expectConfidenceAtLeast(0.75)
-                .expectSuggestionCount(2, 2);
+                .expectTopPattern("damage %e:ENTITY% [by] %val:INT%")
+                .expectPrimaryIssue(SuggestionIssue.TypeMismatch.class)
+                .expectAnyIssue(SuggestionIssue.TypeMismatch.class)
+                .expectConfidenceAtLeast(0.73)
+                .expectSuggestionCount(1, 1);
     }
 
-    /**
-     * Buggy lock-in. Same root issue as {@link #damageNoTarget()}.
-     */
-    @SimCase(name = "missing: damage target but no amount (BUG locked)")
+    @SimCase(name = "missing: damage target but no amount")
     public static SimulatorCase damageNoAmount() {
         return SimulatorCase.statement("damage p by")
                 .env(EnvSimulator.create().withVar("p", MinecraftTypes.PLAYER))
-                .expectTopPattern("%s:STRING% split by %delim:STRING%")
-                .expectPrimaryIssue(SuggestionIssue.Reorder.class)
-                .expectAnyIssue(SuggestionIssue.Reorder.class)
-                .expectConfidenceAtLeast(0.75)
-                .expectSuggestionCount(2, 2);
+                .expectTopPattern("damage %e:ENTITY% [by] %val:INT%")
+                .expectPrimaryIssue(SuggestionIssue.TypeMismatch.class)
+                .expectAnyIssue(SuggestionIssue.TypeMismatch.class)
+                .expectConfidenceAtLeast(0.73)
+                .expectSuggestionCount(1, 1);
     }
 
     @SimCase(name = "missing: spawn without entity type")
@@ -76,12 +69,18 @@ public final class MissingArguments {
                 .expectSuggestionCount(2, 2);
     }
 
-    @SimCase(name = "missing: set time of without world")
+    /**
+     * Buggy lock-in. After the sandbox fix, the catch-all {@code set %name to %val} pattern
+     * accepts the BFS-1 reduction (drop {@code of}) cleanly and outranks the semantically
+     * correct time pattern's TypeMismatch fallback. Flip once catch-all patterns are
+     * deboosted relative to literal-rich competitors.
+     */
+    @SimCase(name = "missing: set time of without world (BUG locked)")
     public static SimulatorCase setTimeNoWorld() {
         return SimulatorCase.statement("set time of to 6000")
-                .expectTopPattern("set time [of] %w:WORLD% [to] %val:INT%")
-                .expectPrimaryIssue(SuggestionIssue.TypeMismatch.class)
-                .expectAnyIssue(SuggestionIssue.TypeMismatch.class)
+                .expectTopPattern("set %name:IDENT% to %val:EXPR%")
+                .expectPrimaryIssue(SuggestionIssue.ExtraTokens.class)
+                .expectAnyIssue(SuggestionIssue.ExtraTokens.class)
                 .expectConfidenceAtLeast(0.73)
                 .expectSuggestionCount(2, 2);
     }

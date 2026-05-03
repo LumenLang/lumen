@@ -8,8 +8,7 @@ import dev.lumenlang.lumen.headless.sim.cases.SimulatorCase;
 import dev.lumenlang.lumen.pipeline.language.simulator.PatternSimulator.SuggestionIssue;
 
 /**
- * Condition-side inputs (permission checks, comparisons, region checks). Most lock in
- * cross-pattern picks the sim makes when no clean condition pattern is found.
+ * Condition-side inputs (permission checks, comparisons, region checks).
  */
 @SimulatorTest
 public final class ConditionForms {
@@ -21,7 +20,7 @@ public final class ConditionForms {
     public static SimulatorCase hasPermission() {
         return SimulatorCase.condition("p has permission \"command.use\"")
                 .env(EnvSimulator.create().withVar("p", MinecraftTypes.PLAYER))
-                .expectNoSuggestions();
+                .expectCleanTop("%p:PLAYER% has permission %perm:STRING%");
     }
 
     @SimCase(name = "cond: 'permision' typo")
@@ -38,7 +37,8 @@ public final class ConditionForms {
     @SimCase(name = "cond: p's health > 10")
     public static SimulatorCase possessiveHealthCmp() {
         return SimulatorCase.condition("p's health > 10")
-                .env(EnvSimulator.create().withVar("p", MinecraftTypes.PLAYER));
+                .env(EnvSimulator.create().withVar("p", MinecraftTypes.PLAYER))
+                .expectCleanTop("%p:PLAYER_POSSESSIVE% health %op:OP% %n:INT%");
     }
 
     @SimCase(name = "cond: bare 'p health > 10' without possessive")
@@ -56,7 +56,7 @@ public final class ConditionForms {
     public static SimulatorCase isOp() {
         return SimulatorCase.condition("p is op")
                 .env(EnvSimulator.create().withVar("p", MinecraftTypes.PLAYER))
-                .expectNoSuggestions();
+                .expectCleanTop("%p:PLAYER% (is|is not) [a] op");
     }
 
     @SimCase(name = "cond: location inside region")
@@ -66,7 +66,7 @@ public final class ConditionForms {
                         .withVar("loc", MinecraftTypes.LOCATION)
                         .withVar("a", MinecraftTypes.LOCATION)
                         .withVar("b", MinecraftTypes.LOCATION))
-                .expectNoSuggestions();
+                .expectCleanTop("%loc:LOCATION% (is|is not) inside %min:LOCATION% to %max:LOCATION%");
     }
 
     @SimCase(name = "cond: 'inisde' typo for 'inside'")

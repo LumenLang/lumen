@@ -1,6 +1,7 @@
 package dev.lumenlang.lumen.headless.sim.cases;
 
 import dev.lumenlang.lumen.headless.sim.failure.AnyIssueMismatch;
+import dev.lumenlang.lumen.headless.sim.failure.CleanTopMismatch;
 import dev.lumenlang.lumen.headless.sim.failure.ConfidenceMismatch;
 import dev.lumenlang.lumen.headless.sim.failure.ContainsPatternMismatch;
 import dev.lumenlang.lumen.headless.sim.failure.CustomMismatch;
@@ -141,6 +142,26 @@ public final class SimulatorCase {
      */
     public @NotNull SimulatorCase expectNoSuggestions() {
         return addCheck(suggestions -> suggestions.isEmpty() ? null : new SuggestionPresenceMismatch(false, suggestions.size()));
+    }
+
+    /**
+     * Adds an expectation that the top suggestion is a clean match: pattern equals
+     * {@code patternRaw}, no issues attached, confidence is {@code 1.0}.
+     */
+    public @NotNull SimulatorCase expectCleanTop(@NotNull String patternRaw) {
+        coverage.add(Coverage.TOP_PATTERN);
+        return addCheck(suggestions -> {
+            if (suggestions.isEmpty()) {
+                return new CleanTopMismatch(patternRaw, null, List.of(), null);
+            }
+            Suggestion top = suggestions.get(0);
+            String actualPattern = top.pattern().raw();
+            List<String> actualIssues = CleanTopMismatch.issueNames(top.issues());
+            double actualConf = top.confidence();
+            boolean clean = patternRaw.equals(actualPattern) && top.issues().isEmpty() && actualConf >= 1.0;
+            if (clean) return null;
+            return new CleanTopMismatch(patternRaw, actualPattern, actualIssues, actualConf);
+        });
     }
 
     /**

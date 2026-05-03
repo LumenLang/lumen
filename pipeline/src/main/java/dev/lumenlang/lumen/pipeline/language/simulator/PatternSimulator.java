@@ -261,12 +261,11 @@ public final class PatternSimulator {
         int limit = Math.min(opts.intValue(SimulatorOption.MAX_CANDIDATES), scored.size());
         debug.emit(Verbosity.CANDIDATES, 0, () -> "analyze " + scored.size() + " pre-filtered candidates, taking top " + limit);
         Map<Pattern, Suggestion> best = new LinkedHashMap<>();
-        boolean[] anyCleanLevel0 = {false};
         for (int i = 0; i < limit; i++) {
             PreFilterScore cs = scored.get(i);
             debug.emit(Verbosity.SCORED, 1, () -> "analyse #" + cs.pattern.raw() + " (preFilter=" + format(cs.confidence) + ")");
             long candStart = debug.enabled(Verbosity.TIMING) ? System.nanoTime() : 0L;
-            Suggestion s = tryMatch(tokens, cs, types, env, opts, debug, anyCleanLevel0);
+            Suggestion s = tryMatch(tokens, cs, types, env, opts, debug);
             if (debug.enabled(Verbosity.TIMING)) {
                 Trace.timing(debug, "tryMatch " + cs.pattern.raw(), System.nanoTime() - candStart);
             }
@@ -278,10 +277,6 @@ public final class PatternSimulator {
             if (existing == null || s.confidence() > existing.confidence()) {
                 best.put(s.pattern(), s);
             }
-        }
-        if (anyCleanLevel0[0]) {
-            debug.emit(Verbosity.RESULT, 0, () -> "suppressing " + best.size() + " sim suggestion(s): some pattern matched the input cleanly");
-            best.clear();
         }
         List<Suggestion> results = new ArrayList<>(best.values());
         results.sort(Comparator.comparingDouble(Suggestion::confidence).reversed());
@@ -302,7 +297,7 @@ public final class PatternSimulator {
         return ordered;
     }
 
-    private static @Nullable Suggestion tryMatch(@NotNull List<Token> tokens, @NotNull PreFilterScore cs, @NotNull TypeRegistry types, @NotNull TypeEnvImpl env, @NotNull SimulatorOptions opts, @NotNull SimulatorDebug debug, @NotNull boolean[] anyCleanLevel0) {
+    private static @Nullable Suggestion tryMatch(@NotNull List<Token> tokens, @NotNull PreFilterScore cs, @NotNull TypeRegistry types, @NotNull TypeEnvImpl env, @NotNull SimulatorOptions opts, @NotNull SimulatorDebug debug) {
         Pattern pattern = cs.pattern;
         List<LiteralInfo> literals = extractLiterals(pattern);
         int maxK = Math.min(effectiveMaxK(tokens.size(), opts), tokens.size() - 1);
@@ -321,9 +316,9 @@ public final class PatternSimulator {
                         Trace.deep(debug, 3, () -> "level-0 succeeded but sandbox rejected, abort candidate");
                         return null;
                     }
-                    anyCleanLevel0[0] = true;
-                    Trace.deep(debug, 3, () -> "level-0 clean match, suppress all sim suggestions for this run");
-                    return null;
+                    debug.trace(new TraceEvent.SuggestionFormed(pattern, 1.0, "level-0 clean", List.of()));
+                    debug.emit(Verbosity.ISSUES, 2, () -> "level-0 clean match, conf=1.000");
+                    return new Suggestion(pattern, 1.0, List.of(), progress);
                 }
                 TypoFix typo = findBestTypoFix(tokens, literals, pattern, debug);
                 if (typo != null) {
@@ -751,6 +746,11 @@ public final class PatternSimulator {
     }
 
     private static @Nullable Suggestion tryReorderMatch(@NotNull List<Token> tokens, @NotNull PreFilterScore cs, @NotNull TypeRegistry types, @NotNull TypeEnvImpl env, @NotNull List<LiteralInfo> literals, @NotNull SimulatorOptions opts, @NotNull SimulatorDebug debug) {
+        double prefilterFloor = opts.doubleValue(SimulatorOption.REORDER_PREFILTER_FLOOR);
+        if (cs.confidence < prefilterFloor) {
+            Trace.deep(debug, 2, () -> "reorder skipped: preFilter " + format(cs.confidence) + " < REORDER_PREFILTER_FLOOR " + format(prefilterFloor));
+            return null;
+        }
         List<LiteralMatchResult> matchDetails = cs.matchDetails;
         long anchoredCount = matchDetails.stream().filter(m -> m.tokenIndex >= 0).count();
         int shapeLimit = opts.intValue(SimulatorOption.SHAPE_MATCH_TOKEN_LIMIT);
@@ -904,7 +904,7 @@ public final class PatternSimulator {
     public static boolean tryStatementHandler(@NotNull RegisteredPattern handler, @NotNull Match match, @NotNull TypeEnvImpl env) {
         try {
             CodegenContextImpl codegenCtx = new CodegenContextImpl("__simulation__.luma");
-            BlockContextImpl blockCtx = new BlockContextImpl(null, null, List.of(), 0);
+            BlockContextImpl blockCtx = sandboxBlock(env);
             HandlerContextImpl hctx = new HandlerContextImpl(match, env, codegenCtx, blockCtx, NoOpJavaOutput.INSTANCE);
             handler.handler().handle(hctx);
             return true;
@@ -924,12 +924,20 @@ public final class PatternSimulator {
     public static boolean tryExpressionHandler(@NotNull RegisteredExpression handler, @NotNull Match match, @NotNull TypeEnvImpl env) {
         try {
             CodegenContextImpl codegenCtx = new CodegenContextImpl("__simulation__.luma");
-            BlockContextImpl blockCtx = new BlockContextImpl(null, null, List.of(), 0);
+            BlockContextImpl blockCtx = sandboxBlock(env);
             HandlerContextImpl hctx = new HandlerContextImpl(match, env, codegenCtx, blockCtx, NoOpJavaOutput.INSTANCE);
             handler.handler().handle(hctx);
             return true;
         } catch (Throwable ignored) {
             return false;
+        }
+    }
+
+    private static @NotNull BlockContextImpl sandboxBlock(@NotNull TypeEnvImpl env) {
+        try {
+            return env.blockContext();
+        } catch (IllegalStateException missing) {
+            return new BlockContextImpl(null, null, List.of(), 0);
         }
     }
 

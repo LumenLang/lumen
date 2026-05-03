@@ -21,7 +21,7 @@ public final class ExpressionForms {
     public static SimulatorCase possessiveHealth() {
         return SimulatorCase.expression("get p's health")
                 .env(EnvSimulator.create().withVar("p", MinecraftTypes.PLAYER))
-                .expectNoSuggestions();
+                .expectCleanTop("get %e:ENTITY_POSSESSIVE% health");
     }
 
     @SimCase(name = "expr: 'get p health' without possessive")
@@ -49,13 +49,13 @@ public final class ExpressionForms {
     @SimCase(name = "expr: combined string of two strings")
     public static SimulatorCase combinedString() {
         return SimulatorCase.expression("combined string of \"a\" and \"b\"")
-                .expectNoSuggestions();
+                .expectCleanTop("combined string [of] %s1:STRING% and %s2:STRING%");
     }
 
     @SimCase(name = "expr: max of two numbers")
     public static SimulatorCase maxOfTwo() {
         return SimulatorCase.expression("max of 5 and 10")
-                .expectNoSuggestions();
+                .expectCleanTop("(max|maximum) of %x:NUMBER% and %y:NUMBER%");
     }
 
     /**
@@ -76,13 +76,13 @@ public final class ExpressionForms {
     public static SimulatorCase getWorld() {
         return SimulatorCase.expression("get loc world")
                 .env(EnvSimulator.create().withVar("loc", MinecraftTypes.LOCATION))
-                .expectNoSuggestions();
+                .expectCleanTop("get %loc:LOCATION% world");
     }
 
     @SimCase(name = "expr: clamp number")
     public static SimulatorCase clampNumber() {
         return SimulatorCase.expression("clamp x between 0 and 10")
                 .env(EnvSimulator.create().withVar("x", PrimitiveType.INT))
-                .expectNoSuggestions();
+                .expectCleanTop("clamp %x:NUMBER% between %min:NUMBER% and %max:NUMBER%");
     }
 }

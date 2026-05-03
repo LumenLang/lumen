@@ -54,6 +54,12 @@ public final class MismatchRenderer {
             }
         } else if (mismatch instanceof CustomMismatch m) {
             rows.add(reasonRow(m.reason()));
+        } else if (mismatch instanceof CleanTopMismatch m) {
+            rows.add(expectedRow(m.expectedPattern() + "  (clean, conf=1.000)"));
+            String actual = m.actualPattern() == null ? "<no suggestion returned>" : m.actualPattern();
+            String issuePart = m.actualIssues().isEmpty() ? "no issues" : String.join(" + ", m.actualIssues());
+            String confPart = m.actualConfidence() == null ? "n/a" : format3(m.actualConfidence());
+            rows.add(actualRow(actual + "  (" + issuePart + ", conf=" + confPart + ")"));
         }
         return rows;
     }

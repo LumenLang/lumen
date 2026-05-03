@@ -96,7 +96,15 @@ public enum SimulatorOption {
     /**
      * Confidence multiplier applied when a sandboxed handler invocation throws.
      */
-    SANDBOX_REJECTED_PENALTY(Kind.DOUBLE, 0.75, Range.zeroToOne());
+    SANDBOX_REJECTED_PENALTY(Kind.DOUBLE, 0.75, Range.zeroToOne()),
+
+    /**
+     * Minimum pre-filter confidence required to attempt the reorder fallback. Patterns that
+     * scored below this threshold during the pre-filter pass skip reorder analysis entirely,
+     * which prevents catch-all patterns (where most parts are placeholders) from emitting
+     * spurious reorder suggestions on inputs they barely match.
+     */
+    REORDER_PREFILTER_FLOOR(Kind.DOUBLE, 0.50, Range.zeroToOne());
 
     /**
      * Numeric kind a {@link SimulatorOption} accepts.

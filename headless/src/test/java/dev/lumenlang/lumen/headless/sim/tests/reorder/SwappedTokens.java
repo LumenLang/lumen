@@ -23,10 +23,16 @@ public final class SwappedTokens {
                 .expectAnySuggestions();
     }
 
-    @SimCase(name = "swap: send title recipient before string")
+    /**
+     * Buggy lock-in. {@code send title to p "hi"} should suggest
+     * {@code send title %title:STRING% to %who:PLAYER%} with a Reorder issue. Sim emits no
+     * suggestions today.
+     */
+    @SimCase(name = "swap: send title recipient before string (BUG locked)")
     public static SimulatorCase sendToBeforeString() {
         return SimulatorCase.statement("send title to p \"hi\"")
-                .env(EnvSimulator.create().withVar("p", MinecraftTypes.PLAYER));
+                .env(EnvSimulator.create().withVar("p", MinecraftTypes.PLAYER))
+                .expectNoSuggestions();
     }
 
     @SimCase(name = "swap: damage 'by amount' before target")
