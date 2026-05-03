@@ -24,18 +24,14 @@ public final class ConditionForms {
                 .expectNoSuggestions();
     }
 
-    /**
-     * Buggy lock-in. Same root issue as {@link #hasPermission()}, with a typo on the literal.
-     */
-    @SimCase(name = "cond: 'permision' typo (BUG locked)")
+    @SimCase(name = "cond: 'permision' typo")
     public static SimulatorCase permisionTypo() {
         return SimulatorCase.condition("p has permision \"command.use\"")
                 .env(EnvSimulator.create().withVar("p", MinecraftTypes.PLAYER))
-                .expectTopPattern("%e:ENTITY% has %attr:ATTRIBUTE%")
-                .expectPrimaryIssue(SuggestionIssue.TypeMismatch.class)
-                .expectAnyIssue(SuggestionIssue.TypeMismatch.class)
-                .expectAnyIssue(SuggestionIssue.ExtraTokens.class)
-                .expectConfidenceAtLeast(0.63)
+                .expectTopPattern("%p:PLAYER% has permission %perm:STRING%")
+                .expectPrimaryIssue(SuggestionIssue.Typo.class)
+                .expectAnyIssue(SuggestionIssue.Typo.class)
+                .expectConfidenceAtLeast(0.95)
                 .expectSuggestionCount(2, 2);
     }
 
@@ -83,7 +79,7 @@ public final class ConditionForms {
                 .expectTopPattern("%loc:LOCATION% (is|is not) inside %min:LOCATION% to %max:LOCATION%")
                 .expectPrimaryIssue(SuggestionIssue.Typo.class)
                 .expectAnyIssue(SuggestionIssue.Typo.class)
-                .expectConfidenceAtLeast(0.475)
+                .expectConfidenceAtLeast(0.95)
                 .expectSuggestionCount(2, 2);
     }
 }

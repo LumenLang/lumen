@@ -338,16 +338,14 @@ public final class PatternSimulator {
                     }
                     debug.trace(new TraceEvent.TypoConsidered(pattern, typo.token, typo.expected, FuzzyMatch.prefixAwareDistance(typo.token.text(), typo.expected)));
                     if (!sandboxRejected && corrProgress.succeeded()) {
-                        boolean firstMatch = firstTokenMatches(tokens, literals) || isFirstLiteralToken(typo, tokens, literals);
-                        double confidence = computeConfidence(0, 1, firstMatch, opts);
+                        double confidence = computeConfidence(0, 1, true, opts);
                         List<SuggestionIssue> issues = List.of(new SuggestionIssue.Typo(typo.token, typo.expected));
                         debug.trace(new TraceEvent.SuggestionFormed(pattern, confidence, "level-0 typo", issues));
                         debug.emit(Verbosity.ISSUES, 2, () -> "level-0 typo accepted, conf=" + format(confidence) + " typo=" + typo.token.text() + "->" + typo.expected);
                         return new Suggestion(pattern, confidence, issues, corrProgress);
                     }
                     if (sandboxRejected && corrProgress.succeeded()) {
-                        boolean firstMatch = firstTokenMatches(tokens, literals) || isFirstLiteralToken(typo, tokens, literals);
-                        double confidence = computeConfidence(0, 1, firstMatch, opts) * sandboxRejectedPenalty;
+                        double confidence = computeConfidence(0, 1, true, opts) * sandboxRejectedPenalty;
                         List<SuggestionIssue> issues = List.of(new SuggestionIssue.Typo(typo.token, typo.expected));
                         debug.trace(new TraceEvent.SuggestionFormed(pattern, confidence, "level-0 typo (sandbox-penalised)", issues));
                         debug.emit(Verbosity.ISSUES, 2, () -> "level-0 typo accepted but sandbox penalised, conf=" + format(confidence));
@@ -401,8 +399,7 @@ public final class PatternSimulator {
                         }
                     }
                     if (corrProgress != null && corrProgress.succeeded()) {
-                        boolean firstMatch = firstTokenMatches(tokens, literals) || isFirstLiteralToken(typo, tokens, literals);
-                        double confidence = computeConfidence(k, 1, firstMatch, opts);
+                        double confidence = computeConfidence(k, 1, true, opts);
                         List<SuggestionIssue> issues = List.of(new SuggestionIssue.ExtraTokens(List.copyOf(removed)), new SuggestionIssue.Typo(typo.token, typo.expected));
                         int level = k;
                         debug.trace(new TraceEvent.TypoConsidered(pattern, typo.token, typo.expected, FuzzyMatch.prefixAwareDistance(typo.token.text(), typo.expected)));
@@ -479,7 +476,8 @@ public final class PatternSimulator {
             if (!bestPartialProgress.unmatchedTrailingTokens().isEmpty()) {
                 issues.add(new SuggestionIssue.ExtraTokens(bestPartialProgress.unmatchedTrailingTokens()));
             }
-            boolean firstMatch = firstTokenMatches(tokens, literals) || isFirstLiteralToken(primaryTypo, tokens, literals);
+            List<Token> correctedForFirstCheck = applyTypoFix(tokens, primaryTypo);
+            boolean firstMatch = firstTokenMatches(tokens, literals) || firstTokenMatches(correctedForFirstCheck, literals) || isFirstLiteralToken(primaryTypo, tokens, literals);
             int totalTypos = 1 + (int) bestPartialProgress.literalTypos().stream().filter(lt -> !lt.token().text().equals(primaryTypo.token.text())).count();
             double confidence = Math.min(computeConfidence(0, totalTypos, firstMatch, opts), computeTypeMatchConfidence(bestPartialProgress, tokens.size()));
             List<SuggestionIssue> frozen = List.copyOf(issues);
