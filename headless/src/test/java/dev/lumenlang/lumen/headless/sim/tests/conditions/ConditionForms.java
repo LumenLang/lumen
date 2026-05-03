@@ -17,20 +17,11 @@ public final class ConditionForms {
     private ConditionForms() {
     }
 
-    /**
-     * Buggy lock-in. Permission checks should match a permission pattern, sim picks an
-     * attribute pattern.
-     */
-    @SimCase(name = "cond: player has permission (BUG locked)")
+    @SimCase(name = "cond: player has permission")
     public static SimulatorCase hasPermission() {
         return SimulatorCase.condition("p has permission \"command.use\"")
                 .env(EnvSimulator.create().withVar("p", MinecraftTypes.PLAYER))
-                .expectTopPattern("%e:ENTITY% has %attr:ATTRIBUTE%")
-                .expectPrimaryIssue(SuggestionIssue.TypeMismatch.class)
-                .expectAnyIssue(SuggestionIssue.TypeMismatch.class)
-                .expectAnyIssue(SuggestionIssue.ExtraTokens.class)
-                .expectConfidenceAtLeast(0.63)
-                .expectSuggestionCount(2, 2);
+                .expectNoSuggestions();
     }
 
     /**
@@ -65,37 +56,21 @@ public final class ConditionForms {
                 .expectSuggestionCount(2, 2);
     }
 
-    /**
-     * Buggy lock-in. {@code p is op} should match {@code OFFLINE_PLAYER is op} cleanly when p is
-     * a PLAYER (PLAYER widens to OFFLINE_PLAYER). Sim reports a TypeMismatch.
-     */
-    @SimCase(name = "cond: p is op (BUG locked)")
+    @SimCase(name = "cond: p is op")
     public static SimulatorCase isOp() {
         return SimulatorCase.condition("p is op")
                 .env(EnvSimulator.create().withVar("p", MinecraftTypes.PLAYER))
-                .expectTopPattern("%op:OFFLINE_PLAYER% (is|is not) [a] op")
-                .expectPrimaryIssue(SuggestionIssue.TypeMismatch.class)
-                .expectAnyIssue(SuggestionIssue.TypeMismatch.class)
-                .expectConfidenceAtLeast(0.73)
-                .expectSuggestionCount(2, 2);
+                .expectNoSuggestions();
     }
 
-    /**
-     * Buggy lock-in. Sim mismatches LOCATION as PLAYER on the inside-region pattern. Flip once
-     * the right pattern is preferred.
-     */
-    @SimCase(name = "cond: location inside region (BUG locked)")
+    @SimCase(name = "cond: location inside region")
     public static SimulatorCase insideRegion() {
         return SimulatorCase.condition("loc is inside a to b")
                 .env(EnvSimulator.create()
                         .withVar("loc", MinecraftTypes.LOCATION)
                         .withVar("a", MinecraftTypes.LOCATION)
                         .withVar("b", MinecraftTypes.LOCATION))
-                .expectTopPattern("%who:PLAYER% (is|is not) inside %min:LOCATION% to %max:LOCATION%")
-                .expectPrimaryIssue(SuggestionIssue.TypeMismatch.class)
-                .expectAnyIssue(SuggestionIssue.TypeMismatch.class)
-                .expectConfidenceAtLeast(0.73)
-                .expectSuggestionCount(2, 2);
+                .expectNoSuggestions();
     }
 
     @SimCase(name = "cond: 'inisde' typo for 'inside'")

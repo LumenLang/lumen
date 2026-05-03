@@ -17,19 +17,11 @@ public final class ExpressionForms {
     private ExpressionForms() {
     }
 
-    /**
-     * Buggy lock-in. {@code get p's health} should match {@code get %ENTITY_POSSESSIVE% health}
-     * cleanly. Sim picks the {@code max health} variant with a Reorder.
-     */
-    @SimCase(name = "expr: get p's health (BUG locked)")
+    @SimCase(name = "expr: get p's health")
     public static SimulatorCase possessiveHealth() {
         return SimulatorCase.expression("get p's health")
                 .env(EnvSimulator.create().withVar("p", MinecraftTypes.PLAYER))
-                .expectTopPattern("get %e:ENTITY_POSSESSIVE% max health")
-                .expectPrimaryIssue(SuggestionIssue.Reorder.class)
-                .expectAnyIssue(SuggestionIssue.Reorder.class)
-                .expectConfidenceAtLeast(1.0)
-                .expectSuggestionCount(2, 2);
+                .expectNoSuggestions();
     }
 
     @SimCase(name = "expr: 'get p health' without possessive")
@@ -54,36 +46,21 @@ public final class ExpressionForms {
                 .expectSuggestionCount(2, 2);
     }
 
-    /**
-     * Buggy lock-in. No {@code combined string of} pattern exists today; sim picks the LIST
-     * indexer.
-     */
-    @SimCase(name = "expr: combined string of two strings (BUG locked)")
+    @SimCase(name = "expr: combined string of two strings")
     public static SimulatorCase combinedString() {
         return SimulatorCase.expression("combined string of \"a\" and \"b\"")
-                .expectTopPattern("%list:LIST% index of %val:EXPR%")
-                .expectPrimaryIssue(SuggestionIssue.TypeMismatch.class)
-                .expectAnyIssue(SuggestionIssue.TypeMismatch.class)
-                .expectConfidenceAtLeast(0.213)
-                .expectSuggestionCount(1, 1);
+                .expectNoSuggestions();
     }
 
-    /**
-     * Buggy lock-in. {@code max of x and y} should match a math reducer; sim falls back to LIST
-     * index of.
-     */
-    @SimCase(name = "expr: max of two numbers (BUG locked)")
+    @SimCase(name = "expr: max of two numbers")
     public static SimulatorCase maxOfTwo() {
         return SimulatorCase.expression("max of 5 and 10")
-                .expectTopPattern("%list:LIST% index of %val:EXPR%")
-                .expectPrimaryIssue(SuggestionIssue.TypeMismatch.class)
-                .expectAnyIssue(SuggestionIssue.TypeMismatch.class)
-                .expectConfidenceAtLeast(0.28)
-                .expectSuggestionCount(1, 1);
+                .expectNoSuggestions();
     }
 
     /**
-     * Buggy lock-in. Same root cause as {@link #maxOfTwo()} with a typo on the verb.
+     * Buggy lock-in. {@code maks} typo for {@code max}: sim should suggest a Typo. Currently
+     * picks LIST indexer with TypeMismatch instead. Flip once typo recognition reaches it.
      */
     @SimCase(name = "expr: 'maks' typo for 'max' (BUG locked)")
     public static SimulatorCase maksForMax() {
@@ -95,34 +72,17 @@ public final class ExpressionForms {
                 .expectSuggestionCount(1, 1);
     }
 
-    /**
-     * Buggy lock-in. {@code get loc world} should match a possessive world getter, sim picks the
-     * server-wide world-by-name lookup.
-     */
-    @SimCase(name = "expr: get world of location (BUG locked)")
+    @SimCase(name = "expr: get world of location")
     public static SimulatorCase getWorld() {
         return SimulatorCase.expression("get loc world")
                 .env(EnvSimulator.create().withVar("loc", MinecraftTypes.LOCATION))
-                .expectTopPattern("get world %name:STRING%")
-                .expectPrimaryIssue(SuggestionIssue.Reorder.class)
-                .expectAnyIssue(SuggestionIssue.Reorder.class)
-                .expectConfidenceAtLeast(1.0)
-                .expectSuggestionCount(2, 2);
+                .expectNoSuggestions();
     }
 
-    /**
-     * Buggy lock-in. {@code clamp x between 0 and 10} has no clamp pattern today; sim falls back
-     * to a coordinate getter.
-     */
-    @SimCase(name = "expr: clamp number (BUG locked)")
+    @SimCase(name = "expr: clamp number")
     public static SimulatorCase clampNumber() {
         return SimulatorCase.expression("clamp x between 0 and 10")
                 .env(EnvSimulator.create().withVar("x", PrimitiveType.INT))
-                .expectTopPattern("[get] %b:BLOCK% (x|y|z)")
-                .expectPrimaryIssue(SuggestionIssue.TypeMismatch.class)
-                .expectAnyIssue(SuggestionIssue.TypeMismatch.class)
-                .expectAnyIssue(SuggestionIssue.ExtraTokens.class)
-                .expectConfidenceAtLeast(0.38)
-                .expectSuggestionCount(1, 1);
+                .expectNoSuggestions();
     }
 }

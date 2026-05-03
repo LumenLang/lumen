@@ -261,11 +261,12 @@ public final class PatternSimulator {
         int limit = Math.min(opts.intValue(SimulatorOption.MAX_CANDIDATES), scored.size());
         debug.emit(Verbosity.CANDIDATES, 0, () -> "analyze " + scored.size() + " pre-filtered candidates, taking top " + limit);
         Map<Pattern, Suggestion> best = new LinkedHashMap<>();
+        boolean[] anyCleanLevel0 = {false};
         for (int i = 0; i < limit; i++) {
             PreFilterScore cs = scored.get(i);
             debug.emit(Verbosity.SCORED, 1, () -> "analyse #" + cs.pattern.raw() + " (preFilter=" + format(cs.confidence) + ")");
             long candStart = debug.enabled(Verbosity.TIMING) ? System.nanoTime() : 0L;
-            Suggestion s = tryMatch(tokens, cs, types, env, opts, debug);
+            Suggestion s = tryMatch(tokens, cs, types, env, opts, debug, anyCleanLevel0);
             if (debug.enabled(Verbosity.TIMING)) {
                 Trace.timing(debug, "tryMatch " + cs.pattern.raw(), System.nanoTime() - candStart);
             }
@@ -277,6 +278,10 @@ public final class PatternSimulator {
             if (existing == null || s.confidence() > existing.confidence()) {
                 best.put(s.pattern(), s);
             }
+        }
+        if (anyCleanLevel0[0]) {
+            debug.emit(Verbosity.RESULT, 0, () -> "suppressing " + best.size() + " sim suggestion(s): some pattern matched the input cleanly");
+            best.clear();
         }
         List<Suggestion> results = new ArrayList<>(best.values());
         results.sort(Comparator.comparingDouble(Suggestion::confidence).reversed());
@@ -297,7 +302,7 @@ public final class PatternSimulator {
         return ordered;
     }
 
-    private static @Nullable Suggestion tryMatch(@NotNull List<Token> tokens, @NotNull PreFilterScore cs, @NotNull TypeRegistry types, @NotNull TypeEnvImpl env, @NotNull SimulatorOptions opts, @NotNull SimulatorDebug debug) {
+    private static @Nullable Suggestion tryMatch(@NotNull List<Token> tokens, @NotNull PreFilterScore cs, @NotNull TypeRegistry types, @NotNull TypeEnvImpl env, @NotNull SimulatorOptions opts, @NotNull SimulatorDebug debug, @NotNull boolean[] anyCleanLevel0) {
         Pattern pattern = cs.pattern;
         List<LiteralInfo> literals = extractLiterals(pattern);
         int maxK = Math.min(effectiveMaxK(tokens.size(), opts), tokens.size() - 1);
@@ -316,7 +321,8 @@ public final class PatternSimulator {
                         Trace.deep(debug, 3, () -> "level-0 succeeded but sandbox rejected, abort candidate");
                         return null;
                     }
-                    Trace.deep(debug, 3, () -> "level-0 succeeded, normal pipeline would have caught it, abort candidate");
+                    anyCleanLevel0[0] = true;
+                    Trace.deep(debug, 3, () -> "level-0 clean match, suppress all sim suggestions for this run");
                     return null;
                 }
                 TypoFix typo = findBestTypoFix(tokens, literals, pattern, debug);

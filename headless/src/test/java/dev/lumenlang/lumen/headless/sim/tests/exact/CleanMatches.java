@@ -19,34 +19,18 @@ public final class CleanMatches {
     private CleanMatches() {
     }
 
-    /**
-     * Buggy lock-in. {@code teleport p to l} should match cleanly. Sim emits PLAYER/ENTITY
-     * teleport variants with TypeMismatch on the LOCATION arg. Flip to
-     * {@code expectNoSuggestions()} once the LOCATION variant is preferred.
-     */
-    @SimCase(name = "clean: teleport p to l (BUG locked)")
+    @SimCase(name = "clean: teleport p to l")
     public static SimulatorCase teleport() {
         return SimulatorCase.statement("teleport p to l")
                 .env(EnvSimulator.create().withVar("p", MinecraftTypes.PLAYER).withVar("l", MinecraftTypes.LOCATION))
-                .expectTopPattern("(teleport|tp) %who:PLAYER% [to] %target:PLAYER%")
-                .expectPrimaryIssue(SuggestionIssue.TypeMismatch.class)
-                .expectAnyIssue(SuggestionIssue.TypeMismatch.class)
-                .expectConfidenceAtLeast(0.73)
-                .expectSuggestionCount(2, 2);
+                .expectNoSuggestions();
     }
 
-    /**
-     * Buggy lock-in. {@code give p diamond} should match cleanly. Sim emits two 3-arg variants
-     * (the {@code [amt]} is optional in the real pattern). Flip once the no-amount form scores
-     * the input as complete.
-     */
-    @SimCase(name = "clean: give p diamond (BUG locked)")
+    @SimCase(name = "clean: give p diamond")
     public static SimulatorCase give() {
         return SimulatorCase.statement("give p diamond")
                 .env(EnvSimulator.create().withVar("p", MinecraftTypes.PLAYER))
-                .expectTopPattern("give %who:PLAYER% %item:MATERIAL% %amt:INT%")
-                .expectConfidenceAtLeast(0.85)
-                .expectSuggestionCount(2, 2);
+                .expectNoSuggestions();
     }
 
     @SimCase(name = "clean: message p \"hello\"")
@@ -101,34 +85,18 @@ public final class CleanMatches {
                 .env(EnvSimulator.create().withVar("mob", MinecraftTypes.ENTITY));
     }
 
-    /**
-     * Buggy lock-in. Heal of an entity should match cleanly, but the sim emits a PLAYER pattern
-     * with TypeMismatch. Flip to {@code expectNoSuggestions()} once the sim handles ENTITY here.
-     */
-    @SimCase(name = "clean: heal entity (BUG locked)")
+    @SimCase(name = "clean: heal entity")
     public static SimulatorCase healEntity() {
         return SimulatorCase.statement("heal mob")
                 .env(EnvSimulator.create().withVar("mob", MinecraftTypes.ENTITY))
-                .expectTopPattern("(heal|restore) [the] %who:PLAYER%")
-                .expectPrimaryIssue(SuggestionIssue.TypeMismatch.class)
-                .expectAnyIssue(SuggestionIssue.TypeMismatch.class)
-                .expectConfidenceAtLeast(0.73)
-                .expectSuggestionCount(1, 1);
+                .expectNoSuggestions();
     }
 
-    /**
-     * Buggy lock-in. Spawn at LOCATION should match cleanly. Sim reports TypeMismatch on the
-     * location slot. Flip to {@code expectNoSuggestions()} once fixed.
-     */
-    @SimCase(name = "clean: spawn entity at location (BUG locked)")
+    @SimCase(name = "clean: spawn entity at location")
     public static SimulatorCase spawnAtLocation() {
         return SimulatorCase.statement("spawn zombie at l")
                 .env(EnvSimulator.create().withVar("l", MinecraftTypes.LOCATION))
-                .expectTopPattern("spawn %type:ENTITY_TYPE% at %who:PLAYER%")
-                .expectPrimaryIssue(SuggestionIssue.TypeMismatch.class)
-                .expectAnyIssue(SuggestionIssue.TypeMismatch.class)
-                .expectConfidenceAtLeast(0.73)
-                .expectSuggestionCount(2, 2);
+                .expectNoSuggestions();
     }
 
     /**
