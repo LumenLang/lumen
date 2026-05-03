@@ -7,12 +7,12 @@ import dev.lumenlang.lumen.headless.sim.cases.EnvSimulator;
 import dev.lumenlang.lumen.headless.sim.cases.SimulatorCase;
 
 /**
- * Cases where the input is missing a required literal keyword from the matching pattern.
+ * Inputs that omit a required literal keyword (e.g. {@code title}, {@code to}).
  */
 @SimulatorTest
-public final class MissingLiteralCases {
+public final class MissingLiterals {
 
-    private MissingLiteralCases() {
+    private MissingLiterals() {
     }
 
     @SimCase(name = "missing literal: send needs 'title' or 'actionbar'")
@@ -27,9 +27,15 @@ public final class MissingLiteralCases {
                 });
     }
 
-    @SimCase(name = "missing argument: 'heal' alone")
+    @SimCase(name = "missing literal: heal alone")
     public static SimulatorCase healAlone() {
         return SimulatorCase.statement("heal")
-                .expectContainsPattern("(heal|restore) [the] %who:PLAYER%");
+                .expectContainsPattern("(heal|restore) %e:ENTITY%");
+    }
+
+    @SimCase(name = "missing literal: send title without 'to' before recipient")
+    public static SimulatorCase sendNoTo() {
+        return SimulatorCase.statement("send title \"hi\" p")
+                .env(EnvSimulator.create().withVar("p", MinecraftTypes.PLAYER));
     }
 }
