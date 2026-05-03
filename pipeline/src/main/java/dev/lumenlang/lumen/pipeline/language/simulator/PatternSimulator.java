@@ -1,5 +1,6 @@
 package dev.lumenlang.lumen.pipeline.language.simulator;
 
+import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
 import dev.lumenlang.lumen.api.pattern.PatternMeta;
 import dev.lumenlang.lumen.api.util.FuzzyMatch;
 import dev.lumenlang.lumen.pipeline.codegen.BlockContextImpl;
@@ -312,8 +313,16 @@ public final class PatternSimulator {
                 Trace.matchAttempt(debug, pattern, "level-0", progress);
                 level0Progress = progress;
                 if (progress.succeeded()) {
-                    if (isBuiltin(cs.meta) && progress.match() != null && !tryHandlerSandbox(cs.handler, progress.match(), env, pattern, "level-0", debug)) {
-                        Trace.deep(debug, 3, () -> "level-0 succeeded but sandbox rejected, abort candidate");
+                    Throwable sandbox = isBuiltin(cs.meta) && progress.match() != null ? runSandbox(cs.handler, progress.match(), env, pattern, "level-0", debug) : null;
+                    if (sandbox instanceof DiagnosticException de) {
+                        double confidence = computeConfidence(0, 0, true, opts) * sandboxRejectedPenalty;
+                        List<SuggestionIssue> issues = List.of(new SuggestionIssue.HandlerDiagnostic(de.diagnostic().title()));
+                        debug.trace(new TraceEvent.SuggestionFormed(pattern, confidence, "level-0 handler-diagnostic", issues));
+                        debug.emit(Verbosity.ISSUES, 2, () -> "level-0 syntactic match, handler rejected: " + de.diagnostic().title() + " (conf=" + format(confidence) + ")");
+                        return new Suggestion(pattern, confidence, issues, progress);
+                    }
+                    if (sandbox != null) {
+                        Trace.deep(debug, 3, () -> "level-0 succeeded but sandbox rejected (non-diagnostic throw), abort candidate");
                         return null;
                     }
                     debug.trace(new TraceEvent.SuggestionFormed(pattern, 1.0, "level-0 clean", List.of()));
@@ -908,18 +917,21 @@ public final class PatternSimulator {
         return "Lumen".equals(meta.by());
     }
 
-    private static boolean tryHandlerSandbox(@Nullable Object handler, @NotNull Match match, @NotNull TypeEnvImpl env, @NotNull Pattern pattern, @NotNull String stage, @NotNull SimulatorDebug debug) {
+    private static @Nullable Throwable runSandbox(@Nullable Object handler, @NotNull Match match, @NotNull TypeEnvImpl env, @NotNull Pattern pattern, @NotNull String stage, @NotNull SimulatorDebug debug) {
         Throwable thrown;
         if (handler instanceof RegisteredPattern rp) {
             thrown = tryStatementHandler(rp, match, env);
         } else if (handler instanceof RegisteredExpression re) {
             thrown = tryExpressionHandler(re, match, env);
         } else {
-            return true;
+            return null;
         }
-        if (thrown == null) return true;
-        Trace.sandboxRejected(debug, pattern, stage, thrown);
-        return false;
+        if (thrown != null) Trace.sandboxRejected(debug, pattern, stage, thrown);
+        return thrown;
+    }
+
+    private static boolean tryHandlerSandbox(@Nullable Object handler, @NotNull Match match, @NotNull TypeEnvImpl env, @NotNull Pattern pattern, @NotNull String stage, @NotNull SimulatorDebug debug) {
+        return runSandbox(handler, match, env, pattern, stage, debug) == null;
     }
 
     /**
@@ -1041,6 +1053,16 @@ public final class PatternSimulator {
          * @param bindingId the type binding ID that is missing
          */
         record MissingBinding(@NotNull String bindingId) implements SuggestionIssue {
+        }
+
+        /**
+         * The pattern's handler accepted the syntactic match but rejected it semantically by
+         * throwing a {@link DiagnosticException}. The diagnostic title carries the underlying
+         * reason (lossy numeric conversion, type mismatch in assignment, etc).
+         *
+         * @param title the diagnostic title from the thrown exception
+         */
+        record HandlerDiagnostic(@NotNull String title) implements SuggestionIssue {
         }
     }
 

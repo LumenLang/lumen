@@ -77,33 +77,25 @@ public final class TypeMismatches {
                 .expectSuggestionCount(2, 2);
     }
 
-    /**
-     * Buggy lock-in. Sim picks an ITEMSTACK display-name pattern instead of a STRING reassignment
-     * pattern. Flip once reassignment beats stretch-matched item patterns.
-     */
-    @SimCase(name = "type: set STRING var with int (BUG locked)")
+    @SimCase(name = "type: set STRING var with int")
     public static SimulatorCase stringGotInt() {
         return SimulatorCase.statement("set name to 5")
                 .env(EnvSimulator.create().withVar("name", PrimitiveType.STRING))
-                .expectTopPattern("set %i:ITEMSTACK_POSSESSIVE% (display name|name) [to] %name:STRING%")
-                .expectPrimaryIssue(SuggestionIssue.TypeMismatch.class)
-                .expectAnyIssue(SuggestionIssue.TypeMismatch.class)
-                .expectConfidenceAtLeast(0.63)
+                .expectTopPattern("set %name:IDENT% to %val:EXPR%")
+                .expectPrimaryIssue(SuggestionIssue.HandlerDiagnostic.class)
+                .expectAnyIssue(SuggestionIssue.HandlerDiagnostic.class)
+                .expectConfidenceAtLeast(0.75)
                 .expectSuggestionCount(2, 2);
     }
 
-    /**
-     * Buggy lock-in. Sim picks the BLOCK pattern, not an INT reassignment with a TypeMismatch on
-     * the value. Flip once reassignment beats BLOCK in this shape.
-     */
-    @SimCase(name = "type: set INT var with double (BUG locked)")
+    @SimCase(name = "type: set INT var with double")
     public static SimulatorCase intGotDouble() {
         return SimulatorCase.statement("set count to 1.5")
                 .env(EnvSimulator.create().withVar("count", PrimitiveType.INT))
-                .expectTopPattern("set %b:BLOCK% data [to] %data:STRING%")
-                .expectPrimaryIssue(SuggestionIssue.TypeMismatch.class)
-                .expectAnyIssue(SuggestionIssue.TypeMismatch.class)
-                .expectConfidenceAtLeast(0.63)
+                .expectTopPattern("set %name:IDENT% to %val:EXPR%")
+                .expectPrimaryIssue(SuggestionIssue.HandlerDiagnostic.class)
+                .expectAnyIssue(SuggestionIssue.HandlerDiagnostic.class)
+                .expectConfidenceAtLeast(0.75)
                 .expectSuggestionCount(2, 2);
     }
 }
