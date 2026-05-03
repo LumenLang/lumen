@@ -44,7 +44,7 @@ public final class ListExpressions {
                 .category(Categories.LIST)
                 .handler(ctx -> {
                     throw new DiagnosticException(LumenDiagnostic.error("Untyped lists are no longer supported")
-                            .at(ctx.block().line(), ctx.block().raw())
+                            .at(ctx.source().currentLine(), ctx.source().currentRaw())
                             .label("use 'new list of <type>' instead")
                             .help("example: 'set myList to new list of string'")
                             .build());
@@ -65,7 +65,7 @@ public final class ListExpressions {
                     List<Token> typeTokens = hctx.bound("type").tokens();
                     TypeAnnotationParser.ParseResult result = TypeAnnotationParser.parseDetailed(typeTokens, 0, env::lookupDataSchema);
                     if (result instanceof TypeAnnotationParser.ParseResult.Failure f) {
-                        throw new DiagnosticException(SuggestionDiagnostics.buildTypeFailure("Invalid list element type", ctx.block().line(), ctx.block().raw(), typeTokens, f));
+                        throw new DiagnosticException(SuggestionDiagnostics.buildTypeFailure("Invalid list element type", ctx.source().currentLine(), ctx.source().currentRaw(), typeTokens, f));
                     }
                     TypeAnnotationParser parsed = ((TypeAnnotationParser.ParseResult.Success) result).parser();
                     LumenType elementType = parsed.type();
@@ -148,14 +148,14 @@ public final class ListExpressions {
                     TypeEnv.GlobalInfo info = env.getGlobalInfo(listVarName);
                     if (info == null) {
                         throw new DiagnosticException(LumenDiagnostic.error("'" + listVarName + "' is not a global variable")
-                                .at(ctx.block().line(), ctx.block().raw())
+                                .at(ctx.source().currentLine(), ctx.source().currentRaw())
                                 .label("scoped list operations require a global variable")
                                 .help("declare it inside a 'global:' block as '" + listVarName + ": list of <type>'")
                                 .build());
                     }
                     if (!info.scoped()) {
                         throw new DiagnosticException(LumenDiagnostic.error("'" + listVarName + "' is not a scoped global")
-                                .at(ctx.block().line(), ctx.block().raw())
+                                .at(ctx.source().currentLine(), ctx.source().currentRaw())
                                 .label("the 'for' keyword requires a scoped global variable")
                                 .help("declare it inside a 'global:' block with 'scoped to <type> " + listVarName + ": list of <type>' for per-entity access")
                                 .build());
@@ -164,7 +164,7 @@ public final class ListExpressions {
                     TypeEnv.VarHandle scopeRef = env.lookupVar(scopeVarName);
                     if (scopeRef == null) {
                         throw new DiagnosticException(LumenDiagnostic.error("Scope variable '" + scopeVarName + "' not found")
-                                .at(ctx.block().line(), ctx.block().raw())
+                                .at(ctx.source().currentLine(), ctx.source().currentRaw())
                                 .label("'" + scopeVarName + "' is not defined in this scope")
                                 .help("the scope variable must be a player or entity reference")
                                 .build());
@@ -189,14 +189,14 @@ public final class ListExpressions {
                     TypeEnv.GlobalInfo info = env.getGlobalInfo(listVarName);
                     if (info == null) {
                         throw new DiagnosticException(LumenDiagnostic.error("'" + listVarName + "' is not a global variable")
-                                .at(ctx.block().line(), ctx.block().raw())
+                                .at(ctx.source().currentLine(), ctx.source().currentRaw())
                                 .label("scoped list operations require a global variable")
                                 .help("declare it inside a 'global:' block as '" + listVarName + ": list of <type>'")
                                 .build());
                     }
                     if (!info.scoped()) {
                         throw new DiagnosticException(LumenDiagnostic.error("'" + listVarName + "' is not a scoped global")
-                                .at(ctx.block().line(), ctx.block().raw())
+                                .at(ctx.source().currentLine(), ctx.source().currentRaw())
                                 .label("the 'for' keyword requires a scoped global variable")
                                 .help("declare it inside a 'global:' block with 'scoped to <type> " + listVarName + ": list of <type>' for per-entity access")
                                 .build());
@@ -205,7 +205,7 @@ public final class ListExpressions {
                     TypeEnv.VarHandle scopeRef = env.lookupVar(scopeVarName);
                     if (scopeRef == null) {
                         throw new DiagnosticException(LumenDiagnostic.error("Scope variable '" + scopeVarName + "' not found")
-                                .at(ctx.block().line(), ctx.block().raw())
+                                .at(ctx.source().currentLine(), ctx.source().currentRaw())
                                 .label("'" + scopeVarName + "' is not defined in this scope")
                                 .help("the scope variable must be a player or entity reference")
                                 .build());

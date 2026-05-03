@@ -1,10 +1,13 @@
 package dev.lumenlang.lumen.api.codegen;
 
 import dev.lumenlang.lumen.api.codegen.TypeEnv.VarHandle;
+import dev.lumenlang.lumen.api.codegen.source.SourceLocator;
+import dev.lumenlang.lumen.api.codegen.source.SourceMap;
 import dev.lumenlang.lumen.api.emit.ScriptToken;
 import dev.lumenlang.lumen.api.handler.BlockHandler;
 import dev.lumenlang.lumen.api.handler.ConditionHandler;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler;
+import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.handler.LoopHandler;
 import dev.lumenlang.lumen.api.handler.StatementHandler;
 import dev.lumenlang.lumen.api.type.LumenType;
@@ -118,18 +121,14 @@ public interface HandlerContext {
     @NotNull JavaOutput out();
 
     /**
-     * Returns the 1-based source line number of the current node being emitted.
-     *
-     * @return the source line number
+     * Source locator for the current node.
      */
-    int line();
+    @NotNull SourceLocator source();
 
     /**
-     * Returns the raw source text of the current node being emitted.
-     *
-     * @return the raw source text
+     * Script-wide source map.
      */
-    @NotNull String raw();
+    @NotNull SourceMap sourceMap();
 
     /**
      * Returns the matched alternative text for the Nth required choice group in the pattern.
@@ -205,24 +204,13 @@ public interface HandlerContext {
     @Nullable LumenType resolvedType(@NotNull String name);
 
     /**
-     * Attempts to resolve a list of tokens into a Java expression string.
-     *
-     * <p>This tries registered expression patterns and variable lookups to produce
-     * the corresponding Java code for the given tokens.
+     * Resolves a list of tokens into a typed {@link ExpressionResult} carrying both the
+     * generated Java expression and the inferred type.
      *
      * @param tokens the expression tokens to resolve
-     * @return the resolved Java expression, or {@code null} if unresolvable
+     * @return the typed result, or {@code null} if unresolvable
      */
-    @Nullable String resolveExpression(@NotNull List<? extends ScriptToken> tokens);
-
-    /**
-     * Parses the condition tokens from the named parameter through the condition registry
-     * and returns a Java boolean expression string.
-     *
-     * @param paramName the name of the parameter containing condition tokens
-     * @return a valid Java boolean expression
-     */
-    @NotNull String parseCondition(@NotNull String paramName);
+    @Nullable ExpressionResult resolveExpression(@NotNull List<? extends ScriptToken> tokens);
 
     /**
      * Returns the parsed value for the named parameter as a {@link VarHandle}.

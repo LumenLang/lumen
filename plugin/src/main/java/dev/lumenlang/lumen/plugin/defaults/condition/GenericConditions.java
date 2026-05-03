@@ -32,7 +32,7 @@ public final class GenericConditions {
         if (ctx.env().lookupVar(java) != null) return;
         List<? extends ScriptToken> tokens = ctx.scriptTokens(paramName);
         String message = "Variable '" + java + "' does not exist";
-        LumenDiagnostic.Builder b = LumenDiagnostic.error(message).at(ctx.line(), ctx.raw());
+        LumenDiagnostic.Builder b = LumenDiagnostic.error(message).at(ctx.source().currentLine(), ctx.source().currentRaw());
         if (!tokens.isEmpty()) {
             ScriptToken first = tokens.get(0);
             ScriptToken last = tokens.get(tokens.size() - 1);

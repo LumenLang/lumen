@@ -52,7 +52,7 @@ public final class VariableStatements {
         }
         if (!(scopeType instanceof ObjectType obj)) {
             throw new DiagnosticException(LumenDiagnostic.error("Invalid scope variable type")
-                    .at(ctx.line(), ctx.raw())
+                    .at(ctx.source().currentLine(), ctx.source().currentRaw())
                     .label("'" + scopeVarName + "' has type " + scopeType.displayName() + " which cannot be used as a scope")
                     .help("scoped globals require an entity, player, or other object reference")
                     .build());

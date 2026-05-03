@@ -85,7 +85,7 @@ public class ListBlocks {
                     public void begin(@NotNull HandlerContext ctx) {
                         if (ctx.block().isRoot()) {
                             throw new DiagnosticException(LumenDiagnostic.error("A 'loop' block cannot be top level")
-                                    .at(ctx.block().line(), ctx.block().raw())
+                                    .at(ctx.source().currentLine(), ctx.source().currentRaw())
                                     .label("top level loop not allowed")
                                     .help("place 'loop' inside an event, command, or other block")
                                     .build());
@@ -94,7 +94,7 @@ public class ListBlocks {
                         String varName = ctx.java("var");
                         if (ctx.env().lookupVar(varName) != null) {
                             throw new DiagnosticException(LumenDiagnostic.error("Loop variable '" + varName + "' is already defined")
-                                    .at(ctx.block().line(), ctx.block().raw())
+                                    .at(ctx.source().currentLine(), ctx.source().currentRaw())
                                     .label("'" + varName + "' already exists in this scope")
                                     .help("use a different variable name")
                                     .build());
@@ -131,7 +131,7 @@ public class ListBlocks {
                     public void begin(@NotNull HandlerContext ctx) {
                         if (ctx.block().isRoot()) {
                             throw new DiagnosticException(LumenDiagnostic.error("A 'loop' block cannot be top level")
-                                    .at(ctx.block().line(), ctx.block().raw())
+                                    .at(ctx.source().currentLine(), ctx.source().currentRaw())
                                     .label("top level loop not allowed")
                                     .help("place 'loop' inside an event, command, or other block")
                                     .build());
@@ -140,7 +140,7 @@ public class ListBlocks {
                         String varName = ctx.java("var");
                         if (env.lookupVar(varName) != null) {
                             throw new DiagnosticException(LumenDiagnostic.error("Loop variable '" + varName + "' is already defined")
-                                    .at(ctx.block().line(), ctx.block().raw())
+                                    .at(ctx.source().currentLine(), ctx.source().currentRaw())
                                     .label("'" + varName + "' already exists in this scope")
                                     .help("use a different variable name")
                                     .build());
@@ -151,14 +151,14 @@ public class ListBlocks {
                         TypeEnv.GlobalInfo info = env.getGlobalInfo(listVarName);
                         if (info == null) {
                             throw new DiagnosticException(LumenDiagnostic.error("'" + listVarName + "' is not a global variable")
-                                    .at(ctx.block().line(), ctx.block().raw())
+                                    .at(ctx.source().currentLine(), ctx.source().currentRaw())
                                     .label("not a global")
                                     .help("declare it inside a 'global:' block as '" + listVarName + ": list of <type>'")
                                     .build());
                         }
                         if (!info.scoped()) {
                             throw new DiagnosticException(LumenDiagnostic.error("'" + listVarName + "' is not a scoped global")
-                                    .at(ctx.block().line(), ctx.block().raw())
+                                    .at(ctx.source().currentLine(), ctx.source().currentRaw())
                                     .label("not scoped")
                                     .help("declare it inside a 'global:' block with 'scoped to <type> " + listVarName + ": list of <type>' for per-entity access")
                                     .build());
@@ -166,7 +166,7 @@ public class ListBlocks {
                         TypeEnv.VarHandle scopeRef = env.lookupVar(scopeVarName);
                         if (scopeRef == null) {
                             throw new DiagnosticException(LumenDiagnostic.error("Scope variable '" + scopeVarName + "' not found")
-                                    .at(ctx.block().line(), ctx.block().raw())
+                                    .at(ctx.source().currentLine(), ctx.source().currentRaw())
                                     .label("undefined variable")
                                     .help("make sure the variable is defined before using it")
                                     .build());

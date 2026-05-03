@@ -1171,7 +1171,8 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull String toJava(Object v, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
                 if (v instanceof VarHandle ref) {
-                    if (ref.globalInfo() != null && ref.globalInfo().scoped()) return ref.name();
+                    TypeEnv.GlobalInfo info = ref.globalInfo();
+                    if (info != null && info.scoped()) return ref.name();
                     return ref.java();
                 }
                 throw new RuntimeException("Cannot generate Java for null list reference");
@@ -1215,7 +1216,8 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull String toJava(Object v, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
                 if (v instanceof VarHandle ref) {
-                    if (ref.globalInfo() != null && ref.globalInfo().scoped()) return ref.name();
+                    TypeEnv.GlobalInfo info = ref.globalInfo();
+                    if (info != null && info.scoped()) return ref.name();
                     return ref.java();
                 }
                 throw new RuntimeException("Cannot generate Java for null map reference");

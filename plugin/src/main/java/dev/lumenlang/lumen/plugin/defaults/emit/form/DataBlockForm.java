@@ -131,9 +131,7 @@ public final class DataBlockForm implements BlockFormHandler {
             }
 
             int typeStart = 1;
-            boolean usedColon = false;
             if (tokens.get(1).text().equals(":")) {
-                usedColon = true;
                 typeStart = 2;
                 if (tokens.size() < 3) {
                     throw new DiagnosticException(LumenDiagnostic.error("Missing type after ':' for field '" + fieldName + "'")

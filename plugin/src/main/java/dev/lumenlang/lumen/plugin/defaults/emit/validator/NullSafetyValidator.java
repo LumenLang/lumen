@@ -48,7 +48,7 @@ public final class NullSafetyValidator implements StatementValidator {
             String declRaw = info != null ? info.declarationRaw() : null;
             int nullLine = nullInfo != null ? nullInfo.line() : -1;
             String nullRaw = nullInfo != null ? nullInfo.raw() : null;
-            LumenDiagnostic diag = TypeChecker.checkNullSafety(type, t.text(), false, ctx.line(), ctx.raw(), t.start(), t.end(), declLine, declRaw, nullLine, nullRaw);
+            LumenDiagnostic diag = TypeChecker.checkNullSafety(type, t.text(), false, ctx.source().currentLine(), ctx.source().currentRaw(), t.start(), t.end(), declLine, declRaw, nullLine, nullRaw);
             if (diag != null) throw new DiagnosticException(diag);
         }
     }

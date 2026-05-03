@@ -14,6 +14,7 @@ import dev.lumenlang.lumen.pipeline.codegen.BlockContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.CodegenContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.HandlerContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
+import dev.lumenlang.lumen.pipeline.codegen.output.AlwaysThrowJavaOutput;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.loop.LoopRegistry;
@@ -36,6 +37,8 @@ import static dev.lumenlang.lumen.api.pattern.LumaExample.top;
 @SuppressWarnings("unused")
 public final class LoopSourceBlock {
 
+    private static final AlwaysThrowJavaOutput NO_OUTPUT = new AlwaysThrowJavaOutput(new IllegalStateException("loop source handler attempted to write to JavaOutput; loop sources must return a LoopResult"));
+
     @Call
     public void register(@NotNull LumenAPI api) {
         api.patterns().block(b -> b
@@ -54,7 +57,7 @@ public final class LoopSourceBlock {
                     public void begin(@NotNull HandlerContext ctx) {
                         if (ctx.block().isRoot()) {
                             throw new DiagnosticException(LumenDiagnostic.error("A 'loop' block cannot be top level")
-                                    .at(ctx.block().line(), ctx.block().raw())
+                                    .at(ctx.source().currentLine(), ctx.source().currentRaw())
                                     .label("top level loop not allowed")
                                     .help("place 'loop' inside an event, command, or other block")
                                     .build());
@@ -62,7 +65,7 @@ public final class LoopSourceBlock {
                         String varName = ctx.java("var");
                         if (ctx.env().lookupVar(varName) != null) {
                             throw new DiagnosticException(LumenDiagnostic.error("Loop variable '" + varName + "' is already defined")
-                                    .at(ctx.block().line(), ctx.block().raw())
+                                    .at(ctx.source().currentLine(), ctx.source().currentRaw())
                                     .label("'" + varName + "' already exists in this scope")
                                     .help("use a different variable name")
                                     .build());
@@ -79,13 +82,13 @@ public final class LoopSourceBlock {
                             int hlStart = sourceTokens.get(0).start();
                             int hlEnd = sourceTokens.get(sourceTokens.size() - 1).end();
                             throw new DiagnosticException(LumenDiagnostic.error("Unknown loop source '" + sourceText + "'")
-                                    .at(ctx.block().line(), ctx.block().raw())
+                                    .at(ctx.source().currentLine(), ctx.source().currentRaw())
                                     .highlight(hlStart, hlEnd)
                                     .label("not a list variable or registered loop source")
                                     .help("see https://lumenlang.dev/loops for available loop sources, or use a list variable, e.g. 'loop x in myList'")
                                     .build());
                         }
-                        HandlerContextImpl loopCtx = new HandlerContextImpl(loopMatch.match(), env, (CodegenContextImpl) ctx.codegen(), (BlockContextImpl) ctx.block(), null, 0, "");
+                        HandlerContextImpl loopCtx = new HandlerContextImpl(loopMatch.match(), env, (CodegenContextImpl) ctx.codegen(), (BlockContextImpl) ctx.block(), NO_OUTPUT);
                         LoopHandler.LoopResult result = loopMatch.reg().handler().handle(loopCtx);
                         ctx.out().line("for (var " + varName + " : " + result.iterableJava() + ") {");
                         ctx.env().defineVar(varName, result.elementType(), varName);

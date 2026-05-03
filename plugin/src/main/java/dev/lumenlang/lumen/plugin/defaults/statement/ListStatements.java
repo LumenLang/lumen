@@ -54,7 +54,7 @@ public final class ListStatements {
         LumenType actual = ctx.resolvedType(paramName);
         if (actual == null || expected.assignableFrom(actual)) return;
         throw new DiagnosticException(LumenDiagnostic.error("List element type mismatch")
-                .at(ctx.block().line(), ctx.block().raw())
+                .at(ctx.source().currentLine(), ctx.source().currentRaw())
                 .label("expected '" + expected.displayName() + "', got '" + actual.displayName() + "'")
                 .help("this list only accepts '" + expected.displayName() + "' elements")
                 .build());
@@ -65,7 +65,7 @@ public final class ListStatements {
         TypeEnv.VarHandle scopeRef = env.lookupVar(scopeVarName);
         if (scopeRef == null) {
             throw new DiagnosticException(LumenDiagnostic.error("Scope variable '" + scopeVarName + "' not found")
-                    .at(ctx.block().line(), ctx.block().raw())
+                    .at(ctx.source().currentLine(), ctx.source().currentRaw())
                     .label("undefined variable")
                     .help("make sure the variable is defined before using it")
                     .build());
@@ -78,7 +78,7 @@ public final class ListStatements {
         TypeEnv.GlobalInfo info = ctx.env().getGlobalInfo(listVarName);
         if (info == null) {
             throw new DiagnosticException(LumenDiagnostic.error("'" + listVarName + "' is not a global variable")
-                    .at(ctx.block().line(), ctx.block().raw())
+                    .at(ctx.source().currentLine(), ctx.source().currentRaw())
                     .label("not a global")
                     .help("declare it inside a 'global:' block as '" + listVarName + ": list of <type>'")
                     .build());

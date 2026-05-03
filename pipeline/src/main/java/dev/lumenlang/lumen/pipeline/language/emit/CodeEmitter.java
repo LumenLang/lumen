@@ -12,6 +12,7 @@ import dev.lumenlang.lumen.pipeline.codegen.BlockContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.CodegenContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.HandlerContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
+import dev.lumenlang.lumen.pipeline.codegen.source.SourceMapImpl;
 import dev.lumenlang.lumen.pipeline.java.JavaBuilder;
 import dev.lumenlang.lumen.pipeline.language.exceptions.LumenScriptException;
 import dev.lumenlang.lumen.pipeline.language.exceptions.TokenCarryingException;
@@ -101,6 +102,7 @@ public final class CodeEmitter {
         Tokenizer tokenizer = new Tokenizer();
         LumenParser parser = new LumenParser();
         List<Line> tokenizedLines = tokenizer.tokenize(src);
+        env.setSourceMap(new SourceMapImpl(src, tokenizedLines));
         for (String warning : Tokenizer.checkIndentConsistency(tokenizedLines, ctx.scriptName())) {
             if (EMITTED_WARNINGS.add(warning)) {
                 LumenLogger.warning(warning);
@@ -383,7 +385,7 @@ public final class CodeEmitter {
                 for (Node child : b.children()) {
                     children.add(new ScriptLineAdapter(child));
                 }
-                HandlerContextImpl emitCtx = new HandlerContextImpl(null, env, ctx, null, out, b.line(), b.raw());
+                HandlerContextImpl emitCtx = new HandlerContextImpl(null, env, ctx, blockCtx, out);
                 try {
                     handler.handle(head, children, emitCtx);
                 } catch (LumenScriptException e) {
@@ -404,7 +406,7 @@ public final class CodeEmitter {
             throw new LumenScriptException(new DiagnosticException(SuggestionDiagnostics.buildNoSuggestion("Unknown block", b.line(), b.raw(), head)));
         }
 
-        HandlerContextImpl hctx = new HandlerContextImpl(bm.match(), env, ctx, blockCtx, out, b.line(), b.raw());
+        HandlerContextImpl hctx = new HandlerContextImpl(bm.match(), env, ctx, blockCtx, out);
 
         try {
             bm.reg().handler().begin(hctx);
@@ -414,7 +416,7 @@ public final class CodeEmitter {
             throw wrapRuntimeException(b.line(), b.raw(), e);
         }
 
-        HandlerContextImpl hookCtx = new HandlerContextImpl(null, env, ctx, blockCtx, out, b.line(), b.raw());
+        HandlerContextImpl hookCtx = new HandlerContextImpl(null, env, ctx, blockCtx, out);
         for (BlockEnterHook hook : emitReg.blockEnterHooks()) {
             try {
                 hook.onBlockEnter(hookCtx);
@@ -463,7 +465,7 @@ public final class CodeEmitter {
 
         if (ts instanceof TypedStatement.PatternStmt ps && ps.match().reg().meta().deprecated()) {
             RegisteredPatternMatch sm = ps.match();
-            HandlerContextImpl hctx = new HandlerContextImpl(sm.match(), env, ctx, blockCtx, out, st.line(), st.raw());
+            HandlerContextImpl hctx = new HandlerContextImpl(sm.match(), env, ctx, blockCtx, out);
             try {
                 sm.reg().handler().handle(hctx);
             } catch (LumenScriptException e) {
@@ -483,7 +485,7 @@ public final class CodeEmitter {
                     .build());
         }
 
-        HandlerContextImpl emitCtx = new HandlerContextImpl(null, env, ctx, blockCtx, out, st.line(), st.raw());
+        HandlerContextImpl emitCtx = new HandlerContextImpl(null, env, ctx, blockCtx, out);
         for (StatementValidator validator : emitReg.statementValidators()) {
             try {
                 validator.validate(tokens, emitCtx);
@@ -496,7 +498,7 @@ public final class CodeEmitter {
 
         if (ts instanceof TypedStatement.PatternStmt ps) {
             RegisteredPatternMatch sm = ps.match();
-            HandlerContextImpl hctx = new HandlerContextImpl(sm.match(), env, ctx, blockCtx, out, st.line(), st.raw());
+            HandlerContextImpl hctx = new HandlerContextImpl(sm.match(), env, ctx, blockCtx, out);
             try {
                 sm.reg().handler().handle(hctx);
             } catch (LumenScriptException e) {
@@ -508,7 +510,7 @@ public final class CodeEmitter {
         }
 
         if (ts instanceof TypedStatement.ExprStmt es) {
-            HandlerContextImpl hctx = new HandlerContextImpl(es.match().match(), env, ctx, blockCtx, out, st.line(), st.raw());
+            HandlerContextImpl hctx = new HandlerContextImpl(es.match().match(), env, ctx, blockCtx, out);
             try {
                 ExpressionResult result = es.match().reg().handler().handle(hctx);
                 out.line(asStatement(result.java()));

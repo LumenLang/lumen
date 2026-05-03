@@ -2,9 +2,10 @@ package dev.lumenlang.lumen.pipeline.codegen;
 
 import dev.lumenlang.lumen.api.codegen.NarrowingFact;
 import dev.lumenlang.lumen.api.codegen.TypeEnv;
+import dev.lumenlang.lumen.api.codegen.source.SourceMap;
 import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.type.LumenType;
-import dev.lumenlang.lumen.api.type.ObjectType;
+import dev.lumenlang.lumen.pipeline.codegen.source.SourceMapImpl;
 import dev.lumenlang.lumen.pipeline.data.DataSchema;
 import dev.lumenlang.lumen.pipeline.persist.GlobalVars;
 import dev.lumenlang.lumen.pipeline.persist.PersistentVars;
@@ -42,6 +43,7 @@ import java.util.Set;
  */
 @SuppressWarnings("unused")
 public final class TypeEnvImpl implements TypeEnv {
+    private static final SourceMap EMPTY_SOURCE_MAP = new SourceMapImpl("");
     private final Map<String, Object> globals = new HashMap<>();
     private final Map<String, String> storedKeys = new HashMap<>();
     private final Map<String, String> storedBaseKeys = new HashMap<>();
@@ -60,47 +62,7 @@ public final class TypeEnvImpl implements TypeEnv {
     private final List<LumenDiagnostic> warnings = new ArrayList<>();
     private final List<NarrowingFact> pendingNarrowings = new ArrayList<>();
     private BlockContextImpl currentBlock;
-
-    /**
-     * Tracks whether a nullable variable is currently known to be null or non-null.
-     *
-     * <p>This is a definite state, not a probability. {@code NULL} means the variable
-     * is certainly null at this point in the code (declared without default, or last reassigned to none).
-     * {@code NON_NULL} means a concrete value was provided (default value or reassignment to a value).
-     */
-    public enum NullState {
-        NULL,
-        NON_NULL
-    }
-
-    /**
-     * Records the declaration site of a nullable variable for use in multi-line diagnostics.
-     *
-     * @param declarationLine the line where the variable was declared
-     * @param declarationRaw  the raw source text of the declaration line
-     */
-    public record NullableVarInfo(int declarationLine, @NotNull String declarationRaw) {
-    }
-
-    /**
-     * Records where a variable was last set to none, for use in value flow diagnostics.
-     *
-     * @param line the line number where the variable became null
-     * @param raw  the raw source text of that line
-     */
-    public record NullAssignmentInfo(int line, @NotNull String raw) {
-    }
-
-    /**
-     * Records where a variable was first declared and last reassigned.
-     *
-     * @param firstLine the line number of the first declaration
-     * @param firstRaw  the raw source text of the first declaration
-     * @param lastLine  the line number of the most recent assignment
-     * @param lastRaw   the raw source text of the most recent assignment
-     */
-    public record DeclarationInfo(int firstLine, @NotNull String firstRaw, int lastLine, @NotNull String lastRaw) {
-    }
+    private SourceMap sourceMap = EMPTY_SOURCE_MAP;
 
     /**
      * Sets the current null state for a nullable variable.
@@ -255,17 +217,28 @@ public final class TypeEnvImpl implements TypeEnv {
     }
 
     /**
-     * Returns the currently active {@link BlockContextImpl}, or {@code null} if not inside any block.
+     * Pipeline-internal accessor for the current {@link BlockContextImpl}. Always present during
+     * normal handler emit.
      *
-     * @return the current block context
+     * @throws IllegalStateException when called outside any active block, which does not happen during normal compilation
      */
-    public BlockContextImpl blockContext() {
+    public @NotNull BlockContextImpl blockContext() {
+        if (currentBlock == null) throw new IllegalStateException("blockContext() called outside any active block");
         return currentBlock;
     }
 
     @Override
-    public BlockContextImpl block() {
-        return currentBlock;
+    public @NotNull BlockContextImpl block() {
+        return blockContext();
+    }
+
+    public void setSourceMap(@NotNull SourceMap sourceMap) {
+        this.sourceMap = sourceMap;
+    }
+
+    @Override
+    public @NotNull SourceMap sourceMap() {
+        return sourceMap;
     }
 
     @Override
@@ -383,29 +356,6 @@ public final class TypeEnvImpl implements TypeEnv {
      */
     public @NotNull Set<String> dataSchemaNames() {
         return dataSchemas.keySet();
-    }
-
-    /**
-     * Returns the first {@link VarRef} in scope whose type matches the given object type.
-     *
-     * <p>Walks the scope stack from innermost to outermost scope, examining all variables
-     * in each frame.
-     *
-     * @param type the object type to match against
-     * @return the first matching variable, or {@code null} if none found
-     */
-    public @Nullable VarRef lookupVarByType(@NotNull ObjectType type) {
-        for (BlockContextImpl c = currentBlock; c != null; c = c.parent()) {
-            VarRef found = c.findVarByType(type);
-            if (found != null) return found;
-        }
-        return null;
-    }
-
-    @Override
-    public @Nullable VarRef lookupVarByType(@NotNull LumenType type) {
-        if (type instanceof ObjectType obj) return lookupVarByType(obj);
-        return null;
     }
 
     /**
@@ -679,28 +629,6 @@ public final class TypeEnvImpl implements TypeEnv {
     }
 
     /**
-     * Information about a script-wide variable declared with {@code global}.
-     *
-     * @param defaultJava  the Java expression for the default value
-     * @param className    the script class name at the time of declaration
-     * @param scoped       whether the global is scoped per entity rather than server-wide
-     * @param stored       whether the variable is persisted to disk ({@code true}) or in-memory only ({@code false})
-     * @param scopeType    the scope type for scoped globals, or {@code null} if not scoped
-     */
-    public record GlobalVarInfo(@NotNull String defaultJava, @NotNull String className, boolean scoped, boolean stored, @Nullable LumenType scopeType)
-            implements TypeEnv.GlobalInfo {
-    }
-
-    /**
-     * A compile-time constant declared in a script's {@code config:} block.
-     *
-     * @param name the config key
-     * @param java the Java expression for the config value
-     */
-    public record ConfigEntry(@NotNull String name, @NotNull String java) {
-    }
-
-    /**
      * Creates a lightweight copy of this environment for parallel block emission.
      *
      * <p>The forked environment shares all read-only state established by important blocks
@@ -713,6 +641,7 @@ public final class TypeEnvImpl implements TypeEnv {
      */
     public @NotNull TypeEnvImpl fork() {
         TypeEnvImpl forked = new TypeEnvImpl();
+        forked.sourceMap = this.sourceMap;
         forked.rootVars.putAll(this.rootVars);
         forked.globalVars.addAll(this.globalVars);
         forked.globals.putAll(this.globals);
@@ -733,6 +662,7 @@ public final class TypeEnvImpl implements TypeEnv {
      */
     public @NotNull TypeEnvImpl deepClone() {
         TypeEnvImpl c = new TypeEnvImpl();
+        c.sourceMap = this.sourceMap;
         c.globals.putAll(this.globals);
         c.storedKeys.putAll(this.storedKeys);
         c.storedBaseKeys.putAll(this.storedBaseKeys);
@@ -752,5 +682,69 @@ public final class TypeEnvImpl implements TypeEnv {
         c.pendingNarrowings.addAll(this.pendingNarrowings);
         c.currentBlock = this.currentBlock == null ? null : this.currentBlock.deepClone();
         return c;
+    }
+
+    /**
+     * Tracks whether a nullable variable is currently known to be null or non-null.
+     *
+     * <p>This is a definite state, not a probability. {@code NULL} means the variable
+     * is certainly null at this point in the code (declared without default, or last reassigned to none).
+     * {@code NON_NULL} means a concrete value was provided (default value or reassignment to a value).
+     */
+    public enum NullState {
+        NULL,
+        NON_NULL
+    }
+
+    /**
+     * Records the declaration site of a nullable variable for use in multi-line diagnostics.
+     *
+     * @param declarationLine the line where the variable was declared
+     * @param declarationRaw  the raw source text of the declaration line
+     */
+    public record NullableVarInfo(int declarationLine, @NotNull String declarationRaw) {
+    }
+
+    /**
+     * Records where a variable was last set to none, for use in value flow diagnostics.
+     *
+     * @param line the line number where the variable became null
+     * @param raw  the raw source text of that line
+     */
+    public record NullAssignmentInfo(int line, @NotNull String raw) {
+    }
+
+    /**
+     * Records where a variable was first declared and last reassigned.
+     *
+     * @param firstLine the line number of the first declaration
+     * @param firstRaw  the raw source text of the first declaration
+     * @param lastLine  the line number of the most recent assignment
+     * @param lastRaw   the raw source text of the most recent assignment
+     */
+    public record DeclarationInfo(int firstLine, @NotNull String firstRaw, int lastLine, @NotNull String lastRaw) {
+    }
+
+    /**
+     * Information about a script-wide variable declared with {@code global}.
+     *
+     * @param defaultJava the Java expression for the default value
+     * @param className   the script class name at the time of declaration
+     * @param scoped      whether the global is scoped per entity rather than server-wide
+     * @param stored      whether the variable is persisted to disk ({@code true}) or in-memory only ({@code false})
+     * @param scopeType   the scope type for scoped globals, or {@code null} if not scoped
+     */
+    public record GlobalVarInfo(@NotNull String defaultJava, @NotNull String className, boolean scoped, boolean stored,
+                                @Nullable LumenType scopeType)
+            implements TypeEnv.GlobalInfo {
+    }
+
+    /**
+     * A compile-time constant declared in a script's {@code config:} block.
+     *
+     * @param name the config key
+     * @param java the Java expression for the config value
+     */
+    public record ConfigEntry(@NotNull String name, @NotNull String java) {
     }
 }

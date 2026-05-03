@@ -8,6 +8,7 @@ import dev.lumenlang.lumen.pipeline.codegen.BlockContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.CodegenContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.HandlerContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
+import dev.lumenlang.lumen.pipeline.codegen.output.AlwaysThrowJavaOutput;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.language.pattern.registered.RegisteredExpressionMatch;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
@@ -27,6 +28,7 @@ import java.util.List;
 public final class ExprResolver {
 
     private static final int MAX_RESOLVE_DEPTH = 10;
+    private static final AlwaysThrowJavaOutput NO_OUTPUT = new AlwaysThrowJavaOutput(new IllegalStateException("expression handler attempted to write to JavaOutput; expressions must return a Java expression string"));
 
     private ExprResolver() {
     }
@@ -108,10 +110,11 @@ public final class ExprResolver {
 
         if (!skipDirectMatch) {
             RegisteredExpressionMatch match = reg.matchExpression(tokens, env);
+            if (match == null) match = reg.matchExpressionSlow(tokens, env);
             if (match != null) {
                 try {
                     BlockContextImpl block = env.blockContext();
-                    HandlerContextImpl hctx = new HandlerContextImpl(match.match(), env, ctx, block, null, 0, "");
+                    HandlerContextImpl hctx = new HandlerContextImpl(match.match(), env, ctx, block, NO_OUTPUT);
                     return match.reg().handler().handle(hctx);
                 } catch (DiagnosticException e) {
                     throw e;
@@ -150,7 +153,7 @@ public final class ExprResolver {
                 ExpressionResult subResult;
                 try {
                     BlockContextImpl block = env.blockContext();
-                    HandlerContextImpl hctx = new HandlerContextImpl(subMatch.match(), env, ctx, block, null, 0, "");
+                    HandlerContextImpl hctx = new HandlerContextImpl(subMatch.match(), env, ctx, block, NO_OUTPUT);
                     subResult = subMatch.reg().handler().handle(hctx);
                 } catch (DiagnosticException e) {
                     throw e;

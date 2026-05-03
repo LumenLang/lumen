@@ -47,8 +47,8 @@ public final class PlaceholderExpander {
             return "\"" + escapeJava(raw) + "\"";
         }
 
-        String sourceLine = env.block().raw();
         int sourceLineNumber = stringToken.line();
+        String sourceLine = env.sourceMap().rawAt(sourceLineNumber);
         int contentStartCol = stringToken.start() + 1;
         int contentEndCol = stringToken.end() - 1;
         String sourceContent = (contentStartCol >= 0 && contentEndCol <= sourceLine.length() && contentStartCol <= contentEndCol)
@@ -113,8 +113,8 @@ public final class PlaceholderExpander {
     public static @NotNull String expandTokens(@NotNull List<Token> tokens, @NotNull TypeEnvImpl env) {
         if (tokens.isEmpty()) return "\"\"";
 
-        String sourceLine = env.block().raw();
         int sourceLineNumber = tokens.get(0).line();
+        String sourceLine = env.sourceMap().rawAt(sourceLineNumber);
 
         StringBuilder result = new StringBuilder();
         StringBuilder literalBuf = new StringBuilder();
@@ -126,7 +126,7 @@ public final class PlaceholderExpander {
                     && i + 2 < tokens.size()
                     && tokens.get(i + 1).kind() == TokenKind.IDENT
                     && tokens.get(i + 2).kind() == TokenKind.SYMBOL && tokens.get(i + 2).text().equals("}")) {
-                if (literalBuf.length() > 0) {
+                if (!literalBuf.isEmpty()) {
                     appendLiteral(result, literalBuf.toString(), first);
                     first = false;
                     literalBuf.setLength(0);
@@ -141,14 +141,14 @@ public final class PlaceholderExpander {
                 i += 3;
                 continue;
             }
-            if (literalBuf.length() > 0) literalBuf.append(' ');
+            if (!literalBuf.isEmpty()) literalBuf.append(' ');
             literalBuf.append(t.text());
             i++;
         }
-        if (literalBuf.length() > 0) {
+        if (!literalBuf.isEmpty()) {
             appendLiteral(result, literalBuf.toString(), first);
         }
-        if (result.length() == 0) {
+        if (result.isEmpty()) {
             return "\"\"";
         }
         return result.toString();

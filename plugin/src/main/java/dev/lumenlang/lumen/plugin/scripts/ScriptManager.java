@@ -454,8 +454,7 @@ public final class ScriptManager {
                     + String.format("%.3f", compileTime / 1_000_000.0) + " ms");
         }
 
-        return new PreparedScript(name, generated.fqcn(), bytecodes,
-                new CompileTimings(parseTime, compileTime));
+        return new PreparedScript(name, generated.fqcn(), bytecodes, new CompileTimings(parseTime, compileTime));
     }
 
     private static @NotNull GeneratedSource parse(@NotNull String name, @NotNull String source) {

@@ -17,14 +17,8 @@ import dev.lumenlang.lumen.pipeline.conditions.parser.ConditionParser;
  * <p>The tree is built during parsing and then flattened to a Java boolean expression string via
  * {@link #toJava(TypeEnvImpl, CodegenContextImpl)}, which is inserted directly into the generated
  * {@code if} statement.
- *
- * @see ConditionAtom
- * @see ConditionAnd
- * @see ConditionOr
- * @see ConditionParser
  */
-public sealed interface ConditionExpr
-        permits ConditionAtom, ConditionAnd, ConditionOr, ConditionInline {
+public sealed interface ConditionExpr permits ConditionAtom, ConditionAnd, ConditionOr, ConditionInline {
 
     /**
      * Converts this condition expression to a Java boolean expression string.

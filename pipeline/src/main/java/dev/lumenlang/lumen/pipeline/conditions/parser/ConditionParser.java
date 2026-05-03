@@ -187,8 +187,6 @@ public final class ConditionParser {
         for (int i = 0; i < segments.size(); i++) {
             if (!segments.get(i).isEmpty()) continue;
             Token sepToken = findSeparatorToken(tokens, keyword, i, segments.size());
-            int line = env.blockContext().line();
-            String raw = env.blockContext().raw();
             String message;
             String label;
             if (i == 0) {
@@ -202,7 +200,7 @@ public final class ConditionParser {
                 label = "expected a condition before this '" + keyword + "'";
             }
             LumenDiagnostic.Builder builder = LumenDiagnostic.error(message)
-                    .at(line, raw);
+                    .at(env.blockContext().node().line(), env.blockContext().node().raw());
             if (sepToken != null) builder.highlight(sepToken.start(), sepToken.end());
             builder.label(label);
             List<PatternSimulator.Suggestion> suggestions = PatternSimulator.suggestConditions(tokens, PatternRegistry.instance(), env);

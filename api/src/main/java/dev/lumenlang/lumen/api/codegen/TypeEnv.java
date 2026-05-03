@@ -1,5 +1,6 @@
 package dev.lumenlang.lumen.api.codegen;
 
+import dev.lumenlang.lumen.api.codegen.source.SourceMap;
 import dev.lumenlang.lumen.api.type.LumenType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,6 +21,11 @@ import java.util.Map;
 public interface TypeEnv {
 
     /**
+     * Source map for the script being compiled.
+     */
+    @NotNull SourceMap sourceMap();
+
+    /**
      * Looks up a named variable by walking the scope stack from innermost
      * to outermost scope.
      *
@@ -27,17 +33,6 @@ public interface TypeEnv {
      * @return the variable descriptor, or {@code null} if not found
      */
     @Nullable VarHandle lookupVar(@NotNull String name);
-
-    /**
-     * Returns the first variable in scope whose type matches the given type.
-     *
-     * <p>Walks the scope stack from innermost to outermost scope, examining all variables
-     * in each frame.
-     *
-     * @param type the type to match against
-     * @return the first matching variable, or {@code null} if none found
-     */
-    @Nullable VarHandle lookupVarByType(@NotNull LumenType type);
 
     /**
      * Defines a named variable in the current block scope.
@@ -175,8 +170,7 @@ public interface TypeEnv {
      * @param baseKey  the base key prefix without the scope part
      * @param scopeVar the scope variable name, or {@code null} if unscoped
      */
-    void markStored(@NotNull String name, @NotNull String keyExpr,
-                    @NotNull String baseKey, @Nullable String scopeVar);
+    void markStored(@NotNull String name, @NotNull String keyExpr, @NotNull String baseKey, @Nullable String scopeVar);
 
     /**
      * Marks a variable as a runtime (non-persistent) global.
@@ -241,11 +235,11 @@ public interface TypeEnv {
     VarHandle defineRootVar(@NotNull String name, @NotNull LumenType type, @NotNull String java);
 
     /**
-     * Returns the current block context, or {@code null} if not inside any block.
+     * Current block context. Always present during normal handler emit.
      *
-     * @return the block access for the current scope
+     * @throws IllegalStateException when called outside any active block, which does not happen during normal compilation
      */
-    @Nullable BlockContext block();
+    @NotNull BlockContext block();
 
     /**
      * Marks a variable as definitively non-null at this point in the code.

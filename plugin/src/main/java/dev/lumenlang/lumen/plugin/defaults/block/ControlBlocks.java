@@ -6,10 +6,13 @@ import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.codegen.BlockContext;
 import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import dev.lumenlang.lumen.api.codegen.NarrowingFact;
+import dev.lumenlang.lumen.api.codegen.block.BlockLocator;
+import dev.lumenlang.lumen.api.codegen.source.BlockPosition;
 import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
 import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.handler.BlockHandler;
 import dev.lumenlang.lumen.api.pattern.Categories;
+import dev.lumenlang.lumen.pipeline.codegen.HandlerContextImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,8 +66,8 @@ public final class ControlBlocks {
     }
 
     private static boolean nextIsElseChain(@NotNull HandlerContext ctx) {
-        if (!ctx.block().hasNext()) return false;
-        String nextRaw = ctx.block().nextRaw().trim().toLowerCase();
+        if (!ctx.source().hasNext()) return false;
+        String nextRaw = ctx.source().requireAhead(1).raw().trim().toLowerCase();
         return nextRaw.startsWith("else if") || nextRaw.startsWith("else ") || nextRaw.startsWith("else:");
     }
 
@@ -89,7 +92,7 @@ public final class ControlBlocks {
                             ctx.out().line("@LumenPreload");
                             ctx.out().line("public void __lumen_if_" + methodId + "() {");
                         }
-                        ctx.out().line("if (" + ctx.parseCondition("cond") + ") {");
+                        ctx.out().line("if (" + ((HandlerContextImpl) ctx).parseCondition("cond") + ") {");
                         List<NarrowingFact> facts = ctx.env().consumeNarrowings();
                         ctx.env().applyNarrowings(facts);
                         ctx.block().putEnv(BRANCH_FACTS_KEY, facts);
@@ -128,7 +131,7 @@ public final class ControlBlocks {
                     @Override
                     public void begin(@NotNull HandlerContext ctx) {
                         validateElseBranch(ctx, "else if");
-                        ctx.out().line("else if (" + ctx.parseCondition("cond") + ") {");
+                        ctx.out().line("else if (" + ((HandlerContextImpl) ctx).parseCondition("cond") + ") {");
                         List<NarrowingFact> facts = ctx.env().consumeNarrowings();
                         ctx.env().applyNarrowings(facts);
                         ctx.block().putEnv(BRANCH_FACTS_KEY, facts);
@@ -197,7 +200,7 @@ public final class ControlBlocks {
                     public void begin(@NotNull HandlerContext ctx) {
                         if (ctx.block().isRoot()) {
                             throw new DiagnosticException(LumenDiagnostic.error("Invalid 'repeat' placement")
-                                    .at(ctx.block().line(), ctx.block().raw())
+                                    .at(ctx.source().currentLine(), ctx.source().currentRaw())
                                     .label("cannot be top-level")
                                     .help("a 'repeat' block must be inside an event or command handler")
                                     .build());
@@ -214,29 +217,31 @@ public final class ControlBlocks {
 
     private static void validateElseBranch(@NotNull HandlerContext ctx, @NotNull String keyword) {
         BlockContext block = ctx.block();
+        BlockLocator locator = block.locator();
         if (block.isRoot()) {
             throw new DiagnosticException(LumenDiagnostic.error("'" + keyword + "' without matching 'if'")
-                    .at(block.line(), block.raw())
+                    .at(locator.currentLine(), locator.currentRaw())
                     .label("cannot be top-level without a preceding 'if'")
                     .help("'" + keyword + "' must directly follow an 'if' or 'else if' block with the same indentation")
                     .build());
         }
-        if (block.isFirst() || (!block.prevHeadEquals("if") && !block.prevHeadEquals("else"))) {
+        if (locator.isFirst() || (!locator.prevHeadEquals("if") && !locator.prevHeadEquals("else"))) {
             LumenDiagnostic.Builder diag = LumenDiagnostic.error("'" + keyword + "' without matching 'if'")
-                    .at(block.line(), block.raw())
+                    .at(locator.currentLine(), locator.currentRaw())
                     .label("no preceding 'if' or 'else if' block at the same indentation level");
-            BlockContext.SiblingInfo nearestIf = block.findSiblingBlock("if");
+            BlockPosition nearestIf = locator.findSiblingHead("if");
             if (nearestIf != null) {
                 diag.note("found 'if' at line " + nearestIf.line() + ", but it is not the direct predecessor");
             }
             diag.help("'" + keyword + "' must directly follow an 'if' or 'else if' block with the same indentation");
             throw new DiagnosticException(diag.build());
         }
-        if (block.prevHeadExact("else")) {
+        if (locator.prevHeadExact("else")) {
+            BlockPosition prev = locator.requireBehind(1);
             LumenDiagnostic.Builder diag = LumenDiagnostic.error("'" + keyword + "' after 'else'")
-                    .at(block.line(), block.raw())
+                    .at(locator.currentLine(), locator.currentRaw())
                     .label("cannot follow an 'else' block");
-            diag.context(block.prevLine(), block.prevRaw(), 0, block.prevRaw().stripTrailing().length(), "this is already the fallback branch");
+            diag.context(prev.line(), prev.raw(), 0, prev.raw().stripTrailing().length(), "this is already the fallback branch");
             diag.help("'" + keyword + "' cannot come after 'else' because 'else' is the final branch");
             throw new DiagnosticException(diag.build());
         }

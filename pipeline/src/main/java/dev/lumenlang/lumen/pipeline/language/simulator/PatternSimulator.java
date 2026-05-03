@@ -1,12 +1,12 @@
 package dev.lumenlang.lumen.pipeline.language.simulator;
 
-import dev.lumenlang.lumen.api.codegen.JavaOutput;
 import dev.lumenlang.lumen.api.pattern.PatternMeta;
 import dev.lumenlang.lumen.api.util.FuzzyMatch;
 import dev.lumenlang.lumen.pipeline.codegen.BlockContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.CodegenContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.HandlerContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
+import dev.lumenlang.lumen.pipeline.codegen.output.NoOpJavaOutput;
 import dev.lumenlang.lumen.pipeline.conditions.registry.RegisteredCondition;
 import dev.lumenlang.lumen.pipeline.language.match.Match;
 import dev.lumenlang.lumen.pipeline.language.match.MatchProgress;
@@ -707,7 +707,7 @@ public final class PatternSimulator {
         try {
             CodegenContextImpl codegenCtx = new CodegenContextImpl("__simulation__.luma");
             BlockContextImpl blockCtx = new BlockContextImpl(null, null, List.of(), 0);
-            HandlerContextImpl hctx = new HandlerContextImpl(match, env, codegenCtx, blockCtx, new NoopJavaOutput(), 0, "");
+            HandlerContextImpl hctx = new HandlerContextImpl(match, env, codegenCtx, blockCtx, NoOpJavaOutput.INSTANCE);
             handler.handler().handle(hctx);
             return true;
         } catch (Throwable ignored) {
@@ -727,7 +727,7 @@ public final class PatternSimulator {
         try {
             CodegenContextImpl codegenCtx = new CodegenContextImpl("__simulation__.luma");
             BlockContextImpl blockCtx = new BlockContextImpl(null, null, List.of(), 0);
-            HandlerContextImpl hctx = new HandlerContextImpl(match, env, codegenCtx, blockCtx, null, 0, "");
+            HandlerContextImpl hctx = new HandlerContextImpl(match, env, codegenCtx, blockCtx, NoOpJavaOutput.INSTANCE);
             handler.handler().handle(hctx);
             return true;
         } catch (Throwable ignored) {
@@ -833,21 +833,5 @@ public final class PatternSimulator {
     }
 
     private record TypoFix(@NotNull Token token, @NotNull String expected, int tokenIndex) {
-    }
-
-    private static final class NoopJavaOutput implements JavaOutput {
-
-        @Override
-        public void line(@NotNull String code) {
-        }
-
-        @Override
-        public int lineNum() {
-            return 0;
-        }
-
-        @Override
-        public void insertLine(int index, @NotNull String code) {
-        }
     }
 }

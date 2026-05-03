@@ -4,6 +4,7 @@ import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
 import dev.lumenlang.lumen.pipeline.codegen.CodegenContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.HandlerContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
+import dev.lumenlang.lumen.pipeline.codegen.output.AlwaysThrowJavaOutput;
 import dev.lumenlang.lumen.pipeline.conditions.registry.ConditionRegistry;
 import dev.lumenlang.lumen.pipeline.conditions.registry.RegisteredConditionMatch;
 import dev.lumenlang.lumen.pipeline.language.exceptions.TokenCarryingException;
@@ -26,6 +27,8 @@ import java.util.List;
  */
 public final class ConditionAtom implements ConditionExpr {
 
+    private static final AlwaysThrowJavaOutput NO_OUTPUT = new AlwaysThrowJavaOutput(new IllegalStateException("condition handler attempted to write to JavaOutput; conditions must return a Java expression string"));
+
     private final RegisteredConditionMatch match;
 
     /**
@@ -40,13 +43,9 @@ public final class ConditionAtom implements ConditionExpr {
     @Override
     public String toJava(TypeEnvImpl env, CodegenContextImpl ctx) {
         try {
-            int line = env.blockContext() != null ? env.blockContext().line() : 0;
-            String raw = env.blockContext() != null ? env.blockContext().raw() : "";
-            HandlerContextImpl hctx = new HandlerContextImpl(match.match(), env, ctx, null, null, line, raw);
+            HandlerContextImpl hctx = new HandlerContextImpl(match.match(), env, ctx, env.blockContext(), NO_OUTPUT);
             return match.reg().handler().handle(hctx);
-        } catch (DiagnosticException e) {
-            throw e;
-        } catch (TokenCarryingException e) {
+        } catch (DiagnosticException | TokenCarryingException e) {
             throw e;
         } catch (RuntimeException e) {
             List<Token> allTokens = new ArrayList<>();

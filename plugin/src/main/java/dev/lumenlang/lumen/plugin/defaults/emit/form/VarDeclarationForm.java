@@ -18,7 +18,6 @@ import dev.lumenlang.lumen.pipeline.codegen.BlockContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.HandlerContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
-import dev.lumenlang.lumen.pipeline.language.pattern.registered.RegisteredExpressionMatch;
 import dev.lumenlang.lumen.pipeline.language.resolve.ExprResolver;
 import dev.lumenlang.lumen.pipeline.language.simulator.PatternSimulator;
 import dev.lumenlang.lumen.pipeline.language.simulator.suggestions.SuggestionDiagnostics;
@@ -81,7 +80,7 @@ public final class VarDeclarationForm {
                 return;
             }
             throw new DiagnosticException(LumenDiagnostic.error("Cannot resolve expression")
-                    .at(emitCtx.line(), emitCtx.raw())
+                    .at(emitCtx.source().currentLine(), emitCtx.source().currentRaw())
                     .highlight(exprTokens.get(0).start(), exprTokens.get(exprTokens.size() - 1).end())
                     .label("'" + ExprResolver.joinTokens(exprTokens) + "' is not a recognized expression")
                     .help("check spelling or ensure the variable or expression is defined")
@@ -94,7 +93,7 @@ public final class VarDeclarationForm {
     private static void emitScopedGlobalSet(@NotNull String name, @NotNull TypeEnv.GlobalInfo info, @NotNull List<Token> exprTokens, @NotNull HandlerContextImpl ctx, @NotNull TypeEnvImpl env) {
         if (!info.scoped()) {
             throw new DiagnosticException(LumenDiagnostic.error("Variable '" + name + "' is not a scoped global")
-                    .at(ctx.line(), ctx.raw())
+                    .at(ctx.source().currentLine(), ctx.source().currentRaw())
                     .highlight(exprTokens.get(0).start(), exprTokens.get(exprTokens.size() - 1).end())
                     .label("'" + name + "' is not scoped")
                     .help("declare it inside a 'global:' block with 'scoped to <type> " + name + ": <type>' for per-entity access")
@@ -110,7 +109,7 @@ public final class VarDeclarationForm {
         }
         if (splitIdx < 0) {
             throw new DiagnosticException(LumenDiagnostic.error("Scoped global '" + name + "' requires a scope")
-                    .at(ctx.line(), ctx.raw())
+                    .at(ctx.source().currentLine(), ctx.source().currentRaw())
                     .highlight(exprTokens.get(0).start(), exprTokens.get(exprTokens.size() - 1).end())
                     .label("missing scope")
                     .help("use 'set " + name + " to <value> for <scope>'")
@@ -122,12 +121,12 @@ public final class VarDeclarationForm {
 
         String valueJava = resolveExpressionJava(valueTokens, ctx, env);
         if (valueJava == null) {
-            throw new DiagnosticException(buildExpressionDiagnostic(valueTokens, ctx.line(), ctx.raw(), env));
+            throw new DiagnosticException(buildExpressionDiagnostic(valueTokens, ctx.source().currentLine(), ctx.source().currentRaw(), env));
         }
 
         if (scopeTokens.size() != 1) {
             throw new DiagnosticException(LumenDiagnostic.error("Invalid scope expression")
-                    .at(ctx.line(), ctx.raw())
+                    .at(ctx.source().currentLine(), ctx.source().currentRaw())
                     .highlight(scopeTokens.get(0).start(), scopeTokens.get(scopeTokens.size() - 1).end())
                     .label("expected a single variable name after 'for'")
                     .help("provide a scope variable like a player or entity")
@@ -138,7 +137,7 @@ public final class VarDeclarationForm {
         if (scopeRef == null) {
             String suggestion = FuzzyMatch.closest(scopeVarName, env.allVisibleVarNames());
             LumenDiagnostic.Builder diagBuilder = LumenDiagnostic.error("Variable '" + scopeVarName + "' not found")
-                    .at(ctx.line(), ctx.raw())
+                    .at(ctx.source().currentLine(), ctx.source().currentRaw())
                     .highlight(scopeTokens.get(0).start(), scopeTokens.get(0).end())
                     .label("undefined variable");
             if (suggestion != null) diagBuilder.help("did you mean '" + suggestion + "'?");
@@ -147,7 +146,7 @@ public final class VarDeclarationForm {
         }
         if (scopeRef.objectType() == null) {
             throw new DiagnosticException(LumenDiagnostic.error("Scope variable '" + scopeVarName + "' has no type")
-                    .at(ctx.line(), ctx.raw())
+                    .at(ctx.source().currentLine(), ctx.source().currentRaw())
                     .highlight(scopeTokens.get(0).start(), scopeTokens.get(0).end())
                     .label("expected a typed variable like a player or entity")
                     .help("use a typed variable as scope")
@@ -170,7 +169,7 @@ public final class VarDeclarationForm {
         BlockContextImpl block = env.blockContext();
         if (block.getEnvFromParents("__lambda_block") != null && env.isVarCapturedByLambda(name)) {
             throw new DiagnosticException(LumenDiagnostic.error("Cannot modify '" + name + "' inside a schedule block")
-                    .at(ctx.line(), ctx.raw())
+                    .at(ctx.source().currentLine(), ctx.source().currentRaw())
                     .highlight(nameToken.start(), nameToken.end())
                     .label("captured variable cannot be modified")
                     .help("declare it inside a 'global:' block as '" + name + ": <type> with default <value>'")
@@ -181,11 +180,11 @@ public final class VarDeclarationForm {
             LumenType varType = ref.type();
             if (!(varType instanceof NullableType)) {
                 Token noneToken = exprTokens.get(0);
-                LumenDiagnostic diag = TypeChecker.checkNullAssignment(varType, name, ctx.line(), ctx.raw(), noneToken.start(), noneToken.end());
+                LumenDiagnostic diag = TypeChecker.checkNullAssignment(varType, name, ctx.source().currentLine(), ctx.source().currentRaw(), noneToken.start(), noneToken.end());
                 if (diag != null) throw new DiagnosticException(diag);
             }
             ctx.out().line(ref.java() + " = null;");
-            env.markNullState(name, TypeEnvImpl.NullState.NULL, ctx.line(), ctx.raw());
+            env.markNullState(name, TypeEnvImpl.NullState.NULL, ctx.source().currentLine(), ctx.source().currentRaw());
             return true;
         }
         TypedExpression resolved = resolveExpressionTyped(exprTokens, ctx, env);
@@ -195,16 +194,16 @@ public final class VarDeclarationForm {
         LumenType varType = ref.type();
         int colStart = exprTokens.get(0).start();
         int colEnd = exprTokens.get(exprTokens.size() - 1).end();
-        LumenDiagnostic diag = TypeChecker.checkAssignment(varType, resolved.type, name, ctx.line(), ctx.raw(), colStart, colEnd);
+        LumenDiagnostic diag = TypeChecker.checkAssignment(varType, resolved.type, name, ctx.source().currentLine(), ctx.source().currentRaw(), colStart, colEnd);
         if (diag != null) throw new DiagnosticException(diag);
         String widened = widenLiteralToTarget(resolved.java, resolved.type, varType);
         ctx.out().line(ref.java() + " = " + widened + ";");
-        env.recordDeclaration(name, ctx.line(), ctx.raw());
+        env.recordDeclaration(name, ctx.source().currentLine(), ctx.source().currentRaw());
         if (varType instanceof NullableType) {
             if (resolved.type instanceof NullableType) {
                 env.clearNonNull(name);
             } else {
-                env.markNullState(name, TypeEnvImpl.NullState.NON_NULL, ctx.line(), ctx.raw());
+                env.markNullState(name, TypeEnvImpl.NullState.NON_NULL, ctx.source().currentLine(), ctx.source().currentRaw());
             }
         }
         return true;
@@ -214,7 +213,7 @@ public final class VarDeclarationForm {
         String nameError = VarNameValidator.validate(name);
         if (nameError != null) {
             throw new DiagnosticException(LumenDiagnostic.error(nameError)
-                    .at(ctx.line(), ctx.raw())
+                    .at(ctx.source().currentLine(), ctx.source().currentRaw())
                     .highlight(nameToken.start(), nameToken.end())
                     .label("invalid variable name")
                     .build());
@@ -225,7 +224,7 @@ public final class VarDeclarationForm {
             return;
         }
 
-        Expr e = ExprParser.parse(exprTokens, env, ctx.line(), ctx.raw());
+        Expr e = ExprParser.parse(exprTokens, env, ctx.source().currentLine(), ctx.source().currentRaw());
 
         String java;
         VarRef inheritedRef = null;
@@ -248,7 +247,7 @@ public final class VarDeclarationForm {
                 Token varToken = exprTokens.get(0);
                 String suggestion = FuzzyMatch.closest(r.name(), env.allVisibleVarNames());
                 LumenDiagnostic.Builder diagBuilder = LumenDiagnostic.error("Variable '" + r.name() + "' not found")
-                            .at(ctx.line(), ctx.raw())
+                            .at(ctx.source().currentLine(), ctx.source().currentRaw())
                             .highlight(varToken.start(), varToken.end())
                             .label("undefined variable");
                 if (suggestion != null) diagBuilder.help("did you mean '" + suggestion + "'?");
@@ -264,7 +263,7 @@ public final class VarDeclarationForm {
         } else {
             Expr.RawExpr raw = (Expr.RawExpr) e;
             if (raw.tokens().size() > 1) {
-                ExpressionResult exprResult = tryExpressionPattern(raw.tokens(), ctx, env);
+                ExpressionResult exprResult = ctx.resolveExpression(raw.tokens());
                 if (exprResult != null) {
                     java = exprResult.java();
                     exprLumenType = exprResult.type();
@@ -276,7 +275,7 @@ public final class VarDeclarationForm {
                         exprLumenType = resolvedResult.type();
                         resolvedMetadata = resolvedResult.metadata();
                     } else {
-                        throw new DiagnosticException(buildExpressionDiagnostic(raw.tokens(), ctx.line(), ctx.raw(), env));
+                        throw new DiagnosticException(buildExpressionDiagnostic(raw.tokens(), ctx.source().currentLine(), ctx.source().currentRaw(), env));
                     }
                 }
             } else {
@@ -285,7 +284,7 @@ public final class VarDeclarationForm {
                     if (isNullKeyword(singleToken.text())) {
                         Token noneToken = raw.tokens().get(0);
                         LumenDiagnostic diag = LumenDiagnostic.error("Cannot declare variable with 'none' without a type")
-                                .at(ctx.line(), ctx.raw())
+                                .at(ctx.source().currentLine(), ctx.source().currentRaw())
                                 .highlight(noneToken.start(), noneToken.end())
                                 .label("'none' has no type")
                                 .help("use 'set " + name + " to nullable <type>' to declare a nullable variable")
@@ -294,7 +293,7 @@ public final class VarDeclarationForm {
                     } else if (env.lookupVar(singleToken.text()) == null) {
                         String suggestion = FuzzyMatch.closest(singleToken.text(), env.allVisibleVarNames());
                         LumenDiagnostic.Builder diagBuilder = LumenDiagnostic.error("Variable '" + singleToken.text() + "' not found")
-                                .at(ctx.line(), ctx.raw())
+                                .at(ctx.source().currentLine(), ctx.source().currentRaw())
                                 .highlight(singleToken.start(), singleToken.end())
                                 .label("undefined variable");
                         if (suggestion != null) diagBuilder.help("did you mean '" + suggestion + "'?");
@@ -319,11 +318,11 @@ public final class VarDeclarationForm {
         ctx.out().line(typeDecl + " " + name + " = " + java + ";");
         VarRef varRef = new VarRef(name, resolvedLumenType, name, resolvedMetadata);
         env.defineVar(name, varRef);
-        env.recordDeclaration(name, ctx.line(), ctx.raw());
+        env.recordDeclaration(name, ctx.source().currentLine(), ctx.source().currentRaw());
         if (resolvedLumenType instanceof NullableType) {
-            env.recordNullableVarInfo(name, new TypeEnvImpl.NullableVarInfo(ctx.line(), ctx.raw()));
+            env.recordNullableVarInfo(name, new TypeEnvImpl.NullableVarInfo(ctx.source().currentLine(), ctx.source().currentRaw()));
             if (!(exprLumenType instanceof NullableType)) {
-                env.markNullState(name, TypeEnvImpl.NullState.NON_NULL, ctx.line(), ctx.raw());
+                env.markNullState(name, TypeEnvImpl.NullState.NON_NULL, ctx.source().currentLine(), ctx.source().currentRaw());
             }
         }
         if (env.blockContext().parent() != null) {
@@ -334,7 +333,7 @@ public final class VarDeclarationForm {
     private static void emitNullableDeclaration(@NotNull String name, @NotNull List<Token> exprTokens, @NotNull Token nameToken, @NotNull HandlerContextImpl ctx, @NotNull TypeEnvImpl env) {
         TypeAnnotationParser.ParseResult result = TypeAnnotationParser.parseDetailed(exprTokens, 0, env::lookupDataSchema);
         if (result instanceof TypeAnnotationParser.ParseResult.Failure f) {
-            throw new DiagnosticException(SuggestionDiagnostics.buildTypeFailure("Invalid nullable type", ctx.line(), ctx.raw(), exprTokens, f));
+            throw new DiagnosticException(SuggestionDiagnostics.buildTypeFailure("Invalid nullable type", ctx.source().currentLine(), ctx.source().currentRaw(), exprTokens, f));
         }
         TypeAnnotationParser parsed = ((TypeAnnotationParser.ParseResult.Success) result).parser();
         NullableType nullableType = (NullableType) parsed.type();
@@ -348,7 +347,7 @@ public final class VarDeclarationForm {
             nullState = isNone || java.equals("null") ? TypeEnvImpl.NullState.NULL : TypeEnvImpl.NullState.NON_NULL;
         } else {
             TypedExpression typed = resolveExpressionTyped(valueTokens, ctx, env);
-            if (typed == null) throw new DiagnosticException(buildExpressionDiagnostic(valueTokens, ctx.line(), ctx.raw(), env));
+            if (typed == null) throw new DiagnosticException(buildExpressionDiagnostic(valueTokens, ctx.source().currentLine(), ctx.source().currentRaw(), env));
             java = widenLiteralToTarget(typed.java(), typed.type(), nullableType.inner());
             nullState = TypeEnvImpl.NullState.NON_NULL;
         }
@@ -356,9 +355,9 @@ public final class VarDeclarationForm {
         Map<String, Object> metadata = parsed.dataSchemaName() != null ? Map.of("data_type", parsed.dataSchemaName()) : Map.of();
         VarRef varRef = new VarRef(name, nullableType, name, metadata);
         env.defineVar(name, varRef);
-        env.recordDeclaration(name, ctx.line(), ctx.raw());
-        env.recordNullableVarInfo(name, new TypeEnvImpl.NullableVarInfo(ctx.line(), ctx.raw()));
-        env.markNullState(name, nullState, ctx.line(), ctx.raw());
+        env.recordDeclaration(name, ctx.source().currentLine(), ctx.source().currentRaw());
+        env.recordNullableVarInfo(name, new TypeEnvImpl.NullableVarInfo(ctx.source().currentLine(), ctx.source().currentRaw()));
+        env.markNullState(name, nullState, ctx.source().currentLine(), ctx.source().currentRaw());
         if (env.blockContext().parent() != null) {
             env.blockContext().parent().defineVar(name, varRef);
         }
@@ -389,38 +388,13 @@ public final class VarDeclarationForm {
         return text.equalsIgnoreCase("none") || text.equalsIgnoreCase("null");
     }
 
-    private static @Nullable ExpressionResult tryExpressionPattern(@NotNull List<Token> tokens, @NotNull HandlerContextImpl ctx, @NotNull TypeEnvImpl env) {
-        PatternRegistry reg;
-        try {
-            reg = PatternRegistry.instance();
-        } catch (RuntimeException e) {
-            return null;
-        }
-        RegisteredExpressionMatch match = reg.matchExpression(tokens, env);
-        if (match == null) {
-            match = reg.matchExpressionSlow(tokens, env);
-        }
-        if (match == null) {
-            return null;
-        }
-        try {
-            BlockContextImpl block = env.blockContext();
-            HandlerContextImpl hctx = new HandlerContextImpl(match.match(), env, ctx.codegenContext(), block, null, ctx.line(), ctx.raw());
-            return match.reg().handler().handle(hctx);
-        } catch (DiagnosticException e) {
-            throw e;
-        } catch (RuntimeException e) {
-            return null;
-        }
-    }
-
     private static @Nullable String resolveExpressionJava(@NotNull List<Token> tokens, @NotNull HandlerContextImpl ctx, @NotNull TypeEnvImpl env) {
         TypedExpression typed = resolveExpressionTyped(tokens, ctx, env);
         return typed != null ? typed.java : null;
     }
 
     private static @Nullable TypedExpression resolveExpressionTyped(@NotNull List<Token> tokens, @NotNull HandlerContextImpl ctx, @NotNull TypeEnvImpl env) {
-        Expr e = ExprParser.parse(tokens, env, ctx.line(), ctx.raw());
+        Expr e = ExprParser.parse(tokens, env, ctx.source().currentLine(), ctx.source().currentRaw());
         if (e instanceof Expr.Literal l) {
             String java;
             if (l.value() instanceof String) {
@@ -446,7 +420,7 @@ public final class VarDeclarationForm {
         if (e instanceof Expr.MathExpr m) return new TypedExpression(m.java(), m.resolvedType());
         Expr.RawExpr raw = (Expr.RawExpr) e;
         if (raw.tokens().size() > 1) {
-            ExpressionResult result = tryExpressionPattern(raw.tokens(), ctx, env);
+            ExpressionResult result = ctx.resolveExpression(raw.tokens());
             if (result != null) return new TypedExpression(result.java(), result.type());
             ExpressionResult resolved = ExprResolver.resolveWithTypeNoDirectMatch(raw.tokens(), ctx.codegenContext(), env);
             if (resolved != null) return new TypedExpression(resolved.java(), resolved.type());

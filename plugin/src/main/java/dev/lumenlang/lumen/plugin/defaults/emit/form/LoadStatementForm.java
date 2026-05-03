@@ -10,15 +10,10 @@ import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.pipeline.codegen.HandlerContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.language.exceptions.LumenScriptException;
-import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
-import dev.lumenlang.lumen.pipeline.language.pattern.registered.RegisteredExpressionMatch;
 import dev.lumenlang.lumen.pipeline.language.resolve.ExprResolver;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
-import dev.lumenlang.lumen.pipeline.language.typed.Expr;
-import dev.lumenlang.lumen.pipeline.language.typed.ExprParser;
 import dev.lumenlang.lumen.pipeline.language.validator.VarNameValidator;
 import dev.lumenlang.lumen.pipeline.persist.PersistentVars;
-import dev.lumenlang.lumen.pipeline.placeholder.PlaceholderExpander;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,40 +60,19 @@ public final class LoadStatementForm {
 
         String nameError = VarNameValidator.validate(name);
         if (nameError != null) {
-            throw new LumenScriptException(ctx.line(), ctx.raw(), nameError);
+            throw new LumenScriptException(ctx.source().currentLine(), ctx.source().currentRaw(), nameError);
         }
 
         if (env.lookupVar(name) != null) {
-            throw new LumenScriptException(ctx.line(), ctx.raw(), "Variable '" + name + "' is already defined in this scope");
+            throw new LumenScriptException(ctx.source().currentLine(), ctx.source().currentRaw(), "Variable '" + name + "' is already defined in this scope");
         }
 
-        RegisteredExpressionMatch exprMatch = PatternRegistry.instance().matchExpression(exprTokens, env);
-
-        String defaultJava;
-        ObjectType resolvedObjectType = null;
-
-        if (exprMatch != null) {
-            HandlerContextImpl hctx = new HandlerContextImpl(exprMatch.match(), env, emitCtx.codegenContext(), env.blockContext(), null, 0, "");
-            ExpressionResult result = exprMatch.reg().handler().handle(hctx);
-            defaultJava = result.java();
-            resolvedObjectType = result.type() instanceof ObjectType ot ? ot : null;
-        } else {
-            Expr e = ExprParser.parse(exprTokens, env);
-            if (e instanceof Expr.Literal l) {
-                defaultJava = l.value() instanceof String ? PlaceholderExpander.expandString(l.sourceToken(), env) : l.value().toString();
-            } else if (e instanceof Expr.RefExpr r) {
-                VarRef ref = env.lookupVar(r.name());
-                if (ref == null) {
-                    throw new RuntimeException("Variable not found: " + r.name());
-                }
-                defaultJava = ref.java();
-            } else if (e instanceof Expr.MathExpr m) {
-                defaultJava = m.java();
-            } else {
-                Expr.RawExpr raw = (Expr.RawExpr) e;
-                throw new LumenScriptException(ctx.line(), ctx.raw(), "Expression not recognized: '" + ExprResolver.joinTokens(raw.tokens()) + "'. Check spelling of variables and expression patterns.", raw.tokens());
-            }
+        ExpressionResult resolved = ctx.resolveExpression(exprTokens);
+        if (resolved == null) {
+            throw new LumenScriptException(ctx.source().currentLine(), ctx.source().currentRaw(), "Expression not recognized: '" + ExprResolver.joinTokens(exprTokens) + "'. Check spelling of variables and expression patterns.", exprTokens);
         }
+        String defaultJava = resolved.java();
+        ObjectType resolvedObjectType = resolved.type() instanceof ObjectType ot ? ot : null;
 
         String className = ctx.codegen().className();
         String keyExpr;
@@ -122,7 +96,7 @@ public final class LoadStatementForm {
         ctx.out().line("var " + name + " = PersistentVars.get(" + keyExpr + ", " + defaultJava + ");");
         VarRef varRef = new VarRef(name, resolvedObjectType, name);
         env.defineVar(name, varRef);
-        env.recordDeclaration(name, ctx.line(), ctx.raw());
+        env.recordDeclaration(name, ctx.source().currentLine(), ctx.source().currentRaw());
         if (env.blockContext().parent() != null) {
             env.blockContext().parent().defineVar(name, varRef);
         }

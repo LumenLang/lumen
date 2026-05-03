@@ -39,14 +39,14 @@ public final class MapStatements {
         TypeEnv.GlobalInfo info = ctx.env().getGlobalInfo(mapVarName);
         if (info == null) {
             throw new DiagnosticException(LumenDiagnostic.error("'" + mapVarName + "' is not a global variable")
-                    .at(ctx.block().line(), ctx.block().raw())
+                    .at(ctx.source().currentLine(), ctx.source().currentRaw())
                     .label("not a global")
                     .help("declare it inside a 'global:' block as '" + mapVarName + ": map of <key> to <value>'")
                     .build());
         }
         if (!info.scoped()) {
             throw new DiagnosticException(LumenDiagnostic.error("'" + mapVarName + "' is not a scoped global")
-                    .at(ctx.block().line(), ctx.block().raw())
+                    .at(ctx.source().currentLine(), ctx.source().currentRaw())
                     .label("not scoped")
                     .help("declare it inside a 'global:' block with 'scoped to <type> " + mapVarName + ": <type>' for per-entity access")
                     .build());
@@ -66,7 +66,7 @@ public final class MapStatements {
         TypeEnv.VarHandle scopeRef = env.lookupVar(scopeVarName);
         if (scopeRef == null) {
             throw new DiagnosticException(LumenDiagnostic.error("Scope variable '" + scopeVarName + "' not found")
-                    .at(ctx.block().line(), ctx.block().raw())
+                    .at(ctx.source().currentLine(), ctx.source().currentRaw())
                     .label("undefined variable")
                     .help("make sure the variable is defined before using it")
                     .build());
@@ -96,7 +96,7 @@ public final class MapStatements {
         LumenType actualKey = ctx.resolvedType("key");
         if (actualKey != null && !expectedKey.assignableFrom(actualKey)) {
             throw new DiagnosticException(LumenDiagnostic.error("Map key type mismatch")
-                    .at(ctx.block().line(), ctx.block().raw())
+                    .at(ctx.source().currentLine(), ctx.source().currentRaw())
                     .label("expected '" + expectedKey.displayName() + "', got '" + actualKey.displayName() + "'")
                     .help("this map only accepts '" + expectedKey.displayName() + "' keys")
                     .build());
@@ -104,7 +104,7 @@ public final class MapStatements {
         LumenType actualVal = ctx.resolvedType("val");
         if (actualVal != null && !expectedVal.assignableFrom(actualVal)) {
             throw new DiagnosticException(LumenDiagnostic.error("Map value type mismatch")
-                    .at(ctx.block().line(), ctx.block().raw())
+                    .at(ctx.source().currentLine(), ctx.source().currentRaw())
                     .label("expected '" + expectedVal.displayName() + "', got '" + actualVal.displayName() + "'")
                     .help("this map only accepts '" + expectedVal.displayName() + "' values")
                     .build());
@@ -120,7 +120,7 @@ public final class MapStatements {
         LumenType actualKey = ctx.resolvedType("key");
         if (actualKey == null || expectedKey.assignableFrom(actualKey)) return;
         throw new DiagnosticException(LumenDiagnostic.error("Map key type mismatch")
-                .at(ctx.block().line(), ctx.block().raw())
+                .at(ctx.source().currentLine(), ctx.source().currentRaw())
                 .label("expected '" + expectedKey.displayName() + "', got '" + actualKey.displayName() + "'")
                 .help("this map only accepts '" + expectedKey.displayName() + "' keys")
                 .build());

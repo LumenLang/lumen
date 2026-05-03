@@ -19,8 +19,6 @@ import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.data.DataSchema;
 import dev.lumenlang.lumen.pipeline.java.compiled.DataInstance;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
-import dev.lumenlang.lumen.pipeline.language.pattern.registered.RegisteredExpressionMatch;
-import dev.lumenlang.lumen.pipeline.language.resolve.ExprResolver;
 import dev.lumenlang.lumen.pipeline.language.simulator.PatternSimulator;
 import dev.lumenlang.lumen.pipeline.language.simulator.suggestions.SuggestionDiagnostics;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
@@ -43,6 +41,7 @@ import java.util.StringJoiner;
 @Registration
 @SuppressWarnings("unused")
 public final class DataExpressions {
+
 
     /**
      * Produces a typed field access result by looking up the field's {@link LumenType}
@@ -108,8 +107,8 @@ public final class DataExpressions {
 
     private static @NotNull ExpressionResult handleConstructor(@NotNull HandlerContext ctx) {
         List<? extends ScriptToken> bodyTokens = ctx.scriptTokens("body");
-        int line = ctx.line();
-        String raw = ctx.raw();
+        int line = ctx.source().currentLine();
+        String raw = ctx.source().currentRaw();
 
         if (bodyTokens.isEmpty()) {
             throw new DiagnosticException(LumenDiagnostic.error("Expected a data type name after 'new'")
@@ -313,18 +312,7 @@ public final class DataExpressions {
             ResolvedValue lit = resolveSingleTokenLiteral(pipelineTokens.get(0), env);
             if (lit != null) return lit;
         }
-        RegisteredExpressionMatch match = PatternRegistry.instance().matchExpression(pipelineTokens, env);
-        if (match != null) {
-            try {
-                HandlerContextImpl hctx = new HandlerContextImpl(match.match(), env, ctx.codegenContext(), env.blockContext(), null, ctx.line(), ctx.raw());
-                ExpressionResult result = match.reg().handler().handle(hctx);
-                return new ResolvedValue(result.java(), result.type());
-            } catch (DiagnosticException e) {
-                throw e;
-            } catch (RuntimeException ignored) {
-            }
-        }
-        ExpressionResult resolved = ExprResolver.resolveWithType(pipelineTokens, ctx.codegenContext(), env);
+        ExpressionResult resolved = ctx.resolveExpression(valueTokens);
         if (resolved != null) return new ResolvedValue(resolved.java(), resolved.type());
         return null;
     }

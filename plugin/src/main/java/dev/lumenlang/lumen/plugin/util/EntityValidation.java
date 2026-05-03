@@ -81,7 +81,6 @@ public final class EntityValidation {
                                          @NotNull String requiredClass,
                                          @NotNull String patternDesc) {
         String cls = javaClass(handle);
-        if (cls == null) return false;
         if (cls.equals(requiredClass)) return true;
 
         try {

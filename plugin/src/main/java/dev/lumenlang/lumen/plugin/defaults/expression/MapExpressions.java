@@ -49,7 +49,7 @@ public final class MapExpressions {
                 .deprecated(true)
                 .handler(ctx -> {
                     throw new DiagnosticException(LumenDiagnostic.error("Untyped maps are no longer supported")
-                            .at(ctx.block().line(), ctx.block().raw())
+                            .at(ctx.source().currentLine(), ctx.source().currentRaw())
                             .label("use 'new map of <key-type> to <value-type>' instead")
                             .help("example: 'set myMap to new map of string to int'")
                             .build());
@@ -69,12 +69,12 @@ public final class MapExpressions {
                     List<Token> keyTokens = hctx.bound("keyType").tokens();
                     TypeAnnotationParser.ParseResult keyResult = TypeAnnotationParser.parseDetailed(keyTokens, 0, env::lookupDataSchema);
                     if (keyResult instanceof TypeAnnotationParser.ParseResult.Failure f) {
-                        throw new DiagnosticException(SuggestionDiagnostics.buildTypeFailure("Invalid map key type", ctx.block().line(), ctx.block().raw(), keyTokens, f));
+                        throw new DiagnosticException(SuggestionDiagnostics.buildTypeFailure("Invalid map key type", ctx.source().currentLine(), ctx.source().currentRaw(), keyTokens, f));
                     }
                     List<Token> valueTokens = hctx.bound("valueType").tokens();
                     TypeAnnotationParser.ParseResult valueResult = TypeAnnotationParser.parseDetailed(valueTokens, 0, env::lookupDataSchema);
                     if (valueResult instanceof TypeAnnotationParser.ParseResult.Failure f) {
-                        throw new DiagnosticException(SuggestionDiagnostics.buildTypeFailure("Invalid map value type", ctx.block().line(), ctx.block().raw(), valueTokens, f));
+                        throw new DiagnosticException(SuggestionDiagnostics.buildTypeFailure("Invalid map value type", ctx.source().currentLine(), ctx.source().currentRaw(), valueTokens, f));
                     }
                     LumenType keyType = ((TypeAnnotationParser.ParseResult.Success) keyResult).parser().type();
                     LumenType valueType = ((TypeAnnotationParser.ParseResult.Success) valueResult).parser().type();
@@ -96,14 +96,14 @@ public final class MapExpressions {
                     TypeEnv.GlobalInfo info = env.getGlobalInfo(mapVarName);
                     if (info == null) {
                         throw new DiagnosticException(LumenDiagnostic.error("'" + mapVarName + "' is not a global variable")
-                                .at(ctx.block().line(), ctx.block().raw())
+                                .at(ctx.source().currentLine(), ctx.source().currentRaw())
                                 .label("scoped map operations require a global variable")
                                 .help("scoped expressions (for ...) are only supported on global vars")
                                 .build());
                     }
                     if (!info.scoped()) {
                         throw new DiagnosticException(LumenDiagnostic.error("'" + mapVarName + "' is not a scoped global")
-                                .at(ctx.block().line(), ctx.block().raw())
+                                .at(ctx.source().currentLine(), ctx.source().currentRaw())
                                 .label("the 'for' keyword requires a scoped global variable")
                                 .help("declare it inside a 'global:' block with 'scoped to <type> " + mapVarName + ": map of <key> to <value>' for per-entity access")
                                 .build());
@@ -111,7 +111,7 @@ public final class MapExpressions {
                     TypeEnv.VarHandle scopeRef = env.lookupVar(scopeVarName);
                     if (scopeRef == null) {
                         throw new DiagnosticException(LumenDiagnostic.error("Scope variable '" + scopeVarName + "' not found")
-                                .at(ctx.block().line(), ctx.block().raw())
+                                .at(ctx.source().currentLine(), ctx.source().currentRaw())
                                 .label("'" + scopeVarName + "' is not defined in this scope")
                                 .help("the scope variable must be a player or entity reference")
                                 .build());

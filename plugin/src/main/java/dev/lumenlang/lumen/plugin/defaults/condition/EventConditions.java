@@ -24,7 +24,7 @@ public final class EventConditions {
                 .since("1.0.0")
                 .category(Categories.EVENT)
                 .handler(ctx -> {
-                    if (ctx.env().block() == null || ctx.env().block().getEnvFromParents("__event_block") == null) {
+                    if (ctx.env().block().getEnvFromParents("__event_block") == null) {
                         throw new RuntimeException("'is cancelled' condition can only be used inside an event handler block");
                     }
                     Boolean cancellable = ctx.env().block().getEnvFromParents("__event_cancellable");

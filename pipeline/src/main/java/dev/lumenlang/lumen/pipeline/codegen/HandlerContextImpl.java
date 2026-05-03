@@ -3,11 +3,14 @@ package dev.lumenlang.lumen.pipeline.codegen;
 import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import dev.lumenlang.lumen.api.codegen.JavaOutput;
 import dev.lumenlang.lumen.api.codegen.TypeEnv;
+import dev.lumenlang.lumen.api.codegen.source.SourceLocator;
+import dev.lumenlang.lumen.api.codegen.source.SourceMap;
 import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
 import dev.lumenlang.lumen.api.emit.ScriptToken;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler.ExpressionResult;
 import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.PrimitiveType;
+import dev.lumenlang.lumen.pipeline.codegen.source.SourceLocatorImpl;
 import dev.lumenlang.lumen.pipeline.conditions.ConditionExpr;
 import dev.lumenlang.lumen.pipeline.conditions.parser.ConditionParser;
 import dev.lumenlang.lumen.pipeline.language.exceptions.TokenCarryingException;
@@ -48,19 +51,15 @@ public final class HandlerContextImpl implements HandlerContext {
     private final @Nullable Match match;
     private final TypeEnvImpl env;
     private final CodegenContextImpl ctx;
-    private final @Nullable BlockContextImpl block;
-    private final @Nullable JavaOutput out;
-    private final int line;
-    private final @NotNull String raw;
+    private final @NotNull BlockContextImpl block;
+    private final @NotNull JavaOutput out;
 
-    public HandlerContextImpl(@Nullable Match match, @NotNull TypeEnvImpl env, @NotNull CodegenContextImpl ctx, @Nullable BlockContextImpl block, @Nullable JavaOutput out, int line, @NotNull String raw) {
+    public HandlerContextImpl(@Nullable Match match, @NotNull TypeEnvImpl env, @NotNull CodegenContextImpl ctx, @NotNull BlockContextImpl block, @NotNull JavaOutput out) {
         this.match = match;
         this.env = env;
         this.ctx = ctx;
         this.block = block;
         this.out = out;
-        this.line = line;
-        this.raw = raw;
     }
 
     /**
@@ -88,6 +87,10 @@ public final class HandlerContextImpl implements HandlerContext {
             case STRING -> TokenKind.STRING;
             case SYMBOL -> TokenKind.SYMBOL;
         };
+    }
+
+    private static TypeEnv.@NotNull VarHandle toSyntheticHandle(@NotNull ExpressionResult result) {
+        return Match.syntheticHandle(result.java(), result.type(), result.metadata());
     }
 
     /**
@@ -174,24 +177,22 @@ public final class HandlerContextImpl implements HandlerContext {
 
     @Override
     public @NotNull BlockContextImpl block() {
-        if (block == null) throw new IllegalStateException("No block context available");
         return block;
     }
 
     @Override
     public @NotNull JavaOutput out() {
-        if (out == null) throw new IllegalStateException("No output available in this context");
         return out;
     }
 
     @Override
-    public int line() {
-        return line;
+    public @NotNull SourceLocator source() {
+        return new SourceLocatorImpl(block.node(), block.siblings(), block.index(), env.sourceMap());
     }
 
     @Override
-    public @NotNull String raw() {
-        return raw;
+    public @NotNull SourceMap sourceMap() {
+        return env.sourceMap();
     }
 
     @Override
@@ -245,12 +246,11 @@ public final class HandlerContextImpl implements HandlerContext {
     }
 
     @Override
-    public @Nullable String resolveExpression(@NotNull List<? extends ScriptToken> tokens) {
+    public @Nullable ExpressionResult resolveExpression(@NotNull List<? extends ScriptToken> tokens) {
         List<Token> pipelineTokens = toPipelineTokens(tokens);
-        return ExprResolver.resolve(pipelineTokens, ctx, env);
+        return ExprResolver.resolveWithType(pipelineTokens, ctx, env);
     }
 
-    @Override
     public @NotNull String parseCondition(@NotNull String paramName) {
         List<Token> tokens = bound(paramName).tokens();
         ConditionParser cp = new ConditionParser(PatternRegistry.instance().conditionRegistry());
@@ -284,9 +284,5 @@ public final class HandlerContextImpl implements HandlerContext {
             if (result != null) return toSyntheticHandle(result);
         }
         return value;
-    }
-
-    private static TypeEnv.@NotNull VarHandle toSyntheticHandle(@NotNull ExpressionResult result) {
-        return Match.syntheticHandle(result.java(), result.type(), result.metadata());
     }
 }

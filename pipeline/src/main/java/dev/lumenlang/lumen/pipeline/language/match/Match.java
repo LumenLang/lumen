@@ -231,8 +231,8 @@ public record Match(
         Token tok = bv.tokens().get(0);
         String varName = tok.text();
         BlockContextImpl block = env.blockContext();
-        String raw = block.raw();
-        int line = block.line();
+        String raw = block.node().raw();
+        int line = block.node().line();
         LumenDiagnostic diag = LumenDiagnostic.warning("Nullable variable used without null check")
                 .at(line, raw)
                 .highlight(tok.start(), tok.end())

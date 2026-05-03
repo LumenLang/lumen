@@ -69,7 +69,7 @@ public final class GlobalVarLoadHook implements BlockEnterHook {
 
             VarRef varRef = new VarRef(name, lumenType, name, exprMetadata, info);
             env.defineVar(name, varRef);
-            env.recordDeclaration(name, ctx.line(), ctx.raw());
+            env.recordDeclaration(name, ctx.source().currentLine(), ctx.source().currentRaw());
             env.markGlobalField(name);
             if (info.stored()) {
                 env.markStored(name, keyExpr, "\"" + className + "." + name + ".\"", null);

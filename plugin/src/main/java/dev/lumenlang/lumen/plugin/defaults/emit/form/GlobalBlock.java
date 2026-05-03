@@ -18,7 +18,6 @@ import dev.lumenlang.lumen.api.util.FuzzyMatch;
 import dev.lumenlang.lumen.pipeline.codegen.HandlerContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
-import dev.lumenlang.lumen.pipeline.language.pattern.registered.RegisteredExpressionMatch;
 import dev.lumenlang.lumen.pipeline.language.simulator.PatternSimulator;
 import dev.lumenlang.lumen.pipeline.language.simulator.suggestions.SuggestionDiagnostics;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
@@ -56,6 +55,7 @@ import java.util.Set;
 @SuppressWarnings("unused")
 public final class GlobalBlock implements BlockFormHandler {
 
+
     private static final String GLOBAL_BLOCK_KEY = "__global_block_declared";
 
     @Call
@@ -77,7 +77,7 @@ public final class GlobalBlock implements BlockFormHandler {
 
         if (env.has(GLOBAL_BLOCK_KEY)) {
             throw new DiagnosticException(LumenDiagnostic.error("Duplicate global block")
-                    .at(ctx.line(), ctx.raw())
+                    .at(ctx.source().currentLine(), ctx.source().currentRaw())
                     .label("only one 'global:' block is allowed per script")
                     .help("merge all global declarations into a single 'global:' block")
                     .build());
@@ -319,10 +319,9 @@ public final class GlobalBlock implements BlockFormHandler {
         Expr expr = ExprParser.parse(exprTokens, env);
         LumenType exprType;
         if (expr instanceof Expr.RawExpr) {
-            RegisteredExpressionMatch match = PatternRegistry.instance().matchExpression(exprTokens, env);
-            if (match == null) return;
-            HandlerContextImpl hctx = new HandlerContextImpl(match.match(), env, ((HandlerContextImpl) ctx).codegenContext(), env.blockContext(), null, 0, "");
-            exprType = match.reg().handler().handle(hctx).type();
+            ExpressionResult resolved = ctx.resolveExpression(exprTokens);
+            if (resolved == null) return;
+            exprType = resolved.type();
         } else {
             exprType = expr.resolvedType();
         }
@@ -340,12 +339,8 @@ public final class GlobalBlock implements BlockFormHandler {
         Expr expr = ExprParser.parse(exprTokens, env);
         if (!(expr instanceof Expr.RawExpr)) return resolveSimpleExprJava(expr, env);
 
-        RegisteredExpressionMatch exprMatch = PatternRegistry.instance().matchExpression(exprTokens, env);
-        if (exprMatch != null) {
-            HandlerContextImpl hctx = new HandlerContextImpl(exprMatch.match(), env, ((HandlerContextImpl) ctx).codegenContext(), env.blockContext(), null, 0, "");
-            ExpressionResult result = exprMatch.reg().handler().handle(hctx);
-            return result.java();
-        }
+        ExpressionResult resolved = ctx.resolveExpression(exprTokens);
+        if (resolved != null) return resolved.java();
 
         List<Token> rawTokens = ((Expr.RawExpr) expr).tokens();
         List<PatternSimulator.Suggestion> suggestions = PatternSimulator.suggestExpressions(rawTokens, PatternRegistry.instance(), env);
@@ -359,11 +354,8 @@ public final class GlobalBlock implements BlockFormHandler {
         if (exprTokens == null) return null;
         Expr expr = ExprParser.parse(exprTokens, env);
         if (!(expr instanceof Expr.RawExpr)) return null;
-        RegisteredExpressionMatch exprMatch = PatternRegistry.instance().matchExpression(exprTokens, env);
-        if (exprMatch == null) return null;
-        HandlerContextImpl hctx = new HandlerContextImpl(exprMatch.match(), env, ((HandlerContextImpl) ctx).codegenContext(), env.blockContext(), null, 0, "");
-        ExpressionResult result = exprMatch.reg().handler().handle(hctx);
-        return result.metadata();
+        ExpressionResult resolved = ctx.resolveExpression(exprTokens);
+        return resolved != null ? resolved.metadata() : null;
     }
 
     private @NotNull String resolveSimpleExprJava(@NotNull Expr expr, @NotNull TypeEnvImpl env) {

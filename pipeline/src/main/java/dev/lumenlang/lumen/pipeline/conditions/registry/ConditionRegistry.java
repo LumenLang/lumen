@@ -209,8 +209,9 @@ public class ConditionRegistry {
                 int o = Math.max(existing == null ? 0 : existing.absorbsOr(), orCount);
                 built.put(marker, new KeywordAbsorption(a, o));
             }
-            splitProtectedKeywords = Map.copyOf(built);
-            return splitProtectedKeywords;
+            Map<String, KeywordAbsorption> result = Map.copyOf(built);
+            splitProtectedKeywords = result;
+            return result;
         }
     }
 
