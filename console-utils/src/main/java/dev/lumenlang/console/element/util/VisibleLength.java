@@ -42,6 +42,42 @@ public final class VisibleLength {
     }
 
     /**
+     * Trims trailing visible whitespace from {@code s}, preserving any ANSI escapes interleaved at
+     * the end so the active style is kept and reset where the original wrote it.
+     */
+    public static @NotNull String stripTrailing(@NotNull String s) {
+        int lastVisible = -1;
+        int i = 0;
+        while (i < s.length()) {
+            char c = s.charAt(i);
+            if (c == 0x1B && i + 1 < s.length() && s.charAt(i + 1) == '[') {
+                int end = s.indexOf('m', i);
+                if (end < 0) break;
+                i = end + 1;
+                continue;
+            }
+            if (c != ' ') lastVisible = i;
+            i++;
+        }
+        if (lastVisible < 0) return "";
+        StringBuilder out = new StringBuilder();
+        out.append(s, 0, lastVisible + 1);
+        int j = lastVisible + 1;
+        while (j < s.length()) {
+            char c = s.charAt(j);
+            if (c == 0x1B && j + 1 < s.length() && s.charAt(j + 1) == '[') {
+                int end = s.indexOf('m', j);
+                if (end < 0) break;
+                out.append(s, j, end + 1);
+                j = end + 1;
+                continue;
+            }
+            j++;
+        }
+        return out.toString();
+    }
+
+    /**
      * Clips {@code s} to the given visible width, preserving ANSI escapes.
      */
     public static @NotNull String clip(@NotNull String s, int width) {

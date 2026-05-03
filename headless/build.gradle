@@ -17,6 +17,26 @@ dependencies {
     implementation project(':plugin')
     implementation "org.spigotmc:spigot-api:1.20-R0.1-SNAPSHOT"
     implementation "com.google.code.gson:gson:2.13.2"
+
+    testImplementation platform('org.junit:junit-bom:5.11.3')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'org.junit.jupiter:junit-jupiter-params'
+    testImplementation 'org.assertj:assertj-core:3.26.3'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+    useJUnitPlatform()
+    if (project.hasProperty('sim.observe')) {
+        systemProperty 'sim.observe', project.property('sim.observe')
+    }
+    testLogging {
+        events 'standard_out', 'standard_error'
+        showStandardStreams = true
+        showExceptions = false
+        showCauses = false
+        showStackTraces = false
+    }
 }
 
 shadowJar {
