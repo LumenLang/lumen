@@ -598,7 +598,7 @@ public final class PatternSimulator {
     private static int bestFormDistance(@NotNull String tokenText, @NotNull LiteralInfo lit) {
         int best = Integer.MAX_VALUE;
         for (String form : lit.forms) {
-            int dist = FuzzyMatch.prefixAwareDistance(tokenText, form);
+            int dist = simDistance(tokenText, form);
             if (dist < best) best = dist;
         }
         return best;
@@ -641,7 +641,7 @@ public final class PatternSimulator {
             Token token = tokens.get(i);
             for (LiteralInfo lit : literals) {
                 for (String form : lit.forms) {
-                    int dist = FuzzyMatch.prefixAwareDistance(token.text(), form);
+                    int dist = simDistance(token.text(), form);
                     int threshold = effectiveThreshold(token.text(), form);
                     boolean within = dist > 0 && dist <= threshold;
                     boolean kept = within && dist < bestDist;
@@ -723,13 +723,31 @@ public final class PatternSimulator {
     }
 
     private static int effectiveThreshold(@NotNull String tokenText, @NotNull String formText) {
-        int tokenThreshold = tokenText.length() <= 2 ? 0 : Math.max(1, Math.min(3, (int) (tokenText.length() * 0.4)));
-        int formThreshold = formText.length() <= 2 ? 0 : Math.max(1, Math.min(3, (int) (formText.length() * 0.4)));
+        int tokenLen = tokenText.length();
+        int formLen = formText.length();
+        if (tokenLen == 2 && formLen >= 2 && formLen <= tokenLen + 1) {
+            return 1;
+        }
+        int tokenThreshold = tokenLen <= 2 ? 0 : Math.max(1, Math.min(3, (int) (tokenLen * 0.4)));
+        int formThreshold = formLen <= 2 ? 0 : Math.max(1, Math.min(3, (int) (formLen * 0.4)));
         int base = Math.min(tokenThreshold, formThreshold);
-        if (base > 0 && tokenText.length() >= 5 && isCharBagSubset(tokenText, formText)) {
+        if (base > 0 && tokenLen >= 5 && isCharBagSubset(tokenText, formText)) {
             return Math.min(3, base + 1);
         }
         return base;
+    }
+
+    /**
+     * Distance used internally by the simulator. For most inputs this delegates to
+     * {@link FuzzyMatch#prefixAwareDistance}, but 2-char tokens fall back to plain
+     * Damerau-Levenshtein because the prefix-penalty scheme inflates the distance for genuine
+     * single-edit typos like {@code st} for {@code set}.
+     */
+    private static int simDistance(@NotNull String tokenText, @NotNull String formText) {
+        if (tokenText.length() == 2 && formText.length() >= 2 && formText.length() <= 3) {
+            return FuzzyMatch.damerauLevenshteinDistance(tokenText, formText);
+        }
+        return FuzzyMatch.prefixAwareDistance(tokenText, formText);
     }
 
     /**

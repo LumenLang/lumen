@@ -16,18 +16,14 @@ public final class SingleTokenTypos {
     private SingleTokenTypos() {
     }
 
-    /**
-     * Buggy lock-in. {@code st} should suggest {@code set}, but the sim picks a coordinate getter.
-     */
-    @SimCase(name = "typo: 'st' for 'set' (BUG locked)")
+    @SimCase(name = "typo: 'st' for 'set'")
     public static SimulatorCase stForSet() {
         return SimulatorCase.statement("st x to 5")
-                .expectTopPattern("[get] %b:BLOCK% (x|y|z)")
-                .expectPrimaryIssue(SuggestionIssue.TypeMismatch.class)
-                .expectAnyIssue(SuggestionIssue.TypeMismatch.class)
-                .expectAnyIssue(SuggestionIssue.ExtraTokens.class)
-                .expectConfidenceAtLeast(0.63)
-                .expectSuggestionCount(1, 1);
+                .expectTopPattern("set %name:IDENT% to %val:EXPR%")
+                .expectPrimaryIssue(SuggestionIssue.Typo.class)
+                .expectAnyIssue(SuggestionIssue.Typo.class)
+                .expectConfidenceAtLeast(0.95)
+                .expectSuggestionCount(2, 2);
     }
 
     /**

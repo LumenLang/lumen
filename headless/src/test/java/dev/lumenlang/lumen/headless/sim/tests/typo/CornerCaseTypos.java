@@ -49,18 +49,13 @@ public final class CornerCaseTypos {
                 .expectCleanTop("set %name:IDENT% to %val:EXPR%");
     }
 
-    /**
-     * Buggy lock-in. Digit substitution {@code t0} for {@code to}. Sim picks the location coord
-     * getter instead of recognising the typo'd {@code to}.
-     */
-    @SimCase(name = "typo: digit substitution 'set x t0 5' (BUG locked)")
+    @SimCase(name = "typo: digit substitution 'set x t0 5'")
     public static SimulatorCase digitInTo() {
         return SimulatorCase.statement("set x t0 5")
-                .expectTopPattern("get %loc:LOCATION% (x|y|z|yaw|pitch)")
+                .expectTopPattern("set %name:IDENT% to %val:EXPR%")
                 .expectPrimaryIssue(SuggestionIssue.Typo.class)
                 .expectAnyIssue(SuggestionIssue.Typo.class)
-                .expectAnyIssue(SuggestionIssue.TypeMismatch.class)
-                .expectConfidenceAtLeast(0.63)
+                .expectConfidenceAtLeast(0.95)
                 .expectSuggestionCount(2, 2);
     }
 
