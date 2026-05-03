@@ -1,9 +1,10 @@
 package dev.lumenlang.lumen.pipeline.language.simulator.options;
 
+import dev.lumenlang.lumen.pipeline.language.simulator.PatternSimulator;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Tunable knobs for {@link dev.lumenlang.lumen.pipeline.language.simulator.PatternSimulator}.
+ * Tunable knobs for {@link PatternSimulator}.
  *
  * <p>Each option carries a numeric kind ({@link Kind#INT} or {@link Kind#DOUBLE}),
  * a default value, and a valid {@link Range}. Use {@link SimulatorOptions#builder()}

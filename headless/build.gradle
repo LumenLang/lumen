@@ -30,6 +30,9 @@ test {
     if (project.hasProperty('sim.observe')) {
         systemProperty 'sim.observe', project.property('sim.observe')
     }
+    if (project.hasProperty('sim.debug')) {
+        systemProperty 'sim.debug', project.property('sim.debug')
+    }
     testLogging {
         events 'standard_out', 'standard_error'
         showStandardStreams = true

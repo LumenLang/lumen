@@ -4,6 +4,7 @@ import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.language.simulator.PatternSimulator;
 import dev.lumenlang.lumen.pipeline.language.simulator.PatternSimulator.Suggestion;
+import dev.lumenlang.lumen.pipeline.language.simulator.debug.SimulatorDebug;
 import dev.lumenlang.lumen.pipeline.language.simulator.options.SimulatorOptions;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import org.jetbrains.annotations.NotNull;
@@ -20,8 +21,8 @@ public enum SimulatorRunner {
      */
     STATEMENT {
         @Override
-        public @NotNull List<Suggestion> run(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnvImpl env, @NotNull SimulatorOptions opts) {
-            return PatternSimulator.suggestStatementsAndExpressions(tokens, reg, env, opts);
+        public @NotNull List<Suggestion> run(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnvImpl env, @NotNull SimulatorOptions opts, @NotNull SimulatorDebug debug) {
+            return PatternSimulator.suggestStatementsAndExpressions(tokens, reg, env, opts, debug);
         }
     },
 
@@ -30,8 +31,8 @@ public enum SimulatorRunner {
      */
     EXPRESSION {
         @Override
-        public @NotNull List<Suggestion> run(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnvImpl env, @NotNull SimulatorOptions opts) {
-            return PatternSimulator.suggestExpressions(tokens, reg, env, opts);
+        public @NotNull List<Suggestion> run(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnvImpl env, @NotNull SimulatorOptions opts, @NotNull SimulatorDebug debug) {
+            return PatternSimulator.suggestExpressions(tokens, reg, env, opts, debug);
         }
     },
 
@@ -40,8 +41,8 @@ public enum SimulatorRunner {
      */
     CONDITION {
         @Override
-        public @NotNull List<Suggestion> run(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnvImpl env, @NotNull SimulatorOptions opts) {
-            return PatternSimulator.suggestConditions(tokens, reg, env, opts);
+        public @NotNull List<Suggestion> run(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnvImpl env, @NotNull SimulatorOptions opts, @NotNull SimulatorDebug debug) {
+            return PatternSimulator.suggestConditions(tokens, reg, env, opts, debug);
         }
     },
 
@@ -50,13 +51,20 @@ public enum SimulatorRunner {
      */
     BLOCK {
         @Override
-        public @NotNull List<Suggestion> run(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnvImpl env, @NotNull SimulatorOptions opts) {
-            return PatternSimulator.suggestBlocks(tokens, reg, env, opts);
+        public @NotNull List<Suggestion> run(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnvImpl env, @NotNull SimulatorOptions opts, @NotNull SimulatorDebug debug) {
+            return PatternSimulator.suggestBlocks(tokens, reg, env, opts, debug);
         }
     };
 
     /**
-     * Invokes the configured simulator entry point.
+     * Invokes the configured simulator entry point with the given debug bag.
      */
-    public abstract @NotNull List<Suggestion> run(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnvImpl env, @NotNull SimulatorOptions opts);
+    public abstract @NotNull List<Suggestion> run(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnvImpl env, @NotNull SimulatorOptions opts, @NotNull SimulatorDebug debug);
+
+    /**
+     * Convenience overload using {@link SimulatorDebug#OFF}.
+     */
+    public @NotNull List<Suggestion> run(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnvImpl env, @NotNull SimulatorOptions opts) {
+        return run(tokens, reg, env, opts, SimulatorDebug.OFF);
+    }
 }

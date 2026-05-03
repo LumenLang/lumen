@@ -8,6 +8,7 @@ import dev.lumenlang.lumen.headless.sim.failure.Mismatch;
 import dev.lumenlang.lumen.headless.sim.failure.PrimaryIssueMismatch;
 import dev.lumenlang.lumen.headless.sim.failure.SuggestionCountMismatch;
 import dev.lumenlang.lumen.headless.sim.failure.SuggestionPresenceMismatch;
+import dev.lumenlang.lumen.headless.sim.debug.TextDebugSink;
 import dev.lumenlang.lumen.headless.sim.failure.TopPatternMismatch;
 import dev.lumenlang.lumen.headless.sim.report.SimulatorReport;
 import dev.lumenlang.lumen.headless.sim.result.RunInsights;
@@ -17,6 +18,9 @@ import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.language.simulator.PatternSimulator;
 import dev.lumenlang.lumen.pipeline.language.simulator.PatternSimulator.Suggestion;
 import dev.lumenlang.lumen.pipeline.language.simulator.PatternSimulator.SuggestionIssue;
+import dev.lumenlang.lumen.pipeline.language.simulator.debug.SimulatorDebug;
+import dev.lumenlang.lumen.pipeline.language.simulator.debug.Verbosity;
+import dev.lumenlang.lumen.pipeline.language.simulator.debug.trace.SimulatorTracer;
 import dev.lumenlang.lumen.pipeline.language.simulator.options.SimulatorOptions;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Line;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
@@ -45,6 +49,7 @@ public final class SimulatorCase {
     private @NotNull String name;
     private @NotNull EnvSimulator env = EnvSimulator.empty();
     private @NotNull SimulatorOptions options = SimulatorOptions.defaults();
+    private @Nullable Verbosity debugLevel;
     private SimulatorCase(@NotNull SimulatorRunner runner, @NotNull String input) {
         this.runner = runner;
         this.input = input;
@@ -112,6 +117,15 @@ public final class SimulatorCase {
      */
     public @NotNull SimulatorCase options(@NotNull SimulatorOptions options) {
         this.options = options;
+        return this;
+    }
+
+    /**
+     * Enables per-case debug output at the given verbosity. Lines are routed through
+     * {@link TextDebugSink#stdout()}. Pass {@link Verbosity#OFF} to disable explicitly.
+     */
+    public @NotNull SimulatorCase withDebug(@NotNull Verbosity level) {
+        this.debugLevel = level;
         return this;
     }
 
@@ -228,7 +242,12 @@ public final class SimulatorCase {
         List<Token> tokens = tokenize(input);
         TypeEnvImpl typeEnv = env.build();
         PatternRegistry registry = PatternRegistry.instance();
-        List<Suggestion> suggestions = runner.run(tokens, registry, typeEnv, options);
+        SimulatorDebug debug = resolveDebug();
+        if (debug != SimulatorDebug.OFF) {
+            System.out.println();
+            System.out.println("=== sim debug [" + debug.verbosity() + "] " + name + " ===");
+        }
+        List<Suggestion> suggestions = runner.run(tokens, registry, typeEnv, options, debug);
 
         List<String> uncoveredNames = EnumSet.complementOf(coverage).stream().map(Enum::name).toList();
         List<String> recs = RunInsights.recommendations(suggestions, new LinkedHashSet<>(uncoveredNames));
@@ -259,6 +278,20 @@ public final class SimulatorCase {
     @Override
     public String toString() {
         return name;
+    }
+
+    private @NotNull SimulatorDebug resolveDebug() {
+        if (debugLevel != null && debugLevel != Verbosity.OFF) {
+            return new SimulatorDebug(debugLevel, TextDebugSink.stdout(), SimulatorTracer.NOOP);
+        }
+        String prop = System.getProperty("sim.debug");
+        if (prop == null || prop.isBlank()) return SimulatorDebug.OFF;
+        try {
+            Verbosity v = Verbosity.valueOf(prop.trim().toUpperCase());
+            return v == Verbosity.OFF ? SimulatorDebug.OFF : new SimulatorDebug(v, TextDebugSink.stdout(), SimulatorTracer.NOOP);
+        } catch (IllegalArgumentException ignored) {
+            return SimulatorDebug.OFF;
+        }
     }
 
     private @NotNull SimulatorCase addCheck(@NotNull Check check) {
