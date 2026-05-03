@@ -17,14 +17,15 @@ public final class CornerCaseTypos {
     private CornerCaseTypos() {
     }
 
-    /**
-     * Buggy lock-in. {@code reapt 5 times} should suggest {@code repeat %n:INT% [time|times]}
-     * with a Typo issue on {@code reapt}. Sim emits no suggestions today.
-     */
-    @SimCase(name = "block typo: 'reapt' for 'repeat' (BUG locked)")
+    @SimCase(name = "block typo: 'reapt' for 'repeat'")
     public static SimulatorCase reaptForRepeat() {
         return SimulatorCase.block("reapt 5 times")
-                .expectNoSuggestions();
+                .expectTopPattern("repeat %n:INT% [time|times]")
+                .expectPrimaryIssue(SuggestionIssue.ExtraTokens.class)
+                .expectAnyIssue(SuggestionIssue.Typo.class)
+                .expectAnyIssue(SuggestionIssue.ExtraTokens.class)
+                .expectConfidenceAtLeast(0.87)
+                .expectSuggestionCount(1, 1);
     }
 
     /**

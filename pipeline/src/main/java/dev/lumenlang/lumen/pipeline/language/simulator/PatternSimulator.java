@@ -716,7 +716,31 @@ public final class PatternSimulator {
     private static int effectiveThreshold(@NotNull String tokenText, @NotNull String formText) {
         int tokenThreshold = tokenText.length() <= 2 ? 0 : Math.max(1, Math.min(3, (int) (tokenText.length() * 0.4)));
         int formThreshold = formText.length() <= 2 ? 0 : Math.max(1, Math.min(3, (int) (formText.length() * 0.4)));
-        return Math.min(tokenThreshold, formThreshold);
+        int base = Math.min(tokenThreshold, formThreshold);
+        if (base > 0 && tokenText.length() >= 5 && isCharBagSubset(tokenText, formText)) {
+            return Math.min(3, base + 1);
+        }
+        return base;
+    }
+
+    /**
+     * {@code true} when every character in {@code token} (case folded, counting multiplicity)
+     * appears in {@code form}.
+     */
+    private static boolean isCharBagSubset(@NotNull String token, @NotNull String form) {
+        String t = token.toLowerCase();
+        String f = form.toLowerCase();
+        int[] counts = new int[128];
+        for (int i = 0; i < f.length(); i++) {
+            char c = f.charAt(i);
+            if (c < 128) counts[c]++;
+        }
+        for (int i = 0; i < t.length(); i++) {
+            char c = t.charAt(i);
+            if (c >= 128 || counts[c] == 0) return false;
+            counts[c]--;
+        }
+        return true;
     }
 
     private static @NotNull List<Token> removeIndices(@NotNull List<Token> tokens, int[] indices) {
