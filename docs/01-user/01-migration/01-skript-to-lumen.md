@@ -88,7 +88,7 @@ right win: Familiar feel, structured for larger scripts
 :::
 :::row Performance
 left warn: Interpreted, many times slower than Java
-right win: Compiled to Java, near-native speed
+right win: Compiled to Java, native speed
 :::
 :::row Beginner Friendliness
 left warn: Forgiving up front, harder to debug later
