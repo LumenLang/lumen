@@ -27,6 +27,9 @@
 !console-utils/
 !console-utils/**
 
+!headless/
+!headless/**
+
 !docs/
 !docs/**
 

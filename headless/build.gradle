@@ -1,0 +1,33 @@
+plugins {
+    id 'java'
+    id 'com.gradleup.shadow'
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        url = "https://hub.spigotmc.org/nexus/content/repositories/snapshots/"
+    }
+    maven {
+        url = "https://repository.vansencool.net"
+    }
+}
+
+dependencies {
+    implementation project(':plugin')
+    implementation "org.spigotmc:spigot-api:1.20-R0.1-SNAPSHOT"
+    implementation "com.google.code.gson:gson:2.13.2"
+}
+
+shadowJar {
+    archiveClassifier.set('')
+    archiveBaseName.set('LumenHeadless')
+    archiveVersion.set('')
+    manifest {
+        attributes 'Main-Class': 'dev.lumenlang.lumen.headless.HeadlessLumen'
+    }
+}
+
+build {
+    dependsOn(tasks.shadowJar)
+}
