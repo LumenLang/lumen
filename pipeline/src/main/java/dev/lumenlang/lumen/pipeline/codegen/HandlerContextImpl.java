@@ -260,7 +260,7 @@ public final class HandlerContextImpl implements HandlerContext {
         } catch (TokenCarryingException e) {
             List<PatternSimulator.Suggestion> suggestions = PatternSimulator.suggestConditions(tokens, PatternRegistry.instance(), env);
             if (!suggestions.isEmpty()) {
-                throw new TokenCarryingException("Unknown condition: " + ExprResolver.joinTokens(tokens), tokens, suggestions);
+                throw new TokenCarryingException("Unknown condition", tokens, suggestions);
             }
             throw new TokenCarryingException(e.getMessage(), tokens);
         }

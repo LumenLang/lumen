@@ -64,22 +64,6 @@ public final class ExprResolver {
     }
 
     /**
-     * Joins a list of tokens into a single space-separated string.
-     *
-     * @param tokens the tokens to join
-     * @return a space-separated string of token texts
-     */
-    public static @NotNull String joinTokens(@NotNull List<Token> tokens) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < tokens.size(); i++) {
-            if (i > 0)
-                sb.append(' ');
-            sb.append(tokens.get(i).text());
-        }
-        return sb.toString();
-    }
-
-    /**
      * Recursive implementation of expression token resolution. Tries three
      * strategies in order: (1) direct expression match, (2) nested sub-expression
      * substitution, and (3) arithmetic operator splitting.

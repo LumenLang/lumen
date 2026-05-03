@@ -82,7 +82,7 @@ public final class VarDeclarationForm {
             throw new DiagnosticException(LumenDiagnostic.error("Cannot resolve expression")
                     .at(emitCtx.source().currentLine(), emitCtx.source().currentRaw())
                     .highlight(exprTokens.get(0).start(), exprTokens.get(exprTokens.size() - 1).end())
-                    .label("'" + ExprResolver.joinTokens(exprTokens) + "' is not a recognized expression")
+                    .label("not a recognized expression")
                     .help("check spelling or ensure the variable or expression is defined")
                     .build());
         }
@@ -300,10 +300,10 @@ public final class VarDeclarationForm {
                         else diagBuilder.help("make sure the variable is defined before using it");
                         throw new DiagnosticException(diagBuilder.build());
                     } else {
-                        java = ExprResolver.joinTokens(raw.tokens());
+                        java = singleToken.text();
                     }
                 } else {
-                    java = ExprResolver.joinTokens(raw.tokens());
+                    java = singleToken.text();
                 }
             }
         }
@@ -437,7 +437,7 @@ public final class VarDeclarationForm {
             }
             return new TypedExpression(varRef.java(), type);
         }
-        return new TypedExpression(ExprResolver.joinTokens(raw.tokens()), PrimitiveType.STRING);
+        return new TypedExpression(single.text(), PrimitiveType.STRING);
     }
 
     private record TypedExpression(@NotNull String java, @NotNull LumenType type) {

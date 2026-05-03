@@ -69,7 +69,7 @@ public final class LoadStatementForm {
 
         ExpressionResult resolved = ctx.resolveExpression(exprTokens);
         if (resolved == null) {
-            throw new LumenScriptException(ctx.source().currentLine(), ctx.source().currentRaw(), "Expression not recognized: '" + ExprResolver.joinTokens(exprTokens) + "'. Check spelling of variables and expression patterns.", exprTokens);
+            throw new LumenScriptException(ctx.source().currentLine(), ctx.source().currentRaw(), "Expression not recognized. Check spelling of variables and expression patterns.", exprTokens);
         }
         String defaultJava = resolved.java();
         ObjectType resolvedObjectType = resolved.type() instanceof ObjectType ot ? ot : null;

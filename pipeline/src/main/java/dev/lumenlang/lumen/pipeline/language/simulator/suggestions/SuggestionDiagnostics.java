@@ -113,7 +113,7 @@ public final class SuggestionDiagnostics {
             else builder.label(label);
         } else {
             if (!tokens.isEmpty()) {
-                builder.label("'" + ExprResolver.joinTokens(tokens) + "' is not recognized");
+                builder.label("not recognized");
             } else {
                 builder.label("no matching pattern was found");
             }

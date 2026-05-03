@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import static dev.lumenlang.lumen.pipeline.language.resolve.ExprResolver.joinTokens;
 
 /**
  * Parses a flat token list representing a boolean condition into a {@link ConditionExpr} tree.
@@ -259,6 +258,6 @@ public final class ConditionParser {
         }
 
         List<PatternSimulator.Suggestion> suggestions = PatternSimulator.suggestConditions(tokens, PatternRegistry.instance(), env);
-        throw new TokenCarryingException("Unknown condition: " + joinTokens(tokens), tokens, suggestions);
+        throw new TokenCarryingException("Unknown condition", tokens, suggestions);
     }
 }

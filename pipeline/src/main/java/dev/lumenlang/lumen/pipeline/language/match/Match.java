@@ -48,9 +48,7 @@ public record Match(
         if (bv.value() instanceof BraceExpr be) {
             String inlined = ExprResolver.resolve(be.innerTokens(), ctx, env);
             if (inlined != null) return inlined;
-            throw new TokenCarryingException(
-                    "Could not resolve braced expression: '{" + ExprResolver.joinTokens(be.innerTokens()) + "}'",
-                    bv.tokens());
+            throw new TokenCarryingException("Could not resolve braced expression", bv.tokens());
         }
         if (bv.value() instanceof InlineExpr ie) {
             ExpressionResult result = ExprResolver.resolveWithType(ie.tokens(), ctx, env);
@@ -60,17 +58,13 @@ public record Match(
                 }
                 return result.java();
             }
-            throw new TokenCarryingException(
-                    "Could not resolve inline expression: '" + ExprResolver.joinTokens(ie.tokens()) + "'",
-                    bv.tokens());
+            throw new TokenCarryingException("Could not resolve inline expression", bv.tokens());
         }
         if (bv.binding().id().equals("EXPR")) {
             String inlined = ExprResolver.resolve(bv.tokens(), ctx, env);
             if (inlined != null) return inlined;
             if (bv.tokens().size() > 1) {
-                throw new TokenCarryingException(
-                        "Expression not recognized: '" + ExprResolver.joinTokens(bv.tokens()) + "'. Check spelling of variables and expression patterns.",
-                        bv.tokens());
+                throw new TokenCarryingException("Expression not recognized. Check spelling of variables and expression patterns.", bv.tokens());
             }
         }
         return bv.binding().toJava(bv.value(), ctx, env);
