@@ -84,39 +84,6 @@ public final class DataExpressions {
         return schema.fields().get(fieldTokens.get(0));
     }
 
-    /**
-     * Resolves a single token to a Java expression using the environment.
-     * Checks for variable references first, then string literals, booleans, and numeric literals.
-     */
-    private static @NotNull String resolveToken(@NotNull String token, @NotNull TypeEnv env) {
-        TypeEnv.VarHandle ref = env.lookupVar(token);
-        if (ref != null) return ref.java();
-
-        if (token.startsWith("\"") && token.endsWith("\"")) {
-            String inner = token.substring(1, token.length() - 1);
-            if (inner.contains("{") && inner.contains("}")) return env.expandPlaceholders(inner);
-            return "\"" + inner + "\"";
-        }
-
-        if (token.contains("{") && token.contains("}")) return env.expandPlaceholders(token);
-
-        if (token.equalsIgnoreCase("true") || token.equalsIgnoreCase("false")) return token.toLowerCase();
-
-        try {
-            Integer.parseInt(token);
-            return token;
-        } catch (NumberFormatException ignored) {
-        }
-
-        try {
-            Double.parseDouble(token);
-            return token;
-        } catch (NumberFormatException ignored) {
-        }
-
-        return "\"" + token + "\"";
-    }
-
     @Call
     public void register(@NotNull LumenAPI api) {
         registerConstructor(api);

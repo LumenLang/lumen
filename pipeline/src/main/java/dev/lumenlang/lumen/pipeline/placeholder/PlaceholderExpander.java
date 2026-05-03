@@ -1,81 +1,156 @@
 package dev.lumenlang.lumen.pipeline.placeholder;
 
+import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.placeholder.PlaceholderType;
 import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
+import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
+import dev.lumenlang.lumen.pipeline.language.tokenization.TokenKind;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * Expands placeholder expressions embedded in strings and var expressions at compile time.
  *
- * <p>Placeholders use the syntax {@code {variable_property}} or {@code {variable}} inside
- * string literals and var expressions. The expander scans the input, and for each placeholder:
- * <ol>
- *   <li>Splits on the first {@code _} to get the variable name and property</li>
- *   <li>Looks up the variable in the scope to get its {@link ObjectType}</li>
- *   <li>Looks up the property template in the {@link PlaceholderRegistry}</li>
- *   <li>Produces a Java expression</li>
- * </ol>
- *
- * <h2>Example</h2>
- * <p>Input string: {@code "Hello {player_name}, hp {player_health}"}
- * <p>Output Java: {@code "Hello " + player.getName() + ", hp " + String.valueOf(player.getHealth())}
- *
- * <p>In var expressions:
- * <pre>{@code set y to {player_y} -> var y = player.getLocation().getBlockY();}</pre>
+ * <p>Two source-tracking entry points exist so unknown placeholders can be reported
+ * with precise source columns:
+ * <ul>
+ *   <li>{@link #expandString} for placeholders embedded inside a single STRING token,
+ *       where the surrounding token's source bounds give the column origin.</li>
+ *   <li>{@link #expandTokens} for placeholders that appear as separate {@code SYMBOL}
+ *       and {@code IDENT} tokens, where each placeholder token already carries its
+ *       own column.</li>
+ * </ul>
  */
 public final class PlaceholderExpander {
 
     /**
-     * Expands all placeholders in the given raw string value and produces a Java expression.
+     * Expands placeholders embedded inside a single STRING token's content.
      *
-     * <p>If the string contains no placeholders, returns the string wrapped in quotes as-is.
-     * Numeric placeholders are wrapped in {@code String.valueOf()} for string context.
+     * <p>The original source slice for the string is recovered from the current block's
+     * raw line text and the token's column bounds, so {@code {placeholder}} positions
+     * are reported with their true source columns even when the content contains
+     * escape sequences that differ in length from the source.
      *
-     * @param raw the raw string content (without surrounding quotes)
-     * @param env the type environment for variable lookups
+     * @param stringToken the originating STRING token whose content holds placeholders
+     * @param env         the type environment for variable lookups and warning emission
      * @return a Java expression string (may use concatenation for embedded placeholders)
      */
-    public static @NotNull String expand(@NotNull String raw, @NotNull TypeEnvImpl env) {
-        if (!raw.contains("{") || !raw.contains("}")) {
+    public static @NotNull String expandString(@NotNull Token stringToken, @NotNull TypeEnvImpl env) {
+        String raw = stringToken.text();
+        if (raw.indexOf('{') < 0 || raw.indexOf('}') < 0) {
             return "\"" + escapeJava(raw) + "\"";
         }
 
+        String sourceLine = env.block().raw();
+        int sourceLineNumber = stringToken.line();
+        int contentStartCol = stringToken.start() + 1;
+        int contentEndCol = stringToken.end() - 1;
+        String sourceContent = (contentStartCol >= 0 && contentEndCol <= sourceLine.length() && contentStartCol <= contentEndCol)
+                ? sourceLine.substring(contentStartCol, contentEndCol)
+                : raw;
+
         StringBuilder result = new StringBuilder();
-        int i = 0;
+        int sourcePos = 0;
+        int contentPos = 0;
         boolean first = true;
 
-        while (i < raw.length()) {
-            int open = raw.indexOf('{', i);
-            if (open == -1) {
-                appendLiteral(result, raw.substring(i), first);
+        while (sourcePos < sourceContent.length()) {
+            int srcOpen = sourceContent.indexOf('{', sourcePos);
+            if (srcOpen < 0) {
+                if (contentPos < raw.length()) {
+                    appendLiteral(result, raw.substring(contentPos), first);
+                }
+                break;
+            }
+            int srcClose = sourceContent.indexOf('}', srcOpen);
+            if (srcClose < 0) {
+                if (contentPos < raw.length()) {
+                    appendLiteral(result, raw.substring(contentPos), first);
+                }
                 break;
             }
 
-            int close = raw.indexOf('}', open);
-            if (close == -1) {
-                appendLiteral(result, raw.substring(i), first);
-                break;
-            }
+            int contentOpen = mapSourceToContent(sourceContent, raw, srcOpen);
+            int contentClose = mapSourceToContent(sourceContent, raw, srcClose);
 
-            if (open > i) {
-                appendLiteral(result, raw.substring(i, open), first);
+            if (contentOpen > contentPos) {
+                appendLiteral(result, raw.substring(contentPos, contentOpen), first);
                 first = false;
             }
 
-            String placeholder = raw.substring(open + 1, close);
-            String javaExpr = resolveForString(placeholder, env);
+            String placeholder = raw.substring(contentOpen + 1, contentClose);
+            int absColStart = contentStartCol + srcOpen;
+            int absColEnd = contentStartCol + srcClose + 1;
+            String javaExpr = resolveForString(placeholder, env, sourceLineNumber, sourceLine, absColStart, absColEnd);
             if (!first) result.append(" + ");
             result.append(javaExpr);
             first = false;
 
-            i = close + 1;
+            sourcePos = srcClose + 1;
+            contentPos = contentClose + 1;
         }
 
+        return result.toString();
+    }
+
+    /**
+     * Expands placeholders that appear as discrete tokens in the input list.
+     *
+     * <p>Used when the source has been tokenized so each {@code {}, identifier, }} is
+     * its own token; columns come straight from those tokens. Non-placeholder tokens
+     * are concatenated as string literals using their source text.
+     *
+     * @param tokens the source tokens forming the value
+     * @param env    the type environment for variable lookups and warning emission
+     * @return a Java expression string
+     */
+    public static @NotNull String expandTokens(@NotNull List<Token> tokens, @NotNull TypeEnvImpl env) {
+        if (tokens.isEmpty()) return "\"\"";
+
+        String sourceLine = env.block().raw();
+        int sourceLineNumber = tokens.get(0).line();
+
+        StringBuilder result = new StringBuilder();
+        StringBuilder literalBuf = new StringBuilder();
+        boolean first = true;
+        int i = 0;
+        while (i < tokens.size()) {
+            Token t = tokens.get(i);
+            if (t.kind() == TokenKind.SYMBOL && t.text().equals("{")
+                    && i + 2 < tokens.size()
+                    && tokens.get(i + 1).kind() == TokenKind.IDENT
+                    && tokens.get(i + 2).kind() == TokenKind.SYMBOL && tokens.get(i + 2).text().equals("}")) {
+                if (literalBuf.length() > 0) {
+                    appendLiteral(result, literalBuf.toString(), first);
+                    first = false;
+                    literalBuf.setLength(0);
+                }
+                String placeholder = tokens.get(i + 1).text();
+                int absColStart = t.start();
+                int absColEnd = tokens.get(i + 2).end();
+                String javaExpr = resolveForString(placeholder, env, sourceLineNumber, sourceLine, absColStart, absColEnd);
+                if (!first) result.append(" + ");
+                result.append(javaExpr);
+                first = false;
+                i += 3;
+                continue;
+            }
+            if (literalBuf.length() > 0) literalBuf.append(' ');
+            literalBuf.append(t.text());
+            i++;
+        }
+        if (literalBuf.length() > 0) {
+            appendLiteral(result, literalBuf.toString(), first);
+        }
+        if (result.length() == 0) {
+            return "\"\"";
+        }
         return result.toString();
     }
 
@@ -135,13 +210,16 @@ public final class PlaceholderExpander {
         };
     }
 
-    /**
-     * Resolves a placeholder for string context. Numeric results are wrapped in
-     * {@code String.valueOf()} so they can be concatenated with strings.
-     */
-    private static @NotNull String resolveForString(@NotNull String placeholder, @NotNull TypeEnvImpl env) {
+    private static @NotNull String resolveForString(@NotNull String placeholder, @NotNull TypeEnvImpl env, int line, @NotNull String sourceLine, int absColStart, int absColEnd) {
         String java = resolveInternal(placeholder, env);
         if (java == null) {
+            env.addWarning(LumenDiagnostic.warning("Unknown placeholder '" + placeholder + "'")
+                    .at(line, sourceLine)
+                    .highlight(absColStart, absColEnd)
+                    .label("placeholder cannot be resolved")
+                    .note("the value will be emitted as the literal text \"<unknown:" + placeholder + ">\" at runtime")
+                    .help("check the spelling, ensure the variable exists in scope, and confirm the property is registered for that type")
+                    .build());
             return "\"<unknown:" + placeholder + ">\"";
         }
 
@@ -152,9 +230,6 @@ public final class PlaceholderExpander {
         return java;
     }
 
-    /**
-     * Core resolution logic shared by string and expression contexts.
-     */
     private static @Nullable String resolveInternal(@NotNull String placeholder, @NotNull TypeEnvImpl env) {
         placeholder = placeholder.replace(' ', '_');
         VarRef fullRef = env.lookupVar(placeholder);
@@ -175,15 +250,12 @@ public final class PlaceholderExpander {
         }
 
         int underscore = placeholder.indexOf('_');
-        String varName;
-        String property;
-
         if (underscore == -1) {
             return null;
         }
 
-        varName = placeholder.substring(0, underscore);
-        property = placeholder.substring(underscore + 1);
+        String varName = placeholder.substring(0, underscore);
+        String property = placeholder.substring(underscore + 1);
 
         VarRef ref = env.lookupVar(varName);
         if (ref == null) {
@@ -200,8 +272,21 @@ public final class PlaceholderExpander {
             return null;
         }
 
-        String guardedVar = ref.java();
-        return PlaceholderRegistry.expand(template, guardedVar);
+        return PlaceholderRegistry.expand(template, ref.java());
+    }
+
+    private static int mapSourceToContent(@NotNull String sourceContent, @NotNull String content, int sourceIdx) {
+        int s = 0;
+        int c = 0;
+        while (s < sourceIdx && s < sourceContent.length() && c < content.length()) {
+            if (sourceContent.charAt(s) == '\\' && s + 1 < sourceContent.length()) {
+                s += 2;
+            } else {
+                s++;
+            }
+            c++;
+        }
+        return c;
     }
 
     private static void appendLiteral(@NotNull StringBuilder sb, @NotNull String text, boolean first) {

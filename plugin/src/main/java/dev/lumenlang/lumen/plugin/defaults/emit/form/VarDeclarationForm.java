@@ -233,8 +233,8 @@ public final class VarDeclarationForm {
         Map<String, Object> resolvedMetadata = Map.of();
 
         if (e instanceof Expr.Literal l) {
-            if (l.value() instanceof String s) {
-                java = PlaceholderExpander.expand(s, env);
+            if (l.value() instanceof String) {
+                java = PlaceholderExpander.expandString(l.sourceToken(), env);
             } else if (l.value() instanceof Boolean b) {
                 java = b.toString();
             } else if (l.value() instanceof Long lv) {
@@ -423,8 +423,8 @@ public final class VarDeclarationForm {
         Expr e = ExprParser.parse(tokens, env, ctx.line(), ctx.raw());
         if (e instanceof Expr.Literal l) {
             String java;
-            if (l.value() instanceof String s) {
-                java = PlaceholderExpander.expand(s, env);
+            if (l.value() instanceof String) {
+                java = PlaceholderExpander.expandString(l.sourceToken(), env);
             } else if (l.value() instanceof Boolean b) {
                 java = b.toString();
             } else if (l.value() instanceof Long lv) {

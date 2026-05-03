@@ -251,7 +251,7 @@ public final class ConditionParser {
         }
 
         if (tokens.size() == 1 && tokens.get(0).kind() == TokenKind.STRING) {
-            String expanded = PlaceholderExpander.expand(tokens.get(0).text(), env);
+            String expanded = PlaceholderExpander.expandString(tokens.get(0), env);
             return new ConditionInline(expanded);
         }
 

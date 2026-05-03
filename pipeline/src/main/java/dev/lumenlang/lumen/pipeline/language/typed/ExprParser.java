@@ -57,23 +57,23 @@ public final class ExprParser {
             Token t = tokens.get(0);
 
             if (t.kind() == TokenKind.STRING)
-                return new Expr.Literal(t.text(), PrimitiveType.STRING);
+                return new Expr.Literal(t.text(), PrimitiveType.STRING, t);
 
             if (t.kind() == TokenKind.NUMBER) {
                 String text = t.text();
                 if (text.endsWith("L") || text.endsWith("l")) {
-                    return new Expr.Literal(Long.parseLong(text.substring(0, text.length() - 1)), PrimitiveType.LONG);
+                    return new Expr.Literal(Long.parseLong(text.substring(0, text.length() - 1)), PrimitiveType.LONG, t);
                 }
                 if (text.contains(".")) {
-                    return new Expr.Literal(Double.parseDouble(text), PrimitiveType.DOUBLE);
+                    return new Expr.Literal(Double.parseDouble(text), PrimitiveType.DOUBLE, t);
                 }
-                return new Expr.Literal(Integer.parseInt(text), PrimitiveType.INT);
+                return new Expr.Literal(Integer.parseInt(text), PrimitiveType.INT, t);
             }
 
             if (t.kind() == TokenKind.IDENT) {
                 String text = t.text();
                 if (text.equalsIgnoreCase("true") || text.equalsIgnoreCase("false"))
-                    return new Expr.Literal(Boolean.parseBoolean(text.toLowerCase()), PrimitiveType.BOOLEAN);
+                    return new Expr.Literal(Boolean.parseBoolean(text.toLowerCase()), PrimitiveType.BOOLEAN, t);
 
                 VarRef ref = env.lookupVar(text);
                 if (ref != null)

@@ -85,7 +85,7 @@ public final class LoadStatementForm {
         } else {
             Expr e = ExprParser.parse(exprTokens, env);
             if (e instanceof Expr.Literal l) {
-                defaultJava = l.value() instanceof String s ? PlaceholderExpander.expand(s, env) : l.value().toString();
+                defaultJava = l.value() instanceof String ? PlaceholderExpander.expandString(l.sourceToken(), env) : l.value().toString();
             } else if (e instanceof Expr.RefExpr r) {
                 VarRef ref = env.lookupVar(r.name());
                 if (ref == null) {

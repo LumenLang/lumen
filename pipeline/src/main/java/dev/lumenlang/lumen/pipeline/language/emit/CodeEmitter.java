@@ -147,8 +147,8 @@ public final class CodeEmitter {
             }
             throw LumenScriptException.raw(sb.toString());
         }
-        for (LumenDiagnostic warning : env.warnings()) {
-            LumenLogger.warning("[Script " + ctx.scriptName() + "] " + warning.format());
+        if (!env.warnings().isEmpty()) {
+            LumenLogger.warning("[Script " + ctx.scriptName() + "] " + env.warnings().size() + " warning(s):\n" + LumenDiagnostic.formatGroup(env.warnings()));
         }
     }
 

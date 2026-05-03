@@ -369,7 +369,7 @@ public final class GlobalBlock implements BlockFormHandler {
     private @NotNull String resolveSimpleExprJava(@NotNull Expr expr, @NotNull TypeEnvImpl env) {
         if (expr instanceof Expr.Literal l) {
             if (l.value() == null) return "null";
-            return l.value() instanceof String s ? PlaceholderExpander.expand(s, env) : l.value().toString();
+            return l.value() instanceof String ? PlaceholderExpander.expandString(l.sourceToken(), env) : l.value().toString();
         }
         if (expr instanceof Expr.RefExpr r) {
             VarRef ref = env.lookupVar(r.name());

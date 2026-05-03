@@ -8,7 +8,6 @@ import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.pipeline.data.DataSchema;
 import dev.lumenlang.lumen.pipeline.persist.GlobalVars;
 import dev.lumenlang.lumen.pipeline.persist.PersistentVars;
-import dev.lumenlang.lumen.pipeline.placeholder.PlaceholderExpander;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -672,11 +671,6 @@ public final class TypeEnvImpl implements TypeEnv {
         VarRef ref = new VarRef(name, type, java, metadata);
         defineVar(name, ref);
         return ref;
-    }
-
-    @Override
-    public @NotNull String expandPlaceholders(@NotNull String raw) {
-        return PlaceholderExpander.expand(raw, this);
     }
 
     @Override

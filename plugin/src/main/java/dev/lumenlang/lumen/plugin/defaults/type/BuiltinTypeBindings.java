@@ -133,8 +133,10 @@ public final class BuiltinTypeBindings {
                     return "String.valueOf(" + ref.java() + ")";
                 }
                 TokenList tl = (TokenList) value;
-                String raw = tl.tokens().stream().map(Token::text).collect(Collectors.joining(" "));
-                return PlaceholderExpander.expand(raw, env);
+                if (tl.tokens().size() == 1 && tl.tokens().get(0).kind() == TokenKind.STRING) {
+                    return PlaceholderExpander.expandString(tl.tokens().get(0), env);
+                }
+                return PlaceholderExpander.expandTokens(tl.tokens(), env);
             }
         });
     }
@@ -176,8 +178,10 @@ public final class BuiltinTypeBindings {
                     return "String.valueOf(" + ref.java() + ")";
                 }
                 TokenList tl = (TokenList) value;
-                String raw = tl.tokens().stream().map(Token::text).collect(Collectors.joining(" "));
-                return PlaceholderExpander.expand(raw, env);
+                if (tl.tokens().size() == 1 && tl.tokens().get(0).kind() == TokenKind.STRING) {
+                    return PlaceholderExpander.expandString(tl.tokens().get(0), env);
+                }
+                return PlaceholderExpander.expandTokens(tl.tokens(), env);
             }
         });
     }

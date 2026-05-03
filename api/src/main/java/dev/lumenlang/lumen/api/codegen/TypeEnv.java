@@ -83,17 +83,6 @@ public interface TypeEnv {
     <T> @Nullable T get(@NotNull String key);
 
     /**
-     * Expands placeholders expressions embedded in a raw string value.
-     *
-     * <p>Placeholders use the syntax {@code {variable_property}} or {@code {variable}}.
-     * If no placeholders are present, the string is returned as a quoted Java literal.
-     *
-     * @param raw the raw string content (without surrounding quotes)
-     * @return a Java expression string (may use concatenation for embedded placeholders)
-     */
-    @NotNull String expandPlaceholders(@NotNull String raw);
-
-    /**
      * Returns whether the named variable is a stored (persistent) variable.
      *
      * @param name the variable name

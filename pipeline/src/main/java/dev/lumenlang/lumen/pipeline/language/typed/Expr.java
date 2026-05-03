@@ -32,11 +32,11 @@ public sealed interface Expr permits Expr.Literal, Expr.RefExpr, Expr.MathExpr, 
      * {@link String}) so the code generator can emit the appropriate literal
      * syntax.
      *
-     * @param value        the parsed constant value, or {@code null} for an explicitly
-     *                     null literal
+     * @param value        the parsed constant value, or {@code null} for an explicitly null literal
      * @param resolvedType the compile-time type inferred from the literal value
+     * @param sourceToken  the originating source token
      */
-    record Literal(@Nullable Object value, @NotNull LumenType resolvedType) implements Expr {
+    record Literal(@Nullable Object value, @NotNull LumenType resolvedType, @NotNull Token sourceToken) implements Expr {
     }
 
     /**
