@@ -312,7 +312,7 @@ public final class PatternSimulator {
                 Trace.matchAttempt(debug, pattern, "level-0", progress);
                 level0Progress = progress;
                 if (progress.succeeded()) {
-                    if (isBuiltin(cs.meta) && progress.match() != null && !tryHandlerSandbox(cs.handler, progress.match(), env)) {
+                    if (isBuiltin(cs.meta) && progress.match() != null && !tryHandlerSandbox(cs.handler, progress.match(), env, pattern, "level-0", debug)) {
                         Trace.deep(debug, 3, () -> "level-0 succeeded but sandbox rejected, abort candidate");
                         return null;
                     }
@@ -327,7 +327,7 @@ public final class PatternSimulator {
                     Trace.matchAttempt(debug, pattern, "level-0 typo-corrected '" + typo.token.text() + "'->'" + typo.expected + "'", corrProgress);
                     boolean sandboxRejected = false;
                     if (corrProgress.succeeded()) {
-                        if (isBuiltin(cs.meta) && corrProgress.match() != null && !tryHandlerSandbox(cs.handler, corrProgress.match(), env)) {
+                        if (isBuiltin(cs.meta) && corrProgress.match() != null && !tryHandlerSandbox(cs.handler, corrProgress.match(), env, pattern, "level-0 typo", debug)) {
                             sandboxRejected = true;
                         }
                     }
@@ -365,8 +365,8 @@ public final class PatternSimulator {
                 Trace.matchAttempt(debug, pattern, "BFS-" + k + " reduced", progress);
                 Trace.bfsCombination(debug, pattern, k, combo.clone(), progress.succeeded(), progress.furthestTokenIndex());
                 if (progress.succeeded()) {
-                    if (isBuiltin(cs.meta) && progress.match() != null && !tryHandlerSandbox(cs.handler, progress.match(), env)) {
-                        int kx = k;
+                    int kx = k;
+                    if (isBuiltin(cs.meta) && progress.match() != null && !tryHandlerSandbox(cs.handler, progress.match(), env, pattern, "BFS-" + kx + " extra", debug)) {
                         Trace.deep(debug, 4, () -> "BFS-" + kx + " match passed but sandbox rejected");
                         progress = null;
                     }
@@ -387,8 +387,8 @@ public final class PatternSimulator {
                     MatchProgress corrProgress = PatternMatcher.matchWithProgress(corrected, pattern, types, env);
                     Trace.matchAttempt(debug, pattern, "BFS-" + k + " typo-corrected '" + typo.token.text() + "'->'" + typo.expected + "'", corrProgress);
                     if (corrProgress.succeeded()) {
-                        if (isBuiltin(cs.meta) && corrProgress.match() != null && !tryHandlerSandbox(cs.handler, corrProgress.match(), env)) {
-                            int kx = k;
+                        int kx = k;
+                        if (isBuiltin(cs.meta) && corrProgress.match() != null && !tryHandlerSandbox(cs.handler, corrProgress.match(), env, pattern, "BFS-" + kx + " extra+typo", debug)) {
                             Trace.deep(debug, 4, () -> "BFS-" + kx + " typo-corrected match passed but sandbox rejected");
                             corrProgress = null;
                         }
@@ -438,7 +438,7 @@ public final class PatternSimulator {
                 List<Token> corrected = applyTypoFix(tokens, bestPartialTypo);
                 MatchProgress check = PatternMatcher.matchWithProgress(corrected, pattern, types, env);
                 Trace.matchAttempt(debug, pattern, "partial-typo sandbox recheck", check);
-                if (check.succeeded() && check.match() != null && !tryHandlerSandbox(cs.handler, check.match(), env)) {
+                if (check.succeeded() && check.match() != null && !tryHandlerSandbox(cs.handler, check.match(), env, pattern, "partial-typo recheck", debug)) {
                     Trace.deep(debug, 3, () -> "partial-typo sandbox rejected, discard");
                     bestPartialTypo = null;
                     bestPartialProgress = null;
@@ -795,7 +795,7 @@ public final class PatternSimulator {
             Trace.deep(debug, 2, () -> "reorder skipped: shaped sequence did not match (furthest=" + shaped.furthestTokenIndex() + ")");
             return null;
         }
-        if (isBuiltin(cs.meta) && shaped.match() != null && !tryHandlerSandbox(cs.handler, shaped.match(), env)) {
+        if (isBuiltin(cs.meta) && shaped.match() != null && !tryHandlerSandbox(cs.handler, shaped.match(), env, cs.pattern, "reorder shape-match", debug)) {
             Trace.deep(debug, 2, () -> "reorder skipped: shaped match passed but sandbox rejected");
             return null;
         }
@@ -908,13 +908,18 @@ public final class PatternSimulator {
         return "Lumen".equals(meta.by());
     }
 
-    private static boolean tryHandlerSandbox(@Nullable Object handler, @NotNull Match match, @NotNull TypeEnvImpl env) {
+    private static boolean tryHandlerSandbox(@Nullable Object handler, @NotNull Match match, @NotNull TypeEnvImpl env, @NotNull Pattern pattern, @NotNull String stage, @NotNull SimulatorDebug debug) {
+        Throwable thrown;
         if (handler instanceof RegisteredPattern rp) {
-            return tryStatementHandler(rp, match, env);
+            thrown = tryStatementHandler(rp, match, env);
         } else if (handler instanceof RegisteredExpression re) {
-            return tryExpressionHandler(re, match, env);
+            thrown = tryExpressionHandler(re, match, env);
+        } else {
+            return true;
         }
-        return true;
+        if (thrown == null) return true;
+        Trace.sandboxRejected(debug, pattern, stage, thrown);
+        return false;
     }
 
     /**
@@ -923,17 +928,17 @@ public final class PatternSimulator {
      * @param handler the registered statement pattern
      * @param match   the match result from corrected token matching
      * @param env     the type environment
-     * @return true if the handler executed without throwing
+     * @return {@code null} if the handler executed without throwing, otherwise the throwable
      */
-    public static boolean tryStatementHandler(@NotNull RegisteredPattern handler, @NotNull Match match, @NotNull TypeEnvImpl env) {
+    public static @Nullable Throwable tryStatementHandler(@NotNull RegisteredPattern handler, @NotNull Match match, @NotNull TypeEnvImpl env) {
         try {
             CodegenContextImpl codegenCtx = new CodegenContextImpl("__simulation__.luma");
             BlockContextImpl blockCtx = sandboxBlock(env);
             HandlerContextImpl hctx = new HandlerContextImpl(match, env, codegenCtx, blockCtx, NoOpJavaOutput.INSTANCE);
             handler.handler().handle(hctx);
-            return true;
-        } catch (Throwable ignored) {
-            return false;
+            return null;
+        } catch (Throwable t) {
+            return t;
         }
     }
 
@@ -943,17 +948,17 @@ public final class PatternSimulator {
      * @param handler the registered expression pattern
      * @param match   the match result from corrected token matching
      * @param env     the type environment
-     * @return true if the handler executed without throwing
+     * @return {@code null} if the handler executed without throwing, otherwise the throwable
      */
-    public static boolean tryExpressionHandler(@NotNull RegisteredExpression handler, @NotNull Match match, @NotNull TypeEnvImpl env) {
+    public static @Nullable Throwable tryExpressionHandler(@NotNull RegisteredExpression handler, @NotNull Match match, @NotNull TypeEnvImpl env) {
         try {
             CodegenContextImpl codegenCtx = new CodegenContextImpl("__simulation__.luma");
             BlockContextImpl blockCtx = sandboxBlock(env);
             HandlerContextImpl hctx = new HandlerContextImpl(match, env, codegenCtx, blockCtx, NoOpJavaOutput.INSTANCE);
             handler.handler().handle(hctx);
-            return true;
-        } catch (Throwable ignored) {
-            return false;
+            return null;
+        } catch (Throwable t) {
+            return t;
         }
     }
 
@@ -1140,6 +1145,22 @@ public final class PatternSimulator {
             long ms = nanos / 1_000_000L;
             debug.trace(new TraceEvent.StageTiming(stage, ms));
             debug.emit(Verbosity.TIMING, 1, () -> stage + " " + ms + " ms (" + nanos + " ns)");
+        }
+
+        static void sandboxRejected(@NotNull SimulatorDebug debug, @NotNull Pattern pattern, @NotNull String stage, @NotNull Throwable thrown) {
+            debug.trace(new TraceEvent.SandboxRejected(pattern, stage, thrown));
+            if (!debug.enabled(Verbosity.BIND)) return;
+            String type = thrown.getClass().getSimpleName();
+            String msg = thrown.getMessage();
+            debug.emit(Verbosity.BIND, 4, () -> "sandbox rejected (" + stage + "): " + type + (msg == null ? "" : ": " + msg));
+            if (debug.enabled(Verbosity.DEEP)) {
+                StackTraceElement[] trace = thrown.getStackTrace();
+                int shown = Math.min(trace.length, 6);
+                for (int i = 0; i < shown; i++) {
+                    StackTraceElement el = trace[i];
+                    debug.emit(Verbosity.DEEP, 5, () -> "at " + el);
+                }
+            }
         }
     }
 }

@@ -157,5 +157,17 @@ public sealed interface TraceEvent {
     record BfsCombination(@NotNull Pattern pattern, int level, @NotNull int[] removedIndices,
                           boolean matched, int furthestIndex) implements TraceEvent {
     }
+
+    /**
+     * Handler sandbox invocation rejected the candidate by throwing.
+     *
+     * @param pattern   candidate pattern whose handler ran
+     * @param stage     label describing which sim stage triggered the sandbox call
+     * @param throwable exception thrown by the handler
+     */
+    record SandboxRejected(@NotNull Pattern pattern, @NotNull String stage,
+                           @NotNull Throwable throwable) implements TraceEvent {
+    }
 }
+
 
