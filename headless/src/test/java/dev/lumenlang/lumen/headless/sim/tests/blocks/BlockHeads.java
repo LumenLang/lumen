@@ -32,15 +32,14 @@ public final class BlockHeads {
                 .expectCleanTop("wait %n:NUMBER% (tick|second|minute|hour|day)[s]");
     }
 
-    /**
-     * Buggy lock-in. {@code every 5} is missing the time-unit literal; sim should suggest
-     * {@code every %n:NUMBER% (tick|second|minute|hour|day)[s]} with a MissingBinding or
-     * Reorder issue. Currently emits nothing.
-     */
-    @SimCase(name = "block: every with no unit (BUG locked)")
+    @SimCase(name = "block: every with no unit")
     public static SimulatorCase everyNoUnit() {
         return SimulatorCase.block("every 5")
-                .expectNoSuggestions();
+                .expectTopPattern("every %n:NUMBER% (tick|second|minute|hour|day)[s]")
+                .expectPrimaryIssue(SuggestionIssue.IncompleteInput.class)
+                .expectAnyIssue(SuggestionIssue.IncompleteInput.class)
+                .expectConfidenceAtLeast(0.85)
+                .expectSuggestionCount(2, 2);
     }
 
     @SimCase(name = "block: 'ever' typo for 'every'")

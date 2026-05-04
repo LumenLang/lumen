@@ -24,15 +24,19 @@ public final class SwappedTokens {
     }
 
     /**
-     * Buggy lock-in. {@code send title to p "hi"} should suggest
-     * {@code send title %title:STRING% to %who:PLAYER%} with a Reorder issue. Sim emits no
-     * suggestions today.
+     * Buggy lock-in. {@code send title to p "hi"} has all tokens in the wrong order; sim should
+     * surface a Reorder issue. Currently sim emits MissingLiteral because the reorder fallback
+     * does not fire here. Flip once reorder detection covers this shape.
      */
     @SimCase(name = "swap: send title recipient before string (BUG locked)")
     public static SimulatorCase sendToBeforeString() {
         return SimulatorCase.statement("send title to p \"hi\"")
                 .env(EnvSimulator.create().withVar("p", MinecraftTypes.PLAYER))
-                .expectNoSuggestions();
+                .expectTopPattern("send title %title:STRING% to %who:PLAYER%")
+                .expectPrimaryIssue(SuggestionIssue.MissingLiteral.class)
+                .expectAnyIssue(SuggestionIssue.MissingLiteral.class)
+                .expectConfidenceAtLeast(0.40)
+                .expectSuggestionCount(2, 2);
     }
 
     @SimCase(name = "swap: damage 'by amount' before target")

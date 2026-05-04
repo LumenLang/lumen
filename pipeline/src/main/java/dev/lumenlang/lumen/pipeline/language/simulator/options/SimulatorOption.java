@@ -104,7 +104,21 @@ public enum SimulatorOption {
      * which prevents catch-all patterns (where most parts are placeholders) from emitting
      * spurious reorder suggestions on inputs they barely match.
      */
-    REORDER_PREFILTER_FLOOR(Kind.DOUBLE, 0.50, Range.zeroToOne());
+    REORDER_PREFILTER_FLOOR(Kind.DOUBLE, 0.50, Range.zeroToOne()),
+
+    /**
+     * Multiplier applied to a fallback suggestion's confidence when the only issue surfaced is a
+     * {@code MissingLiteral}. Low values push these informational suggestions below ordinary
+     * type-mismatch fallbacks; high values let them compete head-on.
+     */
+    MISSING_LITERAL_CONFIDENCE_FACTOR(Kind.DOUBLE, 0.50, Range.zeroToOne()),
+
+    /**
+     * Minimum pre-filter confidence required for a MissingLiteral-only suggestion to be returned.
+     * Patterns that scored below this in the pre-filter pass are clearly distant from the input
+     * and their MissingLiteral suggestion is just noise.
+     */
+    MISSING_LITERAL_PREFILTER_FLOOR(Kind.DOUBLE, 0.50, Range.zeroToOne());
 
     /**
      * Numeric kind a {@link SimulatorOption} accepts.

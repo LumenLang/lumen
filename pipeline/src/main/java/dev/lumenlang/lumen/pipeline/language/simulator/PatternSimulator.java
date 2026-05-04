@@ -489,7 +489,8 @@ public final class PatternSimulator {
             debug.emit(Verbosity.ISSUES, 2, () -> "partial-typo fallback, conf=" + format(confidence) + " issues=" + frozen.size());
             return new Suggestion(pattern, confidence, frozen, bestPartialProgress);
         }
-        if (level0Progress != null && (level0Progress.failedBindingId() != null || !level0Progress.bindingFailures().isEmpty())) {
+        boolean hasIncomplete = level0Progress != null && level0Progress.incomplete() != null;
+        if (level0Progress != null && (level0Progress.failedBindingId() != null || !level0Progress.bindingFailures().isEmpty() || hasIncomplete)) {
             List<SuggestionIssue> issues = new ArrayList<>();
             TypoFix heuristicTypo = findBestTypoFix(tokens, literals, pattern, debug);
             if (heuristicTypo != null && FuzzyMatch.prefixAwareDistance(heuristicTypo.token.text(), heuristicTypo.expected) <= 1) {
@@ -511,14 +512,37 @@ public final class PatternSimulator {
                     issues.add(new SuggestionIssue.TypeMismatch(failedToken, bindingId, reason));
                 }
             }
+            if (level0Progress.incomplete() != null) {
+                MatchProgress.Incomplete inc = level0Progress.incomplete();
+                if (inc.afterTokenIndex() >= tokens.size()) {
+                    issues.add(new SuggestionIssue.IncompleteInput(inc.expectedNext()));
+                } else {
+                    issues.add(new SuggestionIssue.MissingLiteral(inc.expectedNext(), inc.afterTokenIndex() - 1));
+                }
+            }
             if (!level0Progress.unmatchedTrailingTokens().isEmpty()) {
                 issues.add(new SuggestionIssue.ExtraTokens(level0Progress.unmatchedTrailingTokens()));
             }
             double confidence = computeTypeMatchConfidence(level0Progress, tokens.size());
             List<SuggestionIssue> frozen = List.copyOf(issues);
-            debug.trace(new TraceEvent.SuggestionFormed(pattern, confidence, "type-mismatch fallback", frozen));
-            debug.emit(Verbosity.ISSUES, 2, () -> "type-mismatch fallback, conf=" + format(confidence) + " issues=" + frozen.size());
-            return new Suggestion(pattern, confidence, frozen, level0Progress);
+            boolean missingLiteralOnly = !frozen.isEmpty() && frozen.stream().allMatch(i -> i instanceof SuggestionIssue.MissingLiteral);
+            if (missingLiteralOnly) {
+                double prefilterFloor = opts.doubleValue(SimulatorOption.MISSING_LITERAL_PREFILTER_FLOOR);
+                if (cs.confidence < prefilterFloor) {
+                    Trace.deep(debug, 3, () -> "MissingLiteral fallback dropped, preFilter " + format(cs.confidence) + " < floor " + format(prefilterFloor) + ", trying reorder");
+                    return tryReorderMatch(tokens, cs, types, env, literals, opts, debug);
+                }
+                confidence *= opts.doubleValue(SimulatorOption.MISSING_LITERAL_CONFIDENCE_FACTOR);
+                Suggestion reorderAlt = tryReorderMatch(tokens, cs, types, env, literals, opts, debug);
+                if (reorderAlt != null && reorderAlt.confidence() > confidence) {
+                    Trace.deep(debug, 3, () -> "reorder beat MissingLiteral, returning reorder");
+                    return reorderAlt;
+                }
+            }
+            double finalConfidence = confidence;
+            debug.trace(new TraceEvent.SuggestionFormed(pattern, finalConfidence, "type-mismatch fallback", frozen));
+            debug.emit(Verbosity.ISSUES, 2, () -> "type-mismatch fallback, conf=" + format(finalConfidence) + " issues=" + frozen.size());
+            return new Suggestion(pattern, finalConfidence, frozen, level0Progress);
         }
         return tryReorderMatch(tokens, cs, types, env, literals, opts, debug);
     }
@@ -1075,12 +1099,30 @@ public final class PatternSimulator {
 
         /**
          * The pattern's handler accepted the syntactic match but rejected it semantically by
-         * throwing a {@link DiagnosticException}. The diagnostic title carries the underlying
-         * reason (lossy numeric conversion, type mismatch in assignment, etc).
+         * throwing a {@link DiagnosticException}. The diagnostic title carries the underlying reason.
          *
          * @param title the diagnostic title from the thrown exception
          */
         record HandlerDiagnostic(@NotNull String title) implements SuggestionIssue {
+        }
+
+        /**
+         * Pattern expected a literal keyword that the input never produced.
+         *
+         * @param literal       the literal text the pattern expected
+         * @param afterTokenIndex token index after which the literal was missing, or {@code -1}
+         *                       when the literal was missing from the very start
+         */
+        record MissingLiteral(@NotNull String literal, int afterTokenIndex) implements SuggestionIssue {
+        }
+
+        /**
+         * Input ended while the pattern still expected more content.
+         *
+         * @param expectedNext short label naming what the pattern expected next (literal text or
+         *                    binding id)
+         */
+        record IncompleteInput(@NotNull String expectedNext) implements SuggestionIssue {
         }
     }
 

@@ -5,6 +5,7 @@ import dev.lumenlang.lumen.headless.sim.annotations.SimCase;
 import dev.lumenlang.lumen.headless.sim.annotations.SimulatorTest;
 import dev.lumenlang.lumen.headless.sim.cases.EnvSimulator;
 import dev.lumenlang.lumen.headless.sim.cases.SimulatorCase;
+import dev.lumenlang.lumen.pipeline.language.simulator.PatternSimulator.SuggestionIssue;
 
 /**
  * Inputs that omit a required literal keyword (e.g. {@code title}, {@code to}).
@@ -33,15 +34,14 @@ public final class MissingLiterals {
                 .expectContainsPattern("(heal|restore) %e:ENTITY%");
     }
 
-    /**
-     * Buggy lock-in. {@code send title "hi" p} should suggest
-     * {@code send title %title:STRING% to %who:PLAYER%} with a missing-literal {@code to}
-     * issue. Sim emits no suggestions today.
-     */
-    @SimCase(name = "missing literal: send title without 'to' before recipient (BUG locked)")
+    @SimCase(name = "missing literal: send title without 'to' before recipient")
     public static SimulatorCase sendNoTo() {
         return SimulatorCase.statement("send title \"hi\" p")
                 .env(EnvSimulator.create().withVar("p", MinecraftTypes.PLAYER))
-                .expectNoSuggestions();
+                .expectTopPattern("send title %title:STRING% to %who:PLAYER%")
+                .expectPrimaryIssue(SuggestionIssue.MissingLiteral.class)
+                .expectAnyIssue(SuggestionIssue.MissingLiteral.class)
+                .expectConfidenceAtLeast(0.40)
+                .expectSuggestionCount(2, 2);
     }
 }

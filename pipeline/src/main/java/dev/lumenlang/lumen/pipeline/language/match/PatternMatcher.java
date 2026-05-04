@@ -168,12 +168,18 @@ public final class PatternMatcher {
 
         if (part instanceof PatternPart.Literal lit) {
             if (ti >= tokens.size()) {
-                if (progress != null) progress.recordFailure(ti, lit, null, null, List.of());
+                if (progress != null) {
+                    progress.recordFailure(ti, lit, null, null, List.of());
+                    progress.recordIncomplete(ti, lit.text());
+                }
                 return -1;
             }
             int merged = tryMergeTokens(tokens, ti, lit.text());
             if (merged < 0) {
-                if (progress != null) progress.recordFailure(ti, lit, null, null, List.of(tokens.get(ti)));
+                if (progress != null) {
+                    progress.recordFailure(ti, lit, null, null, List.of(tokens.get(ti)));
+                    if (ti > 0) progress.recordIncomplete(ti, lit.text());
+                }
                 return -1;
             }
             ti += merged;
@@ -183,7 +189,10 @@ public final class PatternMatcher {
 
         if (part instanceof PatternPart.FlexLiteral flex) {
             if (ti >= tokens.size()) {
-                if (progress != null) progress.recordFailure(ti, flex, null, null, List.of());
+                if (progress != null) {
+                    progress.recordFailure(ti, flex, null, null, List.of());
+                    progress.recordIncomplete(ti, flex.forms().get(0));
+                }
                 return -1;
             }
             int bestConsumed = -1;
@@ -192,7 +201,10 @@ public final class PatternMatcher {
                 if (merged > 0 && merged > bestConsumed) bestConsumed = merged;
             }
             if (bestConsumed < 0) {
-                if (progress != null) progress.recordFailure(ti, flex, null, null, List.of(tokens.get(ti)));
+                if (progress != null) {
+                    progress.recordFailure(ti, flex, null, null, List.of(tokens.get(ti)));
+                    if (ti > 0) progress.recordIncomplete(ti, flex.forms().get(0));
+                }
                 return -1;
             }
             ti += bestConsumed;

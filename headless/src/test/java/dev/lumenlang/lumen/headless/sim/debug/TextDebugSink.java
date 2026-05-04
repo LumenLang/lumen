@@ -11,10 +11,6 @@ import java.util.function.Consumer;
 /**
  * Console-utils backed sink that colorises lines by their leading marker and indents each line by
  * its depth. Default routes formatted output to {@code System.out}.
- *
- * <p>Markers honoured: {@code +} (admitted candidate, mint), {@code -} (rejected, slate),
- * {@code #} (ranking entry, sky), {@code !} (issue or fallback, warm yellow). Lines without a
- * marker render in {@link Color#BONE}.
  */
 public final class TextDebugSink implements DebugSink {
 
