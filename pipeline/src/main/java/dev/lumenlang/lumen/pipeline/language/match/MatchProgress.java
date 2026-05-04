@@ -29,6 +29,7 @@ public final class MatchProgress {
     private @NotNull List<Token> unmatchedTrailingTokens = List.of();
     private @Nullable Match match;
     private @Nullable Failure deepest;
+    private @Nullable Incomplete incomplete;
 
     void recordFailure(int tokenIndex, @Nullable PatternPart part, @Nullable String bindingId, @Nullable String reason, @NotNull List<Token> failedTokens) {
         if (deepest != null && tokenIndex <= deepest.tokenIndex()) return;
@@ -53,6 +54,12 @@ public final class MatchProgress {
     void recordUnmatchedTrailingTokens(@NotNull List<Token> tokens) {
         if (tokens.size() > unmatchedTrailingTokens.size()) {
             unmatchedTrailingTokens = List.copyOf(tokens);
+        }
+    }
+
+    void recordIncomplete(int afterTokenIndex, @NotNull String expectedNext) {
+        if (incomplete == null || afterTokenIndex > incomplete.afterTokenIndex()) {
+            incomplete = new Incomplete(afterTokenIndex, expectedNext);
         }
     }
 
@@ -143,6 +150,13 @@ public final class MatchProgress {
     }
 
     /**
+     * @return non-null when the matcher exhausted input mid-pattern still expecting more content
+     */
+    public @Nullable Incomplete incomplete() {
+        return incomplete;
+    }
+
+    /**
      * @return all literal typos discovered during downstream failure analysis, deduplicated by token position
      */
     public @NotNull List<LiteralTypo> literalTypos() {
@@ -186,5 +200,16 @@ public final class MatchProgress {
      * @param expected the literal text the token was close to
      */
     public record LiteralTypo(@NotNull Token token, @NotNull String expected) {
+    }
+
+    /**
+     * Records that the matcher exhausted input while still expecting more pattern content.
+     *
+     * @param afterTokenIndex token index after which input ran out (input length when no tokens
+     *                        consumed at all)
+     * @param expectedNext   short label for what the pattern expected next (literal text or
+     *                        binding id)
+     */
+    public record Incomplete(int afterTokenIndex, @NotNull String expectedNext) {
     }
 }
