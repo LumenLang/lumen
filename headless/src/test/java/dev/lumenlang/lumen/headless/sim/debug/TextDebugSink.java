@@ -29,10 +29,8 @@ public final class TextDebugSink implements DebugSink {
 
     @Override
     public void write(int depth, @NotNull String line) {
-        StringBuilder indent = new StringBuilder(depth * 2);
-        for (int i = 0; i < depth; i++) indent.append("  ");
         Color color = colorFor(line);
-        String body = indent + line;
+        String body = "  ".repeat(depth) + line;
         writer.accept(Renderer.render(UIUtils.text(body).fg(color)));
     }
 

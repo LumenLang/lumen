@@ -1193,7 +1193,7 @@ public final class PatternSimulator {
             }
         }
 
-        static void bfsCombination(@NotNull SimulatorDebug debug, @NotNull Pattern pattern, int level, @NotNull int[] removedIndices, boolean matched, int furthestIndex) {
+        static void bfsCombination(@NotNull SimulatorDebug debug, @NotNull Pattern pattern, int level, int[] removedIndices, boolean matched, int furthestIndex) {
             debug.trace(new TraceEvent.BfsCombination(pattern, level, removedIndices, matched, furthestIndex));
             if (!debug.enabled(Verbosity.MATCH)) return;
             StringBuilder ix = new StringBuilder("[");

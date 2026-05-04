@@ -154,7 +154,7 @@ public sealed interface TraceEvent {
      * @param matched        {@code true} when the reduced sequence matched
      * @param furthestIndex  furthest input token index reached by the matcher
      */
-    record BfsCombination(@NotNull Pattern pattern, int level, @NotNull int[] removedIndices,
+    record BfsCombination(@NotNull Pattern pattern, int level, int[] removedIndices,
                           boolean matched, int furthestIndex) implements TraceEvent {
     }
 

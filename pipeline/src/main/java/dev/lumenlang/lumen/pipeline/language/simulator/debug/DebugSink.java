@@ -17,12 +17,7 @@ public interface DebugSink {
     /**
      * Writes lines to {@code System.err} prefixed with {@code "  "} per indent level.
      */
-    DebugSink STDERR = (depth, line) -> {
-        StringBuilder sb = new StringBuilder(depth * 2 + line.length());
-        for (int i = 0; i < depth; i++) sb.append("  ");
-        sb.append(line);
-        System.err.println(sb);
-    };
+    DebugSink STDERR = (depth, line) -> System.err.println("  ".repeat(depth) + line);
 
     /**
      * Emits one debug line at the given indent depth.
