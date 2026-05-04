@@ -61,14 +61,6 @@ public final class GenericEntityStatements {
                 .handler(ctx -> ctx.out().line(ctx.java("e") + ".teleport(" + ctx.java("target") + ");")));
 
         api.patterns().statement(b -> b
-                .by("Lumen").pattern("(teleport|tp) %e:ENTITY% [to] %target:PLAYER%")
-                .description("Teleports an entity to a player.")
-                .example("teleport mob to player")
-                .since("1.0.0")
-                .category(Categories.ENTITY)
-                .handler(ctx -> ctx.out().line(ctx.java("e") + ".teleport(" + ctx.java("target") + ");")));
-
-        api.patterns().statement(b -> b
                 .by("Lumen").pattern("set %e:ENTITY% on fire [for] %ticks:INT% [ticks]")
                 .description("Sets an entity on fire for the specified number of ticks.")
                 .example("set mob on fire for 100 ticks")

@@ -1,0 +1,12 @@
+case: block: every N seconds
+input: every 5 seconds
+runner: BLOCK
+env: <empty>
+suggestions: 2
+  [#0] every %n:NUMBER% (tick|second|minute|hour|day)[s]
+    confidence: 1.000
+    issues: <none>
+  [#1] every %n:NUMBER% (tick|second|minute|hour|day)[s] as %name:STRING%
+    confidence: 0.850
+    issues:
+      - incomplete: expected 'as' next

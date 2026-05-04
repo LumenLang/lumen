@@ -1,0 +1,14 @@
+case: missing literal: send title without 'to' before recipient
+input: send title "hi" p
+runner: STATEMENT
+env:
+  var p: player
+suggestions: 2
+  [#0] send title %title:STRING% to %who:PLAYER%
+    confidence: 0.425
+    issues:
+      - missing literal: 'to' (after token 2)
+  [#1] send title %title:STRING% with subtitle %sub:STRING% to %who:PLAYER%
+    confidence: 0.425
+    issues:
+      - missing literal: 'with' (after token 2)

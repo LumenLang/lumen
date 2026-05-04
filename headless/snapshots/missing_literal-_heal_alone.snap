@@ -1,0 +1,9 @@
+case: missing literal: heal alone
+input: heal
+runner: STATEMENT
+env: <empty>
+suggestions: 1
+  [#0] (heal|restore) [the] %e:LIVING_ENTITY%
+    confidence: 0.850
+    issues:
+      - incomplete: expected 'the' next

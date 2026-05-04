@@ -1,0 +1,14 @@
+case: clean: teleport p to l
+input: teleport p to l
+runner: STATEMENT
+env:
+  var p: player
+  var l: location
+suggestions: 2
+  [#0] (teleport|tp) %e:ENTITY% [to] %loc:LOCATION%
+    confidence: 1.000
+    issues: <none>
+  [#1] (teleport|tp) %e:ENTITY% [to] %target:ENTITY%
+    confidence: 0.730
+    issues:
+      - type mismatch: 'l' (col 14) is not a ENTITY ('l' is a location, not an entity)

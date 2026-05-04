@@ -1,0 +1,10 @@
+case: block typo: 'reapt' for 'repeat'
+input: reapt 5 times
+runner: BLOCK
+env: <empty>
+suggestions: 1
+  [#0] repeat %n:INT% [time|times]
+    confidence: 0.870
+    issues:
+      - extra tokens: 'times' (col 8)
+      - typo: 'reapt' (col 0) should be 'repeat'

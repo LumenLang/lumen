@@ -1,0 +1,12 @@
+case: cond: p's health > 10
+input: p's health > 10
+runner: CONDITION
+env:
+  var p: player
+suggestions: 2
+  [#0] %p:PLAYER_POSSESSIVE% health %op:OP% %n:INT%
+    confidence: 1.000
+    issues: <none>
+  [#1] %e:ENTITY_POSSESSIVE% health %op:OP% %n:INT%
+    confidence: 1.000
+    issues: <none>

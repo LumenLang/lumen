@@ -1,0 +1,14 @@
+case: typo: arg keyword 'send actionber "hi" to p'
+input: send actionber "hi" to p
+runner: STATEMENT
+env:
+  var p: player
+suggestions: 2
+  [#0] send title %title:STRING% with subtitle %sub:STRING% to %who:PLAYER%
+    confidence: 1.000
+    issues:
+      - reorder: 'actionber', 'hi', 'to'
+  [#1] send actionbar %text:STRING% to %who:PLAYER%
+    confidence: 0.950
+    issues:
+      - typo: 'actionber' (col 5) should be 'actionbar'

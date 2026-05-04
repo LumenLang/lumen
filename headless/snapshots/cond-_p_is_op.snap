@@ -1,0 +1,13 @@
+case: cond: p is op
+input: p is op
+runner: CONDITION
+env:
+  var p: player
+suggestions: 2
+  [#0] %p:PLAYER% (is|is not) [a] op
+    confidence: 1.000
+    issues: <none>
+  [#1] %op:OFFLINE_PLAYER% (is|is not) [a] op
+    confidence: 0.730
+    issues:
+      - type mismatch: 'p' (col 0) is not a OFFLINE_PLAYER ('p' is a player, not an offline player)

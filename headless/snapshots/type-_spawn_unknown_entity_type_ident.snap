@@ -1,0 +1,15 @@
+case: type: spawn unknown entity type ident
+input: spawn glowsquidd at l
+runner: STATEMENT
+env:
+  var l: location
+suggestions: 2
+  [#0] spawn %type:ENTITY_TYPE% [at] %loc:LOCATION%
+    confidence: 0.730
+    issues:
+      - type mismatch: 'glowsquidd' (col 6) is not a ENTITY_TYPE ('glowsquidd' is not a valid entity type, did you mean 'glow_squid'?)
+  [#1] spawn %type:ENTITY_TYPE% at %who:PLAYER%
+    confidence: 0.610
+    issues:
+      - type mismatch: 'glowsquidd' (col 6) is not a ENTITY_TYPE ('glowsquidd' is not a valid entity type, did you mean 'glow_squid'?)
+      - type mismatch: 'l' (col 20) is not a PLAYER ('l' is a location, not a player)

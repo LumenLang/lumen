@@ -1,0 +1,13 @@
+case: missing: set time of without world (BUG locked)
+input: set time of to 6000
+runner: STATEMENT
+env: <empty>
+suggestions: 2
+  [#0] set %name:IDENT% to %val:EXPR%
+    confidence: 0.920
+    issues:
+      - extra tokens: 'of' (col 9)
+  [#1] set time [of] %w:WORLD% [to] %val:INT%
+    confidence: 0.730
+    issues:
+      - type mismatch: 'to' (col 12) is not a WORLD ('to' does not exist in this scope)

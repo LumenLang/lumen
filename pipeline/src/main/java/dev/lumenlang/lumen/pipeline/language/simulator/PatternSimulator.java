@@ -1060,6 +1060,10 @@ public final class PatternSimulator {
          * @param expected the correct literal text
          */
         record Typo(@NotNull Token token, @NotNull String expected) implements SuggestionIssue {
+            @Override
+            public String toString() {
+                return "typo: '" + token.text() + "' (col " + token.start() + ") should be '" + expected + "'";
+            }
         }
 
         /**
@@ -1068,6 +1072,10 @@ public final class PatternSimulator {
          * @param tokens the extra tokens that should be removed
          */
         record ExtraTokens(@NotNull List<Token> tokens) implements SuggestionIssue {
+            @Override
+            public String toString() {
+                return "extra tokens: " + renderPositioned(tokens);
+            }
         }
 
         /**
@@ -1076,6 +1084,10 @@ public final class PatternSimulator {
          * @param tokens the tokens that need reordering
          */
         record Reorder(@NotNull List<Token> tokens) implements SuggestionIssue {
+            @Override
+            public String toString() {
+                return "reorder: " + renderQuoted(tokens);
+            }
         }
 
         /**
@@ -1087,6 +1099,10 @@ public final class PatternSimulator {
          */
         record TypeMismatch(@NotNull Token token, @NotNull String bindingId,
                             @NotNull String reason) implements SuggestionIssue {
+            @Override
+            public String toString() {
+                return "type mismatch: '" + token.text() + "' (col " + token.start() + ") is not a " + bindingId + " (" + reason + ")";
+            }
         }
 
         /**
@@ -1095,6 +1111,10 @@ public final class PatternSimulator {
          * @param bindingId the type binding ID that is missing
          */
         record MissingBinding(@NotNull String bindingId) implements SuggestionIssue {
+            @Override
+            public String toString() {
+                return "missing binding: " + bindingId;
+            }
         }
 
         /**
@@ -1104,6 +1124,10 @@ public final class PatternSimulator {
          * @param title the diagnostic title from the thrown exception
          */
         record HandlerDiagnostic(@NotNull String title) implements SuggestionIssue {
+            @Override
+            public String toString() {
+                return "handler rejected: " + title;
+            }
         }
 
         /**
@@ -1114,6 +1138,10 @@ public final class PatternSimulator {
          *                       when the literal was missing from the very start
          */
         record MissingLiteral(@NotNull String literal, int afterTokenIndex) implements SuggestionIssue {
+            @Override
+            public String toString() {
+                return "missing literal: '" + literal + "' (after token " + afterTokenIndex + ")";
+            }
         }
 
         /**
@@ -1123,6 +1151,29 @@ public final class PatternSimulator {
          *                    binding id)
          */
         record IncompleteInput(@NotNull String expectedNext) implements SuggestionIssue {
+            @Override
+            public String toString() {
+                return "incomplete: expected '" + expectedNext + "' next";
+            }
+        }
+
+        private static @NotNull String renderPositioned(@NotNull List<Token> tokens) {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < tokens.size(); i++) {
+                if (i > 0) sb.append(", ");
+                Token t = tokens.get(i);
+                sb.append("'").append(t.text()).append("' (col ").append(t.start()).append(")");
+            }
+            return sb.toString();
+        }
+
+        private static @NotNull String renderQuoted(@NotNull List<Token> tokens) {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < tokens.size(); i++) {
+                if (i > 0) sb.append(", ");
+                sb.append("'").append(tokens.get(i).text()).append("'");
+            }
+            return sb.toString();
         }
     }
 

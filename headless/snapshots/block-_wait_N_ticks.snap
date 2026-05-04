@@ -1,0 +1,13 @@
+case: block: wait N ticks
+input: wait 20 ticks
+runner: BLOCK
+env: <empty>
+suggestions: 2
+  [#0] wait %n:NUMBER% (tick|second|minute|hour|day)[s]
+    confidence: 1.000
+    issues: <none>
+  [#1] wait %n:NUMBER% (tick|second|minute|hour|day)[s] as %name:STRING%
+    confidence: 0.850
+    issues:
+      - typo: 'ticks' (col 8) should be 'tick'
+      - incomplete: expected 'as' next

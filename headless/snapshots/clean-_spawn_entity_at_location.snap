@@ -1,0 +1,13 @@
+case: clean: spawn entity at location
+input: spawn zombie at l
+runner: STATEMENT
+env:
+  var l: location
+suggestions: 2
+  [#0] spawn %type:ENTITY_TYPE% [at] %loc:LOCATION%
+    confidence: 1.000
+    issues: <none>
+  [#1] spawn %type:ENTITY_TYPE% at %who:PLAYER%
+    confidence: 0.730
+    issues:
+      - type mismatch: 'l' (col 16) is not a PLAYER ('l' is a location, not a player)

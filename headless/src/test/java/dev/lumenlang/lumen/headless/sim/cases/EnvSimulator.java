@@ -78,6 +78,27 @@ public final class EnvSimulator {
     }
 
     /**
+     * Human-readable summary lines describing the env, used in snapshot headers.
+     */
+    public @NotNull List<String> summary() {
+        List<String> out = new ArrayList<>();
+        for (Var v : vars) out.add("var " + v.name() + ": " + v.type().displayName());
+        for (Var g : globals) out.add("global " + g.name() + ": " + g.type().displayName());
+        for (Map.Entry<String, Map<String, LumenType>> e : dataSchemas.entrySet()) {
+            StringBuilder sb = new StringBuilder("data ").append(e.getKey()).append(" {");
+            boolean first = true;
+            for (Map.Entry<String, LumenType> f : e.getValue().entrySet()) {
+                if (!first) sb.append(", ");
+                first = false;
+                sb.append(f.getKey()).append(": ").append(f.getValue().displayName());
+            }
+            sb.append("}");
+            out.add(sb.toString());
+        }
+        return out;
+    }
+
+    /**
      * Fresh {@link TypeEnvImpl} with the configured state applied.
      */
     public @NotNull TypeEnvImpl build() {

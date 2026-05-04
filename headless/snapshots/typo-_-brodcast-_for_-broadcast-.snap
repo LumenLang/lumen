@@ -1,0 +1,9 @@
+case: typo: 'brodcast' for 'broadcast'
+input: brodcast "hi"
+runner: STATEMENT
+env: <empty>
+suggestions: 1
+  [#0] (broadcast|announce) %text:STRING%
+    confidence: 0.950
+    issues:
+      - typo: 'brodcast' (col 0) should be 'broadcast'

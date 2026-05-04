@@ -3,6 +3,8 @@ package dev.lumenlang.lumen.headless.sim.runner;
 import dev.lumenlang.lumen.headless.sim.annotations.SimCase;
 import dev.lumenlang.lumen.headless.sim.annotations.SimulatorTest;
 import dev.lumenlang.lumen.headless.sim.cases.SimulatorCase;
+import dev.lumenlang.lumen.headless.sim.report.SimulatorReport;
+import dev.lumenlang.lumen.headless.sim.snapshot.Snapshot;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.DynamicTest;
 
@@ -67,7 +69,8 @@ public final class AnnotatedCaseRunner {
         }
         method.setAccessible(true);
         SimulatorCase simulatorCase = (SimulatorCase) method.invoke(null);
-        simulatorCase.named(displayName).execute();
+        Snapshot snap = simulatorCase.named(displayName).run();
+        SimulatorReport.record(snap);
     }
 
     private static @NotNull List<Class<?>> scanContainers(@NotNull String basePackage) {

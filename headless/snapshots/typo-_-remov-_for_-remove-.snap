@@ -1,0 +1,14 @@
+case: typo: 'remov' for 'remove'
+input: remov mob
+runner: STATEMENT
+env:
+  var mob: living_entity
+suggestions: 2
+  [#0] remove %e:ENTITY%
+    confidence: 0.950
+    issues:
+      - typo: 'remov' (col 0) should be 'remove'
+  [#1] remove [index] %i:INT% from %list:LIST%
+    confidence: 0.850
+    issues:
+      - typo: 'remov' (col 0) should be 'remove'

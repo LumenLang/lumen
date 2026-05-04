@@ -1,0 +1,12 @@
+case: missing: give with player only
+input: give p
+runner: STATEMENT
+env:
+  var p: player
+suggestions: 2
+  [#0] give %who:PLAYER% %item:MATERIAL% %amt:INT%
+    confidence: 0.850
+    issues: <none>
+  [#1] give %who:PLAYER% %item:ITEMSTACK%
+    confidence: 0.850
+    issues: <none>

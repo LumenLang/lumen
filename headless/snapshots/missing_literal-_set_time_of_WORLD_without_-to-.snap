@@ -1,0 +1,16 @@
+case: missing literal: set time of WORLD without 'to'
+input: set time of overworld 6000
+runner: STATEMENT
+env: <empty>
+suggestions: 2
+  [#0] set time [of] %w:WORLD% [to] %val:INT%
+    confidence: 0.610
+    issues:
+      - type mismatch: 'overworld' (col 12) is not a WORLD ('overworld' does not exist in this scope)
+      - type mismatch: 'overworld' (col 12) is not a INT ('overworld' is not a valid integer)
+  [#1] set %who:OFFLINE_PLAYER_POSSESSIVE% op [to] %val:BOOLEAN%
+    confidence: 0.560
+    issues:
+      - typo: 'of' (col 9) should be 'op'
+      - type mismatch: 'time' (col 4) is not a OFFLINE_PLAYER_POSSESSIVE ('time' must use possessive form (e.g. player's))
+      - type mismatch: 'overworld' (col 12) is not a BOOLEAN ('overworld' is not a valid boolean (expected true/false, yes/no, or on/off))

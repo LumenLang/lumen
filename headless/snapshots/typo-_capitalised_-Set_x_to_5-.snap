@@ -1,0 +1,12 @@
+case: typo: capitalised 'Set x to 5'
+input: Set x to 5
+runner: STATEMENT
+env: <empty>
+suggestions: 2
+  [#0] set %name:IDENT% to %val:EXPR%
+    confidence: 1.000
+    issues: <none>
+  [#1] set %b:BLOCK% data [to] %data:STRING%
+    confidence: 0.630
+    issues:
+      - type mismatch: 'x' (col 4) is not a BLOCK ('x' is a int, not a block)

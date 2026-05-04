@@ -1,0 +1,14 @@
+case: type: damage by string amount
+input: damage p by "five"
+runner: STATEMENT
+env:
+  var p: player
+suggestions: 2
+  [#0] damage %e:LIVING_ENTITY% [by] %val:INT%
+    confidence: 0.730
+    issues:
+      - type mismatch: 'five' (col 12) is not a INT ('five' is not a valid integer)
+  [#1] give %who:PLAYER% %item:MATERIAL% %amt:INT%
+    confidence: 0.500
+    issues:
+      - typo: 'five' (col 12) should be 'give'

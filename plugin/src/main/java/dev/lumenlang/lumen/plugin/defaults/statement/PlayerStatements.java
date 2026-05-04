@@ -40,26 +40,6 @@ public final class PlayerStatements {
 
         api.patterns().statement(b -> b
                 .by("Lumen")
-                .patterns("(teleport|tp) %who:PLAYER% [to] %target:PLAYER%")
-                .description("Teleports a player to another player.")
-                .example("teleport player to target")
-                .since("1.0.0")
-                .category(Categories.PLAYER)
-                .handler(ctx -> ctx.out()
-                        .line(ctx.java("who") + ".teleport(" + ctx.java("target") + ");")));
-
-        api.patterns().statement(b -> b
-                .by("Lumen")
-                .pattern("(teleport|tp) %who:PLAYER% [to] %loc:LOCATION%")
-                .description("Teleports a player to a location.")
-                .example("teleport player to loc")
-                .since("1.0.0")
-                .category(Categories.PLAYER)
-                .handler(ctx -> ctx.out()
-                        .line(ctx.java("who") + ".teleport(" + ctx.java("loc") + ");")));
-
-        api.patterns().statement(b -> b
-                .by("Lumen")
                 .pattern("(feed|saturate) %who:PLAYER%")
                 .description("Fully feeds a player, setting their food level to 20.")
                 .example("feed player")

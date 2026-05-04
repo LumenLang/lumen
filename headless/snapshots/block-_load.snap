@@ -1,0 +1,8 @@
+case: block: load
+input: load
+runner: BLOCK
+env: <empty>
+suggestions: 1
+  [#0] load
+    confidence: 1.000
+    issues: <none>

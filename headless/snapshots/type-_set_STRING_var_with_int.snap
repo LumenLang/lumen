@@ -1,0 +1,14 @@
+case: type: set STRING var with int
+input: set name to 5
+runner: STATEMENT
+env:
+  var name: string
+suggestions: 2
+  [#0] set %name:IDENT% to %val:EXPR%
+    confidence: 0.750
+    issues:
+      - handler rejected: Type mismatch in assignment
+  [#1] set %i:ITEMSTACK_POSSESSIVE% (display name|name) [to] %name:STRING%
+    confidence: 0.630
+    issues:
+      - type mismatch: 'name' (col 4) is not a ITEMSTACK_POSSESSIVE ('name' must use possessive form (e.g. item's))

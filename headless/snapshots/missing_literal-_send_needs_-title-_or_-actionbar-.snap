@@ -1,0 +1,14 @@
+case: missing literal: send needs 'title' or 'actionbar'
+input: send "hi" to p
+runner: STATEMENT
+env:
+  var p: player
+suggestions: 2
+  [#0] send title %title:STRING% to %who:PLAYER%
+    confidence: 1.000
+    issues:
+      - reorder: 'hi', 'to'
+  [#1] send actionbar %text:STRING% to %who:PLAYER%
+    confidence: 1.000
+    issues:
+      - reorder: 'hi', 'to'

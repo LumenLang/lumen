@@ -27,13 +27,6 @@ public final class TextDebugSink implements DebugSink {
         return new TextDebugSink(System.out::println);
     }
 
-    @Override
-    public void write(int depth, @NotNull String line) {
-        Color color = colorFor(line);
-        String body = "  ".repeat(depth) + line;
-        writer.accept(Renderer.render(UIUtils.text(body).fg(color)));
-    }
-
     private static @NotNull Color colorFor(@NotNull String line) {
         String trimmed = line.stripLeading();
         if (trimmed.startsWith("+ ")) return Color.MINT;
@@ -41,5 +34,12 @@ public final class TextDebugSink implements DebugSink {
         if (trimmed.startsWith("#")) return Color.SKY;
         if (trimmed.startsWith("!")) return Color.WARM_YELLOW;
         return Color.BONE;
+    }
+
+    @Override
+    public void write(int depth, @NotNull String line) {
+        Color color = colorFor(line);
+        String body = "  ".repeat(depth) + line;
+        writer.accept(Renderer.render(UIUtils.text(body).fg(color)));
     }
 }

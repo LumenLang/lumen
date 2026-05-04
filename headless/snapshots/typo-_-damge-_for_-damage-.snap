@@ -1,0 +1,10 @@
+case: typo: 'damge' for 'damage'
+input: damge p by 5
+runner: STATEMENT
+env:
+  var p: player
+suggestions: 1
+  [#0] damage %e:LIVING_ENTITY% [by] %val:INT%
+    confidence: 0.950
+    issues:
+      - typo: 'damge' (col 0) should be 'damage'

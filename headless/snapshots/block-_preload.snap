@@ -1,0 +1,8 @@
+case: block: preload
+input: preload
+runner: BLOCK
+env: <empty>
+suggestions: 1
+  [#0] preload
+    confidence: 1.000
+    issues: <none>

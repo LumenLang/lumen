@@ -1,0 +1,13 @@
+case: expr: get p's health
+input: get p's health
+runner: EXPRESSION
+env:
+  var p: player
+suggestions: 2
+  [#0] get %e:ENTITY_POSSESSIVE% health
+    confidence: 1.000
+    issues: <none>
+  [#1] get %e:ENTITY_POSSESSIVE% max health
+    confidence: 1.000
+    issues:
+      - reorder: 'p's', 'health'

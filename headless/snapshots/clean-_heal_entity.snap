@@ -1,0 +1,9 @@
+case: clean: heal entity
+input: heal mob
+runner: STATEMENT
+env:
+  var mob: living_entity
+suggestions: 1
+  [#0] (heal|restore) [the] %e:LIVING_ENTITY%
+    confidence: 1.000
+    issues: <none>

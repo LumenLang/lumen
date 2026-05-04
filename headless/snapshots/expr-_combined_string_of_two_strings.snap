@@ -1,0 +1,12 @@
+case: expr: combined string of two strings
+input: combined string of "a" and "b"
+runner: EXPRESSION
+env: <empty>
+suggestions: 2
+  [#0] combined string [of] %s1:STRING% and %s2:STRING%
+    confidence: 1.000
+    issues: <none>
+  [#1] substring of %s:STRING% from %start:INT%
+    confidence: 0.667
+    issues:
+      - typo: 'string' (col 9) should be 'substring'

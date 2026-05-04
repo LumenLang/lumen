@@ -1,0 +1,13 @@
+case: incomplete: wait with no time unit
+input: wait 20
+runner: BLOCK
+env: <empty>
+suggestions: 2
+  [#0] wait %n:NUMBER% (tick|second|minute|hour|day)[s]
+    confidence: 0.850
+    issues:
+      - incomplete: expected 'tick' next
+  [#1] wait %n:NUMBER% (tick|second|minute|hour|day)[s] as %name:STRING%
+    confidence: 0.850
+    issues:
+      - incomplete: expected 'tick' next

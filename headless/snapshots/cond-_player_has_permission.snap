@@ -1,0 +1,14 @@
+case: cond: player has permission
+input: p has permission "command.use"
+runner: CONDITION
+env:
+  var p: player
+suggestions: 2
+  [#0] %p:PLAYER% has permission %perm:STRING%
+    confidence: 1.000
+    issues: <none>
+  [#1] %e:ENTITY% has %attr:ATTRIBUTE%
+    confidence: 0.630
+    issues:
+      - type mismatch: 'permission' (col 6) is not a ATTRIBUTE ('permission' is not a valid attribute)
+      - extra tokens: 'command.use' (col 17)
