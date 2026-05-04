@@ -42,8 +42,8 @@ public final class SwappedTokens {
     @SimCase(name = "swap: damage 'by amount' before target")
     public static SimulatorCase damageAmountFirst() {
         return SimulatorCase.statement("damage by 5 mob")
-                .env(EnvSimulator.create().withVar("mob", MinecraftTypes.ENTITY))
-                .expectTopPattern("damage %e:ENTITY% [by] %val:INT%")
+                .env(EnvSimulator.create().withVar("mob", MinecraftTypes.LIVING_ENTITY))
+                .expectTopPattern("damage %e:LIVING_ENTITY% [by] %val:INT%")
                 .expectPrimaryIssue(SuggestionIssue.TypeMismatch.class)
                 .expectAnyIssue(SuggestionIssue.TypeMismatch.class)
                 .expectAnyIssue(SuggestionIssue.ExtraTokens.class)

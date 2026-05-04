@@ -30,8 +30,8 @@ public final class IncompleteCases {
     @SimCase(name = "incomplete: damage entity by (no amount)")
     public static SimulatorCase damageNoAmount() {
         return SimulatorCase.statement("damage mob by")
-                .env(EnvSimulator.create().withVar("mob", MinecraftTypes.ENTITY))
-                .expectTopPattern("damage %e:ENTITY% [by] %val:INT%")
+                .env(EnvSimulator.create().withVar("mob", MinecraftTypes.LIVING_ENTITY))
+                .expectTopPattern("damage %e:LIVING_ENTITY% [by] %val:INT%")
                 .expectPrimaryIssue(SuggestionIssue.TypeMismatch.class)
                 .expectAnyIssue(SuggestionIssue.TypeMismatch.class)
                 .expectConfidenceAtLeast(0.73)
@@ -65,8 +65,8 @@ public final class IncompleteCases {
     @SimCase(name = "missing literal: damage entity missing 'by'")
     public static SimulatorCase damageMissingBy() {
         return SimulatorCase.statement("damage mob 5")
-                .env(EnvSimulator.create().withVar("mob", MinecraftTypes.ENTITY))
-                .expectCleanTop("damage %e:ENTITY% [by] %val:INT%");
+                .env(EnvSimulator.create().withVar("mob", MinecraftTypes.LIVING_ENTITY))
+                .expectCleanTop("damage %e:LIVING_ENTITY% [by] %val:INT%");
     }
 
     @SimCase(name = "missing literal: set time of WORLD without 'to'")

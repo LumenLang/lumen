@@ -62,15 +62,15 @@ public final class CleanMatches {
     @SimCase(name = "clean: damage entity by amount")
     public static SimulatorCase damage() {
         return SimulatorCase.statement("damage mob by 5")
-                .env(EnvSimulator.create().withVar("mob", MinecraftTypes.ENTITY))
-                .expectCleanTop("damage %e:ENTITY% [by] %val:INT%");
+                .env(EnvSimulator.create().withVar("mob", MinecraftTypes.LIVING_ENTITY))
+                .expectCleanTop("damage %e:LIVING_ENTITY% [by] %val:INT%");
     }
 
     @SimCase(name = "clean: heal entity")
     public static SimulatorCase healEntity() {
         return SimulatorCase.statement("heal mob")
-                .env(EnvSimulator.create().withVar("mob", MinecraftTypes.ENTITY))
-                .expectCleanTop("(heal|restore) %e:ENTITY%");
+                .env(EnvSimulator.create().withVar("mob", MinecraftTypes.LIVING_ENTITY))
+                .expectCleanTop("(heal|restore) [the] %e:LIVING_ENTITY%");
     }
 
     @SimCase(name = "clean: spawn entity at location")

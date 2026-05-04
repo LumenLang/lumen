@@ -28,7 +28,7 @@ public final class TypeMismatches {
     public static SimulatorCase damageStringAmount() {
         return SimulatorCase.statement("damage p by \"five\"")
                 .env(EnvSimulator.create().withVar("p", MinecraftTypes.PLAYER))
-                .expectTopPattern("damage %e:ENTITY% [by] %val:INT%")
+                .expectTopPattern("damage %e:LIVING_ENTITY% [by] %val:INT%")
                 .expectPrimaryIssue(SuggestionIssue.TypeMismatch.class)
                 .expectAnyIssue(SuggestionIssue.TypeMismatch.class)
                 .expectConfidenceAtLeast(0.73)

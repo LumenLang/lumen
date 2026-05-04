@@ -31,7 +31,7 @@ public final class MissingLiterals {
     @SimCase(name = "missing literal: heal alone")
     public static SimulatorCase healAlone() {
         return SimulatorCase.statement("heal")
-                .expectContainsPattern("(heal|restore) %e:ENTITY%");
+                .expectContainsPattern("(heal|restore) [the] %e:LIVING_ENTITY%");
     }
 
     @SimCase(name = "missing literal: send title without 'to' before recipient")

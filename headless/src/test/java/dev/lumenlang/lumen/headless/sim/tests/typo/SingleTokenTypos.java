@@ -124,7 +124,7 @@ public final class SingleTokenTypos {
     public static SimulatorCase damgeForDamage() {
         return SimulatorCase.statement("damge p by 5")
                 .env(EnvSimulator.create().withVar("p", MinecraftTypes.PLAYER))
-                .expectTopPattern("damage %e:ENTITY% [by] %val:INT%")
+                .expectTopPattern("damage %e:LIVING_ENTITY% [by] %val:INT%")
                 .expectPrimaryIssue(SuggestionIssue.Typo.class)
                 .expectAnyIssue(SuggestionIssue.Typo.class)
                 .expectConfidenceAtLeast(0.95)
@@ -134,7 +134,7 @@ public final class SingleTokenTypos {
     @SimCase(name = "typo: 'remov' for 'remove'")
     public static SimulatorCase removForRemove() {
         return SimulatorCase.statement("remov mob")
-                .env(EnvSimulator.create().withVar("mob", MinecraftTypes.ENTITY))
+                .env(EnvSimulator.create().withVar("mob", MinecraftTypes.LIVING_ENTITY))
                 .expectTopPattern("remove %e:ENTITY%")
                 .expectPrimaryIssue(SuggestionIssue.Typo.class)
                 .expectAnyIssue(SuggestionIssue.Typo.class)

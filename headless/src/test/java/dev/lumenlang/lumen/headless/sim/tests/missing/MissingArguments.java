@@ -20,7 +20,7 @@ public final class MissingArguments {
     @SimCase(name = "missing: damage without target")
     public static SimulatorCase damageNoTarget() {
         return SimulatorCase.statement("damage by 5")
-                .expectTopPattern("damage %e:ENTITY% [by] %val:INT%")
+                .expectTopPattern("damage %e:LIVING_ENTITY% [by] %val:INT%")
                 .expectPrimaryIssue(SuggestionIssue.TypeMismatch.class)
                 .expectAnyIssue(SuggestionIssue.TypeMismatch.class)
                 .expectConfidenceAtLeast(0.73)
@@ -31,7 +31,7 @@ public final class MissingArguments {
     public static SimulatorCase damageNoAmount() {
         return SimulatorCase.statement("damage p by")
                 .env(EnvSimulator.create().withVar("p", MinecraftTypes.PLAYER))
-                .expectTopPattern("damage %e:ENTITY% [by] %val:INT%")
+                .expectTopPattern("damage %e:LIVING_ENTITY% [by] %val:INT%")
                 .expectPrimaryIssue(SuggestionIssue.TypeMismatch.class)
                 .expectAnyIssue(SuggestionIssue.TypeMismatch.class)
                 .expectConfidenceAtLeast(0.73)
