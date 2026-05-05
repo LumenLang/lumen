@@ -5,9 +5,9 @@ import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.emit.ScriptToken;
 import dev.lumenlang.lumen.api.type.NullableType;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
+import dev.lumenlang.lumen.pipeline.language.match.BoundValue;
 import dev.lumenlang.lumen.pipeline.language.match.MatchProgress;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
-import dev.lumenlang.lumen.pipeline.language.resolve.ExprResolver;
 import dev.lumenlang.lumen.pipeline.language.simulator.PatternSimulator;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.language.tokenization.TokenKind;
@@ -16,6 +16,7 @@ import dev.lumenlang.lumen.pipeline.typebinding.TypeRegistry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -274,9 +275,12 @@ public final class SuggestionDiagnostics {
     }
 
     private static int issuePriority(@NotNull PatternSimulator.SuggestionIssue issue) {
+        if (issue instanceof PatternSimulator.SuggestionIssue.HandlerDiagnostic) return 5;
         if (issue instanceof PatternSimulator.SuggestionIssue.Typo) return 4;
         if (issue instanceof PatternSimulator.SuggestionIssue.ExtraTokens) return 3;
         if (issue instanceof PatternSimulator.SuggestionIssue.TypeMismatch) return 2;
+        if (issue instanceof PatternSimulator.SuggestionIssue.IncompleteInput) return 2;
+        if (issue instanceof PatternSimulator.SuggestionIssue.MissingLiteral) return 2;
         if (issue instanceof PatternSimulator.SuggestionIssue.MissingBinding) return 1;
         if (issue instanceof PatternSimulator.SuggestionIssue.Reorder) return 1;
         return 0;
@@ -304,6 +308,16 @@ public final class SuggestionDiagnostics {
             int start = reorder.tokens().stream().mapToInt(Token::start).min().orElse(0);
             int end = reorder.tokens().stream().mapToInt(Token::end).max().orElse(0);
             builder.highlight(start, end).label("tokens '" + reorderNote(reorder.tokens()) + "' may be in the wrong order");
+        } else if (issue instanceof PatternSimulator.SuggestionIssue.MissingLiteral missing) {
+            Token anchor = anchorTokenAfter(top, missing.afterTokenIndex());
+            int point = anchor != null ? anchor.end() : 0;
+            builder.highlight(point, point + 1).label("missing keyword '" + missing.literal() + "' here");
+        } else if (issue instanceof PatternSimulator.SuggestionIssue.IncompleteInput incomplete) {
+            Token last = lastInputToken(top);
+            if (last != null) builder.highlight(last.end(), last.end() + 1);
+            builder.label("expected '" + incomplete.expectedNext() + "' next");
+        } else if (issue instanceof PatternSimulator.SuggestionIssue.HandlerDiagnostic handler) {
+            builder.label(handler.title());
         }
     }
 
@@ -322,7 +336,36 @@ public final class SuggestionDiagnostics {
             for (Token t : reorder.tokens()) {
                 builder.subHighlight(t.start(), t.end(), "out of order");
             }
+        } else if (issue instanceof PatternSimulator.SuggestionIssue.MissingLiteral missing) {
+            builder.note("also missing keyword '" + missing.literal() + "'");
+        } else if (issue instanceof PatternSimulator.SuggestionIssue.IncompleteInput incomplete) {
+            builder.note("input ended while expecting '" + incomplete.expectedNext() + "'");
+        } else if (issue instanceof PatternSimulator.SuggestionIssue.HandlerDiagnostic handler) {
+            builder.note(handler.title());
         }
+    }
+
+    private static @Nullable Token anchorTokenAfter(@NotNull PatternSimulator.Suggestion top, int afterTokenIndex) {
+        if (top.progress() == null || top.progress().match() == null) return null;
+        Collection<BoundValue> bound = top.progress().match().values().values();
+        Token best = null;
+        for (BoundValue bv : bound) {
+            for (Token t : bv.tokens()) {
+                if (best == null || t.start() > best.start()) best = t;
+            }
+        }
+        return best;
+    }
+
+    private static @Nullable Token lastInputToken(@NotNull PatternSimulator.Suggestion top) {
+        if (top.progress() == null || top.progress().match() == null) return null;
+        Token last = null;
+        for (BoundValue bv : top.progress().match().values().values()) {
+            for (Token t : bv.tokens()) {
+                if (last == null || t.end() > last.end()) last = t;
+            }
+        }
+        return last;
     }
 
     private static @NotNull String confidenceTier(double confidence) {

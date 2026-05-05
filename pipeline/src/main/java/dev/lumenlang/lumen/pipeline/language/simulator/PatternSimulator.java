@@ -334,12 +334,14 @@ public final class PatternSimulator {
                 }
                 long typoStart = dt ? System.nanoTime() : 0L;
                 TypoFix typo = findBestTypoFix(tokens, literals, pattern, debug);
-                if (dt) Trace.deepTiming(debug, "  level-0 typo lookup " + pattern.raw(), System.nanoTime() - typoStart);
+                if (dt)
+                    Trace.deepTiming(debug, "  level-0 typo lookup " + pattern.raw(), System.nanoTime() - typoStart);
                 if (typo != null) {
                     long ctyStart = dt ? System.nanoTime() : 0L;
                     List<Token> corrected = applyTypoFix(tokens, typo);
                     MatchProgress corrProgress = PatternMatcher.matchWithProgress(corrected, pattern, types, env);
-                    if (dt) Trace.deepTiming(debug, "  level-0 typo retry " + pattern.raw(), System.nanoTime() - ctyStart);
+                    if (dt)
+                        Trace.deepTiming(debug, "  level-0 typo retry " + pattern.raw(), System.nanoTime() - ctyStart);
                     Trace.matchAttempt(debug, pattern, "level-0 typo-corrected '" + typo.token.text() + "'->'" + typo.expected + "'", corrProgress);
                     boolean sandboxRejected = false;
                     if (corrProgress.succeeded()) {
@@ -434,13 +436,15 @@ public final class PatternSimulator {
             int explored = combinationsChecked;
             int level = k;
             boolean any = !levelResults.isEmpty();
-            if (dt) Trace.deepTiming(debug, "  BFS k=" + level + " (" + explored + " combos) " + pattern.raw(), System.nanoTime() - bfsStart);
+            if (dt)
+                Trace.deepTiming(debug, "  BFS k=" + level + " (" + explored + " combos) " + pattern.raw(), System.nanoTime() - bfsStart);
             debug.trace(new TraceEvent.BfsLevel(pattern, level, explored, any));
             debug.emit(Verbosity.MATCH, 2, () -> "BFS k=" + level + " explored=" + explored + " produced=" + (any ? "yes" : "no"));
             if (!levelResults.isEmpty()) {
                 levelResults.sort(Comparator.comparingDouble(Suggestion::confidence).reversed().thenComparing(Comparator.comparingInt((Suggestion s) -> {
                     for (PatternSimulator.SuggestionIssue si : s.issues()) {
-                        if (si instanceof SuggestionIssue.ExtraTokens extra) return extra.tokens().stream().mapToInt(Token::start).min().orElse(0);
+                        if (si instanceof SuggestionIssue.ExtraTokens extra)
+                            return extra.tokens().stream().mapToInt(Token::start).min().orElse(0);
                     }
                     return 0;
                 }).reversed()));
@@ -696,9 +700,9 @@ public final class PatternSimulator {
     /**
      * Picks the lowest-distance typo candidate whose token survived the BFS removal.
      *
-     * @param perToken         original-position typo candidates from {@link #perTokenBestTypos}
-     * @param removedIndices   sorted indices of tokens dropped at the current BFS level
-     * @param totalTokens      size of the pre-removal token list
+     * @param perToken       original-position typo candidates from {@link #perTokenBestTypos}
+     * @param removedIndices sorted indices of tokens dropped at the current BFS level
+     * @param totalTokens    size of the pre-removal token list
      * @return a {@link TypoFix} positioned within the reduced token list, or {@code null} if no
      * surviving token has a typo candidate
      */
@@ -723,20 +727,6 @@ public final class PatternSimulator {
         }
         if (best == null) return null;
         return new TypoFix(best.token, best.form, bestReducedIdx);
-    }
-
-    /**
-     * Per-token best literal-form typo candidate, cached across BFS combinations.
-     *
-     * @param token    the original input token
-     * @param form     the literal form the token is closest to
-     * @param distance edit distance between {@code token} and {@code form}
-     */
-    private record TypoCandidate(@NotNull Token token, @NotNull String form, int distance) {
-    }
-
-    private static @Nullable TypoFix findBestTypoFix(@NotNull List<Token> tokens, @NotNull List<LiteralInfo> literals) {
-        return findBestTypoFix(tokens, literals, null, SimulatorDebug.OFF);
     }
 
     private static @Nullable TypoFix findBestTypoFix(@NotNull List<Token> tokens, @NotNull List<LiteralInfo> literals, @Nullable Pattern pattern, @NotNull SimulatorDebug debug) {
@@ -891,7 +881,7 @@ public final class PatternSimulator {
         return result;
     }
 
-    private static @NotNull boolean[] computeBfsLockedTokens(@NotNull PreFilterScore cs, int tokenCount) {
+    private static boolean @NotNull [] computeBfsLockedTokens(@NotNull PreFilterScore cs, int tokenCount) {
         boolean[] locked = new boolean[tokenCount];
         int requiredAnchored = 0;
         int requiredTotal = 0;
@@ -902,7 +892,8 @@ public final class PatternSimulator {
         }
         if (requiredTotal == 0 || requiredAnchored < requiredTotal) return locked;
         for (LiteralMatchResult m : cs.matchDetails) {
-            if (!m.literal.optional && m.tokenIndex >= 0 && m.tokenIndex < tokenCount && m.distance == 0) locked[m.tokenIndex] = true;
+            if (!m.literal.optional && m.tokenIndex >= 0 && m.tokenIndex < tokenCount && m.distance == 0)
+                locked[m.tokenIndex] = true;
         }
         return locked;
     }
@@ -955,7 +946,7 @@ public final class PatternSimulator {
             return null;
         }
         List<Token> reordered = findReorderedFromAnchors(tokens, matchDetails);
-        List<SuggestionIssue.MissingLiteral> missing = findUnanchoredRequiredLiterals(tokens, matchDetails);
+        List<SuggestionIssue.MissingLiteral> missing = findUnanchoredRequiredLiterals(matchDetails);
         if (reordered.isEmpty() && missing.isEmpty()) {
             Trace.deep(debug, 2, () -> "reorder skipped: no reordered tokens or missing literals identified");
             return null;
@@ -1060,7 +1051,7 @@ public final class PatternSimulator {
         return result.size() >= 2 ? List.copyOf(result) : List.of();
     }
 
-    private static @NotNull List<SuggestionIssue.MissingLiteral> findUnanchoredRequiredLiterals(@NotNull List<Token> tokens, @NotNull List<LiteralMatchResult> matchDetails) {
+    private static @NotNull List<SuggestionIssue.MissingLiteral> findUnanchoredRequiredLiterals(@NotNull List<LiteralMatchResult> matchDetails) {
         List<LiteralMatchResult> sorted = new ArrayList<>(matchDetails);
         sorted.sort(Comparator.comparingInt(m -> m.literal.partIndex));
         List<SuggestionIssue.MissingLiteral> result = new ArrayList<>();
@@ -1179,110 +1170,6 @@ public final class PatternSimulator {
      */
     public sealed interface SuggestionIssue {
 
-        /**
-         * A token in the input that is a likely typo of a pattern literal.
-         *
-         * @param token    the input token containing the typo
-         * @param expected the correct literal text
-         */
-        record Typo(@NotNull Token token, @NotNull String expected) implements SuggestionIssue {
-            @Override
-            public String toString() {
-                return "typo: '" + token.text() + "' (col " + token.start() + ") should be '" + expected + "'";
-            }
-        }
-
-        /**
-         * Tokens in the input that are not part of the matched pattern.
-         *
-         * @param tokens the extra tokens that should be removed
-         */
-        record ExtraTokens(@NotNull List<Token> tokens) implements SuggestionIssue {
-            @Override
-            public String toString() {
-                return "extra tokens: " + renderPositioned(tokens);
-            }
-        }
-
-        /**
-         * Tokens in the input that are in the wrong order relative to the pattern.
-         *
-         * @param tokens the tokens that need reordering
-         */
-        record Reorder(@NotNull List<Token> tokens) implements SuggestionIssue {
-            @Override
-            public String toString() {
-                return "reorder: " + renderQuoted(tokens);
-            }
-        }
-
-        /**
-         * A token that was rejected by a type binding in the pattern.
-         *
-         * @param token     the rejected input token
-         * @param bindingId the type binding id that rejected it
-         * @param reason    a human readable rejection reason produced by the binding
-         */
-        record TypeMismatch(@NotNull Token token, @NotNull String bindingId,
-                            @NotNull String reason) implements SuggestionIssue {
-            @Override
-            public String toString() {
-                return "type mismatch: '" + token.text() + "' (col " + token.start() + ") is not a " + bindingId + " (" + reason + ")";
-            }
-        }
-
-        /**
-         * A type binding that expects input but received none (missing tokens).
-         *
-         * @param bindingId the type binding ID that is missing
-         */
-        record MissingBinding(@NotNull String bindingId) implements SuggestionIssue {
-            @Override
-            public String toString() {
-                return "missing binding: " + bindingId;
-            }
-        }
-
-        /**
-         * The pattern's handler accepted the syntactic match but rejected it semantically by
-         * throwing a {@link DiagnosticException}. The diagnostic title carries the underlying reason.
-         *
-         * @param title the diagnostic title from the thrown exception
-         */
-        record HandlerDiagnostic(@NotNull String title) implements SuggestionIssue {
-            @Override
-            public String toString() {
-                return "handler rejected: " + title;
-            }
-        }
-
-        /**
-         * Pattern expected a literal keyword that the input never produced.
-         *
-         * @param literal       the literal text the pattern expected
-         * @param afterTokenIndex token index after which the literal was missing, or {@code -1}
-         *                       when the literal was missing from the very start
-         */
-        record MissingLiteral(@NotNull String literal, int afterTokenIndex) implements SuggestionIssue {
-            @Override
-            public String toString() {
-                return "missing literal: '" + literal + "' (after token " + afterTokenIndex + ")";
-            }
-        }
-
-        /**
-         * Input ended while the pattern still expected more content.
-         *
-         * @param expectedNext short label naming what the pattern expected next (literal text or
-         *                    binding id)
-         */
-        record IncompleteInput(@NotNull String expectedNext) implements SuggestionIssue {
-            @Override
-            public String toString() {
-                return "incomplete: expected '" + expectedNext + "' next";
-            }
-        }
-
         private static @NotNull String renderPositioned(@NotNull List<Token> tokens) {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < tokens.size(); i++) {
@@ -1301,6 +1188,120 @@ public final class PatternSimulator {
             }
             return sb.toString();
         }
+
+        /**
+         * A token in the input that is a likely typo of a pattern literal.
+         *
+         * @param token    the input token containing the typo
+         * @param expected the correct literal text
+         */
+        record Typo(@NotNull Token token, @NotNull String expected) implements SuggestionIssue {
+            @Override
+            public @NotNull String toString() {
+                return "typo: '" + token.text() + "' (col " + token.start() + ") should be '" + expected + "'";
+            }
+        }
+
+        /**
+         * Tokens in the input that are not part of the matched pattern.
+         *
+         * @param tokens the extra tokens that should be removed
+         */
+        record ExtraTokens(@NotNull List<Token> tokens) implements SuggestionIssue {
+            @Override
+            public @NotNull String toString() {
+                return "extra tokens: " + renderPositioned(tokens);
+            }
+        }
+
+        /**
+         * Tokens in the input that are in the wrong order relative to the pattern.
+         *
+         * @param tokens the tokens that need reordering
+         */
+        record Reorder(@NotNull List<Token> tokens) implements SuggestionIssue {
+            @Override
+            public @NotNull String toString() {
+                return "reorder: " + renderQuoted(tokens);
+            }
+        }
+
+        /**
+         * A token that was rejected by a type binding in the pattern.
+         *
+         * @param token     the rejected input token
+         * @param bindingId the type binding id that rejected it
+         * @param reason    a human readable rejection reason produced by the binding
+         */
+        record TypeMismatch(@NotNull Token token, @NotNull String bindingId,
+                            @NotNull String reason) implements SuggestionIssue {
+            @Override
+            public @NotNull String toString() {
+                return "type mismatch: '" + token.text() + "' (col " + token.start() + ") is not a " + bindingId + " (" + reason + ")";
+            }
+        }
+
+        /**
+         * A type binding that expects input but received none (missing tokens).
+         *
+         * @param bindingId the type binding ID that is missing
+         */
+        record MissingBinding(@NotNull String bindingId) implements SuggestionIssue {
+            @Override
+            public @NotNull String toString() {
+                return "missing binding: " + bindingId;
+            }
+        }
+
+        /**
+         * The pattern's handler accepted the syntactic match but rejected it semantically by
+         * throwing a {@link DiagnosticException}. The diagnostic title carries the underlying reason.
+         *
+         * @param title the diagnostic title from the thrown exception
+         */
+        record HandlerDiagnostic(@NotNull String title) implements SuggestionIssue {
+            @Override
+            public @NotNull String toString() {
+                return "handler rejected: " + title;
+            }
+        }
+
+        /**
+         * Pattern expected a literal keyword that the input never produced.
+         *
+         * @param literal         the literal text the pattern expected
+         * @param afterTokenIndex token index after which the literal was missing, or {@code -1}
+         *                        when the literal was missing from the very start
+         */
+        record MissingLiteral(@NotNull String literal, int afterTokenIndex) implements SuggestionIssue {
+            @Override
+            public @NotNull String toString() {
+                return "missing literal: '" + literal + "' (after token " + afterTokenIndex + ")";
+            }
+        }
+
+        /**
+         * Input ended while the pattern still expected more content.
+         *
+         * @param expectedNext short label naming what the pattern expected next (literal text or
+         *                     binding id)
+         */
+        record IncompleteInput(@NotNull String expectedNext) implements SuggestionIssue {
+            @Override
+            public @NotNull String toString() {
+                return "incomplete: expected '" + expectedNext + "' next";
+            }
+        }
+    }
+
+    /**
+     * Per-token best literal-form typo candidate, cached across BFS combinations.
+     *
+     * @param token    the original input token
+     * @param form     the literal form the token is closest to
+     * @param distance edit distance between {@code token} and {@code form}
+     */
+    private record TypoCandidate(@NotNull Token token, @NotNull String form, int distance) {
     }
 
     /**
@@ -1311,10 +1312,13 @@ public final class PatternSimulator {
      * @param issues     the specific issues detected (typos, extra tokens, reorders, type mismatches)
      * @param progress   match progress from real simulation, or null if not enriched
      */
-    public record Suggestion(@NotNull Pattern pattern, double confidence, @NotNull List<SuggestionIssue> issues, @Nullable MatchProgress progress) {
+    public record Suggestion(@NotNull Pattern pattern, double confidence, @NotNull List<SuggestionIssue> issues,
+                             @Nullable MatchProgress progress) {
     }
 
-    private record PreFilterScore(@NotNull Pattern pattern, double confidence, @NotNull List<LiteralMatchResult> matchDetails, @NotNull PatternMeta meta, @Nullable Object handler) {
+    private record PreFilterScore(@NotNull Pattern pattern, double confidence,
+                                  @NotNull List<LiteralMatchResult> matchDetails, @NotNull PatternMeta meta,
+                                  @Nullable Object handler) {
     }
 
     private record LiteralInfo(@NotNull List<String> forms, int partIndex, boolean optional) {

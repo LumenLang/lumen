@@ -120,26 +120,9 @@ public enum SimulatorOption {
      */
     MISSING_LITERAL_PREFILTER_FLOOR(Kind.DOUBLE, 0.50, Range.zeroToOne());
 
-    /**
-     * Numeric kind a {@link SimulatorOption} accepts.
-     */
-    public enum Kind {
-
-        /**
-         * Integer option, set with {@code .set(option, int)}.
-         */
-        INT,
-
-        /**
-         * Double option, set with {@code .set(option, double)}.
-         */
-        DOUBLE
-    }
-
     private final @NotNull Kind kind;
     private final double defaultValue;
     private final @NotNull Range range;
-
     SimulatorOption(@NotNull Kind kind, double defaultValue, @NotNull Range range) {
         this.kind = kind;
         this.defaultValue = defaultValue;
@@ -163,5 +146,21 @@ public enum SimulatorOption {
      */
     public @NotNull Range range() {
         return range;
+    }
+
+    /**
+     * Numeric kind a {@link SimulatorOption} accepts.
+     */
+    public enum Kind {
+
+        /**
+         * Integer option, set with {@code .set(option, int)}.
+         */
+        INT,
+
+        /**
+         * Double option, set with {@code .set(option, double)}.
+         */
+        DOUBLE
     }
 }
