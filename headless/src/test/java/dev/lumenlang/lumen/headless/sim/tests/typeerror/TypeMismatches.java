@@ -6,7 +6,6 @@ import dev.lumenlang.lumen.headless.sim.annotations.SimCase;
 import dev.lumenlang.lumen.headless.sim.annotations.SimulatorTest;
 import dev.lumenlang.lumen.headless.sim.cases.EnvSimulator;
 import dev.lumenlang.lumen.headless.sim.cases.SimulatorCase;
-import dev.lumenlang.lumen.pipeline.language.simulator.PatternSimulator.SuggestionIssue;
 
 /**
  * Inputs whose argument types fail the binding the matching pattern asks for.

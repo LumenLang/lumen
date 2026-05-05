@@ -5,10 +5,12 @@ import dev.lumenlang.console.element.Renderer;
 import dev.lumenlang.console.style.Color;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Renders one or more {@link SnapshotDiff} entries as compact, colored, git-style output.
+ * Renders {@link SnapshotDiff} entries as full-context unified diffs so surrounding
+ * fields stay visible alongside the changed lines.
  */
 public final class SnapshotDiffRenderer {
 
@@ -48,48 +50,83 @@ public final class SnapshotDiffRenderer {
                 UIUtils.text("[" + d.status() + "] ").fg(statusColor).bold(),
                 UIUtils.text(d.caseName()).fg(Color.BONE).bold())));
         if (d.status() == SnapshotDiff.Status.NEW) {
-            renderNew(d.actual());
-        } else {
-            for (SnapshotDiff.FieldChange c : d.fieldChanges()) {
-                renderChange(c);
-            }
+            renderAdded(SnapshotSerializer.serialize(d.actual()));
+        } else if (d.baseline() != null) {
+            renderUnified(SnapshotSerializer.serialize(d.baseline()), SnapshotSerializer.serialize(d.actual()));
         }
         System.out.println();
     }
 
-    private static void renderNew(@NotNull Snapshot snap) {
-        System.out.println(Renderer.render(UIUtils.row(
-                UIUtils.text("  input: ").fg(Color.SLATE),
-                UIUtils.text(snap.input()).fg(Color.BONE))));
-        if (snap.suggestions().isEmpty()) {
-            System.out.println(Renderer.render(UIUtils.text("  no suggestions").fg(Color.GHOST_GREY)));
-            return;
-        }
-        for (int i = 0; i < snap.suggestions().size(); i++) {
-            SuggestionSnap s = snap.suggestions().get(i);
+    private static void renderAdded(@NotNull String text) {
+        for (String line : text.split("\n", -1)) {
+            if (line.isEmpty()) continue;
             System.out.println(Renderer.render(UIUtils.row(
-                    UIUtils.text("  [#" + i + "] ").fg(Color.SLATE),
-                    UIUtils.text(s.patternRaw()).fg(Color.BONE).bold(),
-                    UIUtils.text("  conf=" + String.format("%.3f", s.confidence())).fg(Color.MINT))));
-            for (String issue : s.issues()) {
-                System.out.println(Renderer.render(UIUtils.row(
-                        UIUtils.text("        "),
-                        UIUtils.text(issue).fg(Color.GHOST_GREY))));
+                    UIUtils.text("  + ").fg(Color.MINT).bold(),
+                    UIUtils.text(line).fg(Color.BONE))));
+        }
+    }
+
+    private static void renderUnified(@NotNull String beforeText, @NotNull String afterText) {
+        List<String> before = splitNonEmpty(beforeText);
+        List<String> after = splitNonEmpty(afterText);
+        for (DiffLine line : computeLcsDiff(before, after)) {
+            switch (line.kind) {
+                case CONTEXT -> System.out.println(Renderer.render(UIUtils.row(
+                        UIUtils.text("    ").fg(Color.GHOST_GREY),
+                        UIUtils.text(line.text).fg(Color.GHOST_GREY))));
+                case REMOVED -> System.out.println(Renderer.render(UIUtils.row(
+                        UIUtils.text("  - ").fg(Color.ALARM_RED).bold(),
+                        UIUtils.text(line.text).fg(Color.BONE))));
+                case ADDED -> System.out.println(Renderer.render(UIUtils.row(
+                        UIUtils.text("  + ").fg(Color.MINT).bold(),
+                        UIUtils.text(line.text).fg(Color.BONE))));
             }
         }
     }
 
-    private static void renderChange(@NotNull SnapshotDiff.FieldChange c) {
-        System.out.println(Renderer.render(UIUtils.text("  " + c.label()).fg(Color.SLATE)));
-        if (c.before() != null) {
-            System.out.println(Renderer.render(UIUtils.row(
-                    UIUtils.text("  - ").fg(Color.ALARM_RED).bold(),
-                    UIUtils.text(c.before()).fg(Color.BONE))));
+    private static @NotNull List<String> splitNonEmpty(@NotNull String text) {
+        List<String> out = new ArrayList<>();
+        for (String line : text.split("\n", -1)) {
+            if (!line.isEmpty()) out.add(line);
         }
-        if (c.after() != null) {
-            System.out.println(Renderer.render(UIUtils.row(
-                    UIUtils.text("  + ").fg(Color.MINT).bold(),
-                    UIUtils.text(c.after()).fg(Color.BONE))));
+        return out;
+    }
+
+    private static @NotNull List<DiffLine> computeLcsDiff(@NotNull List<String> a, @NotNull List<String> b) {
+        int n = a.size();
+        int m = b.size();
+        int[][] dp = new int[n + 1][m + 1];
+        for (int i = n - 1; i >= 0; i--) {
+            for (int j = m - 1; j >= 0; j--) {
+                if (a.get(i).equals(b.get(j))) dp[i][j] = dp[i + 1][j + 1] + 1;
+                else dp[i][j] = Math.max(dp[i + 1][j], dp[i][j + 1]);
+            }
         }
+        List<DiffLine> result = new ArrayList<>();
+        int i = 0;
+        int j = 0;
+        while (i < n && j < m) {
+            if (a.get(i).equals(b.get(j))) {
+                result.add(new DiffLine(DiffKind.CONTEXT, a.get(i)));
+                i++;
+                j++;
+            } else if (dp[i + 1][j] >= dp[i][j + 1]) {
+                result.add(new DiffLine(DiffKind.REMOVED, a.get(i)));
+                i++;
+            } else {
+                result.add(new DiffLine(DiffKind.ADDED, b.get(j)));
+                j++;
+            }
+        }
+        while (i < n) result.add(new DiffLine(DiffKind.REMOVED, a.get(i++)));
+        while (j < m) result.add(new DiffLine(DiffKind.ADDED, b.get(j++)));
+        return result;
+    }
+
+    private enum DiffKind {
+        CONTEXT, REMOVED, ADDED
+    }
+
+    private record DiffLine(@NotNull DiffKind kind, @NotNull String text) {
     }
 }

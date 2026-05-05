@@ -6,7 +6,6 @@ import dev.lumenlang.lumen.headless.sim.annotations.SimCase;
 import dev.lumenlang.lumen.headless.sim.annotations.SimulatorTest;
 import dev.lumenlang.lumen.headless.sim.cases.EnvSimulator;
 import dev.lumenlang.lumen.headless.sim.cases.SimulatorCase;
-import dev.lumenlang.lumen.pipeline.language.simulator.PatternSimulator.SuggestionIssue;
 
 /**
  * Expression-side inputs (getters, possessives, math/min/max, world lookup, clamp).

@@ -3,7 +3,6 @@ package dev.lumenlang.lumen.headless.sim.tests.blocks;
 import dev.lumenlang.lumen.headless.sim.annotations.SimCase;
 import dev.lumenlang.lumen.headless.sim.annotations.SimulatorTest;
 import dev.lumenlang.lumen.headless.sim.cases.SimulatorCase;
-import dev.lumenlang.lumen.pipeline.language.simulator.PatternSimulator.SuggestionIssue;
 
 /**
  * Block-head inputs: {@code repeat}, {@code every}, {@code wait}, {@code load}, {@code preload}.

@@ -534,7 +534,7 @@ public final class PatternSimulator {
                 }
                 confidence *= opts.doubleValue(SimulatorOption.MISSING_LITERAL_CONFIDENCE_FACTOR);
                 Suggestion reorderAlt = tryReorderMatch(tokens, cs, types, env, literals, opts, debug);
-                if (reorderAlt != null && reorderAlt.confidence() > confidence) {
+                if (reorderAlt != null && reorderAlt.issues().stream().anyMatch(i -> i instanceof SuggestionIssue.Reorder) && reorderAlt.confidence() > confidence) {
                     Trace.deep(debug, 3, () -> "reorder beat MissingLiteral, returning reorder");
                     return reorderAlt;
                 }
@@ -851,16 +851,22 @@ public final class PatternSimulator {
             return null;
         }
         List<Token> reordered = findReorderedFromAnchors(tokens, matchDetails);
-        if (reordered.isEmpty()) {
-            Trace.deep(debug, 2, () -> "reorder skipped: no reordered tokens identified from anchors");
+        List<SuggestionIssue.MissingLiteral> missing = findUnanchoredRequiredLiterals(tokens, matchDetails);
+        if (reordered.isEmpty() && missing.isEmpty()) {
+            Trace.deep(debug, 2, () -> "reorder skipped: no reordered tokens or missing literals identified");
             return null;
         }
         boolean firstMatch = firstTokenMatches(tokens, literals);
         double confidence = Math.max(opts.doubleValue(SimulatorOption.VALIDATED_REORDER_FLOOR), computeConfidence(0, 0, firstMatch, opts));
-        List<SuggestionIssue> issues = List.of(new SuggestionIssue.Reorder(reordered));
-        debug.trace(new TraceEvent.SuggestionFormed(cs.pattern, confidence, "reorder fallback", issues));
-        debug.emit(Verbosity.ISSUES, 2, () -> "reorder fallback, conf=" + format(confidence) + " reordered=" + reordered.size() + " tok(s)");
-        return new Suggestion(cs.pattern, confidence, issues, shaped);
+        if (!missing.isEmpty()) confidence *= opts.doubleValue(SimulatorOption.MISSING_LITERAL_CONFIDENCE_FACTOR);
+        List<SuggestionIssue> issues = new ArrayList<>(missing.size() + (reordered.isEmpty() ? 0 : 1));
+        issues.addAll(missing);
+        if (!reordered.isEmpty()) issues.add(new SuggestionIssue.Reorder(reordered));
+        List<SuggestionIssue> frozen = List.copyOf(issues);
+        double finalConfidence = confidence;
+        debug.trace(new TraceEvent.SuggestionFormed(cs.pattern, finalConfidence, "reorder fallback", frozen));
+        debug.emit(Verbosity.ISSUES, 2, () -> "reorder fallback, conf=" + format(finalConfidence) + " reordered=" + reordered.size() + " tok(s) missing=" + missing.size());
+        return new Suggestion(cs.pattern, finalConfidence, frozen, shaped);
     }
 
     private static @Nullable MatchProgress tryShapeMatch(@NotNull List<Token> tokens, @NotNull Pattern pattern, @NotNull List<LiteralMatchResult> matchDetails, @NotNull TypeRegistry types, @NotNull TypeEnvImpl env, @NotNull SimulatorDebug debug) {
@@ -948,6 +954,22 @@ public final class PatternSimulator {
             expectedPos = m.tokenIndex + 1;
         }
         return result.size() >= 2 ? List.copyOf(result) : List.of();
+    }
+
+    private static @NotNull List<SuggestionIssue.MissingLiteral> findUnanchoredRequiredLiterals(@NotNull List<Token> tokens, @NotNull List<LiteralMatchResult> matchDetails) {
+        List<LiteralMatchResult> sorted = new ArrayList<>(matchDetails);
+        sorted.sort(Comparator.comparingInt(m -> m.literal.partIndex));
+        List<SuggestionIssue.MissingLiteral> result = new ArrayList<>();
+        int lastAnchorTokenIdx = -1;
+        for (LiteralMatchResult m : sorted) {
+            if (m.tokenIndex >= 0) {
+                lastAnchorTokenIdx = m.tokenIndex;
+                continue;
+            }
+            if (m.literal.optional) continue;
+            result.add(new SuggestionIssue.MissingLiteral(m.literal.primaryForm(), lastAnchorTokenIdx));
+        }
+        return List.copyOf(result);
     }
 
     private static @NotNull Token syntheticToken(@NotNull String text, @NotNull List<Token> reference) {
