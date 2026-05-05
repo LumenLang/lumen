@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -214,23 +215,19 @@ public final class PatternMatcher {
         }
 
         if (part instanceof PatternPart.Group group) {
-            List<PatternPart> tail = parts.subList(pi + 1, parts.size());
             for (List<PatternPart> alt : group.alternatives()) {
-                List<PatternPart> combined = new ArrayList<>(alt.size() + tail.size());
-                combined.addAll(alt);
-                combined.addAll(tail);
-                Map<String, BoundValue> snapshot = new LinkedHashMap<>(map);
+                int mapSnapshot = map.size();
                 int choicesSnapshot = choices.size();
                 if (group.required()) {
                     choices.add(altText(alt));
                 }
-                int result = tryMatch(tokens, ti, combined, 0, types, env, map, choices, validator, progress);
-                if (result >= 0) return result;
-
-                map.clear();
-                map.putAll(snapshot);
-                while (choices.size() > choicesSnapshot)
-                    choices.remove(choices.size() - 1);
+                int afterAlt = tryMatch(tokens, ti, alt, 0, types, env, map, choices, validator, progress);
+                if (afterAlt >= 0) {
+                    int afterTail = tryMatch(tokens, afterAlt, parts, pi + 1, types, env, map, choices, validator, progress);
+                    if (afterTail >= 0) return afterTail;
+                }
+                trimTrailingEntries(map, mapSnapshot);
+                trimTrailingEntries(choices, choicesSnapshot);
             }
 
             if (!group.required()) {
@@ -311,16 +308,13 @@ public final class PatternMatcher {
                         }
                     }
 
-                    Map<String, BoundValue> snapshot = new LinkedHashMap<>(map);
+                    int mapSnapshot = map.size();
                     int choicesSnapshot = choices.size();
                     map.put(ph.name(), new BoundValue(ph, slice, value, binding));
                     int result = tryMatch(tokens, end, parts, pi + 1, types, env, map, choices, validator, progress);
                     if (result >= 0) return result;
-
-                    map.clear();
-                    map.putAll(snapshot);
-                    while (choices.size() > choicesSnapshot)
-                        choices.remove(choices.size() - 1);
+                    trimTrailingEntries(map, mapSnapshot);
+                    trimTrailingEntries(choices, choicesSnapshot);
                 }
             }
             if (progress != null) {
@@ -332,7 +326,7 @@ public final class PatternMatcher {
                     int cEnd = ti + effectiveConsume;
                     if (cEnd <= tokens.size()) {
                         MatchProgress contProgress = new MatchProgress();
-                        Map<String, BoundValue> cSnapshot = new LinkedHashMap<>(map);
+                        int cMapSnapshot = map.size();
                         int cChoices = choices.size();
                         map.put(ph.name(), new BoundValue(ph, tokens.subList(ti, cEnd), PARSE_FAILED, binding));
                         int contResult = tryMatch(tokens, cEnd, parts, pi + 1, types, env, map, choices, validator, contProgress);
@@ -345,9 +339,8 @@ public final class PatternMatcher {
                         } else if (contProgress.furthestTokenIndex() > progress.furthestTokenIndex()) {
                             progress.recordFailure(contProgress.furthestTokenIndex(), pp, binding.id(), reason, fTokens);
                         }
-                        map.clear();
-                        map.putAll(cSnapshot);
-                        while (choices.size() > cChoices) choices.remove(choices.size() - 1);
+                        trimTrailingEntries(map, cMapSnapshot);
+                        trimTrailingEntries(choices, cChoices);
                     }
                     discoverDownstreamFailures(tokens, ti + effectiveConsume, parts, pi + 1, types, env, progress);
                 }
@@ -424,6 +417,24 @@ public final class PatternMatcher {
             String msg = e.getMessage();
             return msg != null ? msg : internalError(binding, e);
         };
+    }
+
+    private static void trimTrailingEntries(@NotNull Map<String, BoundValue> map, int target) {
+        if (map.size() <= target) return;
+        if (target == 0) {
+            map.clear();
+            return;
+        }
+        Iterator<Map.Entry<String, BoundValue>> it = map.entrySet().iterator();
+        for (int i = 0; i < target && it.hasNext(); i++) it.next();
+        while (it.hasNext()) {
+            it.next();
+            it.remove();
+        }
+    }
+
+    private static void trimTrailingEntries(@NotNull List<String> list, int target) {
+        while (list.size() > target) list.remove(list.size() - 1);
     }
 
     private static @NotNull String internalError(@NotNull TypeBinding binding, @NotNull RuntimeException e) {

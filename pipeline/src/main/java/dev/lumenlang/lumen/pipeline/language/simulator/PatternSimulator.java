@@ -300,6 +300,7 @@ public final class PatternSimulator {
 
     private static @Nullable Suggestion tryMatch(@NotNull List<Token> tokens, @NotNull PreFilterScore cs, @NotNull TypeRegistry types, @NotNull TypeEnvImpl env, @NotNull SimulatorOptions opts, @NotNull SimulatorDebug debug) {
         Pattern pattern = cs.pattern;
+        boolean dt = debug.enabled(Verbosity.DEEP_TIMING);
         List<LiteralInfo> literals = extractLiterals(pattern);
         int maxK = Math.min(effectiveMaxK(tokens.size(), opts), tokens.size() - 1);
         int maxCombosPerLevel = opts.intValue(SimulatorOption.MAX_COMBINATIONS_PER_LEVEL);
@@ -309,7 +310,9 @@ public final class PatternSimulator {
         MatchProgress bestPartialProgress = null;
         for (int k = 0; k <= maxK; k++) {
             if (k == 0) {
+                long lvl0Start = dt ? System.nanoTime() : 0L;
                 MatchProgress progress = PatternMatcher.matchWithProgress(tokens, pattern, types, env);
+                if (dt) Trace.deepTiming(debug, "  level-0 match " + pattern.raw(), System.nanoTime() - lvl0Start);
                 Trace.matchAttempt(debug, pattern, "level-0", progress);
                 level0Progress = progress;
                 if (progress.succeeded()) {
@@ -329,10 +332,14 @@ public final class PatternSimulator {
                     debug.emit(Verbosity.ISSUES, 2, () -> "level-0 clean match, conf=1.000");
                     return new Suggestion(pattern, 1.0, List.of(), progress);
                 }
+                long typoStart = dt ? System.nanoTime() : 0L;
                 TypoFix typo = findBestTypoFix(tokens, literals, pattern, debug);
+                if (dt) Trace.deepTiming(debug, "  level-0 typo lookup " + pattern.raw(), System.nanoTime() - typoStart);
                 if (typo != null) {
+                    long ctyStart = dt ? System.nanoTime() : 0L;
                     List<Token> corrected = applyTypoFix(tokens, typo);
                     MatchProgress corrProgress = PatternMatcher.matchWithProgress(corrected, pattern, types, env);
+                    if (dt) Trace.deepTiming(debug, "  level-0 typo retry " + pattern.raw(), System.nanoTime() - ctyStart);
                     Trace.matchAttempt(debug, pattern, "level-0 typo-corrected '" + typo.token.text() + "'->'" + typo.expected + "'", corrProgress);
                     boolean sandboxRejected = false;
                     if (corrProgress.succeeded()) {
@@ -362,14 +369,17 @@ public final class PatternSimulator {
                 }
                 continue;
             }
+            long bfsStart = dt ? System.nanoTime() : 0L;
+            boolean[] anchoredTokens = computeBfsLockedTokens(cs, tokens.size());
+            TypoCandidate[] perTokenTypo = perTokenBestTypos(tokens, literals);
             List<Suggestion> levelResults = new ArrayList<>();
             int[] combo = new int[k];
             for (int ci = 0; ci < k; ci++) combo[ci] = ci;
             int combinationsChecked = 0;
             do {
+                if (touchesAnchored(combo, anchoredTokens)) continue;
                 if (combinationsChecked++ >= maxCombosPerLevel) break;
                 List<Token> reduced = removeIndices(tokens, combo);
-                List<Token> removed = extractIndices(tokens, combo);
                 MatchProgress progress = PatternMatcher.matchWithProgress(reduced, pattern, types, env);
                 Trace.matchAttempt(debug, pattern, "BFS-" + k + " reduced", progress);
                 Trace.bfsCombination(debug, pattern, k, combo.clone(), progress.succeeded(), progress.furthestTokenIndex());
@@ -383,6 +393,7 @@ public final class PatternSimulator {
                 if (progress != null && progress.succeeded()) {
                     boolean firstMatch = firstTokenMatches(tokens, literals) || firstTokenMatches(reduced, literals);
                     double confidence = computeConfidence(k, 0, firstMatch, opts);
+                    List<Token> removed = extractIndices(tokens, combo);
                     List<SuggestionIssue> issues = List.of(new SuggestionIssue.ExtraTokens(List.copyOf(removed)));
                     int level = k;
                     debug.trace(new TraceEvent.SuggestionFormed(pattern, confidence, "BFS-" + level + " extra", issues));
@@ -390,7 +401,8 @@ public final class PatternSimulator {
                     levelResults.add(new Suggestion(pattern, confidence, issues, progress));
                     continue;
                 }
-                TypoFix typo = findBestTypoFix(reduced, literals, pattern, debug);
+                if (progress == null || progress.furthestTokenIndex() < 0) continue;
+                TypoFix typo = pickBestSurvivingTypo(perTokenTypo, combo, tokens.size());
                 if (typo != null) {
                     List<Token> corrected = applyTypoFix(reduced, typo);
                     MatchProgress corrProgress = PatternMatcher.matchWithProgress(corrected, pattern, types, env);
@@ -404,6 +416,7 @@ public final class PatternSimulator {
                     }
                     if (corrProgress != null && corrProgress.succeeded()) {
                         double confidence = computeConfidence(k, 1, true, opts);
+                        List<Token> removed = extractIndices(tokens, combo);
                         List<SuggestionIssue> issues = List.of(new SuggestionIssue.ExtraTokens(List.copyOf(removed)), new SuggestionIssue.Typo(typo.token, typo.expected));
                         int level = k;
                         debug.trace(new TraceEvent.TypoConsidered(pattern, typo.token, typo.expected, FuzzyMatch.prefixAwareDistance(typo.token.text(), typo.expected)));
@@ -421,6 +434,7 @@ public final class PatternSimulator {
             int explored = combinationsChecked;
             int level = k;
             boolean any = !levelResults.isEmpty();
+            if (dt) Trace.deepTiming(debug, "  BFS k=" + level + " (" + explored + " combos) " + pattern.raw(), System.nanoTime() - bfsStart);
             debug.trace(new TraceEvent.BfsLevel(pattern, level, explored, any));
             debug.emit(Verbosity.MATCH, 2, () -> "BFS k=" + level + " explored=" + explored + " produced=" + (any ? "yes" : "no"));
             if (!levelResults.isEmpty()) {
@@ -654,6 +668,73 @@ public final class PatternSimulator {
         return miss;
     }
 
+    /**
+     * Computes the best literal typo candidate for each input token once. The result is reused
+     * across BFS combinations so the O(T x L x F) walk is done a single time per pattern.
+     */
+    private static @NotNull TypoCandidate[] perTokenBestTypos(@NotNull List<Token> tokens, @NotNull List<LiteralInfo> literals) {
+        TypoCandidate[] out = new TypoCandidate[tokens.size()];
+        for (int i = 0; i < tokens.size(); i++) {
+            Token token = tokens.get(i);
+            int bestDist = Integer.MAX_VALUE;
+            String bestForm = null;
+            for (LiteralInfo lit : literals) {
+                for (String form : lit.forms) {
+                    int dist = simDistance(token.text(), form);
+                    int threshold = effectiveThreshold(token.text(), form);
+                    if (dist > 0 && dist <= threshold && dist < bestDist) {
+                        bestDist = dist;
+                        bestForm = form;
+                    }
+                }
+            }
+            if (bestForm != null) out[i] = new TypoCandidate(token, bestForm, bestDist);
+        }
+        return out;
+    }
+
+    /**
+     * Picks the lowest-distance typo candidate whose token survived the BFS removal.
+     *
+     * @param perToken         original-position typo candidates from {@link #perTokenBestTypos}
+     * @param removedIndices   sorted indices of tokens dropped at the current BFS level
+     * @param totalTokens      size of the pre-removal token list
+     * @return a {@link TypoFix} positioned within the reduced token list, or {@code null} if no
+     * surviving token has a typo candidate
+     */
+    private static @Nullable TypoFix pickBestSurvivingTypo(@NotNull TypoCandidate[] perToken, int[] removedIndices, int totalTokens) {
+        boolean[] removed = new boolean[totalTokens];
+        for (int idx : removedIndices) removed[idx] = true;
+        int bestDist = Integer.MAX_VALUE;
+        TypoCandidate best = null;
+        int bestReducedIdx = -1;
+        int reducedIdx = 0;
+        for (int i = 0; i < totalTokens; i++) {
+            if (removed[i]) {
+                continue;
+            }
+            TypoCandidate cand = perToken[i];
+            if (cand != null && cand.distance < bestDist) {
+                bestDist = cand.distance;
+                best = cand;
+                bestReducedIdx = reducedIdx;
+            }
+            reducedIdx++;
+        }
+        if (best == null) return null;
+        return new TypoFix(best.token, best.form, bestReducedIdx);
+    }
+
+    /**
+     * Per-token best literal-form typo candidate, cached across BFS combinations.
+     *
+     * @param token    the original input token
+     * @param form     the literal form the token is closest to
+     * @param distance edit distance between {@code token} and {@code form}
+     */
+    private record TypoCandidate(@NotNull Token token, @NotNull String form, int distance) {
+    }
+
     private static @Nullable TypoFix findBestTypoFix(@NotNull List<Token> tokens, @NotNull List<LiteralInfo> literals) {
         return findBestTypoFix(tokens, literals, null, SimulatorDebug.OFF);
     }
@@ -808,6 +889,29 @@ public final class PatternSimulator {
         List<Token> result = new ArrayList<>(indices.length);
         for (int idx : indices) result.add(tokens.get(idx));
         return result;
+    }
+
+    private static @NotNull boolean[] computeBfsLockedTokens(@NotNull PreFilterScore cs, int tokenCount) {
+        boolean[] locked = new boolean[tokenCount];
+        int requiredAnchored = 0;
+        int requiredTotal = 0;
+        for (LiteralMatchResult m : cs.matchDetails) {
+            if (m.literal.optional) continue;
+            requiredTotal++;
+            if (m.tokenIndex >= 0 && m.distance == 0) requiredAnchored++;
+        }
+        if (requiredTotal == 0 || requiredAnchored < requiredTotal) return locked;
+        for (LiteralMatchResult m : cs.matchDetails) {
+            if (!m.literal.optional && m.tokenIndex >= 0 && m.tokenIndex < tokenCount && m.distance == 0) locked[m.tokenIndex] = true;
+        }
+        return locked;
+    }
+
+    private static boolean touchesAnchored(int[] combo, boolean[] anchored) {
+        for (int idx : combo) {
+            if (idx < anchored.length && anchored[idx]) return true;
+        }
+        return false;
     }
 
     private static boolean nextCombination(int[] combo, int n) {
@@ -1300,6 +1404,12 @@ public final class PatternSimulator {
             long ms = nanos / 1_000_000L;
             debug.trace(new TraceEvent.StageTiming(stage, ms));
             debug.emit(Verbosity.TIMING, 1, () -> stage + " " + ms + " ms (" + nanos + " ns)");
+        }
+
+        static void deepTiming(@NotNull SimulatorDebug debug, @NotNull String stage, long nanos) {
+            long us = nanos / 1_000L;
+            debug.trace(new TraceEvent.StageTiming(stage, nanos / 1_000_000L));
+            debug.emit(Verbosity.DEEP_TIMING, 2, () -> stage + " " + us + " us (" + nanos + " ns)");
         }
 
         static void sandboxRejected(@NotNull SimulatorDebug debug, @NotNull Pattern pattern, @NotNull String stage, @NotNull Throwable thrown) {
