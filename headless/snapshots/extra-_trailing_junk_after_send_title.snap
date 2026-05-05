@@ -3,12 +3,8 @@ input: send title "hi" to p extra junk
 runner: STATEMENT
 env:
   var p: player
-suggestions: 2
+suggestions: 1
   [#0] send title %title:STRING% to %who:PLAYER%
     confidence: 0.840
     issues:
       - extra tokens: 'extra' (col 21), 'junk' (col 27)
-  [#1] send title %title:STRING% with subtitle %sub:STRING% to %who:PLAYER%
-    confidence: 0.286
-    issues:
-      - missing literal: 'with' (after token 2)

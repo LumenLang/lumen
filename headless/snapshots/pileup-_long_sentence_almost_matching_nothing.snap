@@ -2,10 +2,4 @@ case: pileup: long sentence almost matching nothing
 input: the quick brown fox jumps over the lazy dog
 runner: STATEMENT
 env: <empty>
-suggestions: 1
-  [#0] %list:LIST% size for %scope:VAR%
-    confidence: 0.050
-    issues:
-      - typo: 'fox' (col 16) should be 'for'
-      - type mismatch: 'the' (col 0) is not a LIST ('the' does not exist in this scope)
-      - type mismatch: 'quick' (col 4) is not a VAR ('quick' does not exist in this scope)
+suggestions: 0

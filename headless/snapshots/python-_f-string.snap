@@ -2,12 +2,4 @@ case: python: f-string
 input: send(f"hello {player.name}")
 runner: STATEMENT
 env: <empty>
-suggestions: 2
-  [#0] send title %title:STRING% to %who:PLAYER%
-    confidence: 0.200
-    issues:
-      - missing literal: 'title' (after token 0)
-  [#1] send actionbar %text:STRING% to %who:PLAYER%
-    confidence: 0.200
-    issues:
-      - missing literal: 'actionbar' (after token 0)
+suggestions: 0

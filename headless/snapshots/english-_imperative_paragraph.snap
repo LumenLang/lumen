@@ -2,14 +2,4 @@ case: english: imperative paragraph
 input: Take the player and remove all of their items immediately
 runner: STATEMENT
 env: <empty>
-suggestions: 2
-  [#0] %list:LIST% index of %val:EXPR%
-    confidence: 0.080
-    issues:
-      - type mismatch: 'Take' (col 0) is not a LIST ('Take' does not exist in this scope)
-  [#1] tame %e:ENTITY% [by] %who:PLAYER%
-    confidence: 0.060
-    issues:
-      - typo: 'Take' (col 0) should be 'tame'
-      - type mismatch: 'the' (col 5) is not a ENTITY ('the' does not exist in this scope)
-      - type mismatch: 'player' (col 9) is not a PLAYER ('player' does not exist in this scope)
+suggestions: 0

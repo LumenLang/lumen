@@ -2,15 +2,9 @@ case: minecraft command: execute
 input: /execute as @a at @s run kill
 runner: STATEMENT
 env: <empty>
-suggestions: 2
+suggestions: 1
   [#0] %s:EXPR% as number
     confidence: 0.475
     issues:
       - typo: 'at' (col 15) should be 'as'
       - type mismatch: '/' (col 0) is not a EXPR ('EXPR' rejected the input)
-  [#1] (execute|run|perform) [command] %cmd:STRING% as %who:PLAYER%
-    confidence: 0.280
-    issues:
-      - typo: 'at' (col 15) should be 'as'
-      - type mismatch: '@' (col 18) is not a PLAYER ('@' does not exist in this scope)
-      - extra tokens: 's' (col 19), 'run' (col 21), 'kill' (col 25)

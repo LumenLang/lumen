@@ -2,12 +2,4 @@ case: powershell: pipe to where
 input: Get-Player | Where-Object { $_.Health -gt 0 }
 runner: STATEMENT
 env: <empty>
-suggestions: 2
-  [#0] get player (by|from) (name|username) %name:STRING%
-    confidence: 0.100
-    issues:
-      - missing literal: 'player' (after token 0)
-  [#1] get player (by|from) (uuid|unique id) %uuid:STRING%
-    confidence: 0.100
-    issues:
-      - missing literal: 'player' (after token 0)
+suggestions: 0

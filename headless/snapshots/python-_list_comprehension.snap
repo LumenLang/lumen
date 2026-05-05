@@ -2,9 +2,4 @@ case: python: list comprehension
 input: alive = [p for p in players if p.health > 0]
 runner: STATEMENT
 env: <empty>
-suggestions: 1
-  [#0] %list:LIST% size for %scope:VAR%
-    confidence: 0.050
-    issues:
-      - type mismatch: 'alive' (col 0) is not a LIST ('alive' does not exist in this scope)
-      - type mismatch: '=' (col 6) is not a VAR ('=' does not exist in this scope)
+suggestions: 0

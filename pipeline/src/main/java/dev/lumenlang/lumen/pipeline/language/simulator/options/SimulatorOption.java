@@ -118,7 +118,14 @@ public enum SimulatorOption {
      * Patterns that scored below this in the pre-filter pass are clearly distant from the input
      * and their MissingLiteral suggestion is just noise.
      */
-    MISSING_LITERAL_PREFILTER_FLOOR(Kind.DOUBLE, 0.50, Range.zeroToOne());
+    MISSING_LITERAL_PREFILTER_FLOOR(Kind.DOUBLE, 0.50, Range.zeroToOne()),
+
+    /**
+     * Minimum confidence a final suggestion must reach to be returned to callers. Below this the
+     * caller sees an empty list and can render a generic "no close match" diagnostic instead of
+     * a misleading low-confidence guess.
+     */
+    MIN_REPORT_CONFIDENCE(Kind.DOUBLE, 0.30, Range.zeroToOne());
 
     private final @NotNull Kind kind;
     private final double defaultValue;

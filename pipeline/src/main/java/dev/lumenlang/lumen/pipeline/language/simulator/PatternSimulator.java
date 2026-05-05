@@ -279,7 +279,11 @@ public final class PatternSimulator {
                 best.put(s.pattern(), s);
             }
         }
-        List<Suggestion> results = new ArrayList<>(best.values());
+        double minReport = opts.doubleValue(SimulatorOption.MIN_REPORT_CONFIDENCE);
+        List<Suggestion> results = new ArrayList<>(best.values().size());
+        for (Suggestion s : best.values()) {
+            if (s.confidence() >= minReport) results.add(s);
+        }
         results.sort(Comparator.comparingDouble(Suggestion::confidence).reversed());
         int max = Math.min(opts.intValue(SimulatorOption.MAX_SUGGESTIONS), results.size());
         List<Suggestion> ordered = List.copyOf(results.subList(0, max));

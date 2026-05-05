@@ -2,10 +2,4 @@ case: minecraft command: tp
 input: /tp @p ~ ~10 ~
 runner: STATEMENT
 env: <empty>
-suggestions: 1
-  [#0] op %who:OFFLINE_PLAYER%
-    confidence: 0.130
-    issues:
-      - typo: 'tp' (col 1) should be 'op'
-      - type mismatch: '@' (col 4) is not a OFFLINE_PLAYER ('@' does not exist in this scope)
-      - extra tokens: 'p' (col 5), '~' (col 7), '~' (col 9), '10' (col 10), '~' (col 13)
+suggestions: 0

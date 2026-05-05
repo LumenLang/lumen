@@ -2,14 +2,4 @@ case: sql: update
 input: UPDATE players SET health = 20 WHERE name = "alice"
 runner: STATEMENT
 env: <empty>
-suggestions: 2
-  [#0] get %e:ENTITY_POSSESSIVE% name
-    confidence: 0.180
-    issues:
-      - typo: 'SET' (col 15) should be 'get'
-      - type mismatch: 'health' (col 19) is not a ENTITY_POSSESSIVE ('health' must use possessive form (e.g. entity's))
-  [#1] get %e:ENTITY_POSSESSIVE% health
-    confidence: 0.180
-    issues:
-      - typo: 'SET' (col 15) should be 'get'
-      - type mismatch: 'health' (col 19) is not a ENTITY_POSSESSIVE ('health' must use possessive form (e.g. entity's))
+suggestions: 0

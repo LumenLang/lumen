@@ -2,11 +2,7 @@ case: expr: max of two numbers
 input: max of 5 and 10
 runner: EXPRESSION
 env: <empty>
-suggestions: 2
+suggestions: 1
   [#0] (max|maximum) of %x:NUMBER% and %y:NUMBER%
     confidence: 1.000
     issues: <none>
-  [#1] %list:LIST% index of %val:EXPR%
-    confidence: 0.280
-    issues:
-      - type mismatch: 'max' (col 0) is not a LIST ('max' does not exist in this scope)

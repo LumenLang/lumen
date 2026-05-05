@@ -2,14 +2,4 @@ case: lua: nil check
 input: if player == nil then
 runner: CONDITION
 env: <empty>
-suggestions: 2
-  [#0] %e:ENTITY% (is|is not) player created
-    confidence: 0.213
-    issues:
-      - typo: 'if' (col 0) should be 'is'
-      - type mismatch: 'is' (col 0) is not a ENTITY ('is' does not exist in this scope)
-  [#1] %e:ENTITY% (is|is not) [a] %type:ENTITY_TYPE%
-    confidence: 0.213
-    issues:
-      - typo: 'if' (col 0) should be 'is'
-      - type mismatch: 'is' (col 0) is not a ENTITY ('is' does not exist in this scope)
+suggestions: 0

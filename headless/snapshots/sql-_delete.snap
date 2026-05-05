@@ -2,12 +2,4 @@ case: sql: delete
 input: DELETE FROM players WHERE health <= 0
 runner: STATEMENT
 env: <empty>
-suggestions: 2
-  [#0] delete stored %name:EXPR%
-    confidence: 0.125
-    issues:
-      - missing literal: 'stored' (after token 0)
-  [#1] delete stored %name:EXPR% for %scope:VAR%
-    confidence: 0.125
-    issues:
-      - missing literal: 'stored' (after token 0)
+suggestions: 0

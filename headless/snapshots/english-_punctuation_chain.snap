@@ -2,14 +2,4 @@ case: english: punctuation chain
 input: kill, kill!! kill??
 runner: STATEMENT
 env: <empty>
-suggestions: 2
-  [#0] (kill|slay) %who:PLAYER%
-    confidence: 0.130
-    issues:
-      - type mismatch: ',' (col 4) is not a PLAYER (',' does not exist in this scope)
-      - extra tokens: 'kill' (col 6), '!' (col 10), '!' (col 11), 'kill' (col 13), '?' (col 17), '?' (col 18)
-  [#1] (kill|slay) %e:LIVING_ENTITY%
-    confidence: 0.130
-    issues:
-      - type mismatch: ',' (col 4) is not a LIVING_ENTITY (',' does not exist in this scope)
-      - extra tokens: 'kill' (col 6), '!' (col 10), '!' (col 11), 'kill' (col 13), '?' (col 17), '?' (col 18)
+suggestions: 0

@@ -2,10 +2,4 @@ case: css: rule
 input: .player { color: red; }
 runner: STATEMENT
 env: <empty>
-suggestions: 1
-  [#0] floor %x:NUMBER%
-    confidence: 0.130
-    issues:
-      - typo: 'color' (col 10) should be 'floor'
-      - type mismatch: ':' (col 15) is not a NUMBER (':' is not a valid number)
-      - extra tokens: 'red' (col 17), ';' (col 20), '}' (col 22)
+suggestions: 0

@@ -2,8 +2,4 @@ case: expr: 'maks' typo for 'max' (BUG locked)
 input: maks of 5 and 10
 runner: EXPRESSION
 env: <empty>
-suggestions: 1
-  [#0] %list:LIST% index of %val:EXPR%
-    confidence: 0.280
-    issues:
-      - type mismatch: 'maks' (col 0) is not a LIST ('maks' does not exist in this scope)
+suggestions: 0

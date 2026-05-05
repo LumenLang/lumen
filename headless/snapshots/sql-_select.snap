@@ -2,10 +2,4 @@ case: sql: select
 input: SELECT health FROM players WHERE name = "alice"
 runner: STATEMENT
 env: <empty>
-suggestions: 1
-  [#0] eject %e:ENTITY%
-    confidence: 0.130
-    issues:
-      - typo: 'SELECT' (col 0) should be 'eject'
-      - type mismatch: 'health' (col 7) is not a ENTITY ('health' does not exist in this scope)
-      - extra tokens: 'FROM' (col 14), 'players' (col 19), 'WHERE' (col 27), 'name' (col 33), '=' (col 38), 'alice' (col 40)
+suggestions: 0

@@ -2,16 +2,4 @@ case: skript: give named item
 input: give player a diamond sword named "sharp"
 runner: STATEMENT
 env: <empty>
-suggestions: 2
-  [#0] give %who:PLAYER% %item:MATERIAL% %amt:INT%
-    confidence: 0.211
-    issues:
-      - type mismatch: 'player' (col 5) is not a PLAYER ('player' does not exist in this scope)
-      - type mismatch: 'a' (col 12) is not a MATERIAL ('a' is not a valid material)
-      - type mismatch: 'diamond' (col 14) is not a INT ('diamond' is not a valid integer)
-  [#1] give %who:PLAYER% %item:ITEMSTACK% %amt:INT%
-    confidence: 0.211
-    issues:
-      - type mismatch: 'player' (col 5) is not a PLAYER ('player' does not exist in this scope)
-      - type mismatch: 'a' (col 12) is not a ITEMSTACK ('a' does not exist in this scope)
-      - type mismatch: 'diamond' (col 14) is not a INT ('diamond' is not a valid integer)
+suggestions: 0

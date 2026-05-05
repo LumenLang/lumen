@@ -3,13 +3,8 @@ input: set count to 1 plus 2 plus 3 plus 4 plus 5
 runner: STATEMENT
 env:
   var count: int
-suggestions: 2
+suggestions: 1
   [#0] set %name:IDENT% to %val:EXPR%
     confidence: 0.750
     issues:
       - handler rejected: Cannot resolve expression
-  [#1] set %e:ENTITY_POSSESSIVE% %attr:ATTRIBUTE% [base] [value] [to] %val:DOUBLE%
-    confidence: 0.177
-    issues:
-      - type mismatch: 'count' (col 4) is not a ENTITY_POSSESSIVE ('count' must use possessive form (e.g. entity's))
-      - missing binding: ATTRIBUTE (col 9)
