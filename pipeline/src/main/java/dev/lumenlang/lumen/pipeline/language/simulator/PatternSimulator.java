@@ -932,11 +932,12 @@ public final class PatternSimulator {
             Trace.deep(debug, 2, () -> "reorder skipped: no anchored literals");
             return null;
         }
-        MatchProgress shaped = tryShapeMatch(tokens, cs.pattern, matchDetails, types, env, debug);
-        if (shaped == null) {
+        ShapeMatchResult shapeResult = tryShapeMatch(tokens, cs.pattern, matchDetails, types, env, debug);
+        if (shapeResult == null) {
             Trace.deep(debug, 2, () -> "reorder skipped: shape produced nothing");
             return null;
         }
+        MatchProgress shaped = shapeResult.progress();
         if (!shaped.succeeded()) {
             Trace.deep(debug, 2, () -> "reorder skipped: shaped sequence did not match (furthest=" + shaped.furthestTokenIndex() + ")");
             return null;
@@ -945,7 +946,8 @@ public final class PatternSimulator {
             Trace.deep(debug, 2, () -> "reorder skipped: shaped match passed but sandbox rejected");
             return null;
         }
-        List<Token> reordered = findReorderedFromAnchors(tokens, matchDetails);
+        List<Token> shapeReordered = tokensThatChangedPosition(tokens, shapeResult.shapedTokens());
+        List<Token> reordered = shapeReordered.isEmpty() ? findReorderedFromAnchors(tokens, matchDetails) : shapeReordered;
         List<SuggestionIssue.MissingLiteral> missing = findUnanchoredRequiredLiterals(matchDetails);
         if (reordered.isEmpty() && missing.isEmpty()) {
             Trace.deep(debug, 2, () -> "reorder skipped: no reordered tokens or missing literals identified");
@@ -964,7 +966,7 @@ public final class PatternSimulator {
         return new Suggestion(cs.pattern, finalConfidence, frozen, shaped);
     }
 
-    private static @Nullable MatchProgress tryShapeMatch(@NotNull List<Token> tokens, @NotNull Pattern pattern, @NotNull List<LiteralMatchResult> matchDetails, @NotNull TypeRegistry types, @NotNull TypeEnvImpl env, @NotNull SimulatorDebug debug) {
+    private static @Nullable ShapeMatchResult tryShapeMatch(@NotNull List<Token> tokens, @NotNull Pattern pattern, @NotNull List<LiteralMatchResult> matchDetails, @NotNull TypeRegistry types, @NotNull TypeEnvImpl env, @NotNull SimulatorDebug debug) {
         List<LiteralMatchResult> anchored = matchDetails.stream().filter(m -> m.tokenIndex >= 0).sorted(Comparator.comparingInt(m -> m.literal.partIndex)).toList();
         if (anchored.isEmpty()) return null;
         boolean[] used = new boolean[tokens.size()];
@@ -975,6 +977,44 @@ public final class PatternSimulator {
         for (int j = 0; j < tokens.size(); j++) {
             if (!used[j]) remaining.add(tokens.get(j));
         }
+        List<List<Token>> permutations = boundedPermutations(remaining);
+        ShapeMatchResult fallback = null;
+        for (List<Token> perm : permutations) {
+            List<Token> shaped = buildShapedTokens(pattern, anchored, tokens, perm);
+            if (shaped.isEmpty()) continue;
+            MatchProgress shapedProgress = PatternMatcher.matchWithProgress(shaped, pattern, types, env);
+            Trace.shapeAttempt(debug, pattern, shaped, shapedProgress);
+            Trace.matchAttempt(debug, pattern, "shape-match", shapedProgress);
+            ShapeMatchResult result = new ShapeMatchResult(shapedProgress, List.copyOf(shaped));
+            if (shapedProgress.succeeded()) return result;
+            if (fallback == null) fallback = result;
+        }
+        return fallback;
+    }
+
+    /**
+     * Returns the input tokens whose position differs from the shape-matched order, walking from
+     * the leftmost difference to the rightmost so the highlight stays contiguous in source order.
+     * Synthetic literal tokens fabricated during shape match are skipped.
+     */
+    private static @NotNull List<Token> tokensThatChangedPosition(@NotNull List<Token> input, @NotNull List<Token> shaped) {
+        if (input.isEmpty() || shaped.isEmpty()) return List.of();
+        int firstDiff = -1;
+        int lastDiff = -1;
+        int limit = Math.min(input.size(), shaped.size());
+        for (int i = 0; i < limit; i++) {
+            if (input.get(i) != shaped.get(i)) {
+                if (firstDiff < 0) firstDiff = i;
+                lastDiff = i;
+            }
+        }
+        if (firstDiff < 0) return List.of();
+        List<Token> result = new ArrayList<>(lastDiff - firstDiff + 1);
+        for (int i = firstDiff; i <= lastDiff; i++) result.add(input.get(i));
+        return result.size() >= 2 ? List.copyOf(result) : List.of();
+    }
+
+    private static @NotNull List<Token> buildShapedTokens(@NotNull Pattern pattern, @NotNull List<LiteralMatchResult> anchored, @NotNull List<Token> tokens, @NotNull List<Token> remaining) {
         List<PatternPart> parts = pattern.parts();
         List<Token> shaped = new ArrayList<>();
         int remIdx = 0;
@@ -1008,14 +1048,31 @@ public final class PatternSimulator {
         while (remIdx < remaining.size()) {
             shaped.add(remaining.get(remIdx++));
         }
-        if (shaped.isEmpty()) {
-            Trace.shapeAttempt(debug, pattern, List.of(), null);
-            return null;
+        return shaped;
+    }
+
+    private static @NotNull List<List<Token>> boundedPermutations(@NotNull List<Token> input) {
+        if (input.size() <= 1) return List.of(input);
+        if (input.size() > 4) return List.of(input);
+        List<List<Token>> out = new ArrayList<>();
+        permute(new ArrayList<>(input), 0, out);
+        return out;
+    }
+
+    private static void permute(@NotNull List<Token> arr, int start, @NotNull List<List<Token>> out) {
+        if (start == arr.size() - 1) {
+            out.add(List.copyOf(arr));
+            return;
         }
-        MatchProgress shapedProgress = PatternMatcher.matchWithProgress(shaped, pattern, types, env);
-        Trace.shapeAttempt(debug, pattern, shaped, shapedProgress);
-        Trace.matchAttempt(debug, pattern, "shape-match", shapedProgress);
-        return shapedProgress;
+        for (int i = start; i < arr.size(); i++) {
+            Token tmp = arr.get(start);
+            arr.set(start, arr.get(i));
+            arr.set(i, tmp);
+            permute(arr, start + 1, out);
+            tmp = arr.get(start);
+            arr.set(start, arr.get(i));
+            arr.set(i, tmp);
+        }
     }
 
     private static @Nullable Token findAnchorToken(@NotNull List<LiteralMatchResult> anchored, @NotNull List<Token> tokens, @NotNull String text) {
@@ -1292,6 +1349,14 @@ public final class PatternSimulator {
                 return "incomplete: expected '" + expectedNext + "' next";
             }
         }
+    }
+
+    /**
+     * Outcome of a shape-match attempt: the matcher's progress against the reshaped tokens and
+     * the shaped sequence itself. The shaped sequence reflects the order the simulator believes
+     * the input should be in.
+     */
+    private record ShapeMatchResult(@NotNull MatchProgress progress, @NotNull List<Token> shapedTokens) {
     }
 
     /**

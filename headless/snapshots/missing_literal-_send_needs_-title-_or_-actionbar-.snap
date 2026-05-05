@@ -8,9 +8,9 @@ suggestions: 2
     confidence: 0.500
     issues:
       - missing literal: 'title' (after token 0)
-      - reorder: 'hi', 'to'
+      - reorder: 'hi', 'to', 'p'
   [#1] send actionbar %text:STRING% to %who:PLAYER%
     confidence: 0.500
     issues:
       - missing literal: 'actionbar' (after token 0)
-      - reorder: 'hi', 'to'
+      - reorder: 'hi', 'to', 'p'

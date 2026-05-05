@@ -21,12 +21,7 @@ public final class SwappedTokens {
                 .env(EnvSimulator.create().withVar("p", MinecraftTypes.PLAYER));
     }
 
-    /**
-     * Buggy lock-in. {@code send title to p "hi"} has all tokens in the wrong order; sim should
-     * surface a Reorder issue. Currently sim emits MissingLiteral because the reorder fallback
-     * does not fire here. Flip once reorder detection covers this shape.
-     */
-    @SimCase(name = "swap: send title recipient before string (BUG locked)")
+    @SimCase(name = "swap: send title recipient before string")
     public static SimulatorCase sendToBeforeString() {
         return SimulatorCase.statement("send title to p \"hi\"")
                 .env(EnvSimulator.create().withVar("p", MinecraftTypes.PLAYER));

@@ -14,4 +14,4 @@ suggestions: 2
       - missing literal: 'title' (after token 0)
       - missing literal: 'with' (after token 0)
       - missing literal: 'subtitle' (after token 0)
-      - reorder: 'actionber', 'hi', 'to'
+      - reorder: 'actionber', 'hi', 'to', 'p'

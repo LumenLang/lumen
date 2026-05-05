@@ -1,13 +1,13 @@
-case: swap: send title recipient before string (BUG locked)
+case: swap: send title recipient before string
 input: send title to p "hi"
 runner: STATEMENT
 env:
   var p: player
 suggestions: 2
   [#0] send title %title:STRING% to %who:PLAYER%
-    confidence: 0.400
+    confidence: 1.000
     issues:
-      - missing literal: 'to' (after token 2)
+      - reorder: 'to', 'p', 'hi'
   [#1] send title %title:STRING% with subtitle %sub:STRING% to %who:PLAYER%
     confidence: 0.400
     issues:

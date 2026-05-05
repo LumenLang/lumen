@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Comparator;
+import java.util.stream.Stream;
 
 /**
  * Reads and writes per-case baseline files under {@code headless/snapshots}, resolved relative to
@@ -36,6 +38,24 @@ public final class BaselineStore {
             return SnapshotSerializer.deserialize(Files.readString(path));
         } catch (IOException e) {
             throw new IllegalStateException("Failed to read baseline " + path, e);
+        }
+    }
+
+    /**
+     * Deletes the snapshots directory and all its contents.
+     */
+    public static void clear() {
+        if (!Files.exists(ROOT)) return;
+        try (Stream<Path> walk = Files.walk(ROOT)) {
+            walk.sorted(Comparator.reverseOrder()).forEach(p -> {
+                try {
+                    Files.deleteIfExists(p);
+                } catch (IOException e) {
+                    throw new IllegalStateException("Failed to delete " + p, e);
+                }
+            });
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to clear baseline directory " + ROOT, e);
         }
     }
 

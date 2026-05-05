@@ -41,6 +41,7 @@ public final class SimulatorReport implements AfterAllCallback {
         if (CAPTURED.isEmpty()) return;
         boolean baseline = Boolean.parseBoolean(System.getProperty("sim.baseline", "false"));
         if (baseline) {
+            BaselineStore.clear();
             for (Snapshot snap : CAPTURED) BaselineStore.write(snap);
             CAPTURED.sort(Comparator.comparing(Snapshot::caseName));
             SnapshotRecapRenderer.print(CAPTURED);
