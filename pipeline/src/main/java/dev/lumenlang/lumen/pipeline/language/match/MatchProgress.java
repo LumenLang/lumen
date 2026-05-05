@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * Tracks the progress and failure point of a single pattern match attempt.
@@ -31,14 +32,14 @@ public final class MatchProgress {
     private @Nullable Failure deepest;
     private @Nullable Incomplete incomplete;
 
-    void recordFailure(int tokenIndex, @Nullable PatternPart part, @Nullable String bindingId, @Nullable String reason, @NotNull List<Token> failedTokens) {
+    void recordFailure(int tokenIndex, @Nullable PatternPart part, @Nullable String bindingId, @Nullable Supplier<String> reason, @NotNull List<Token> failedTokens) {
         if (deepest != null && tokenIndex <= deepest.tokenIndex()) return;
         if (deepest != null && bindingId == null && deepest.bindingId() != null && tokenIndex - deepest.tokenIndex() <= 2)
             return;
         deepest = new Failure(tokenIndex, part, bindingId, reason, failedTokens);
     }
 
-    void recordBindingFailure(int tokenIndex, @NotNull String bindingId, @NotNull String reason, @NotNull List<Token> failedTokens) {
+    void recordBindingFailure(int tokenIndex, @NotNull String bindingId, @NotNull Supplier<String> reason, @NotNull List<Token> failedTokens) {
         bindingFailures.add(new BindingFailure(tokenIndex, bindingId, reason, failedTokens));
     }
 
@@ -113,7 +114,9 @@ public final class MatchProgress {
      * @return the human readable reason from the deepest failure, or null when the failure originated from a literal or structural match (which has no binding authored message)
      */
     public @Nullable String failedReason() {
-        return deepest == null ? null : deepest.reason();
+        if (deepest == null) return null;
+        Supplier<String> r = deepest.reason();
+        return r == null ? null : r.get();
     }
 
     /**
@@ -178,19 +181,27 @@ public final class MatchProgress {
      * @param failedTokens the tokens attempted at the failure point
      */
     public record Failure(int tokenIndex, @Nullable PatternPart part, @Nullable String bindingId,
-                          @Nullable String reason, @NotNull List<Token> failedTokens) {
+                          @Nullable Supplier<String> reason, @NotNull List<Token> failedTokens) {
     }
 
     /**
-     * A single type binding rejection captured during downstream failure analysis.
+     * A single type binding rejection captured during downstream failure analysis. The reason is
+     * resolved lazily on first {@link #reason()} call so speculative attempts that get discarded
+     * never pay for expensive message construction.
      *
-     * @param tokenIndex   the token index where the binding was attempted
-     * @param bindingId    the type binding id that rejected the input
-     * @param reason       a human readable rejection reason supplied by the binding
-     * @param failedTokens the tokens attempted at the rejection point
+     * @param tokenIndex      the token index where the binding was attempted
+     * @param bindingId       the type binding id that rejected the input
+     * @param reasonSupplier  lazy supplier of the rejection reason
+     * @param failedTokens    the tokens attempted at the rejection point
      */
-    public record BindingFailure(int tokenIndex, @NotNull String bindingId, @NotNull String reason,
+    public record BindingFailure(int tokenIndex, @NotNull String bindingId,
+                                 @NotNull Supplier<String> reasonSupplier,
                                  @NotNull List<Token> failedTokens) {
+
+        public @NotNull String reason() {
+            String value = reasonSupplier.get();
+            return value == null ? "" : value;
+        }
     }
 
     /**

@@ -12,41 +12,41 @@ public enum Verbosity {
      */
     OFF(0),
     /**
+     * Per-stage timing in milliseconds.
+     */
+    TIMING(1),
+    /**
      * Final ranking line for the run.
      */
-    RESULT(1),
+    RESULT(2),
     /**
      * Each surviving suggestion with its final confidence.
      */
-    RANKED(2),
+    RANKED(3),
     /**
      * Every scored candidate, including ones below the cut.
      */
-    SCORED(3),
+    SCORED(4),
     /**
      * Component breakdown of each candidate's score.
      */
-    BREAKDOWN(4),
+    BREAKDOWN(5),
     /**
      * Per-candidate issue derivation steps.
      */
-    ISSUES(5),
+    ISSUES(6),
     /**
      * Per-token alignment between input and pattern slots.
      */
-    MATCH(6),
+    MATCH(7),
     /**
      * Per-binding parse attempts with success or rejection reason.
      */
-    BIND(7),
+    BIND(8),
     /**
      * Candidate generation step including pruning decisions.
      */
-    CANDIDATES(8),
-    /**
-     * Per-stage timing in milliseconds.
-     */
-    TIMING(9),
+    CANDIDATES(9),
     /**
      * Internal scorer state and walk steps.
      */

@@ -436,7 +436,8 @@ public final class DefaultTypeBindings {
                 if (frozenMats.contains(normalized)) return normalized;
                 VarHandle ref = env.lookupVar(tokens.get(0));
                 if (ref != null) return ref;
-                throw new ParseFailureException(fuzzyMaterial(tokens.get(0), frozenMats));
+                String token = tokens.get(0);
+                throw new ParseFailureException(() -> fuzzyMaterial(token, frozenMats));
             }
 
             @Override
@@ -903,7 +904,7 @@ public final class DefaultTypeBindings {
                 VarHandle ref = env.lookupVar(raw);
                 if (ref != null)
                     return ref;
-                throw new ParseFailureException(fuzzyEntityType(raw, knownEntities));
+                throw new ParseFailureException(() -> fuzzyEntityType(raw, knownEntities));
             }
 
             @Override
@@ -1052,7 +1053,7 @@ public final class DefaultTypeBindings {
                         throw new ParseFailureException("'" + raw + "' is an item stack variable, not a material name");
                     return ref;
                 }
-                throw new ParseFailureException(fuzzyItem(raw, knownMaterials));
+                throw new ParseFailureException(() -> fuzzyItem(raw, knownMaterials));
             }
 
             @Override

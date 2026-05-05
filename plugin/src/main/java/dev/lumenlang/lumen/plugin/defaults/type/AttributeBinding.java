@@ -45,52 +45,23 @@ public final class AttributeBinding {
 
             @Override
             public int consumeCount(@NotNull List<String> tokens, @NotNull TypeEnv env) {
-                if (tokens.isEmpty())
-                    return 0;
-                String candidate = tokens.get(0);
-                String resolved = AttributeNames.resolve(candidate);
-                if (resolved != null)
-                    return 1;
-
-                if (tokens.size() >= 2) {
-                    String twoWord = tokens.get(0) + "_" + tokens.get(1);
-                    String resolved2 = AttributeNames.resolve(twoWord);
-                    if (resolved2 != null)
-                        return 2;
-                }
-                if (tokens.size() >= 3) {
-                    String threeWord = tokens.get(0) + "_" + tokens.get(1) + "_" + tokens.get(2);
-                    String resolved3 = AttributeNames.resolve(threeWord);
-                    if (resolved3 != null)
-                        return 3;
-                }
-
-                throw new ParseFailureException(fuzzyAttribute(candidate));
+                if (tokens.isEmpty()) return 0;
+                if (tokens.size() >= 3 && AttributeNames.resolve(tokens.get(0) + "_" + tokens.get(1) + "_" + tokens.get(2)) != null)
+                    return 3;
+                if (tokens.size() >= 2 && AttributeNames.resolve(tokens.get(0) + "_" + tokens.get(1)) != null)
+                    return 2;
+                return 1;
             }
 
             @Override
             public Object parse(@NotNull List<String> tokens, @NotNull TypeEnv env) {
                 if (tokens.isEmpty())
                     throw new ParseFailureException("expected an attribute name here");
-
-                if (tokens.size() >= 3) {
-                    String threeWord = tokens.get(0) + "_" + tokens.get(1) + "_" + tokens.get(2);
-                    String resolved3 = AttributeNames.resolve(threeWord);
-                    if (resolved3 != null)
-                        return resolved3;
-                }
-                if (tokens.size() >= 2) {
-                    String twoWord = tokens.get(0) + "_" + tokens.get(1);
-                    String resolved2 = AttributeNames.resolve(twoWord);
-                    if (resolved2 != null)
-                        return resolved2;
-                }
-
-                String resolved = AttributeNames.resolve(tokens.get(0));
-                if (resolved != null)
-                    return resolved;
-
-                throw new ParseFailureException(fuzzyAttribute(tokens.get(0)));
+                String joined = String.join("_", tokens);
+                String resolved = AttributeNames.resolve(joined);
+                if (resolved != null) return resolved;
+                String head = tokens.get(0);
+                throw new ParseFailureException(() -> fuzzyAttribute(head));
             }
 
             @Override

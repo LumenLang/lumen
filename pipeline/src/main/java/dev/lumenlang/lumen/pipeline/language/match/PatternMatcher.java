@@ -19,6 +19,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * Matches tokenized input against compiled {@link Pattern} objects.
@@ -245,7 +246,7 @@ public final class PatternMatcher {
             TypeBinding binding = types.get(ph.typeId());
             if (binding == null) {
                 if (progress != null)
-                    progress.recordFailure(ti, pp, ph.typeId(), "no type binding registered for '" + ph.typeId() + "'", List.of());
+                    progress.recordFailure(ti, pp, ph.typeId(), () -> "no type binding registered for '" + ph.typeId() + "'", List.of());
                 return -1;
             }
 
@@ -264,7 +265,7 @@ public final class PatternMatcher {
             List<Token> remaining = tokens.subList(ti, tokens.size());
             ConsumeOutcome consumeOutcome = safeConsumeCount(binding, remaining, env);
             int consumeCount = consumeOutcome.consumeCount();
-            String latestReason = consumeOutcome.reason();
+            Supplier<String> latestReason = consumeOutcome.reason();
 
             boolean skipGreedy = false;
             if (consumeOutcome.rejected()) {
@@ -285,6 +286,7 @@ public final class PatternMatcher {
                     }
                     latestReason = parsed.reason();
                 }
+                skipGreedy = true;
             }
 
             if (!skipGreedy) {
@@ -324,7 +326,7 @@ public final class PatternMatcher {
             if (progress != null) {
                 List<Token> fTokens = ti < tokens.size() ? List.of(tokens.get(ti)) : List.of();
                 int effectiveConsume = consumeCount > 0 ? consumeCount : 1;
-                String reason = latestReason != null ? latestReason : "'" + binding.id() + "' rejected the input";
+                Supplier<String> reason = latestReason != null ? latestReason : () -> "'" + binding.id() + "' rejected the input";
                 if (ti < tokens.size()) {
                     progress.recordBindingFailure(ti, binding.id(), reason, fTokens);
                     int cEnd = ti + effectiveConsume;
@@ -370,7 +372,7 @@ public final class PatternMatcher {
      * @param consumeCount the number of tokens to consume, or {@link #CONSUME_REJECTED} when rejected
      * @param reason       a binding authored rejection reason when rejected, otherwise null
      */
-    private record ConsumeOutcome(int consumeCount, @Nullable String reason) {
+    private record ConsumeOutcome(int consumeCount, @Nullable Supplier<String> reason) {
         boolean rejected() {
             return consumeCount == CONSUME_REJECTED;
         }
@@ -379,14 +381,14 @@ public final class PatternMatcher {
     /**
      * Result of a guarded {@link TypeBinding#parse} call.
      *
-     * <p>When {@link #failed()} is true, {@link #reason()} carries the binding authored
-     * rejection message. Otherwise {@code reason} is null and {@code value} is the
-     * parsed value.
+     * <p>When {@link #failed()} is true, {@link #reason()} carries a lazy supplier of the
+     * binding authored rejection message. Otherwise {@code reason} is null and {@code value}
+     * is the parsed value.
      *
      * @param value  the parsed value, or {@link #PARSE_FAILED} when rejected
-     * @param reason a binding authored rejection reason when failed, otherwise null
+     * @param reason lazy supplier of the binding authored rejection reason when failed, otherwise null
      */
-    private record ParseOutcome(@Nullable Object value, @Nullable String reason) {
+    private record ParseOutcome(@Nullable Object value, @Nullable Supplier<String> reason) {
         boolean failed() {
             return value == PARSE_FAILED;
         }
@@ -396,10 +398,10 @@ public final class PatternMatcher {
         try {
             return new ConsumeOutcome(binding.consumeCount(tokens, env), null);
         } catch (ParseFailureException e) {
-            return new ConsumeOutcome(CONSUME_REJECTED, messageOrInternalError(binding, e));
+            return new ConsumeOutcome(CONSUME_REJECTED, lazyMessage(binding, e));
         } catch (RuntimeException e) {
             LumenLogger.warning("Type binding '" + binding.id() + "' threw unexpected " + e.getClass().getSimpleName() + " in consumeCount: " + e.getMessage() + ". Treating as non-match.");
-            return new ConsumeOutcome(CONSUME_REJECTED, internalError(binding, e));
+            return new ConsumeOutcome(CONSUME_REJECTED, () -> internalError(binding, e));
         }
     }
 
@@ -407,17 +409,21 @@ public final class PatternMatcher {
         try {
             return new ParseOutcome(binding.parse(tokens, env), null);
         } catch (ParseFailureException e) {
-            LumenLogger.debug("PatternMatcher.match", "  parse threw: " + e.getMessage());
-            return new ParseOutcome(PARSE_FAILED, messageOrInternalError(binding, e));
+            if (LumenLogger.isFullDebug()) {
+                LumenLogger.debug("PatternMatcher.match", "  parse threw: " + e.getMessage());
+            }
+            return new ParseOutcome(PARSE_FAILED, lazyMessage(binding, e));
         } catch (RuntimeException e) {
             LumenLogger.warning("Type binding '" + binding.id() + "' threw unexpected " + e.getClass().getSimpleName() + " in parse: " + e.getMessage() + ". Treating as non-match.");
-            return new ParseOutcome(PARSE_FAILED, internalError(binding, e));
+            return new ParseOutcome(PARSE_FAILED, () -> internalError(binding, e));
         }
     }
 
-    private static @NotNull String messageOrInternalError(@NotNull TypeBinding binding, @NotNull RuntimeException e) {
-        String msg = e.getMessage();
-        return msg != null ? msg : internalError(binding, e);
+    private static @NotNull Supplier<String> lazyMessage(@NotNull TypeBinding binding, @NotNull RuntimeException e) {
+        return () -> {
+            String msg = e.getMessage();
+            return msg != null ? msg : internalError(binding, e);
+        };
     }
 
     private static @NotNull String internalError(@NotNull TypeBinding binding, @NotNull RuntimeException e) {
