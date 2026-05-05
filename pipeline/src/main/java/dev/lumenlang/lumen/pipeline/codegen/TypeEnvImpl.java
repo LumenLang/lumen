@@ -734,9 +734,7 @@ public final class TypeEnvImpl implements TypeEnv {
      * @param stored      whether the variable is persisted to disk ({@code true}) or in-memory only ({@code false})
      * @param scopeType   the scope type for scoped globals, or {@code null} if not scoped
      */
-    public record GlobalVarInfo(@NotNull String defaultJava, @NotNull String className, boolean scoped, boolean stored,
-                                @Nullable LumenType scopeType)
-            implements TypeEnv.GlobalInfo {
+    public record GlobalVarInfo(@NotNull String defaultJava, @NotNull String className, boolean scoped, boolean stored, @Nullable LumenType scopeType) implements TypeEnv.GlobalInfo {
     }
 
     /**

@@ -45,11 +45,6 @@ import java.util.Set;
  * <pre>
  * [stored] [scoped to &lt;type&gt;[s]] &lt;name&gt;: &lt;type&gt; [with default &lt;expr&gt;]
  * </pre>
- *
- * <p>Collections auto-default to empty instances. Nullable types auto-default to {@code null}.
- * Non-nullable, non-collection types without a default produce a parse error.
- *
- * <p>Exactly one {@code global:} block is allowed per script.
  */
 @Registration(order = -2000)
 @SuppressWarnings("unused")
@@ -252,6 +247,7 @@ public final class GlobalBlock implements BlockFormHandler {
         String javaExpr = scoped ? null : name;
         VarRef handle = new VarRef(name, declaredType, javaExpr, exprMetadata != null ? exprMetadata : Map.of(), info);
         env.registerGlobal(handle);
+        env.recordDeclaration(name, line, raw);
     }
 
     private void validateStoredTypeUnchanged(@NotNull String className, @NotNull String name, @NotNull LumenType declaredType, int line, @NotNull String raw) {
