@@ -685,6 +685,51 @@ public final class TypeEnvImpl implements TypeEnv {
     }
 
     /**
+     * Replaces every piece of mutable state on this env with the contents of {@code source},
+     * keeping {@code this} as the live instance for callers already holding it. Inverse of
+     * {@link #deepClone()}: a snapshot taken via {@code deepClone} can be passed here later
+     * to roll back any mutations made in between.
+     */
+    public void restoreFrom(@NotNull TypeEnvImpl source) {
+        this.sourceMap = source.sourceMap;
+        this.globals.clear();
+        this.globals.putAll(source.globals);
+        this.storedKeys.clear();
+        this.storedKeys.putAll(source.storedKeys);
+        this.storedBaseKeys.clear();
+        this.storedBaseKeys.putAll(source.storedBaseKeys);
+        this.storedScopeVars.clear();
+        this.storedScopeVars.putAll(source.storedScopeVars);
+        this.runtimeGlobals.clear();
+        this.runtimeGlobals.addAll(source.runtimeGlobals);
+        this.globalFields.clear();
+        this.globalFields.addAll(source.globalFields);
+        this.experimental.clear();
+        this.experimental.addAll(source.experimental);
+        this.globalVars.clear();
+        this.globalVars.addAll(source.globalVars);
+        this.configEntries.clear();
+        this.configEntries.addAll(source.configEntries);
+        this.rootVars.clear();
+        this.rootVars.putAll(source.rootVars);
+        this.dataSchemas.clear();
+        this.dataSchemas.putAll(source.dataSchemas);
+        this.nullStates.clear();
+        this.nullStates.putAll(source.nullStates);
+        this.nullableVarInfos.clear();
+        this.nullableVarInfos.putAll(source.nullableVarInfos);
+        this.nullAssignments.clear();
+        this.nullAssignments.putAll(source.nullAssignments);
+        this.declarationInfos.clear();
+        this.declarationInfos.putAll(source.declarationInfos);
+        this.warnings.clear();
+        this.warnings.addAll(source.warnings);
+        this.pendingNarrowings.clear();
+        this.pendingNarrowings.addAll(source.pendingNarrowings);
+        this.currentBlock = source.currentBlock == null ? null : source.currentBlock.deepClone();
+    }
+
+    /**
      * Tracks whether a nullable variable is currently known to be null or non-null.
      *
      * <p>This is a definite state, not a probability. {@code NULL} means the variable
