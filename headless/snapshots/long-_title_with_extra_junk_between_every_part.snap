@@ -1,0 +1,14 @@
+case: long: title with extra junk between every part
+input: send weird title nope "hi" foo to bar p
+runner: STATEMENT
+env:
+  var p: player
+suggestions: 2
+  [#0] send title %title:STRING% to %who:PLAYER%
+    confidence: 0.111
+    issues:
+      - missing literal: 'title' (after token 0)
+  [#1] send actionbar %text:STRING% to %who:PLAYER%
+    confidence: 0.111
+    issues:
+      - missing literal: 'actionbar' (after token 0)

@@ -1,0 +1,18 @@
+case: pileup: condition with typo, possessive missing, wrong op, extras
+input: p halth >> 10 maybe now
+runner: CONDITION
+env:
+  var p: player
+suggestions: 2
+  [#0] %p:PLAYER_POSSESSIVE% health %op:OP% %n:INT%
+    confidence: 0.475
+    issues:
+      - typo: 'halth' (col 2) should be 'health'
+      - type mismatch: 'p' (col 0) is not a PLAYER_POSSESSIVE ('p' must use possessive form (e.g. player's))
+      - extra tokens: 'maybe' (col 14), 'now' (col 20)
+  [#1] %e:ENTITY_POSSESSIVE% health %op:OP% %n:INT%
+    confidence: 0.475
+    issues:
+      - typo: 'halth' (col 2) should be 'health'
+      - type mismatch: 'p' (col 0) is not a ENTITY_POSSESSIVE ('p' must use possessive form (e.g. entity's))
+      - extra tokens: 'maybe' (col 14), 'now' (col 20)

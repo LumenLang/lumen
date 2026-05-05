@@ -1,0 +1,16 @@
+case: possessive: detached apostrophe 'p ' s'
+input: get p 's health
+runner: EXPRESSION
+env:
+  var p: player
+suggestions: 2
+  [#0] get %e:ENTITY_POSSESSIVE% %attr:ATTRIBUTE% [base] [value]
+    confidence: 0.560
+    issues:
+      - type mismatch: 'p' (col 4) is not a ENTITY_POSSESSIVE ('p' must use possessive form (e.g. entity's))
+      - type mismatch: ''' (col 6) is not a ATTRIBUTE (''' is not a valid attribute)
+  [#1] get %e:ENTITY_POSSESSIVE% %attr:ATTRIBUTE% (effective|total) [value]
+    confidence: 0.560
+    issues:
+      - type mismatch: 'p' (col 4) is not a ENTITY_POSSESSIVE ('p' must use possessive form (e.g. entity's))
+      - type mismatch: ''' (col 6) is not a ATTRIBUTE (''' is not a valid attribute)

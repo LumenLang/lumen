@@ -1,0 +1,16 @@
+case: pileup: kill many wrong tokens trailing
+input: kil mob now then later please immediately
+runner: STATEMENT
+env:
+  var mob: living_entity
+suggestions: 2
+  [#0] (kill|slay) %e:LIVING_ENTITY%
+    confidence: 0.429
+    issues:
+      - typo: 'kil' (col 0) should be 'kill'
+  [#1] (kill|slay) %who:PLAYER%
+    confidence: 0.166
+    issues:
+      - typo: 'kil' (col 0) should be 'kill'
+      - type mismatch: 'mob' (col 4) is not a PLAYER ('mob' is a living_entity, not a player)
+      - extra tokens: 'now' (col 8), 'then' (col 12), 'later' (col 17), 'please' (col 23), 'immediately' (col 30)

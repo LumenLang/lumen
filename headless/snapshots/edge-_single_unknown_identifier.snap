@@ -1,0 +1,5 @@
+case: edge: single unknown identifier
+input: xyzzy
+runner: STATEMENT
+env: <empty>
+suggestions: 0

@@ -1,0 +1,5 @@
+case: edge: single string literal
+input: "hello"
+runner: STATEMENT
+env: <empty>
+suggestions: 0

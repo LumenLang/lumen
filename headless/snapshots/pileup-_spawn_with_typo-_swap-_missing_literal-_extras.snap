@@ -1,0 +1,18 @@
+case: pileup: spawn with typo, swap, missing literal, extras
+input: spwan at l zomb extra now
+runner: STATEMENT
+env:
+  var l: location
+suggestions: 2
+  [#0] spawn %type:ENTITY_TYPE% [at] %loc:LOCATION%
+    confidence: 0.547
+    issues:
+      - typo: 'spwan' (col 0) should be 'spawn'
+      - type mismatch: 'at' (col 6) is not a ENTITY_TYPE ('at' is not a valid entity type)
+      - extra tokens: 'zomb' (col 11), 'extra' (col 16), 'now' (col 22)
+  [#1] spawn %type:ENTITY_TYPE% at %who:PLAYER%
+    confidence: 0.260
+    issues:
+      - typo: 'spwan' (col 0) should be 'spawn'
+      - type mismatch: 'at' (col 6) is not a ENTITY_TYPE ('at' is not a valid entity type)
+      - type mismatch: 'l' (col 9) is not a PLAYER ('l' is a location, not a player)

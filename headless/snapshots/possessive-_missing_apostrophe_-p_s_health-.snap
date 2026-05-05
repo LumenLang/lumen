@@ -1,0 +1,14 @@
+case: possessive: missing apostrophe 'p s health'
+input: get p s health
+runner: EXPRESSION
+env:
+  var p: player
+suggestions: 2
+  [#0] get %e:ENTITY_POSSESSIVE% health
+    confidence: 0.630
+    issues:
+      - type mismatch: 'p' (col 4) is not a ENTITY_POSSESSIVE ('p' must use possessive form (e.g. entity's))
+  [#1] get %e:ENTITY_POSSESSIVE% max health
+    confidence: 0.630
+    issues:
+      - type mismatch: 'p' (col 4) is not a ENTITY_POSSESSIVE ('p' must use possessive form (e.g. entity's))

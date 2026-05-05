@@ -1,0 +1,10 @@
+case: pileup: send title with everything broken
+input: sand titl with subitle hi sub p extra fade in 10
+runner: STATEMENT
+env:
+  var p: player
+suggestions: 1
+  [#0] %s:LIST% joined with %delim:STRING%
+    confidence: 0.080
+    issues:
+      - type mismatch: 'sand' (col 0) is not a LIST ('sand' does not exist in this scope)

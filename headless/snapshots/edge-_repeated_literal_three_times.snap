@@ -1,0 +1,13 @@
+case: edge: repeated literal three times
+input: set set set
+runner: STATEMENT
+env: <empty>
+suggestions: 2
+  [#0] set %b:BLOCK% data [to] %data:STRING%
+    confidence: 0.730
+    issues:
+      - type mismatch: 'set' (col 4) is not a BLOCK ('set' does not exist in this scope)
+  [#1] set %i:ITEMSTACK_POSSESSIVE% lore [to] %lore:STRING%
+    confidence: 0.730
+    issues:
+      - type mismatch: 'set' (col 4) is not a ITEMSTACK_POSSESSIVE ('set' must use possessive form (e.g. item's))

@@ -1,0 +1,17 @@
+case: pileup: set with garbage tokens between every part
+input: Set foo count bar to baz 5 qux
+runner: STATEMENT
+env:
+  var count: int
+suggestions: 2
+  [#0] set %i:ITEMSTACK_POSSESSIVE% amount [to] %amt:INT%
+    confidence: 0.630
+    issues:
+      - typo: 'count' (col 8) should be 'amount'
+      - type mismatch: 'foo' (col 4) is not a ITEMSTACK_POSSESSIVE ('foo' must use possessive form (e.g. item's))
+      - extra tokens: 'qux' (col 27)
+  [#1] set %who:PLAYER_POSSESSIVE% food [level] [to] %val:INT%
+    confidence: 0.255
+    issues:
+      - typo: 'foo' (col 4) should be 'food'
+      - type mismatch: 'food' (col 0) is not a PLAYER_POSSESSIVE ('food' must use possessive form (e.g. player's))
