@@ -210,10 +210,13 @@ public final class GlobalBlock implements BlockFormHandler {
             }
             idx++;
             if (idx >= tokens.size()) {
+                int caret = tokens.get(idx - 1).end();
                 throw new DiagnosticException(LumenDiagnostic.error("Expected expression after 'with default'")
                         .at(line, raw)
-                        .highlight(tokens.get(idx - 1).start(), tokens.get(idx - 1).end())
+                        .highlight(caret, caret + 1)
                         .label("missing default value expression")
+                        .note("expected a value of type '" + declaredType.displayName() + "' here")
+                        .help("add a literal or expression that produces a '" + declaredType.displayName() + "'")
                         .build());
             }
             exprTokens = tokens.subList(idx, tokens.size());
@@ -293,7 +296,7 @@ public final class GlobalBlock implements BlockFormHandler {
     private @NotNull String resolveDefault(@NotNull LumenType declaredType, @Nullable List<Token> exprTokens, @NotNull String name, int line, @NotNull String raw, boolean stored, @NotNull TypeEnvImpl env, @NotNull HandlerContext ctx) {
         if (exprTokens != null) {
             validateDefaultType(declaredType, exprTokens, name, line, raw, env, ctx);
-            return resolveExprJava(exprTokens, line, raw, env, ctx);
+            return resolveExprJava(exprTokens, line, raw, env, ctx, declaredType);
         }
 
         if (declaredType instanceof CollectionType ct) {
@@ -335,7 +338,7 @@ public final class GlobalBlock implements BlockFormHandler {
         }
     }
 
-    private @NotNull String resolveExprJava(@NotNull List<Token> exprTokens, int line, @NotNull String raw, @NotNull TypeEnvImpl env, @NotNull HandlerContext ctx) {
+    private @NotNull String resolveExprJava(@NotNull List<Token> exprTokens, int line, @NotNull String raw, @NotNull TypeEnvImpl env, @NotNull HandlerContext ctx, @NotNull LumenType declaredType) {
         Expr expr = ExprParser.parse(exprTokens, env);
         if (!(expr instanceof Expr.RawExpr)) return resolveSimpleExprJava(expr, env);
 
@@ -344,10 +347,42 @@ public final class GlobalBlock implements BlockFormHandler {
 
         List<Token> rawTokens = ((Expr.RawExpr) expr).tokens();
         List<PatternSimulator.Suggestion> suggestions = PatternSimulator.suggestExpressions(rawTokens, PatternRegistry.instance(), env);
-        if (!suggestions.isEmpty()) {
-            throw new DiagnosticException(SuggestionDiagnostics.build("Cannot resolve default expression", line, raw, rawTokens, suggestions));
+        LumenDiagnostic diag = !suggestions.isEmpty()
+                ? SuggestionDiagnostics.build("Cannot resolve default expression", line, raw, rawTokens, suggestions, env)
+                : SuggestionDiagnostics.buildNoSuggestion("Cannot resolve default expression", line, raw, rawTokens, env);
+        throw new DiagnosticException(annotateExpectedType(diag, declaredType));
+    }
+
+    private static @NotNull LumenDiagnostic annotateExpectedType(@NotNull LumenDiagnostic original, @NotNull LumenType declaredType) {
+        LumenDiagnostic.Builder b = LumenDiagnostic.error(original.title())
+                .at(original.line(), original.sourceText());
+        if (original.columnStart() >= 0 && original.columnEnd() > original.columnStart()) {
+            b.highlight(original.columnStart(), original.columnEnd());
         }
-        throw new DiagnosticException(SuggestionDiagnostics.buildNoSuggestion("Cannot resolve default expression", line, raw, rawTokens));
+        String label = typeSpecificLabel(declaredType, original.underlineLabel());
+        if (label != null) b.label(label);
+        for (LumenDiagnostic.SubHighlight sh : original.subHighlights()) {
+            b.subHighlight(sh.columnStart(), sh.columnEnd(), sh.label());
+        }
+        for (LumenDiagnostic.ContextLine cl : original.contextLines()) {
+            b.context(cl.line(), cl.source(), cl.columnStart(), cl.columnEnd(), cl.label());
+        }
+        b.note("expected a value of type '" + declaredType.displayName() + "'");
+        for (String n : original.notes()) b.note(n);
+        for (String h : original.helpLines()) b.help(h);
+        return b.build();
+    }
+
+    private static @Nullable String typeSpecificLabel(@NotNull LumenType type, @Nullable String fallback) {
+        LumenType unwrapped = type.unwrap();
+        if (!(unwrapped instanceof PrimitiveType p)) return fallback;
+        return switch (p) {
+            case STRING -> "not a string literal, wrap it in \"...\"";
+            case BOOLEAN -> "not a boolean, expected 'true' or 'false'";
+            case INT, LONG -> "not a number";
+            case DOUBLE, FLOAT -> "not a decimal number";
+            default -> fallback;
+        };
     }
 
     private @Nullable Map<String, Object> resolveExprMetadata(@Nullable List<Token> exprTokens, @NotNull TypeEnvImpl env, @NotNull HandlerContext ctx) {

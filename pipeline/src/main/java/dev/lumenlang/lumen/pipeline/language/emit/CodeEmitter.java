@@ -147,29 +147,30 @@ public final class CodeEmitter {
         for (LumenDiagnostic d : preErrors) {
             if (seenLines.add(d.line())) errorDiags.add(d);
         }
-        List<LumenScriptException> rawOnly = new ArrayList<>();
+        List<LumenScriptException> keptErrors = new ArrayList<>();
         for (LumenScriptException e : errors) {
             LumenDiagnostic d = e.diagnostic();
-            if (d != null) {
-                if (seenLines.add(d.line())) errorDiags.add(d);
-            } else {
-                if (e.line() <= 0 || seenLines.add(e.line())) rawOnly.add(e);
+            int lineKey = d != null ? d.line() : e.line();
+            if (lineKey <= 0 || seenLines.add(lineKey)) {
+                keptErrors.add(e);
+                if (d != null) errorDiags.add(d);
             }
         }
 
-        if (!errorDiags.isEmpty() || !rawOnly.isEmpty()) {
-            if (errorDiags.size() == 1 && rawOnly.isEmpty() && warnings.isEmpty() && preErrors.isEmpty()) {
-                throw new DiagnosticException(errorDiags.get(0));
+        if (!errorDiags.isEmpty() || !keptErrors.isEmpty()) {
+            if (keptErrors.size() == 1 && warnings.isEmpty() && preErrors.isEmpty()) {
+                throw keptErrors.get(0);
             }
-            if (rawOnly.isEmpty()) {
+            boolean allHaveDiags = keptErrors.stream().allMatch(e -> e.diagnostic() != null);
+            if (allHaveDiags) {
                 List<LumenDiagnostic> all = new ArrayList<>(warnings);
                 all.addAll(errorDiags);
                 throw LumenScriptException.raw(LumenDiagnostic.formatGroup(all));
             }
             StringBuilder sb = new StringBuilder();
-            sb.append(errorDiags.size() + rawOnly.size()).append(" error(s) found:\n");
-            for (LumenDiagnostic d : errorDiags) sb.append('\n').append(d.format());
-            for (LumenScriptException e : rawOnly) sb.append('\n').append(e.getMessage());
+            sb.append(keptErrors.size() + preErrors.size()).append(" error(s) found:\n");
+            for (LumenDiagnostic d : preErrors) sb.append('\n').append(d.format());
+            for (LumenScriptException e : keptErrors) sb.append('\n').append(e.getMessage());
             throw LumenScriptException.raw(sb.toString());
         }
         if (!warnings.isEmpty()) {
