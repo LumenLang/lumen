@@ -1,8 +1,10 @@
 package dev.lumenlang.lumen.pipeline.language.tokenization;
 
+import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -31,6 +33,15 @@ import java.util.List;
  */
 public final class Tokenizer {
 
+    private final List<LumenDiagnostic> diagnostics = new ArrayList<>();
+
+    /**
+     * Diagnostics produced during the most recent {@link #tokenize(String)} call.
+     */
+    public @NotNull List<LumenDiagnostic> diagnostics() {
+        return Collections.unmodifiableList(diagnostics);
+    }
+
     /**
      * Tokenizes an entire multi-line source string.
      *
@@ -41,6 +52,7 @@ public final class Tokenizer {
      * @return an ordered list of tokenized lines; blank and comment lines are excluded
      */
     public List<Line> tokenize(String src) {
+        diagnostics.clear();
         List<Line> lines = new ArrayList<>();
         String[] split = src.split("\\r?\\n", -1);
 
@@ -90,14 +102,30 @@ public final class Tokenizer {
             if (c == '"') {
                 int j = i + 1;
                 StringBuilder sb = new StringBuilder();
-                while (j < s.length() && s.charAt(j) != '"') {
+                boolean closed = false;
+                while (j < s.length()) {
                     if (s.charAt(j) == '\\' && j + 1 < s.length()) {
                         j++;
+                        sb.append(s.charAt(j));
+                        j++;
+                        continue;
+                    }
+                    if (s.charAt(j) == '"') {
+                        closed = true;
+                        break;
                     }
                     sb.append(s.charAt(j));
                     j++;
                 }
-                j++;
+                if (!closed) {
+                    diagnostics.add(LumenDiagnostic.error("unterminated string literal")
+                            .at(line, s)
+                            .highlight(start, s.length())
+                            .label("string opens here, never closes")
+                            .help("add a closing '\"' before the end of the line")
+                            .build());
+                }
+                if (closed) j++;
                 out.add(new Token(TokenKind.STRING, sb.toString(), line, start, offset + j));
                 i = j;
                 continue;

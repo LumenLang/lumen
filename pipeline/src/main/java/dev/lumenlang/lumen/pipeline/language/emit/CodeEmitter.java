@@ -37,7 +37,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -105,7 +107,7 @@ public final class CodeEmitter {
             env.addWarning(d);
         }
         Node script = parser.parse(tokenizedLines);
-        generate(script, reg, env, ctx, out);
+        generate(script, reg, env, ctx, out, tokenizer.diagnostics());
     }
 
     /**
@@ -123,30 +125,55 @@ public final class CodeEmitter {
             @NotNull TypeEnvImpl env,
             @NotNull CodegenContextImpl ctx,
             @NotNull JavaBuilder out) {
+        generate(root, reg, env, ctx, out, List.of());
+    }
+
+    private static void generate(
+            @NotNull Node root,
+            @NotNull PatternRegistry reg,
+            @NotNull TypeEnvImpl env,
+            @NotNull CodegenContextImpl ctx,
+            @NotNull JavaBuilder out,
+            @NotNull List<LumenDiagnostic> preErrors) {
         List<LumenScriptException> errors = new ArrayList<>();
         emitChildren(root, null, reg, env, ctx, out, errors);
 
-        if (!errors.isEmpty()) {
-            if (errors.size() == 1 && env.warnings().isEmpty()) {
-                throw errors.get(0);
+        Set<Integer> seenLines = new HashSet<>();
+        List<LumenDiagnostic> warnings = new ArrayList<>();
+        for (LumenDiagnostic d : env.warnings()) {
+            if (seenLines.add(d.line())) warnings.add(d);
+        }
+        List<LumenDiagnostic> errorDiags = new ArrayList<>();
+        for (LumenDiagnostic d : preErrors) {
+            if (seenLines.add(d.line())) errorDiags.add(d);
+        }
+        List<LumenScriptException> rawOnly = new ArrayList<>();
+        for (LumenScriptException e : errors) {
+            LumenDiagnostic d = e.diagnostic();
+            if (d != null) {
+                if (seenLines.add(d.line())) errorDiags.add(d);
+            } else {
+                if (e.line() <= 0 || seenLines.add(e.line())) rawOnly.add(e);
             }
-            List<LumenDiagnostic> diagnostics = new ArrayList<>(env.warnings());
-            for (LumenScriptException e : errors) {
-                LumenDiagnostic d = e.diagnostic();
-                if (d != null) diagnostics.add(d);
+        }
+
+        if (!errorDiags.isEmpty() || !rawOnly.isEmpty()) {
+            if (errorDiags.size() == 1 && rawOnly.isEmpty() && warnings.isEmpty() && preErrors.isEmpty()) {
+                throw new DiagnosticException(errorDiags.get(0));
             }
-            if (diagnostics.size() == errors.size() + env.warnings().size()) {
-                throw LumenScriptException.raw(LumenDiagnostic.formatGroup(diagnostics));
+            if (rawOnly.isEmpty()) {
+                List<LumenDiagnostic> all = new ArrayList<>(warnings);
+                all.addAll(errorDiags);
+                throw LumenScriptException.raw(LumenDiagnostic.formatGroup(all));
             }
             StringBuilder sb = new StringBuilder();
-            sb.append(errors.size()).append(" error(s) found:\n");
-            for (LumenScriptException e : errors) {
-                sb.append('\n').append(e.getMessage());
-            }
+            sb.append(errorDiags.size() + rawOnly.size()).append(" error(s) found:\n");
+            for (LumenDiagnostic d : errorDiags) sb.append('\n').append(d.format());
+            for (LumenScriptException e : rawOnly) sb.append('\n').append(e.getMessage());
             throw LumenScriptException.raw(sb.toString());
         }
-        if (!env.warnings().isEmpty()) {
-            LumenLogger.warning("[Script " + ctx.scriptName() + "] " + env.warnings().size() + " warning(s):\n" + LumenDiagnostic.formatGroup(env.warnings()));
+        if (!warnings.isEmpty()) {
+            LumenLogger.warning("[Script " + ctx.scriptName() + "] " + warnings.size() + " warning(s):\n" + LumenDiagnostic.formatGroup(warnings));
         }
     }
 
