@@ -26,6 +26,7 @@ import dev.lumenlang.lumen.pipeline.language.pattern.registered.RegisteredBlockM
 import dev.lumenlang.lumen.pipeline.language.pattern.registered.RegisteredPatternMatch;
 import dev.lumenlang.lumen.pipeline.language.simulator.PatternSimulator;
 import dev.lumenlang.lumen.pipeline.language.simulator.suggestions.SuggestionDiagnostics;
+import dev.lumenlang.lumen.pipeline.language.tokenization.IndentDiagnostics;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Line;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Tokenizer;
@@ -37,8 +38,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -48,7 +47,6 @@ import java.util.concurrent.Future;
  */
 public final class CodeEmitter {
 
-    private static final Set<String> EMITTED_WARNINGS = ConcurrentHashMap.newKeySet();
     private static volatile int parallelParseThreads = 3;
     private static volatile ExecutorService parallelPool;
 
@@ -103,10 +101,8 @@ public final class CodeEmitter {
         LumenParser parser = new LumenParser();
         List<Line> tokenizedLines = tokenizer.tokenize(src);
         env.setSourceMap(new SourceMapImpl(src, tokenizedLines));
-        for (String warning : Tokenizer.checkIndentConsistency(tokenizedLines, ctx.scriptName())) {
-            if (EMITTED_WARNINGS.add(warning)) {
-                LumenLogger.warning(warning);
-            }
+        for (LumenDiagnostic d : IndentDiagnostics.analyze(src)) {
+            env.addWarning(d);
         }
         Node script = parser.parse(tokenizedLines);
         generate(script, reg, env, ctx, out);

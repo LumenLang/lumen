@@ -3,9 +3,7 @@ package dev.lumenlang.lumen.pipeline.language.tokenization;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Splits raw Lumen script source text into a list of {@link Line} objects, each containing
@@ -167,59 +165,5 @@ public final class Tokenizer {
             }
         }
         return line;
-    }
-
-    /**
-     * Checks the tokenized lines for indentation consistency and returns any
-     * warnings about inconsistent style.
-     *
-     * <p>This checks two things:
-     * <ol>
-     *   <li>Whether different indent increments are used (e.g. sometimes +2, sometimes +4)</li>
-     *   <li>Whether any line's indent level is not a multiple of the dominant indent width</li>
-     * </ol>
-     *
-     * <p>This method never affects parsing. It only produces human-readable warning messages.
-     *
-     * @param lines      the tokenized lines to check
-     * @param scriptName the script file name for the warning message
-     * @return a list of warning messages (empty if indentation is consistent)
-     */
-    public static @NotNull List<String> checkIndentConsistency(@NotNull List<Line> lines,
-                                                               @NotNull String scriptName) {
-        if (lines.size() < 2) return List.of();
-
-        Map<Integer, Integer> incrementCounts = new HashMap<>();
-        for (int i = 1; i < lines.size(); i++) {
-            int diff = lines.get(i).indent() - lines.get(i - 1).indent();
-            if (diff > 0) {
-                incrementCounts.merge(diff, 1, Integer::sum);
-            }
-        }
-        if (incrementCounts.isEmpty()) return List.of();
-
-        int dominantIncrement = incrementCounts.entrySet().stream()
-                .max(Map.Entry.comparingByValue())
-                .get()
-                .getKey();
-
-        List<String> warnings = new ArrayList<>();
-
-        if (incrementCounts.size() > 1) {
-            warnings.add("[Script " + scriptName + "] Inconsistent indentation: "
-                    + "found indent widths of " + incrementCounts.keySet()
-                    + ", expected a consistent indent width of " + dominantIncrement + " spaces");
-        }
-
-        for (Line line : lines) {
-            if (line.indent() > 0 && line.indent() % dominantIncrement != 0) {
-                warnings.add("[Script " + scriptName + "] Line " + line.lineNumber()
-                        + ": indent of " + line.indent()
-                        + " spaces is not a multiple of the detected indent width ("
-                        + dominantIncrement + ")");
-            }
-        }
-
-        return warnings;
     }
 }
