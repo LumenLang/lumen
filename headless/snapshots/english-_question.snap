@@ -1,0 +1,11 @@
+case: english: question
+input: How do I give a player a diamond sword in Lumen?
+runner: STATEMENT
+env: <empty>
+suggestions: 1
+  [#0] (show|open) %inv:INVENTORY% for %who:PLAYER%
+    confidence: 0.050
+    issues:
+      - typo: 'How' (col 0) should be 'show'
+      - type mismatch: 'do' (col 4) is not a INVENTORY ('do' does not exist in this scope)
+      - type mismatch: 'I' (col 7) is not a PLAYER ('I' does not exist in this scope)

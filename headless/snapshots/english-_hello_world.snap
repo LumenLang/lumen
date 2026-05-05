@@ -1,0 +1,9 @@
+case: english: hello world
+input: hello world
+runner: STATEMENT
+env: <empty>
+suggestions: 1
+  [#0] [get] %b:BLOCK% world
+    confidence: 0.730
+    issues:
+      - type mismatch: 'hello' (col 0) is not a BLOCK ('hello' does not exist in this scope)

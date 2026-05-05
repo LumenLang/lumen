@@ -1,0 +1,13 @@
+case: bash: subshell
+input: name=$(whoami)
+runner: STATEMENT
+env: <empty>
+suggestions: 2
+  [#0] name[:] %n:STRING%
+    confidence: 0.500
+    issues:
+      - typo: 'name' (col 0) should be 'name:'
+  [#1] namespace[:] %ns:STRING%
+    confidence: 0.500
+    issues:
+      - typo: 'name' (col 0) should be 'namespace'

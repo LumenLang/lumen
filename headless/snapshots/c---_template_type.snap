@@ -1,0 +1,5 @@
+case: c++: template type
+input: std::vector<Player> players;
+runner: STATEMENT
+env: <empty>
+suggestions: 0

@@ -1,0 +1,5 @@
+case: ini: section
+input: [player.config]
+runner: STATEMENT
+env: <empty>
+suggestions: 0

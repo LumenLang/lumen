@@ -1,0 +1,5 @@
+case: js: template literal
+input: send(`hello ${player.name}`)
+runner: STATEMENT
+env: <empty>
+suggestions: 0

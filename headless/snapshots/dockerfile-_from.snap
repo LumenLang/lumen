@@ -1,0 +1,5 @@
+case: dockerfile: from
+input: FROM openjdk:17-jdk
+runner: STATEMENT
+env: <empty>
+suggestions: 0

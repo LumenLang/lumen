@@ -1,0 +1,5 @@
+case: perl: print with newline
+input: print "hello\\n";
+runner: STATEMENT
+env: <empty>
+suggestions: 0

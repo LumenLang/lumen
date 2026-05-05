@@ -1,0 +1,13 @@
+case: skript: curly local var assignment
+input: set {_score} to 0
+runner: STATEMENT
+env: <empty>
+suggestions: 2
+  [#0] set %name:IDENT% to %val:EXPR%
+    confidence: 0.750
+    issues:
+      - handler rejected: Variable name '{' must start with a letter or digit, but starts with '{'
+  [#1] set %e:ENTITY_POSSESSIVE% %attr:ATTRIBUTE% [base] [value] [to] %val:DOUBLE%
+    confidence: 0.730
+    issues:
+      - type mismatch: 'to' (col 13) is not a ATTRIBUTE ('to' is not a valid attribute)

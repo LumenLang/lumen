@@ -1,0 +1,5 @@
+case: english: when X then Y
+input: when a player joins the server send them a welcome message
+runner: STATEMENT
+env: <empty>
+suggestions: 0

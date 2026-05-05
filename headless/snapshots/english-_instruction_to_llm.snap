@@ -1,0 +1,11 @@
+case: english: instruction to llm
+input: write a script that heals the player on join
+runner: STATEMENT
+env: <empty>
+suggestions: 1
+  [#0] (whitelist|allowlist) %who:OFFLINE_PLAYER%
+    confidence: 0.102
+    issues:
+      - typo: 'write' (col 0) should be 'whitelist'
+      - type mismatch: 'a' (col 6) is not a OFFLINE_PLAYER ('a' does not exist in this scope)
+      - extra tokens: 'script' (col 8), 'that' (col 15), 'heals' (col 20), 'the' (col 26), 'player' (col 30), 'on' (col 37), 'join' (col 40)

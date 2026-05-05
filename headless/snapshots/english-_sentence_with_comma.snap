@@ -1,0 +1,5 @@
+case: english: sentence with comma
+input: First, kill the player, then send a message
+runner: STATEMENT
+env: <empty>
+suggestions: 0

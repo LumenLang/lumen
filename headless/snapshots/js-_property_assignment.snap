@@ -1,0 +1,5 @@
+case: js: property assignment
+input: player.health = 20
+runner: STATEMENT
+env: <empty>
+suggestions: 0

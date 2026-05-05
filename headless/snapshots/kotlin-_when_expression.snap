@@ -1,0 +1,5 @@
+case: kotlin: when expression
+input: when (player.health) {
+runner: BLOCK
+env: <empty>
+suggestions: 0

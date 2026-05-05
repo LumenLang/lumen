@@ -5,11 +5,13 @@ import dev.lumenlang.lumen.headless.sim.snapshot.Snapshot;
 import dev.lumenlang.lumen.headless.sim.snapshot.SnapshotComparator;
 import dev.lumenlang.lumen.headless.sim.snapshot.SnapshotDiff;
 import dev.lumenlang.lumen.headless.sim.snapshot.SnapshotDiffRenderer;
+import dev.lumenlang.lumen.headless.sim.snapshot.SnapshotRecapRenderer;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -40,7 +42,8 @@ public final class SimulatorReport implements AfterAllCallback {
         boolean baseline = Boolean.parseBoolean(System.getProperty("sim.baseline", "false"));
         if (baseline) {
             for (Snapshot snap : CAPTURED) BaselineStore.write(snap);
-            System.out.println();
+            CAPTURED.sort(Comparator.comparing(Snapshot::caseName));
+            SnapshotRecapRenderer.print(CAPTURED);
             System.out.println("wrote " + CAPTURED.size() + " baseline snapshot(s)");
             CAPTURED.clear();
             return;

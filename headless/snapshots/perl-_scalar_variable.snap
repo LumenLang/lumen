@@ -1,0 +1,10 @@
+case: perl: scalar variable
+input: $count = 5;
+runner: STATEMENT
+env: <empty>
+suggestions: 1
+  [#0] round %x:NUMBER%
+    confidence: 0.710
+    issues:
+      - extra tokens: '$' (col 0), '=' (col 7), ';' (col 10)
+      - typo: 'count' (col 1) should be 'round'

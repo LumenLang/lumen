@@ -1,0 +1,5 @@
+case: java: try with resources
+input: try (var p = bukkit.getPlayer()) {
+runner: BLOCK
+env: <empty>
+suggestions: 0

@@ -19,7 +19,7 @@ public final class SnapshotSerializer {
     public static @NotNull String serialize(@NotNull Snapshot snap) {
         StringBuilder sb = new StringBuilder();
         sb.append("case: ").append(snap.caseName()).append('\n');
-        sb.append("input: ").append(snap.input()).append('\n');
+        sb.append("input: ").append(escape(snap.input())).append('\n');
         sb.append("runner: ").append(snap.runner()).append('\n');
         if (snap.env().isEmpty()) {
             sb.append("env: <empty>\n");
@@ -49,7 +49,7 @@ public final class SnapshotSerializer {
         String[] lines = text.split("\n", -1);
         int i = 0;
         String caseName = readKv(lines[i++], "case");
-        String input = readKv(lines[i++], "input");
+        String input = unescape(readKv(lines[i++], "input"));
         String runner = readKv(lines[i++], "runner");
         List<String> env = new ArrayList<>();
         if (lines[i].equals("env: <empty>")) {
@@ -82,6 +82,39 @@ public final class SnapshotSerializer {
 
     private static @NotNull String formatConfidence(double v) {
         return String.format("%.3f", v);
+    }
+
+    private static @NotNull String escape(@NotNull String s) {
+        StringBuilder sb = new StringBuilder(s.length());
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            switch (c) {
+                case '\\' -> sb.append("\\\\");
+                case '\n' -> sb.append("\\n");
+                case '\r' -> sb.append("\\r");
+                case '\t' -> sb.append("\\t");
+                default -> sb.append(c);
+            }
+        }
+        return sb.toString();
+    }
+
+    private static @NotNull String unescape(@NotNull String s) {
+        StringBuilder sb = new StringBuilder(s.length());
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (c == '\\' && i + 1 < s.length()) {
+                char next = s.charAt(++i);
+                switch (next) {
+                    case 'n' -> sb.append('\n');
+                    case 'r' -> sb.append('\r');
+                    case 't' -> sb.append('\t');
+                    case '\\' -> sb.append('\\');
+                    default -> sb.append(next);
+                }
+            } else sb.append(c);
+        }
+        return sb.toString();
     }
 
     private static @NotNull String readKv(@NotNull String line, @NotNull String key) {

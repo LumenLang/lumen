@@ -1,0 +1,10 @@
+case: bash: var assignment
+input: count=5
+runner: STATEMENT
+env: <empty>
+suggestions: 1
+  [#0] round %x:NUMBER%
+    confidence: 0.870
+    issues:
+      - extra tokens: '=' (col 5)
+      - typo: 'count' (col 0) should be 'round'

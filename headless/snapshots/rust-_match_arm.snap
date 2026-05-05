@@ -1,0 +1,5 @@
+case: rust: match arm
+input: match player.health() {
+runner: BLOCK
+env: <empty>
+suggestions: 0

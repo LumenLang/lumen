@@ -1,0 +1,15 @@
+case: c: variable declaration
+input: int count = 5;
+runner: STATEMENT
+env: <empty>
+suggestions: 2
+  [#0] round %x:NUMBER%
+    confidence: 0.710
+    issues:
+      - extra tokens: 'int' (col 0), '=' (col 10), ';' (col 13)
+      - typo: 'count' (col 4) should be 'round'
+  [#1] %s:EXPR% as integer
+    confidence: 0.475
+    issues:
+      - typo: 'int' (col 0) should be 'integer'
+      - type mismatch: 'integer' (col 0) is not a EXPR ('EXPR' rejected the input)

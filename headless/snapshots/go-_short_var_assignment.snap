@@ -1,0 +1,10 @@
+case: go: short var assignment
+input: count := 5
+runner: STATEMENT
+env: <empty>
+suggestions: 1
+  [#0] round %x:NUMBER%
+    confidence: 0.790
+    issues:
+      - extra tokens: ':' (col 6), '=' (col 7)
+      - typo: 'count' (col 0) should be 'round'

@@ -1,0 +1,5 @@
+case: bash: echo
+input: echo hello
+runner: STATEMENT
+env: <empty>
+suggestions: 0

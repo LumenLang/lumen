@@ -1,0 +1,5 @@
+case: c++: namespace scope
+input: bukkit::server.kill(player);
+runner: STATEMENT
+env: <empty>
+suggestions: 0

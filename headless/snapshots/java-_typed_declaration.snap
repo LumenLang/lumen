@@ -1,0 +1,5 @@
+case: java: typed declaration
+input: Player p = bukkit.getPlayer("alice");
+runner: STATEMENT
+env: <empty>
+suggestions: 0

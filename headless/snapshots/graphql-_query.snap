@@ -1,0 +1,5 @@
+case: graphql: query
+input: query { player(name: "alice") { health } }
+runner: STATEMENT
+env: <empty>
+suggestions: 0

@@ -1,0 +1,5 @@
+case: php: variable assignment
+input: $player->setHealth(20);
+runner: STATEMENT
+env: <empty>
+suggestions: 0

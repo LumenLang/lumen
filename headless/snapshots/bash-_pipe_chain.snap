@@ -1,0 +1,15 @@
+case: bash: pipe chain
+input: ps aux | grep java | wc -l
+runner: STATEMENT
+env: <empty>
+suggestions: 2
+  [#0] %s:EXPR% as number
+    confidence: 0.102
+    issues:
+      - typo: 'ps' (col 0) should be 'as'
+      - type mismatch: 'as' (col 0) is not a EXPR ('EXPR' rejected the input)
+  [#1] %s:EXPR% as integer
+    confidence: 0.102
+    issues:
+      - typo: 'ps' (col 0) should be 'as'
+      - type mismatch: 'as' (col 0) is not a EXPR ('EXPR' rejected the input)

@@ -1,0 +1,11 @@
+case: skript: function call colon
+input: function greet(p: player):
+runner: STATEMENT
+env: <empty>
+suggestions: 1
+  [#0] reset %e:ENTITY_POSSESSIVE% %attr:ATTRIBUTE%
+    confidence: 0.135
+    issues:
+      - typo: 'greet' (col 9) should be 'reset'
+      - type mismatch: '(' (col 14) is not a ENTITY_POSSESSIVE ('(' must use possessive form (e.g. entity's))
+      - type mismatch: 'p' (col 15) is not a ATTRIBUTE ('p' is not a valid attribute)

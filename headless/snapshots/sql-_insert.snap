@@ -1,0 +1,5 @@
+case: sql: insert
+input: INSERT INTO players (name, health) VALUES ("alice", 20)
+runner: STATEMENT
+env: <empty>
+suggestions: 0

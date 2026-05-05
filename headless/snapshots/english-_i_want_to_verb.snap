@@ -1,0 +1,5 @@
+case: english: i want to verb
+input: I want to send a message to every player on the server
+runner: STATEMENT
+env: <empty>
+suggestions: 0

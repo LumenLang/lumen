@@ -1,0 +1,14 @@
+case: skript: list expression
+input: add player to {team::red::*}
+runner: STATEMENT
+env: <empty>
+suggestions: 2
+  [#0] add %n:INT% to %name:EXPR%
+    confidence: 0.730
+    issues:
+      - type mismatch: 'player' (col 4) is not a INT ('player' is not a valid integer)
+  [#1] add %item:ITEMSTACK% to %b:BLOCK% inventory
+    confidence: 0.610
+    issues:
+      - type mismatch: 'player' (col 4) is not a ITEMSTACK ('player' does not exist in this scope)
+      - type mismatch: '{' (col 14) is not a BLOCK ('{' does not exist in this scope)

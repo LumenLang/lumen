@@ -1,0 +1,5 @@
+case: markdown: list bullet
+input: * heal the player
+runner: STATEMENT
+env: <empty>
+suggestions: 0

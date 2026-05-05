@@ -1,0 +1,5 @@
+case: ruby: do block
+input: players.each do |p|
+runner: BLOCK
+env: <empty>
+suggestions: 0

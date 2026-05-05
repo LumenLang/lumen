@@ -1,0 +1,13 @@
+case: swift: optional unwrap
+input: let p = player?.target
+runner: STATEMENT
+env: <empty>
+suggestions: 2
+  [#0] get player (by|from) (name|username) %name:STRING%
+    confidence: 0.429
+    issues:
+      - typo: 'let' (col 0) should be 'get'
+  [#1] get player (by|from) (uuid|unique id) %uuid:STRING%
+    confidence: 0.429
+    issues:
+      - typo: 'let' (col 0) should be 'get'

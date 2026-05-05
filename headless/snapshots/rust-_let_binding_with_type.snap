@@ -1,0 +1,15 @@
+case: rust: let binding with type
+input: let count: i32 = 5;
+runner: STATEMENT
+env: <empty>
+suggestions: 2
+  [#0] set %e:ENTITY_POSSESSIVE% %attr:ATTRIBUTE% [base] [value] [to] %val:DOUBLE%
+    confidence: 0.474
+    issues:
+      - typo: 'let' (col 0) should be 'set'
+      - type mismatch: 'i32' (col 11) is not a ENTITY_POSSESSIVE ('i32' must use possessive form (e.g. entity's))
+      - type mismatch: '=' (col 15) is not a ATTRIBUTE ('=' is not a valid attribute)
+  [#1] set %name:IDENT% to %val:EXPR%
+    confidence: 0.429
+    issues:
+      - typo: 'let' (col 0) should be 'set'

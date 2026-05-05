@@ -1,0 +1,15 @@
+case: python: function call
+input: kill(player)
+runner: STATEMENT
+env: <empty>
+suggestions: 2
+  [#0] (kill|slay) %who:PLAYER%
+    confidence: 0.380
+    issues:
+      - type mismatch: '(' (col 4) is not a PLAYER ('(' does not exist in this scope)
+      - extra tokens: 'player' (col 5), ')' (col 11)
+  [#1] (kill|slay) %e:LIVING_ENTITY%
+    confidence: 0.380
+    issues:
+      - type mismatch: '(' (col 4) is not a LIVING_ENTITY ('(' does not exist in this scope)
+      - extra tokens: 'player' (col 5), ')' (col 11)

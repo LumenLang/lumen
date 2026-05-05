@@ -1,0 +1,16 @@
+case: skript: loop all players
+input: loop all players:
+runner: BLOCK
+env: <empty>
+suggestions: 2
+  [#0] loop %var:EXPR% in %source:EXPR%
+    confidence: 0.730
+    issues:
+      - type mismatch: 'all' (col 5) is not a EXPR ('EXPR' rejected the input)
+      - incomplete: expected 'in' next
+  [#1] loop %var:EXPR% in %list:LIST%
+    confidence: 0.610
+    issues:
+      - type mismatch: 'all' (col 5) is not a EXPR ('EXPR' rejected the input)
+      - type mismatch: 'players' (col 9) is not a LIST ('players' does not exist in this scope)
+      - incomplete: expected 'in' next
