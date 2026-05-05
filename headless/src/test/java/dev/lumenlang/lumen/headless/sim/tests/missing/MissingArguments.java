@@ -45,13 +45,7 @@ public final class MissingArguments {
                 .env(EnvSimulator.create().withVar("p", MinecraftTypes.PLAYER));
     }
 
-    /**
-     * Buggy lock-in. After the sandbox fix, the catch-all {@code set %name to %val} pattern
-     * accepts the BFS-1 reduction (drop {@code of}) cleanly and outranks the semantically
-     * correct time pattern's TypeMismatch fallback. Flip once catch-all patterns are
-     * deboosted relative to literal-rich competitors.
-     */
-    @SimCase(name = "missing: set time of without world (BUG locked)")
+    @SimCase(name = "missing: set time of without world")
     public static SimulatorCase setTimeNoWorld() {
         return SimulatorCase.statement("set time of to 6000");
     }

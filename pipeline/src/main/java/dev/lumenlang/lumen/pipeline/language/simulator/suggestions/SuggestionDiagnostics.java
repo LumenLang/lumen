@@ -16,6 +16,7 @@ import dev.lumenlang.lumen.pipeline.typebinding.TypeRegistry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -182,6 +183,21 @@ public final class SuggestionDiagnostics {
     }
 
     private static @Nullable LumenDiagnostic detectUnsupportedSyntax(int line, @NotNull String raw, @NotNull List<Token> tokens) {
+        List<int[]> spaceRuns = findMultiSpaceRuns(raw);
+        if (!spaceRuns.isEmpty()) {
+            int[] first = spaceRuns.get(0);
+            LumenDiagnostic.Builder builder = LumenDiagnostic.error("Unsupported syntax").at(line, raw)
+                    .highlight(first[0], first[1])
+                    .label(spaceRuns.size() == 1 ? "multiple spaces between tokens" : "multiple spaces between tokens (" + spaceRuns.size() + " runs on this line)");
+            for (int i = 1; i < spaceRuns.size(); i++) {
+                int[] run = spaceRuns.get(i);
+                builder.subHighlight(run[0], run[1], "and here");
+            }
+            return builder
+                    .note("Lumen treats consecutive spaces as one separator; collapse them or quote the value as a string")
+                    .help("use a single space, or wrap the value in double quotes if the spacing is intentional")
+                    .build();
+        }
         if (tokens.size() == 1 && tokens.get(0).kind() == TokenKind.SYMBOL) {
             String text = tokens.get(0).text();
             if (text.equals("{") || text.equals("}")) {
@@ -355,6 +371,44 @@ public final class SuggestionDiagnostics {
         } else if (issue instanceof PatternSimulator.SuggestionIssue.HandlerDiagnostic handler) {
             builder.note(handler.title());
         }
+    }
+
+    /**
+     * Returns every multi-space run that sits between non-whitespace tokens and is not inside a
+     * string literal. Each entry is {@code [start, end]} with {@code end} exclusive.
+     */
+    private static @NotNull List<int[]> findMultiSpaceRuns(@NotNull String raw) {
+        List<int[]> out = new ArrayList<>();
+        int i = 0;
+        while (i < raw.length() && raw.charAt(i) == ' ') i++;
+        boolean sawContent = false;
+        boolean inString = false;
+        for (; i < raw.length(); i++) {
+            char c = raw.charAt(i);
+            if (inString) {
+                if (c == '\\' && i + 1 < raw.length()) {
+                    i++;
+                    continue;
+                }
+                if (c == '"') inString = false;
+                continue;
+            }
+            if (c == '"') {
+                inString = true;
+                sawContent = true;
+                continue;
+            }
+            if (c == ' ' && sawContent && i + 1 < raw.length() && raw.charAt(i + 1) == ' ') {
+                int j = i + 1;
+                while (j < raw.length() && raw.charAt(j) == ' ') j++;
+                if (j < raw.length()) {
+                    out.add(new int[]{i, j});
+                    i = j - 1;
+                }
+            }
+            if (c != ' ') sawContent = true;
+        }
+        return out;
     }
 
     /**

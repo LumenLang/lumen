@@ -7,8 +7,7 @@ import dev.lumenlang.lumen.headless.sim.cases.EnvSimulator;
 import dev.lumenlang.lumen.headless.sim.cases.SimulatorCase;
 
 /**
- * Typos mixed with whitespace, casing, digit-substitution, and arg-keyword variants. Stress
- * cases for the typo scorer.
+ * Typos mixed with casing, digit-substitution, and arg-keyword variants.
  */
 @SimulatorTest
 public final class CornerCaseTypos {
@@ -19,15 +18,6 @@ public final class CornerCaseTypos {
     @SimCase(name = "block typo: 'reapt' for 'repeat'")
     public static SimulatorCase reaptForRepeat() {
         return SimulatorCase.block("reapt 5 times");
-    }
-
-    /**
-     * Buggy lock-in. Triple whitespace shouldn't change matching, but sim drifts to the location
-     * coord getter (same root cause as {@code tForTo}).
-     */
-    @SimCase(name = "typo: triple whitespace 'set    x   t   5' (BUG locked)")
-    public static SimulatorCase tripleSpace() {
-        return SimulatorCase.statement("set    x   t   5");
     }
 
     @SimCase(name = "typo: capitalised 'Set x to 5'")

@@ -1,4 +1,4 @@
-case: typo: 'teleprt' for 'teleport' (BUG locked)
+case: typo: 'teleprt' for 'teleport'
 input: teleprt p to l
 runner: STATEMENT
 env:

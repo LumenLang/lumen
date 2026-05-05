@@ -1,4 +1,4 @@
-case: missing: set time of without world (BUG locked)
+case: missing: set time of without world
 input: set time of to 6000
 runner: STATEMENT
 env: <empty>

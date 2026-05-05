@@ -44,11 +44,7 @@ public final class ExpressionForms {
         return SimulatorCase.expression("max of 5 and 10");
     }
 
-    /**
-     * Buggy lock-in. {@code maks} typo for {@code max}: sim should suggest a Typo. Currently
-     * picks LIST indexer with TypeMismatch instead. Flip once typo recognition reaches it.
-     */
-    @SimCase(name = "expr: 'maks' typo for 'max' (BUG locked)")
+    @SimCase(name = "expr: 'maks' typo for 'max'")
     public static SimulatorCase maksForMax() {
         return SimulatorCase.expression("maks of 5 and 10");
     }

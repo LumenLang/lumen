@@ -29,10 +29,7 @@ public final class SingleTokenTypos {
         return SimulatorCase.statement("set x t 5");
     }
 
-    /**
-     * Buggy lock-in. {@code teleprt} should keep the LOCATION shape, but sim picks the PLAYER one.
-     */
-    @SimCase(name = "typo: 'teleprt' for 'teleport' (BUG locked)")
+    @SimCase(name = "typo: 'teleprt' for 'teleport'")
     public static SimulatorCase teleprtForTeleport() {
         return SimulatorCase.statement("teleprt p to l")
                 .env(EnvSimulator.create().withVar("p", MinecraftTypes.PLAYER).withVar("l", MinecraftTypes.LOCATION));

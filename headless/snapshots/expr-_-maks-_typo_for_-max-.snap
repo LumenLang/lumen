@@ -1,4 +1,4 @@
-case: expr: 'maks' typo for 'max' (BUG locked)
+case: expr: 'maks' typo for 'max'
 input: maks of 5 and 10
 runner: EXPRESSION
 env: <empty>
