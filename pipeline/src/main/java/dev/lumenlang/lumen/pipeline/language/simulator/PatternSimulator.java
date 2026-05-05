@@ -693,7 +693,8 @@ public final class PatternSimulator {
             String bestForm = null;
             for (LiteralInfo lit : literals) {
                 for (String form : lit.forms) {
-                    int dist = simDistance(token.text(), form);
+                    boolean shortLoose = canUseShortTokenLooseTypo(token, lit, tokens, literals);
+                    int dist = simDistance(token.text(), form, shortLoose);
                     int threshold = effectiveThreshold(token.text(), form);
                     if (dist > 0 && dist <= threshold && dist < bestDist) {
                         bestDist = dist;
@@ -704,6 +705,31 @@ public final class PatternSimulator {
             if (bestForm != null) out[i] = new TypoCandidate(token, bestForm, bestDist);
         }
         return out;
+    }
+
+    /**
+     * The 1-char-loose typo path is enabled only when the candidate token is 1 character, the
+     * target form is 2 characters, and every other required literal in the pattern has at least
+     * one exact-match token elsewhere in the input.
+     */
+    private static boolean canUseShortTokenLooseTypo(@NotNull Token candidate, @NotNull LiteralInfo target, @NotNull List<Token> tokens, @NotNull List<LiteralInfo> literals) {
+        if (candidate.text().length() != 1) return false;
+        if (target.forms.stream().noneMatch(f -> f.length() == 2)) return false;
+        for (LiteralInfo other : literals) {
+            if (other == target || other.optional) continue;
+            boolean satisfied = false;
+            for (Token t : tokens) {
+                for (String form : other.forms) {
+                    if (form.equalsIgnoreCase(t.text())) {
+                        satisfied = true;
+                        break;
+                    }
+                }
+                if (satisfied) break;
+            }
+            if (!satisfied) return false;
+        }
+        return true;
     }
 
     /**
@@ -745,7 +771,8 @@ public final class PatternSimulator {
             Token token = tokens.get(i);
             for (LiteralInfo lit : literals) {
                 for (String form : lit.forms) {
-                    int dist = simDistance(token.text(), form);
+                    boolean shortLoose = canUseShortTokenLooseTypo(token, lit, tokens, literals);
+                    int dist = simDistance(token.text(), form, shortLoose);
                     int threshold = effectiveThreshold(token.text(), form);
                     boolean within = dist > 0 && dist <= threshold;
                     boolean kept = within && dist < bestDist;
@@ -890,6 +917,9 @@ public final class PatternSimulator {
     private static int effectiveThreshold(@NotNull String tokenText, @NotNull String formText) {
         int tokenLen = tokenText.length();
         int formLen = formText.length();
+        if (tokenLen == 1 && formLen == 2 && tokenText.charAt(0) == formText.charAt(0)) {
+            return 1;
+        }
         if (tokenLen == 2 && formLen >= 2 && formLen <= tokenLen + 1) {
             return 1;
         }
@@ -909,6 +939,19 @@ public final class PatternSimulator {
      * single-edit typos like {@code st} for {@code set}.
      */
     private static int simDistance(@NotNull String tokenText, @NotNull String formText) {
+        return simDistance(tokenText, formText, false);
+    }
+
+    /**
+     * {@code shortTokenLooseDistance=true} drops the prefix-aware penalty for 1-char tokens, so a
+     * lone {@code t} can typo-fix to {@code to}. Callers enable it only when the pattern's other
+     * required literals are already accounted for, otherwise random 1-char tokens would match
+     * arbitrary 2-char keywords.
+     */
+    private static int simDistance(@NotNull String tokenText, @NotNull String formText, boolean shortTokenLooseDistance) {
+        if (shortTokenLooseDistance && tokenText.length() == 1 && formText.length() == 2) {
+            return FuzzyMatch.damerauLevenshteinDistance(tokenText, formText);
+        }
         if (tokenText.length() == 2 && formText.length() >= 2 && formText.length() <= 3) {
             return FuzzyMatch.damerauLevenshteinDistance(tokenText, formText);
         }

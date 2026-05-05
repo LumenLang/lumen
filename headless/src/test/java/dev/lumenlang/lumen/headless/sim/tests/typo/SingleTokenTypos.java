@@ -20,11 +20,7 @@ public final class SingleTokenTypos {
         return SimulatorCase.statement("st x to 5");
     }
 
-    /**
-     * Buggy lock-in. {@code t} → {@code to} should keep us on the {@code set} pattern; sim drifts
-     * to a location coord getter.
-     */
-    @SimCase(name = "typo: 't' for 'to' (BUG locked)")
+    @SimCase(name = "typo: 't' for 'to'")
     public static SimulatorCase tForTo() {
         return SimulatorCase.statement("set x t 5");
     }
