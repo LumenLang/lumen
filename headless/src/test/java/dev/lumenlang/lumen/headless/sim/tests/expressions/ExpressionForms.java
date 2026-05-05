@@ -44,7 +44,13 @@ public final class ExpressionForms {
         return SimulatorCase.expression("max of 5 and 10");
     }
 
-    @SimCase(name = "expr: 'maks' typo for 'max'")
+    /**
+     * Buggy lock-in. Sim returns no suggestions because {@code maks -> max} is a 2-edit typo and
+     * any threshold loose enough to accept it also accepts unrelated keyword pairs like
+     * {@code send -> set}. Flip once the typo path can distinguish phonetic typos from
+     * neighbouring real keywords.
+     */
+    @SimCase(name = "expr: 'maks' typo for 'max' (BUG locked)")
     public static SimulatorCase maksForMax() {
         return SimulatorCase.expression("maks of 5 and 10");
     }
