@@ -10,4 +10,4 @@ suggestions: 2
   [#1] set %e:ENTITY_POSSESSIVE% %attr:ATTRIBUTE% [base] [value] [to] %val:DOUBLE%
     confidence: 0.730
     issues:
-      - type mismatch: 'to' (col 13) is not a ATTRIBUTE ('to' is not a valid attribute)
+      - missing binding: ATTRIBUTE (col 12)

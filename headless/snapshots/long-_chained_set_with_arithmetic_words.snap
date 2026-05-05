@@ -12,4 +12,4 @@ suggestions: 2
     confidence: 0.177
     issues:
       - type mismatch: 'count' (col 4) is not a ENTITY_POSSESSIVE ('count' must use possessive form (e.g. entity's))
-      - type mismatch: 'to' (col 10) is not a ATTRIBUTE ('to' is not a valid attribute)
+      - missing binding: ATTRIBUTE (col 9)

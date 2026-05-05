@@ -10,4 +10,4 @@ suggestions: 2
   [#1] set time [of] %w:WORLD% [to] %val:INT%
     confidence: 0.730
     issues:
-      - type mismatch: 'to' (col 12) is not a WORLD ('to' does not exist in this scope)
+      - missing binding: WORLD (col 11)

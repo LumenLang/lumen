@@ -81,10 +81,10 @@ public final class SuggestionDiagnostics {
         List<PatternSimulator.SuggestionIssue> issues = top.issues();
         PatternSimulator.SuggestionIssue primary = findPrimary(issues);
         if (primary != null) {
-            applyPrimaryHighlight(builder, primary, top, types);
+            applyPrimaryHighlight(builder, primary, top, types, raw);
             for (PatternSimulator.SuggestionIssue issue : issues) {
                 if (issue == primary) continue;
-                applySubHighlight(builder, issue, types);
+                applySubHighlight(builder, issue, types, raw);
             }
         } else if (top.progress() != null && !top.progress().bindingFailures().isEmpty()) {
             List<MatchProgress.BindingFailure> failures = top.progress().bindingFailures();
@@ -286,7 +286,7 @@ public final class SuggestionDiagnostics {
         return 0;
     }
 
-    private static void applyPrimaryHighlight(@NotNull LumenDiagnostic.Builder builder, @NotNull PatternSimulator.SuggestionIssue issue, @NotNull PatternSimulator.Suggestion top, @NotNull TypeRegistry types) {
+    private static void applyPrimaryHighlight(@NotNull LumenDiagnostic.Builder builder, @NotNull PatternSimulator.SuggestionIssue issue, @NotNull PatternSimulator.Suggestion top, @NotNull TypeRegistry types, @NotNull String raw) {
         if (issue instanceof PatternSimulator.SuggestionIssue.Typo typo) {
             boolean validated = top.progress() != null && top.progress().succeeded();
             builder.highlight(typo.token().start(), typo.token().end());
@@ -303,7 +303,13 @@ public final class SuggestionDiagnostics {
             builder.highlight(mismatch.token().start(), mismatch.token().end());
             builder.label(mismatch.reason());
         } else if (issue instanceof PatternSimulator.SuggestionIssue.MissingBinding missing) {
-            builder.label("missing " + types.displayNameOf(missing.bindingId()));
+            int col = missing.atColumn();
+            String label = "expected " + types.displayNameOf(missing.bindingId()) + " " + missingBindingWhere(col, raw);
+            if (col >= 0) {
+                builder.highlight(col, col + 1).label(label);
+            } else {
+                builder.label(label);
+            }
         } else if (issue instanceof PatternSimulator.SuggestionIssue.Reorder reorder) {
             int start = reorder.tokens().stream().mapToInt(Token::start).min().orElse(0);
             int end = reorder.tokens().stream().mapToInt(Token::end).max().orElse(0);
@@ -321,7 +327,7 @@ public final class SuggestionDiagnostics {
         }
     }
 
-    private static void applySubHighlight(@NotNull LumenDiagnostic.Builder builder, @NotNull PatternSimulator.SuggestionIssue issue, @NotNull TypeRegistry types) {
+    private static void applySubHighlight(@NotNull LumenDiagnostic.Builder builder, @NotNull PatternSimulator.SuggestionIssue issue, @NotNull TypeRegistry types, @NotNull String raw) {
         if (issue instanceof PatternSimulator.SuggestionIssue.Typo typo) {
             builder.subHighlight(typo.token().start(), typo.token().end(), "did you mean '" + typo.expected() + "'?");
         } else if (issue instanceof PatternSimulator.SuggestionIssue.ExtraTokens extra) {
@@ -331,7 +337,13 @@ public final class SuggestionDiagnostics {
         } else if (issue instanceof PatternSimulator.SuggestionIssue.TypeMismatch mismatch) {
             builder.subHighlight(mismatch.token().start(), mismatch.token().end(), mismatch.reason());
         } else if (issue instanceof PatternSimulator.SuggestionIssue.MissingBinding missing) {
-            builder.note("missing " + types.displayNameOf(missing.bindingId()));
+            int col = missing.atColumn();
+            String label = "expected " + types.displayNameOf(missing.bindingId()) + " " + missingBindingWhere(col, raw);
+            if (col >= 0) {
+                builder.subHighlight(col, col + 1, label);
+            } else {
+                builder.note(label);
+            }
         } else if (issue instanceof PatternSimulator.SuggestionIssue.Reorder reorder) {
             for (Token t : reorder.tokens()) {
                 builder.subHighlight(t.start(), t.end(), "out of order");
@@ -343,6 +355,28 @@ public final class SuggestionDiagnostics {
         } else if (issue instanceof PatternSimulator.SuggestionIssue.HandlerDiagnostic handler) {
             builder.note(handler.title());
         }
+    }
+
+    /**
+     * Positional phrase for a missing-binding caret: at start, at end, in between '{a}' and '{b}',
+     * or here.
+     */
+    private static @NotNull String missingBindingWhere(int col, @NotNull String raw) {
+        if (col < 0) return "at end";
+        int beforeEnd = Math.min(col, raw.length());
+        while (beforeEnd > 0 && Character.isWhitespace(raw.charAt(beforeEnd - 1))) beforeEnd--;
+        int beforeStart = beforeEnd;
+        while (beforeStart > 0 && !Character.isWhitespace(raw.charAt(beforeStart - 1))) beforeStart--;
+        int afterStart = Math.max(0, col);
+        while (afterStart < raw.length() && Character.isWhitespace(raw.charAt(afterStart))) afterStart++;
+        int afterEnd = afterStart;
+        while (afterEnd < raw.length() && !Character.isWhitespace(raw.charAt(afterEnd))) afterEnd++;
+        boolean hasBefore = beforeEnd > beforeStart;
+        boolean hasAfter = afterEnd > afterStart;
+        if (!hasBefore && !hasAfter) return "here";
+        if (!hasBefore) return "at start";
+        if (!hasAfter) return "at end";
+        return "in between '" + raw.substring(beforeStart, beforeEnd) + "' and '" + raw.substring(afterStart, afterEnd) + "'";
     }
 
     private static @Nullable Token anchorTokenAfter(@NotNull PatternSimulator.Suggestion top, int afterTokenIndex) {

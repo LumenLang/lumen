@@ -7,8 +7,8 @@ suggestions: 2
   [#0] (teleport|tp) %e:ENTITY% [to] %loc:LOCATION%
     confidence: 0.730
     issues:
-      - type mismatch: 'to' (col 11) is not a LOCATION ('to' does not exist in this scope)
+      - missing binding: LOCATION (col 14)
   [#1] (teleport|tp) %e:ENTITY% [to] %target:ENTITY%
     confidence: 0.730
     issues:
-      - type mismatch: 'to' (col 11) is not a ENTITY ('to' does not exist in this scope)
+      - missing binding: ENTITY (col 10)

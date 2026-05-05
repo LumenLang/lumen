@@ -11,4 +11,4 @@ suggestions: 2
   [#1] set %i:ITEMSTACK_POSSESSIVE% (display name|name) [to] %name:STRING%
     confidence: 0.630
     issues:
-      - type mismatch: 'name' (col 4) is not a ITEMSTACK_POSSESSIVE ('name' must use possessive form (e.g. item's))
+      - missing binding: ITEMSTACK_POSSESSIVE (col 3)

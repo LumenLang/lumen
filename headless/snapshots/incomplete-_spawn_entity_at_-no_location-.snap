@@ -9,4 +9,4 @@ suggestions: 2
   [#1] spawn %type:ENTITY_TYPE% [at] %loc:LOCATION%
     confidence: 0.730
     issues:
-      - type mismatch: 'at' (col 13) is not a LOCATION ('at' does not exist in this scope)
+      - missing binding: LOCATION (col 16)

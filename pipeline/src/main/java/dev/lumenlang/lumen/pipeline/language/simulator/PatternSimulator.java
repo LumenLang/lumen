@@ -481,7 +481,7 @@ public final class PatternSimulator {
                     if (!bf.failedTokens().isEmpty()) {
                         issues.add(new SuggestionIssue.TypeMismatch(bf.failedTokens().get(0), bf.bindingId(), bf.reason()));
                     } else {
-                        issues.add(new SuggestionIssue.MissingBinding(bf.bindingId()));
+                        issues.add(new SuggestionIssue.MissingBinding(bf.bindingId(), missingBindingColumn(pattern, bf.bindingId(), null, tokens)));
                     }
                 }
             } else if (bestPartialProgress.failedBindingId() != null && !bestPartialProgress.failedTokens().isEmpty()) {
@@ -516,10 +516,11 @@ public final class PatternSimulator {
             }
             if (!level0Progress.bindingFailures().isEmpty()) {
                 for (MatchProgress.BindingFailure bf : level0Progress.bindingFailures()) {
-                    if (!bf.failedTokens().isEmpty()) {
-                        issues.add(new SuggestionIssue.TypeMismatch(bf.failedTokens().get(0), bf.bindingId(), bf.reason()));
+                    Token failed = bf.failedTokens().isEmpty() ? null : bf.failedTokens().get(0);
+                    if (failed == null || tokenIsLaterPatternLiteral(failed, pattern, literals)) {
+                        issues.add(new SuggestionIssue.MissingBinding(bf.bindingId(), missingBindingColumn(pattern, bf.bindingId(), failed, tokens)));
                     } else {
-                        issues.add(new SuggestionIssue.MissingBinding(bf.bindingId()));
+                        issues.add(new SuggestionIssue.TypeMismatch(failed, bf.bindingId(), bf.reason()));
                     }
                 }
             } else {
@@ -527,7 +528,11 @@ public final class PatternSimulator {
                 String reason = level0Progress.failedReason();
                 String bindingId = level0Progress.failedBindingId();
                 if (failedToken != null && bindingId != null && reason != null) {
-                    issues.add(new SuggestionIssue.TypeMismatch(failedToken, bindingId, reason));
+                    if (tokenIsLaterPatternLiteral(failedToken, pattern, literals)) {
+                        issues.add(new SuggestionIssue.MissingBinding(bindingId, missingBindingColumn(pattern, bindingId, failedToken, tokens)));
+                    } else {
+                        issues.add(new SuggestionIssue.TypeMismatch(failedToken, bindingId, reason));
+                    }
                 }
             }
             if (level0Progress.incomplete() != null) {
@@ -801,6 +806,67 @@ public final class PatternSimulator {
         }
         if (firstInputIdx < 0) return false;
         return typo.tokenIndex == firstInputIdx && firstRequired.forms.stream().anyMatch(f -> f.equalsIgnoreCase(typo.expected));
+    }
+
+    /**
+     * Computes the column where a caret should land for a missing binding. Walks the pattern
+     * parts to locate {@code bindingId} and the literal {@code failed} matches; if the literal
+     * comes before the placeholder, the gap is right after the literal, otherwise it is right
+     * before. When {@code failed} is null the gap is past the end of input.
+     */
+    private static int missingBindingColumn(@NotNull Pattern pattern, @NotNull String bindingId, @Nullable Token failed, @NotNull List<Token> tokens) {
+        if (failed == null) {
+            if (tokens.isEmpty()) return 0;
+            return tokens.get(tokens.size() - 1).end() + 1;
+        }
+        int placeholderIdx = -1;
+        int literalIdx = -1;
+        List<PatternPart> parts = pattern.parts();
+        for (int i = 0; i < parts.size(); i++) {
+            PatternPart part = parts.get(i);
+            if (placeholderIdx < 0 && part instanceof PatternPart.PlaceholderPart pp && pp.ph().typeId().equals(bindingId)) {
+                placeholderIdx = i;
+            }
+            if (literalIdx < 0 && partMatchesText(part, failed.text())) {
+                literalIdx = i;
+            }
+        }
+        if (placeholderIdx >= 0 && literalIdx >= 0 && literalIdx < placeholderIdx) {
+            return failed.end() + 1;
+        }
+        return Math.max(0, failed.start() - 1);
+    }
+
+    private static boolean partMatchesText(@NotNull PatternPart part, @NotNull String text) {
+        if (part instanceof PatternPart.Literal lit) return lit.text().equalsIgnoreCase(text);
+        if (part instanceof PatternPart.FlexLiteral flex) {
+            for (String form : flex.forms()) {
+                if (form.equalsIgnoreCase(text)) return true;
+            }
+        }
+        if (part instanceof PatternPart.Group group) {
+            for (List<PatternPart> alt : group.alternatives()) {
+                for (PatternPart inner : alt) {
+                    if (partMatchesText(inner, text)) return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Returns {@code true} when {@code failed} matches any literal form in the pattern. The
+     * matcher fed this token to a placeholder, but the token actually belongs to a later literal
+     * slot, so the placeholder should be reported as missing rather than as a type mismatch.
+     */
+    private static boolean tokenIsLaterPatternLiteral(@NotNull Token failed, @NotNull Pattern pattern, @NotNull List<LiteralInfo> literals) {
+        String text = failed.text();
+        for (LiteralInfo lit : literals) {
+            for (String form : lit.forms) {
+                if (form.equalsIgnoreCase(text)) return true;
+            }
+        }
+        return false;
     }
 
     private static double computeConfidence(int removals, int typos, boolean firstTokenMatches, @NotNull SimulatorOptions opts) {
@@ -1302,11 +1368,14 @@ public final class PatternSimulator {
          * A type binding that expects input but received none (missing tokens).
          *
          * @param bindingId the type binding ID that is missing
+         * @param atColumn  the column where a caret should point (the gap where the binding's
+         *                  value should have appeared), or {@code -1} when no precise column is
+         *                  known
          */
-        record MissingBinding(@NotNull String bindingId) implements SuggestionIssue {
+        record MissingBinding(@NotNull String bindingId, int atColumn) implements SuggestionIssue {
             @Override
             public @NotNull String toString() {
-                return "missing binding: " + bindingId;
+                return atColumn < 0 ? "missing binding: " + bindingId : "missing binding: " + bindingId + " (col " + atColumn + ")";
             }
         }
 

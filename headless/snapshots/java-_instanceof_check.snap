@@ -6,10 +6,10 @@ suggestions: 2
   [#0] %val:EXPR% is [a] valid entity type
     confidence: 0.730
     issues:
-      - type mismatch: 'entity' (col 0) is not a EXPR ('EXPR' rejected the input)
+      - missing binding: EXPR (col 0)
       - incomplete: expected 'is' next
   [#1] %val:EXPR% is not [a] valid entity type
     confidence: 0.730
     issues:
-      - type mismatch: 'entity' (col 0) is not a EXPR ('EXPR' rejected the input)
+      - missing binding: EXPR (col 0)
       - incomplete: expected 'is' next

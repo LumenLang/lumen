@@ -7,4 +7,4 @@ suggestions: 1
   [#0] damage %e:LIVING_ENTITY% [by] %val:INT%
     confidence: 0.730
     issues:
-      - type mismatch: 'by' (col 11) is not a INT ('by' is not a valid integer)
+      - missing binding: INT (col 14)

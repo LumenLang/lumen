@@ -11,4 +11,4 @@ suggestions: 2
     confidence: 0.610
     issues:
       - type mismatch: 'alice' (col 5) is not a PLAYER ('alice' does not exist in this scope)
-      - missing binding: INT
+      - missing binding: INT (col 21)

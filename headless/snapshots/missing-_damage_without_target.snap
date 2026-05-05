@@ -6,4 +6,4 @@ suggestions: 1
   [#0] damage %e:LIVING_ENTITY% [by] %val:INT%
     confidence: 0.730
     issues:
-      - type mismatch: 'by' (col 7) is not a LIVING_ENTITY ('by' does not exist in this scope)
+      - missing binding: LIVING_ENTITY (col 6)
