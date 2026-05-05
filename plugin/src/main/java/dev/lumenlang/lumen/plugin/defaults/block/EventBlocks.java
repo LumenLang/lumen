@@ -6,6 +6,8 @@ import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.codegen.CodegenContext;
 import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import dev.lumenlang.lumen.api.codegen.TypeEnv;
+import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
+import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.event.AdvancedEventDefinition;
 import dev.lumenlang.lumen.api.event.EventDefinition;
 import dev.lumenlang.lumen.api.handler.BlockHandler;
@@ -17,6 +19,7 @@ import dev.lumenlang.lumen.pipeline.codegen.HandlerContextImpl;
 import dev.lumenlang.lumen.pipeline.events.EventDefRegistry;
 import dev.lumenlang.lumen.pipeline.language.exceptions.TokenCarryingException;
 import dev.lumenlang.lumen.plugin.commands.CommandMeta;
+import dev.lumenlang.lumen.plugin.commands.CommandRegistry;
 import org.bukkit.World;
 import org.jetbrains.annotations.NotNull;
 
@@ -191,6 +194,17 @@ public final class EventBlocks {
                         CodegenContext jctx = ctx.codegen();
 
                         String cmd = ctx.java("name");
+                        String owner = CommandRegistry.ownerOf(cmd);
+                        if (owner != null && !owner.equals(jctx.scriptName())) {
+                            var nameTokens = ctx.scriptTokens("name");
+                            throw new DiagnosticException(LumenDiagnostic.error("Command '" + cmd + "' is already registered")
+                                    .at(ctx.source().currentLine(), ctx.source().currentRaw())
+                                    .highlight(nameTokens.get(0).start(), nameTokens.get(nameTokens.size() - 1).end())
+                                    .label("conflicts with command from script '" + owner + "'")
+                                    .note("two scripts cannot register a command with the same name")
+                                    .help("rename this command, or remove it from '" + owner + "'")
+                                    .build());
+                        }
                         CommandMeta meta = new CommandMeta(cmd);
 
                         ctx.block().putEnv("cmd_meta", meta);

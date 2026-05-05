@@ -252,6 +252,16 @@ public final class CommandRegistry {
     }
 
     /**
+     * Returns the script that currently owns a command name, or {@code null} if no script owns it.
+     */
+    public static @Nullable String ownerOf(@NotNull String name) {
+        for (Map.Entry<String, List<String>> e : scriptCommands.entrySet()) {
+            if (e.getValue().contains(name)) return e.getKey();
+        }
+        return null;
+    }
+
+    /**
      * Unregisters all script and plugin commands (called on plugin disable).
      */
     public static void unregisterAll() {
