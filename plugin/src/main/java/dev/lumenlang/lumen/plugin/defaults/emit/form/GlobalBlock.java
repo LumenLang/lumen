@@ -166,6 +166,22 @@ public final class GlobalBlock implements BlockFormHandler {
                     .build());
         }
 
+        for (TypeEnvImpl.ConfigEntry entry : env.configEntries()) {
+            if (entry.name().equals(name)) {
+                LumenDiagnostic.Builder b = LumenDiagnostic.error("Global variable '" + name + "' conflicts with a config entry")
+                        .at(line, raw)
+                        .highlight(nameToken.start(), nameToken.end())
+                        .label("name already used by a config entry");
+                TypeEnvImpl.DeclarationInfo decl = env.declarationInfo(name);
+                if (decl != null) {
+                    b.context(decl.firstLine(), decl.firstRaw(), 0, decl.firstRaw().stripTrailing().length(), "first defined here");
+                }
+                b.note("config entries and globals share the same namespace");
+                b.help("rename one of them");
+                throw new DiagnosticException(b.build());
+            }
+        }
+
         if (idx >= tokens.size() || !tokens.get(idx).text().equals(":")) {
             throw new DiagnosticException(LumenDiagnostic.error("Expected ':' after variable name")
                     .at(line, raw)
