@@ -1,0 +1,15 @@
+case: yaml: simple key value
+input: name: alice
+runner: STATEMENT
+env: <empty>
+suggestions: 2
+  [#0] namespace[:] %ns:STRING%
+    confidence: 0.850
+    issues:
+      - typo: 'name' (col 0) should be 'namespace'
+  [#1] tame %e:ENTITY% [by] %who:PLAYER%
+    confidence: 0.610
+    issues:
+      - typo: 'name' (col 0) should be 'tame'
+      - type mismatch: ':' (col 4) is not a ENTITY (':' does not exist in this scope)
+      - type mismatch: 'alice' (col 6) is not a PLAYER ('alice' does not exist in this scope)

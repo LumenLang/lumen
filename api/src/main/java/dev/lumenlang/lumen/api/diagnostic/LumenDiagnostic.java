@@ -389,7 +389,13 @@ public final class LumenDiagnostic {
             ));
         }
 
-        rows.add(codeRow(line, trimmed, gutterWidth));
+        int maxColumn = trimmed.length();
+        if (columnEnd > maxColumn) maxColumn = columnEnd;
+        for (SubHighlight sh : subHighlights) {
+            if (sh.columnEnd > maxColumn) maxColumn = sh.columnEnd;
+        }
+        String paddedSrc = maxColumn > trimmed.length() ? trimmed + " ".repeat(maxColumn - trimmed.length()) : trimmed;
+        rows.add(codeRow(line, paddedSrc, gutterWidth));
 
         boolean verbose = verboseDiagnostics;
         boolean longLine = !verbose && !subHighlights.isEmpty() && trimmed.length() > LONG_LINE_THRESHOLD;
@@ -399,14 +405,14 @@ public final class LumenDiagnostic {
             int fullStart = trimmed.length() - stripped.length();
             rows.add(highlightRow(fullStart, stripped.length(), null, accent, gutterWidth));
         } else {
-            int start = Math.max(0, Math.min(columnStart, trimmed.length()));
-            int end = Math.max(start + 1, Math.min(columnEnd, trimmed.length()));
+            int start = Math.max(0, Math.min(columnStart, paddedSrc.length()));
+            int end = Math.max(start + 1, Math.min(columnEnd, paddedSrc.length()));
             rows.add(highlightRow(start, end - start, underlineLabel, accent, gutterWidth));
         }
         if (!subHighlightsAsNotes) {
             for (SubHighlight sh : subHighlights) {
-                int shStart = Math.max(0, Math.min(sh.columnStart, trimmed.length()));
-                int shEnd = Math.max(shStart + 1, Math.min(sh.columnEnd, trimmed.length()));
+                int shStart = Math.max(0, Math.min(sh.columnStart, paddedSrc.length()));
+                int shEnd = Math.max(shStart + 1, Math.min(sh.columnEnd, paddedSrc.length()));
                 rows.add(highlightRow(shStart, shEnd - shStart, sh.label, accent, gutterWidth));
             }
         }

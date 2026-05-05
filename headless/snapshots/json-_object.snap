@@ -1,0 +1,13 @@
+case: json: object
+input: { "name": "alice", "health": 20 }
+runner: STATEMENT
+env: <empty>
+suggestions: 2
+  [#0] name[:] %n:STRING%
+    confidence: 0.333
+    issues:
+      - typo: 'name' (col 2) should be 'name:'
+  [#1] namespace[:] %ns:STRING%
+    confidence: 0.333
+    issues:
+      - typo: 'name' (col 2) should be 'namespace'

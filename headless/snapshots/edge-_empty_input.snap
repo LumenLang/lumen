@@ -1,0 +1,5 @@
+case: edge: empty input
+input: 
+runner: STATEMENT
+env: <empty>
+suggestions: 0

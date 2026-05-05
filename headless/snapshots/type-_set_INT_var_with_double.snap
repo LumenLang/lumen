@@ -1,0 +1,14 @@
+case: type: set INT var with double
+input: set count to 1.5
+runner: STATEMENT
+env:
+  var count: int
+suggestions: 2
+  [#0] set %name:IDENT% to %val:EXPR%
+    confidence: 0.750
+    issues:
+      - handler rejected: Lossy numeric conversion
+  [#1] set %b:BLOCK% data [to] %data:STRING%
+    confidence: 0.630
+    issues:
+      - type mismatch: 'count' (col 4) is not a BLOCK ('count' is a int, not a block)

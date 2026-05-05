@@ -1,0 +1,5 @@
+case: skript: function call colon
+input: function greet(p: player):
+runner: STATEMENT
+env: <empty>
+suggestions: 0

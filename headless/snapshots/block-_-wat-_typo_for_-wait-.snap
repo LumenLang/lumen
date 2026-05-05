@@ -1,0 +1,13 @@
+case: block: 'wat' typo for 'wait'
+input: wat 20 ticks
+runner: BLOCK
+env: <empty>
+suggestions: 2
+  [#0] wait %n:NUMBER% (tick|second|minute|hour|day)[s]
+    confidence: 0.950
+    issues:
+      - typo: 'wat' (col 0) should be 'wait'
+  [#1] wait %n:NUMBER% (tick|second|minute|hour|day)[s] as %name:STRING%
+    confidence: 0.850
+    issues:
+      - typo: 'wat' (col 0) should be 'wait'

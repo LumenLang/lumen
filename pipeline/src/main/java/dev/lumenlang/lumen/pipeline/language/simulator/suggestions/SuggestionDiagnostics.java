@@ -5,9 +5,9 @@ import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.emit.ScriptToken;
 import dev.lumenlang.lumen.api.type.NullableType;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
+import dev.lumenlang.lumen.pipeline.language.match.BoundValue;
 import dev.lumenlang.lumen.pipeline.language.match.MatchProgress;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
-import dev.lumenlang.lumen.pipeline.language.resolve.ExprResolver;
 import dev.lumenlang.lumen.pipeline.language.simulator.PatternSimulator;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.language.tokenization.TokenKind;
@@ -16,6 +16,8 @@ import dev.lumenlang.lumen.pipeline.typebinding.TypeRegistry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -80,10 +82,10 @@ public final class SuggestionDiagnostics {
         List<PatternSimulator.SuggestionIssue> issues = top.issues();
         PatternSimulator.SuggestionIssue primary = findPrimary(issues);
         if (primary != null) {
-            applyPrimaryHighlight(builder, primary, top, types);
+            applyPrimaryHighlight(builder, primary, top, types, raw);
             for (PatternSimulator.SuggestionIssue issue : issues) {
                 if (issue == primary) continue;
-                applySubHighlight(builder, issue, types);
+                applySubHighlight(builder, issue, types, raw);
             }
         } else if (top.progress() != null && !top.progress().bindingFailures().isEmpty()) {
             List<MatchProgress.BindingFailure> failures = top.progress().bindingFailures();
@@ -181,6 +183,21 @@ public final class SuggestionDiagnostics {
     }
 
     private static @Nullable LumenDiagnostic detectUnsupportedSyntax(int line, @NotNull String raw, @NotNull List<Token> tokens) {
+        List<int[]> spaceRuns = findMultiSpaceRuns(raw);
+        if (!spaceRuns.isEmpty()) {
+            int[] first = spaceRuns.get(0);
+            LumenDiagnostic.Builder builder = LumenDiagnostic.error("Unsupported syntax").at(line, raw)
+                    .highlight(first[0], first[1])
+                    .label(spaceRuns.size() == 1 ? "multiple spaces between tokens" : "multiple spaces between tokens (" + spaceRuns.size() + " runs on this line)");
+            for (int i = 1; i < spaceRuns.size(); i++) {
+                int[] run = spaceRuns.get(i);
+                builder.subHighlight(run[0], run[1], "and here");
+            }
+            return builder
+                    .note("Lumen treats consecutive spaces as one separator; collapse them or quote the value as a string")
+                    .help("use a single space, or wrap the value in double quotes if the spacing is intentional")
+                    .build();
+        }
         if (tokens.size() == 1 && tokens.get(0).kind() == TokenKind.SYMBOL) {
             String text = tokens.get(0).text();
             if (text.equals("{") || text.equals("}")) {
@@ -274,15 +291,18 @@ public final class SuggestionDiagnostics {
     }
 
     private static int issuePriority(@NotNull PatternSimulator.SuggestionIssue issue) {
+        if (issue instanceof PatternSimulator.SuggestionIssue.HandlerDiagnostic) return 5;
         if (issue instanceof PatternSimulator.SuggestionIssue.Typo) return 4;
         if (issue instanceof PatternSimulator.SuggestionIssue.ExtraTokens) return 3;
         if (issue instanceof PatternSimulator.SuggestionIssue.TypeMismatch) return 2;
+        if (issue instanceof PatternSimulator.SuggestionIssue.IncompleteInput) return 2;
+        if (issue instanceof PatternSimulator.SuggestionIssue.MissingLiteral) return 2;
         if (issue instanceof PatternSimulator.SuggestionIssue.MissingBinding) return 1;
         if (issue instanceof PatternSimulator.SuggestionIssue.Reorder) return 1;
         return 0;
     }
 
-    private static void applyPrimaryHighlight(@NotNull LumenDiagnostic.Builder builder, @NotNull PatternSimulator.SuggestionIssue issue, @NotNull PatternSimulator.Suggestion top, @NotNull TypeRegistry types) {
+    private static void applyPrimaryHighlight(@NotNull LumenDiagnostic.Builder builder, @NotNull PatternSimulator.SuggestionIssue issue, @NotNull PatternSimulator.Suggestion top, @NotNull TypeRegistry types, @NotNull String raw) {
         if (issue instanceof PatternSimulator.SuggestionIssue.Typo typo) {
             boolean validated = top.progress() != null && top.progress().succeeded();
             builder.highlight(typo.token().start(), typo.token().end());
@@ -299,15 +319,31 @@ public final class SuggestionDiagnostics {
             builder.highlight(mismatch.token().start(), mismatch.token().end());
             builder.label(mismatch.reason());
         } else if (issue instanceof PatternSimulator.SuggestionIssue.MissingBinding missing) {
-            builder.label("missing " + types.displayNameOf(missing.bindingId()));
+            int col = missing.atColumn();
+            String label = "expected " + types.displayNameOf(missing.bindingId()) + " " + missingBindingWhere(col, raw);
+            if (col >= 0) {
+                builder.highlight(col, col + 1).label(label);
+            } else {
+                builder.label(label);
+            }
         } else if (issue instanceof PatternSimulator.SuggestionIssue.Reorder reorder) {
             int start = reorder.tokens().stream().mapToInt(Token::start).min().orElse(0);
             int end = reorder.tokens().stream().mapToInt(Token::end).max().orElse(0);
             builder.highlight(start, end).label("tokens '" + reorderNote(reorder.tokens()) + "' may be in the wrong order");
+        } else if (issue instanceof PatternSimulator.SuggestionIssue.MissingLiteral missing) {
+            Token anchor = anchorTokenAfter(top, missing.afterTokenIndex());
+            int point = anchor != null ? anchor.end() : 0;
+            builder.highlight(point, point + 1).label("missing keyword '" + missing.literal() + "' here");
+        } else if (issue instanceof PatternSimulator.SuggestionIssue.IncompleteInput incomplete) {
+            Token last = lastInputToken(top);
+            if (last != null) builder.highlight(last.end(), last.end() + 1);
+            builder.label("expected '" + incomplete.expectedNext() + "' next");
+        } else if (issue instanceof PatternSimulator.SuggestionIssue.HandlerDiagnostic handler) {
+            builder.label(handler.title());
         }
     }
 
-    private static void applySubHighlight(@NotNull LumenDiagnostic.Builder builder, @NotNull PatternSimulator.SuggestionIssue issue, @NotNull TypeRegistry types) {
+    private static void applySubHighlight(@NotNull LumenDiagnostic.Builder builder, @NotNull PatternSimulator.SuggestionIssue issue, @NotNull TypeRegistry types, @NotNull String raw) {
         if (issue instanceof PatternSimulator.SuggestionIssue.Typo typo) {
             builder.subHighlight(typo.token().start(), typo.token().end(), "did you mean '" + typo.expected() + "'?");
         } else if (issue instanceof PatternSimulator.SuggestionIssue.ExtraTokens extra) {
@@ -317,12 +353,107 @@ public final class SuggestionDiagnostics {
         } else if (issue instanceof PatternSimulator.SuggestionIssue.TypeMismatch mismatch) {
             builder.subHighlight(mismatch.token().start(), mismatch.token().end(), mismatch.reason());
         } else if (issue instanceof PatternSimulator.SuggestionIssue.MissingBinding missing) {
-            builder.note("missing " + types.displayNameOf(missing.bindingId()));
+            int col = missing.atColumn();
+            String label = "expected " + types.displayNameOf(missing.bindingId()) + " " + missingBindingWhere(col, raw);
+            if (col >= 0) {
+                builder.subHighlight(col, col + 1, label);
+            } else {
+                builder.note(label);
+            }
         } else if (issue instanceof PatternSimulator.SuggestionIssue.Reorder reorder) {
             for (Token t : reorder.tokens()) {
                 builder.subHighlight(t.start(), t.end(), "out of order");
             }
+        } else if (issue instanceof PatternSimulator.SuggestionIssue.MissingLiteral missing) {
+            builder.note("also missing keyword '" + missing.literal() + "'");
+        } else if (issue instanceof PatternSimulator.SuggestionIssue.IncompleteInput incomplete) {
+            builder.note("input ended while expecting '" + incomplete.expectedNext() + "'");
+        } else if (issue instanceof PatternSimulator.SuggestionIssue.HandlerDiagnostic handler) {
+            builder.note(handler.title());
         }
+    }
+
+    /**
+     * Returns every multi-space run that sits between non-whitespace tokens and is not inside a
+     * string literal. Each entry is {@code [start, end]} with {@code end} exclusive.
+     */
+    private static @NotNull List<int[]> findMultiSpaceRuns(@NotNull String raw) {
+        List<int[]> out = new ArrayList<>();
+        int i = 0;
+        while (i < raw.length() && raw.charAt(i) == ' ') i++;
+        boolean sawContent = false;
+        boolean inString = false;
+        for (; i < raw.length(); i++) {
+            char c = raw.charAt(i);
+            if (inString) {
+                if (c == '\\' && i + 1 < raw.length()) {
+                    i++;
+                    continue;
+                }
+                if (c == '"') inString = false;
+                continue;
+            }
+            if (c == '"') {
+                inString = true;
+                sawContent = true;
+                continue;
+            }
+            if (c == ' ' && sawContent && i + 1 < raw.length() && raw.charAt(i + 1) == ' ') {
+                int j = i + 1;
+                while (j < raw.length() && raw.charAt(j) == ' ') j++;
+                if (j < raw.length()) {
+                    out.add(new int[]{i, j});
+                    i = j - 1;
+                }
+            }
+            if (c != ' ') sawContent = true;
+        }
+        return out;
+    }
+
+    /**
+     * Positional phrase for a missing-binding caret: at start, at end, in between '{a}' and '{b}',
+     * or here.
+     */
+    private static @NotNull String missingBindingWhere(int col, @NotNull String raw) {
+        if (col < 0) return "at end";
+        int beforeEnd = Math.min(col, raw.length());
+        while (beforeEnd > 0 && Character.isWhitespace(raw.charAt(beforeEnd - 1))) beforeEnd--;
+        int beforeStart = beforeEnd;
+        while (beforeStart > 0 && !Character.isWhitespace(raw.charAt(beforeStart - 1))) beforeStart--;
+        int afterStart = Math.max(0, col);
+        while (afterStart < raw.length() && Character.isWhitespace(raw.charAt(afterStart))) afterStart++;
+        int afterEnd = afterStart;
+        while (afterEnd < raw.length() && !Character.isWhitespace(raw.charAt(afterEnd))) afterEnd++;
+        boolean hasBefore = beforeEnd > beforeStart;
+        boolean hasAfter = afterEnd > afterStart;
+        if (!hasBefore && !hasAfter) return "here";
+        if (!hasBefore) return "at start";
+        if (!hasAfter) return "at end";
+        return "in between '" + raw.substring(beforeStart, beforeEnd) + "' and '" + raw.substring(afterStart, afterEnd) + "'";
+    }
+
+    private static @Nullable Token anchorTokenAfter(@NotNull PatternSimulator.Suggestion top, int afterTokenIndex) {
+        if (top.progress() == null || top.progress().match() == null) return null;
+        Collection<BoundValue> bound = top.progress().match().values().values();
+        Token best = null;
+        for (BoundValue bv : bound) {
+            for (Token t : bv.tokens()) {
+                if (best == null || t.start() > best.start()) best = t;
+            }
+        }
+        return best;
+    }
+
+    private static @Nullable Token lastInputToken(@NotNull PatternSimulator.Suggestion top) {
+        if (top.progress() == null || top.progress().match() == null) return null;
+        Token last = null;
+        for (BoundValue bv : top.progress().match().values().values()) {
+            for (Token t : bv.tokens()) {
+                if (last == null || t.end() > last.end()) last = t;
+            }
+        }
+        return last;
     }
 
     private static @NotNull String confidenceTier(double confidence) {

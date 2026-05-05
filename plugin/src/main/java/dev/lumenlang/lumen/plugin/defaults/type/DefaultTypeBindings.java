@@ -11,7 +11,9 @@ import dev.lumenlang.lumen.api.type.AddonTypeBinding;
 import dev.lumenlang.lumen.api.type.BuiltinLumenTypes;
 import dev.lumenlang.lumen.api.type.CollectionType;
 import dev.lumenlang.lumen.api.type.EnumTypeBinding;
+import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.MinecraftTypes;
+import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.api.type.RegistryTypeBinding;
 import dev.lumenlang.lumen.api.type.TypeBindingMeta;
 import dev.lumenlang.lumen.api.util.FuzzyMatch;
@@ -108,6 +110,7 @@ public final class DefaultTypeBindings {
         registerCond(api);
         registerOp(api);
         registerEntity(api);
+        registerLivingEntity(api);
         registerItem(api);
         registerItemStack(api);
         registerLocation(api);
@@ -433,7 +436,8 @@ public final class DefaultTypeBindings {
                 if (frozenMats.contains(normalized)) return normalized;
                 VarHandle ref = env.lookupVar(tokens.get(0));
                 if (ref != null) return ref;
-                throw new ParseFailureException(fuzzyMaterial(tokens.get(0), frozenMats));
+                String token = tokens.get(0);
+                throw new ParseFailureException(() -> fuzzyMaterial(token, frozenMats));
             }
 
             @Override
@@ -811,7 +815,8 @@ public final class DefaultTypeBindings {
             }
 
             private boolean isEntity(@NotNull VarHandle ref) {
-                return MinecraftTypes.ENTITY.equals(ref.type().unwrap()) || MinecraftTypes.PLAYER.equals(ref.type().unwrap());
+                LumenType unwrapped = ref.type().unwrap();
+                return unwrapped instanceof ObjectType obj && (obj.equals(MinecraftTypes.ENTITY) || obj.isSubtypeOf(MinecraftTypes.ENTITY));
             }
         });
 
@@ -855,7 +860,8 @@ public final class DefaultTypeBindings {
             }
 
             private boolean isEntity(@NotNull VarHandle ref) {
-                return MinecraftTypes.ENTITY.equals(ref.type().unwrap()) || MinecraftTypes.PLAYER.equals(ref.type().unwrap());
+                LumenType unwrapped = ref.type().unwrap();
+                return unwrapped instanceof ObjectType obj && (obj.equals(MinecraftTypes.ENTITY) || obj.isSubtypeOf(MinecraftTypes.ENTITY));
             }
         });
 
@@ -898,7 +904,7 @@ public final class DefaultTypeBindings {
                 VarHandle ref = env.lookupVar(raw);
                 if (ref != null)
                     return ref;
-                throw new ParseFailureException(fuzzyEntityType(raw, knownEntities));
+                throw new ParseFailureException(() -> fuzzyEntityType(raw, knownEntities));
             }
 
             @Override
@@ -909,6 +915,97 @@ public final class DefaultTypeBindings {
                 }
                 ctx.addImport(EntityType.class.getName());
                 return "EntityType." + value;
+            }
+        });
+    }
+
+    private void registerLivingEntity(@NotNull LumenAPI api) {
+        api.types().register(new AddonTypeBinding() {
+            @Override
+            public @NotNull String id() {
+                return "LIVING_ENTITY";
+            }
+
+            @Override
+            public @NotNull TypeBindingMeta meta() {
+                return new TypeBindingMeta(
+                        "a living entity variable",
+                        "Resolves a living entity reference from a variable name. Accepts any variable whose declared type is a subtype of LIVING_ENTITY (so PLAYER and other living-entity subtypes both work).",
+                        "org.bukkit.entity.LivingEntity",
+                        List.of("heal %e:LIVING_ENTITY%", "damage %e:LIVING_ENTITY% by 5"),
+                        "1.0.0",
+                        false);
+            }
+
+            @Override
+            public Object parse(@NotNull List<String> tokens, @NotNull TypeEnv env) {
+                String raw = tokens.get(0);
+                if (raw.endsWith("'s"))
+                    throw new ParseFailureException("'" + raw + "' should not use possessive form here");
+
+                VarHandle ref = env.lookupVar(raw);
+                if (ref == null)
+                    throw new ParseFailureException("'" + raw + "' does not exist in this scope");
+                if (!isLivingEntity(ref))
+                    throw new ParseFailureException("'" + raw + "' is a " + ref.type().displayName() + ", not a living entity");
+                return ref;
+            }
+
+            @Override
+            public @NotNull String toJava(Object v, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
+                if (v == null)
+                    throw new RuntimeException("Cannot generate Java for null living entity reference");
+                return ((VarHandle) v).java();
+            }
+
+            private boolean isLivingEntity(@NotNull VarHandle ref) {
+                LumenType unwrapped = ref.type().unwrap();
+                return unwrapped instanceof ObjectType obj && (obj.equals(MinecraftTypes.LIVING_ENTITY) || obj.isSubtypeOf(MinecraftTypes.LIVING_ENTITY));
+            }
+        });
+
+        api.types().register(new AddonTypeBinding() {
+            @Override
+            public @NotNull String id() {
+                return "LIVING_ENTITY_POSSESSIVE";
+            }
+
+            @Override
+            public @NotNull TypeBindingMeta meta() {
+                return new TypeBindingMeta(
+                        "a living entity variable in possessive form (e.g. mob's)",
+                        "Resolves a living entity reference from a possessive token (e.g. mob's). The token must end with 's.",
+                        "org.bukkit.entity.LivingEntity",
+                        List.of("%e:LIVING_ENTITY_POSSESSIVE% health"),
+                        "1.0.0",
+                        false);
+            }
+
+            @Override
+            public Object parse(@NotNull List<String> tokens, @NotNull TypeEnv env) {
+                String raw = tokens.get(0);
+                if (!raw.endsWith("'s"))
+                    throw new ParseFailureException("'" + raw + "' must use possessive form (e.g. mob's)");
+                String name = raw.substring(0, raw.length() - 2);
+
+                VarHandle ref = env.lookupVar(name);
+                if (ref == null)
+                    throw new ParseFailureException("'" + name + "' does not exist in this scope");
+                if (!isLivingEntity(ref))
+                    throw new ParseFailureException("'" + name + "' is a " + ref.type().displayName() + ", not a living entity");
+                return ref;
+            }
+
+            @Override
+            public @NotNull String toJava(Object v, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
+                if (v == null)
+                    throw new RuntimeException("Cannot generate Java for null living entity reference");
+                return ((VarHandle) v).java();
+            }
+
+            private boolean isLivingEntity(@NotNull VarHandle ref) {
+                LumenType unwrapped = ref.type().unwrap();
+                return unwrapped instanceof ObjectType obj && (obj.equals(MinecraftTypes.LIVING_ENTITY) || obj.isSubtypeOf(MinecraftTypes.LIVING_ENTITY));
             }
         });
     }
@@ -956,7 +1053,7 @@ public final class DefaultTypeBindings {
                         throw new ParseFailureException("'" + raw + "' is an item stack variable, not a material name");
                     return ref;
                 }
-                throw new ParseFailureException(fuzzyItem(raw, knownMaterials));
+                throw new ParseFailureException(() -> fuzzyItem(raw, knownMaterials));
             }
 
             @Override

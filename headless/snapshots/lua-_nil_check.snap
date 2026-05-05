@@ -1,0 +1,5 @@
+case: lua: nil check
+input: if player == nil then
+runner: CONDITION
+env: <empty>
+suggestions: 0

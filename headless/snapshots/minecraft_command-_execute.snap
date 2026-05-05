@@ -1,0 +1,10 @@
+case: minecraft command: execute
+input: /execute as @a at @s run kill
+runner: STATEMENT
+env: <empty>
+suggestions: 1
+  [#0] %s:EXPR% as number
+    confidence: 0.475
+    issues:
+      - typo: 'at' (col 15) should be 'as'
+      - type mismatch: '/' (col 0) is not a EXPR ('EXPR' rejected the input)

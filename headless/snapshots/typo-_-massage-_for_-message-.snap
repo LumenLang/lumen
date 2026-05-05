@@ -1,0 +1,10 @@
+case: typo: 'massage' for 'message'
+input: massage p "hello"
+runner: STATEMENT
+env:
+  var p: player
+suggestions: 1
+  [#0] message %who:PLAYER% %text:STRING%
+    confidence: 0.950
+    issues:
+      - typo: 'massage' (col 0) should be 'message'

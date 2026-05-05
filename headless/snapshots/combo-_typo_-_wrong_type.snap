@@ -1,0 +1,10 @@
+case: combo: typo + wrong type
+input: damge "alice" by 5
+runner: STATEMENT
+env: <empty>
+suggestions: 1
+  [#0] damage %e:LIVING_ENTITY% [by] %val:INT%
+    confidence: 0.730
+    issues:
+      - typo: 'damge' (col 0) should be 'damage'
+      - type mismatch: 'alice' (col 6) is not a LIVING_ENTITY ('alice' does not exist in this scope)

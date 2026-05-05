@@ -1,0 +1,13 @@
+case: edge: ALL CAPS verb
+input: KILL P
+runner: STATEMENT
+env: <empty>
+suggestions: 2
+  [#0] (kill|slay) %who:PLAYER%
+    confidence: 0.730
+    issues:
+      - type mismatch: 'P' (col 5) is not a PLAYER ('P' does not exist in this scope)
+  [#1] (kill|slay) %e:LIVING_ENTITY%
+    confidence: 0.730
+    issues:
+      - type mismatch: 'P' (col 5) is not a LIVING_ENTITY ('P' does not exist in this scope)

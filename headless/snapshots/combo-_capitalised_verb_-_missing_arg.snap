@@ -1,0 +1,12 @@
+case: combo: capitalised verb + missing arg
+input: Kill
+runner: STATEMENT
+env:
+  var p: player
+suggestions: 2
+  [#0] (kill|slay) %who:PLAYER%
+    confidence: 0.850
+    issues: <none>
+  [#1] (kill|slay) %e:LIVING_ENTITY%
+    confidence: 0.850
+    issues: <none>

@@ -1,0 +1,5 @@
+case: rust: function definition
+input: fn heal(p: &mut Player) { p.set_health(20); }
+runner: STATEMENT
+env: <empty>
+suggestions: 0

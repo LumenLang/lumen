@@ -1,0 +1,12 @@
+case: clean: kill player variable
+input: kill p
+runner: STATEMENT
+env:
+  var p: player
+suggestions: 2
+  [#0] (kill|slay) %who:PLAYER%
+    confidence: 1.000
+    issues: <none>
+  [#1] (kill|slay) %e:LIVING_ENTITY%
+    confidence: 1.000
+    issues: <none>

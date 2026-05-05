@@ -1,0 +1,5 @@
+case: sql: delete
+input: DELETE FROM players WHERE health <= 0
+runner: STATEMENT
+env: <empty>
+suggestions: 0

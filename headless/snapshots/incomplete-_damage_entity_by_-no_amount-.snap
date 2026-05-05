@@ -1,0 +1,10 @@
+case: incomplete: damage entity by (no amount)
+input: damage mob by
+runner: STATEMENT
+env:
+  var mob: living_entity
+suggestions: 1
+  [#0] damage %e:LIVING_ENTITY% [by] %val:INT%
+    confidence: 0.730
+    issues:
+      - missing binding: INT (col 14)

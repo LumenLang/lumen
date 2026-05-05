@@ -1,0 +1,13 @@
+case: block: every with no unit
+input: every 5
+runner: BLOCK
+env: <empty>
+suggestions: 2
+  [#0] every %n:NUMBER% (tick|second|minute|hour|day)[s]
+    confidence: 0.850
+    issues:
+      - incomplete: expected 'tick' next
+  [#1] every %n:NUMBER% (tick|second|minute|hour|day)[s] as %name:STRING%
+    confidence: 0.850
+    issues:
+      - incomplete: expected 'tick' next

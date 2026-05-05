@@ -1,0 +1,5 @@
+case: java: for-each loop
+input: for (Player p : bukkit.getOnlinePlayers()) {
+runner: BLOCK
+env: <empty>
+suggestions: 0

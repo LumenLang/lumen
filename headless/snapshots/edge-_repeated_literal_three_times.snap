@@ -1,0 +1,13 @@
+case: edge: repeated literal three times
+input: set set set
+runner: STATEMENT
+env: <empty>
+suggestions: 2
+  [#0] set %b:BLOCK% data [to] %data:STRING%
+    confidence: 0.730
+    issues:
+      - missing binding: BLOCK (col 8)
+  [#1] set %i:ITEMSTACK_POSSESSIVE% lore [to] %lore:STRING%
+    confidence: 0.730
+    issues:
+      - missing binding: ITEMSTACK_POSSESSIVE (col 8)

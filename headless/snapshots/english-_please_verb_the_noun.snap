@@ -1,0 +1,5 @@
+case: english: please verb the noun
+input: please kill the player named alice
+runner: STATEMENT
+env: <empty>
+suggestions: 0

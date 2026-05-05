@@ -1,0 +1,14 @@
+case: typo: 'giv' for 'give'
+input: giv p diamond
+runner: STATEMENT
+env:
+  var p: player
+suggestions: 2
+  [#0] give %who:PLAYER% %item:ITEM%
+    confidence: 0.950
+    issues:
+      - typo: 'giv' (col 0) should be 'give'
+  [#1] give %who:PLAYER% %item:MATERIAL% %amt:INT%
+    confidence: 0.850
+    issues:
+      - typo: 'giv' (col 0) should be 'give'

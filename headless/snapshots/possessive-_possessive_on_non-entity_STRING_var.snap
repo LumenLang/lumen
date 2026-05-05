@@ -1,0 +1,14 @@
+case: possessive: possessive on non-entity STRING var
+input: get name's health
+runner: EXPRESSION
+env:
+  var name: string
+suggestions: 2
+  [#0] get %e:ENTITY_POSSESSIVE% health
+    confidence: 0.730
+    issues:
+      - type mismatch: 'name's' (col 4) is not a ENTITY_POSSESSIVE ('name' is a string, not an entity)
+  [#1] get %e:ENTITY_POSSESSIVE% max health
+    confidence: 0.730
+    issues:
+      - type mismatch: 'name's' (col 4) is not a ENTITY_POSSESSIVE ('name' is a string, not an entity)

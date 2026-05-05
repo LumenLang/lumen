@@ -1,0 +1,14 @@
+case: long: deeply nested possessive chain
+input: get p's target's location's world
+runner: EXPRESSION
+env:
+  var p: player
+suggestions: 2
+  [#0] get %e:ENTITY_POSSESSIVE% world
+    confidence: 0.840
+    issues:
+      - extra tokens: 'target's' (col 8), 'location's' (col 17)
+  [#1] get %who:PLAYER_POSSESSIVE% world
+    confidence: 0.840
+    issues:
+      - extra tokens: 'target's' (col 8), 'location's' (col 17)

@@ -1,0 +1,5 @@
+case: english: question
+input: How do I give a player a diamond sword in Lumen?
+runner: STATEMENT
+env: <empty>
+suggestions: 0

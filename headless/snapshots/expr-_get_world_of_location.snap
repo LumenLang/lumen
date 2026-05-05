@@ -1,0 +1,13 @@
+case: expr: get world of location
+input: get loc world
+runner: EXPRESSION
+env:
+  var loc: location
+suggestions: 2
+  [#0] get %loc:LOCATION% world
+    confidence: 1.000
+    issues: <none>
+  [#1] get world %name:STRING%
+    confidence: 1.000
+    issues:
+      - reorder: 'loc', 'world'

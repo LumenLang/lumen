@@ -1,0 +1,10 @@
+case: pileup: kill many wrong tokens trailing
+input: kil mob now then later please immediately
+runner: STATEMENT
+env:
+  var mob: living_entity
+suggestions: 1
+  [#0] (kill|slay) %e:LIVING_ENTITY%
+    confidence: 0.429
+    issues:
+      - typo: 'kil' (col 0) should be 'kill'

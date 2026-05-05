@@ -1,0 +1,14 @@
+case: cond: bare 'p health > 10' without possessive
+input: p health > 10
+runner: CONDITION
+env:
+  var p: player
+suggestions: 2
+  [#0] %p:PLAYER_POSSESSIVE% health %op:OP% %n:INT%
+    confidence: 0.730
+    issues:
+      - type mismatch: 'p' (col 0) is not a PLAYER_POSSESSIVE ('p' must use possessive form (e.g. player's))
+  [#1] %e:ENTITY_POSSESSIVE% health %op:OP% %n:INT%
+    confidence: 0.730
+    issues:
+      - type mismatch: 'p' (col 0) is not a ENTITY_POSSESSIVE ('p' must use possessive form (e.g. entity's))

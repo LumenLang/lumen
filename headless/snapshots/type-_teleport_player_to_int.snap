@@ -1,0 +1,14 @@
+case: type: teleport player to int
+input: teleport p to 5
+runner: STATEMENT
+env:
+  var p: player
+suggestions: 2
+  [#0] (teleport|tp) %e:ENTITY% [to] %loc:LOCATION%
+    confidence: 0.730
+    issues:
+      - type mismatch: '5' (col 14) is not a LOCATION ('5' does not exist in this scope)
+  [#1] (teleport|tp) %e:ENTITY% [to] %target:ENTITY%
+    confidence: 0.730
+    issues:
+      - type mismatch: '5' (col 14) is not a ENTITY ('5' does not exist in this scope)

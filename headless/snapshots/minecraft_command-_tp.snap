@@ -1,0 +1,5 @@
+case: minecraft command: tp
+input: /tp @p ~ ~10 ~
+runner: STATEMENT
+env: <empty>
+suggestions: 0

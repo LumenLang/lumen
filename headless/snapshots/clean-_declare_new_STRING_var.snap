@@ -1,0 +1,12 @@
+case: clean: declare new STRING var
+input: set greeting to "hi"
+runner: STATEMENT
+env: <empty>
+suggestions: 2
+  [#0] set %name:IDENT% to %val:EXPR%
+    confidence: 1.000
+    issues: <none>
+  [#1] set %b:BLOCK% data [to] %data:STRING%
+    confidence: 0.630
+    issues:
+      - type mismatch: 'greeting' (col 4) is not a BLOCK ('greeting' is a string, not a block)

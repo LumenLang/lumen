@@ -1,0 +1,9 @@
+case: clean: message p "hello"
+input: message p "hello"
+runner: STATEMENT
+env:
+  var p: player
+suggestions: 1
+  [#0] message %who:PLAYER% %text:STRING%
+    confidence: 1.000
+    issues: <none>

@@ -1,0 +1,14 @@
+case: typo: 'sand' for 'send' before title
+input: sand title "hi" to p
+runner: STATEMENT
+env:
+  var p: player
+suggestions: 2
+  [#0] send title %title:STRING% to %who:PLAYER%
+    confidence: 0.950
+    issues:
+      - typo: 'sand' (col 0) should be 'send'
+  [#1] send title %title:STRING% with subtitle %sub:STRING% to %who:PLAYER%
+    confidence: 0.800
+    issues:
+      - typo: 'sand' (col 0) should be 'send'

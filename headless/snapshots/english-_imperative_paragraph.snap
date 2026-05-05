@@ -1,0 +1,5 @@
+case: english: imperative paragraph
+input: Take the player and remove all of their items immediately
+runner: STATEMENT
+env: <empty>
+suggestions: 0

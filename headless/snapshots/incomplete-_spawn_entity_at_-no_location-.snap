@@ -1,0 +1,12 @@
+case: incomplete: spawn entity at (no location)
+input: spawn zombie at
+runner: STATEMENT
+env: <empty>
+suggestions: 2
+  [#0] spawn %type:ENTITY_TYPE% at %who:PLAYER%
+    confidence: 0.850
+    issues: <none>
+  [#1] spawn %type:ENTITY_TYPE% [at] %loc:LOCATION%
+    confidence: 0.730
+    issues:
+      - missing binding: LOCATION (col 16)

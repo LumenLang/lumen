@@ -1,9 +1,10 @@
 package dev.lumenlang.lumen.pipeline.language.simulator.options;
 
+import dev.lumenlang.lumen.pipeline.language.simulator.PatternSimulator;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Tunable knobs for {@link dev.lumenlang.lumen.pipeline.language.simulator.PatternSimulator}.
+ * Tunable knobs for {@link PatternSimulator}.
  *
  * <p>Each option carries a numeric kind ({@link Kind#INT} or {@link Kind#DOUBLE}),
  * a default value, and a valid {@link Range}. Use {@link SimulatorOptions#builder()}
@@ -95,28 +96,40 @@ public enum SimulatorOption {
     /**
      * Confidence multiplier applied when a sandboxed handler invocation throws.
      */
-    SANDBOX_REJECTED_PENALTY(Kind.DOUBLE, 0.75, Range.zeroToOne());
+    SANDBOX_REJECTED_PENALTY(Kind.DOUBLE, 0.75, Range.zeroToOne()),
 
     /**
-     * Numeric kind a {@link SimulatorOption} accepts.
+     * Minimum pre-filter confidence required to attempt the reorder fallback. Patterns that
+     * scored below this threshold during the pre-filter pass skip reorder analysis entirely,
+     * which prevents catch-all patterns (where most parts are placeholders) from emitting
+     * spurious reorder suggestions on inputs they barely match.
      */
-    public enum Kind {
+    REORDER_PREFILTER_FLOOR(Kind.DOUBLE, 0.50, Range.zeroToOne()),
 
-        /**
-         * Integer option, set with {@code .set(option, int)}.
-         */
-        INT,
+    /**
+     * Multiplier applied to a fallback suggestion's confidence when the only issue surfaced is a
+     * {@code MissingLiteral}. Low values push these informational suggestions below ordinary
+     * type-mismatch fallbacks; high values let them compete head-on.
+     */
+    MISSING_LITERAL_CONFIDENCE_FACTOR(Kind.DOUBLE, 0.50, Range.zeroToOne()),
 
-        /**
-         * Double option, set with {@code .set(option, double)}.
-         */
-        DOUBLE
-    }
+    /**
+     * Minimum pre-filter confidence required for a MissingLiteral-only suggestion to be returned.
+     * Patterns that scored below this in the pre-filter pass are clearly distant from the input
+     * and their MissingLiteral suggestion is just noise.
+     */
+    MISSING_LITERAL_PREFILTER_FLOOR(Kind.DOUBLE, 0.50, Range.zeroToOne()),
+
+    /**
+     * Minimum confidence a final suggestion must reach to be returned to callers. Below this the
+     * caller sees an empty list and can render a generic "no close match" diagnostic instead of
+     * a misleading low-confidence guess.
+     */
+    MIN_REPORT_CONFIDENCE(Kind.DOUBLE, 0.30, Range.zeroToOne());
 
     private final @NotNull Kind kind;
     private final double defaultValue;
     private final @NotNull Range range;
-
     SimulatorOption(@NotNull Kind kind, double defaultValue, @NotNull Range range) {
         this.kind = kind;
         this.defaultValue = defaultValue;
@@ -140,5 +153,21 @@ public enum SimulatorOption {
      */
     public @NotNull Range range() {
         return range;
+    }
+
+    /**
+     * Numeric kind a {@link SimulatorOption} accepts.
+     */
+    public enum Kind {
+
+        /**
+         * Integer option, set with {@code .set(option, int)}.
+         */
+        INT,
+
+        /**
+         * Double option, set with {@code .set(option, double)}.
+         */
+        DOUBLE
     }
 }

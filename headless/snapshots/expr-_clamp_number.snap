@@ -1,0 +1,14 @@
+case: expr: clamp number
+input: clamp x between 0 and 10
+runner: EXPRESSION
+env:
+  var x: int
+suggestions: 2
+  [#0] clamp %x:NUMBER% between %min:NUMBER% and %max:NUMBER%
+    confidence: 1.000
+    issues: <none>
+  [#1] [get] %b:BLOCK% (x|y|z)
+    confidence: 0.380
+    issues:
+      - type mismatch: 'clamp' (col 0) is not a BLOCK ('clamp' does not exist in this scope)
+      - extra tokens: 'between' (col 8), '0' (col 16), 'and' (col 18), '10' (col 22)

@@ -1,0 +1,5 @@
+case: edge: single number literal
+input: 42
+runner: STATEMENT
+env: <empty>
+suggestions: 0

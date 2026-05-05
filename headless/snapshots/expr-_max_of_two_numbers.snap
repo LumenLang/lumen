@@ -1,0 +1,8 @@
+case: expr: max of two numbers
+input: max of 5 and 10
+runner: EXPRESSION
+env: <empty>
+suggestions: 1
+  [#0] (max|maximum) of %x:NUMBER% and %y:NUMBER%
+    confidence: 1.000
+    issues: <none>

@@ -1,0 +1,13 @@
+case: long: full title with subtitle and timing
+input: send title "hi" with subtitle "sub" to p with fade in 10 stay 20 fade out 10
+runner: STATEMENT
+env:
+  var p: player
+suggestions: 2
+  [#0] send title %title:STRING% with subtitle %sub:STRING% to %who:PLAYER% with fade in %fi:INT% stay %st:INT% fade out %fo:INT%
+    confidence: 1.000
+    issues: <none>
+  [#1] send title %title:STRING% with subtitle %sub:STRING% to %who:PLAYER%
+    confidence: 0.529
+    issues:
+      - typo: 'sub' (col 30) should be 'subtitle'

@@ -1,0 +1,5 @@
+case: hocon: nested key
+input: player { health = 20, name = "alice" }
+runner: STATEMENT
+env: <empty>
+suggestions: 0

@@ -1,0 +1,5 @@
+case: minecraft command: scoreboard
+input: /scoreboard players add @p kills 1
+runner: STATEMENT
+env: <empty>
+suggestions: 0

@@ -1,0 +1,14 @@
+case: clean: reassign existing INT var
+input: set count to 5
+runner: STATEMENT
+env:
+  var count: int
+suggestions: 2
+  [#0] set %name:IDENT% to %val:EXPR%
+    confidence: 1.000
+    issues: <none>
+  [#1] set %i:ITEMSTACK_POSSESSIVE% amount [to] %amt:INT%
+    confidence: 0.630
+    issues:
+      - typo: 'count' (col 4) should be 'amount'
+      - type mismatch: 'amount' (col 0) is not a ITEMSTACK_POSSESSIVE ('amount' must use possessive form (e.g. item's))

@@ -1,0 +1,5 @@
+case: bash: pipe chain
+input: ps aux | grep java | wc -l
+runner: STATEMENT
+env: <empty>
+suggestions: 0

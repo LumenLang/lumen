@@ -1,0 +1,13 @@
+case: skript: make player invisible
+input: make player invisible to other players
+runner: STATEMENT
+env: <empty>
+suggestions: 2
+  [#0] make %i:ITEMSTACK% unbreakable
+    confidence: 0.380
+    issues:
+      - type mismatch: 'player' (col 5) is not a ITEMSTACK ('player' does not exist in this scope)
+  [#1] make %i:ITEMSTACK% breakable
+    confidence: 0.380
+    issues:
+      - type mismatch: 'player' (col 5) is not a ITEMSTACK ('player' does not exist in this scope)

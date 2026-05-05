@@ -1,0 +1,5 @@
+case: skript: stop trigger
+input: stop the trigger
+runner: STATEMENT
+env: <empty>
+suggestions: 0

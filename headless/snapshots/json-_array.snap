@@ -1,0 +1,5 @@
+case: json: array
+input: ["alice", "bob", "charlie"]
+runner: STATEMENT
+env: <empty>
+suggestions: 0

@@ -1,0 +1,5 @@
+case: skript: send to all players
+input: send "hi" to all players
+runner: STATEMENT
+env: <empty>
+suggestions: 0

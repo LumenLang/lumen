@@ -1,0 +1,17 @@
+case: cond: 'inisde' typo for 'inside'
+input: loc is inisde a to b
+runner: CONDITION
+env:
+  var loc: location
+  var a: location
+  var b: location
+suggestions: 2
+  [#0] %loc:LOCATION% (is|is not) inside %min:LOCATION% to %max:LOCATION%
+    confidence: 0.950
+    issues:
+      - typo: 'inisde' (col 7) should be 'inside'
+  [#1] %who:PLAYER% (is|is not) inside %min:LOCATION% to %max:LOCATION%
+    confidence: 0.475
+    issues:
+      - typo: 'inisde' (col 7) should be 'inside'
+      - type mismatch: 'loc' (col 0) is not a PLAYER ('loc' is a location, not a player)

@@ -1,0 +1,5 @@
+case: python: import statement
+input: from bukkit import Player
+runner: STATEMENT
+env: <empty>
+suggestions: 0

@@ -1,0 +1,13 @@
+case: skript: loop all entities
+input: loop all entities in world "world":
+runner: BLOCK
+env: <empty>
+suggestions: 2
+  [#0] loop %var:EXPR% in %source:EXPR%
+    confidence: 1.000
+    issues: <none>
+  [#1] if %cond:COND%
+    confidence: 0.710
+    issues:
+      - extra tokens: 'loop' (col 0), 'all' (col 5), 'entities' (col 9)
+      - typo: 'in' (col 18) should be 'if'

@@ -1,0 +1,14 @@
+case: expr: 'gat' typo for 'get'
+input: gat p's health
+runner: EXPRESSION
+env:
+  var p: player
+suggestions: 2
+  [#0] get %e:ENTITY_POSSESSIVE% health
+    confidence: 0.950
+    issues:
+      - typo: 'gat' (col 0) should be 'get'
+  [#1] get %e:ENTITY_POSSESSIVE% max health
+    confidence: 0.850
+    issues:
+      - typo: 'gat' (col 0) should be 'get'

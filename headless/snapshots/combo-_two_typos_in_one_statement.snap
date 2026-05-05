@@ -1,0 +1,15 @@
+case: combo: two typos in one statement
+input: kil zomb
+runner: STATEMENT
+env:
+  var zomb: living_entity
+suggestions: 2
+  [#0] (kill|slay) %e:LIVING_ENTITY%
+    confidence: 0.950
+    issues:
+      - typo: 'kil' (col 0) should be 'kill'
+  [#1] (kill|slay) %who:PLAYER%
+    confidence: 0.730
+    issues:
+      - typo: 'kil' (col 0) should be 'kill'
+      - type mismatch: 'zomb' (col 4) is not a PLAYER ('zomb' is a living_entity, not a player)

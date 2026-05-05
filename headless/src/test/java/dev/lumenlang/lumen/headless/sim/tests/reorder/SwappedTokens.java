@@ -1,0 +1,47 @@
+package dev.lumenlang.lumen.headless.sim.tests.reorder;
+
+import dev.lumenlang.lumen.api.type.MinecraftTypes;
+import dev.lumenlang.lumen.headless.sim.annotations.SimCase;
+import dev.lumenlang.lumen.headless.sim.annotations.SimulatorTest;
+import dev.lumenlang.lumen.headless.sim.cases.EnvSimulator;
+import dev.lumenlang.lumen.headless.sim.cases.SimulatorCase;
+
+/**
+ * Inputs whose tokens are all present but in the wrong order.
+ */
+@SimulatorTest
+public final class SwappedTokens {
+
+    private SwappedTokens() {
+    }
+
+    @SimCase(name = "swap: message arguments swapped")
+    public static SimulatorCase messageArgs() {
+        return SimulatorCase.statement("message \"hello\" p")
+                .env(EnvSimulator.create().withVar("p", MinecraftTypes.PLAYER));
+    }
+
+    @SimCase(name = "swap: send title recipient before string")
+    public static SimulatorCase sendToBeforeString() {
+        return SimulatorCase.statement("send title to p \"hi\"")
+                .env(EnvSimulator.create().withVar("p", MinecraftTypes.PLAYER));
+    }
+
+    @SimCase(name = "swap: damage 'by amount' before target")
+    public static SimulatorCase damageAmountFirst() {
+        return SimulatorCase.statement("damage by 5 mob")
+                .env(EnvSimulator.create().withVar("mob", MinecraftTypes.LIVING_ENTITY));
+    }
+
+    @SimCase(name = "swap: teleport target before player")
+    public static SimulatorCase teleportTargetFirst() {
+        return SimulatorCase.statement("teleport l to p")
+                .env(EnvSimulator.create().withVar("p", MinecraftTypes.PLAYER).withVar("l", MinecraftTypes.LOCATION));
+    }
+
+    @SimCase(name = "swap: spawn type after location")
+    public static SimulatorCase spawnTypeLast() {
+        return SimulatorCase.statement("spawn at l zombie")
+                .env(EnvSimulator.create().withVar("l", MinecraftTypes.LOCATION));
+    }
+}

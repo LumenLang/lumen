@@ -1,0 +1,14 @@
+case: lua: local declaration
+input: local count = 5
+runner: STATEMENT
+env: <empty>
+suggestions: 2
+  [#0] round %x:NUMBER%
+    confidence: 0.790
+    issues:
+      - extra tokens: 'local' (col 0), '=' (col 12)
+      - typo: 'count' (col 6) should be 'round'
+  [#1] global %rest:EXPR%
+    confidence: 0.712
+    issues:
+      - typo: 'local' (col 0) should be 'global'

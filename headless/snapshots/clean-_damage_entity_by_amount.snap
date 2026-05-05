@@ -1,0 +1,9 @@
+case: clean: damage entity by amount
+input: damage mob by 5
+runner: STATEMENT
+env:
+  var mob: living_entity
+suggestions: 1
+  [#0] damage %e:LIVING_ENTITY% [by] %val:INT%
+    confidence: 1.000
+    issues: <none>

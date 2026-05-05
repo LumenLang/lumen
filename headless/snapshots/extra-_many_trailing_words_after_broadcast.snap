@@ -1,0 +1,9 @@
+case: extra: many trailing words after broadcast
+input: broadcast "hi" everyone now please
+runner: STATEMENT
+env: <empty>
+suggestions: 1
+  [#0] (broadcast|announce) %text:STRING%
+    confidence: 0.760
+    issues:
+      - extra tokens: 'everyone' (col 15), 'now' (col 24), 'please' (col 28)

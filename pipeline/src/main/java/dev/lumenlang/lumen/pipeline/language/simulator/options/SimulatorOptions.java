@@ -51,7 +51,8 @@ public final class SimulatorOptions {
      * @throws IllegalArgumentException if the option's kind is not {@link SimulatorOption.Kind#INT}
      */
     public int intValue(@NotNull SimulatorOption option) {
-        if (option.kind() != SimulatorOption.Kind.INT) throw new IllegalArgumentException(option + " is not an int option");
+        if (option.kind() != SimulatorOption.Kind.INT)
+            throw new IllegalArgumentException(option + " is not an int option");
         Double v = overrides.get(option);
         return v != null ? v.intValue() : (int) option.defaultValue();
     }
@@ -63,7 +64,8 @@ public final class SimulatorOptions {
      * @throws IllegalArgumentException if the option's kind is not {@link SimulatorOption.Kind#DOUBLE}
      */
     public double doubleValue(@NotNull SimulatorOption option) {
-        if (option.kind() != SimulatorOption.Kind.DOUBLE) throw new IllegalArgumentException(option + " is not a double option");
+        if (option.kind() != SimulatorOption.Kind.DOUBLE)
+            throw new IllegalArgumentException(option + " is not a double option");
         Double v = overrides.get(option);
         return v != null ? v : option.defaultValue();
     }
@@ -86,9 +88,11 @@ public final class SimulatorOptions {
          * @throws IllegalArgumentException if the option is not int-kind or value is out of range
          */
         public @NotNull Builder set(@NotNull SimulatorOption option, int value) {
-            if (option.kind() != SimulatorOption.Kind.INT) throw new IllegalArgumentException(option + " expects a double, got int");
+            if (option.kind() != SimulatorOption.Kind.INT)
+                throw new IllegalArgumentException(option + " expects a double, got int");
             Range range = option.range();
-            if (!range.contains(value)) throw new IllegalArgumentException(option + " value " + value + " out of range [" + (long) range.min() + ", " + (range.max() == Double.POSITIVE_INFINITY ? "inf" : Long.toString((long) range.max())) + "]");
+            if (!range.contains(value))
+                throw new IllegalArgumentException(option + " value " + value + " out of range [" + (long) range.min() + ", " + (range.max() == Double.POSITIVE_INFINITY ? "inf" : Long.toString((long) range.max())) + "]");
             values.put(option, (double) value);
             return this;
         }
@@ -101,9 +105,11 @@ public final class SimulatorOptions {
          * @throws IllegalArgumentException if the option is not double-kind or value is out of range
          */
         public @NotNull Builder set(@NotNull SimulatorOption option, double value) {
-            if (option.kind() != SimulatorOption.Kind.DOUBLE) throw new IllegalArgumentException(option + " expects an int, got double");
+            if (option.kind() != SimulatorOption.Kind.DOUBLE)
+                throw new IllegalArgumentException(option + " expects an int, got double");
             Range range = option.range();
-            if (!range.contains(value)) throw new IllegalArgumentException(option + " value " + value + " out of range [" + range.min() + ", " + (range.max() == Double.POSITIVE_INFINITY ? "inf" : Double.toString(range.max())) + "]");
+            if (!range.contains(value))
+                throw new IllegalArgumentException(option + " value " + value + " out of range [" + range.min() + ", " + (range.max() == Double.POSITIVE_INFINITY ? "inf" : Double.toString(range.max())) + "]");
             values.put(option, value);
             return this;
         }

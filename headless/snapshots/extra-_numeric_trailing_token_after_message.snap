@@ -1,0 +1,10 @@
+case: extra: numeric trailing token after message
+input: message p "hello" 42
+runner: STATEMENT
+env:
+  var p: player
+suggestions: 1
+  [#0] message %who:PLAYER% %text:STRING%
+    confidence: 0.920
+    issues:
+      - extra tokens: '42' (col 18)

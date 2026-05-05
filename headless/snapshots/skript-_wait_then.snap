@@ -1,0 +1,5 @@
+case: skript: wait then
+input: wait 5 ticks then teleport player to spawn
+runner: STATEMENT
+env: <empty>
+suggestions: 0

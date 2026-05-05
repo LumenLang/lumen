@@ -1,0 +1,15 @@
+case: type: assign string to INT var
+input: set count to "hi"
+runner: STATEMENT
+env:
+  var count: int
+  var p: player
+suggestions: 2
+  [#0] set %name:IDENT% to %val:EXPR%
+    confidence: 0.750
+    issues:
+      - handler rejected: Type mismatch in assignment
+  [#1] set %b:BLOCK% data [to] %data:STRING%
+    confidence: 0.630
+    issues:
+      - type mismatch: 'count' (col 4) is not a BLOCK ('count' is a int, not a block)

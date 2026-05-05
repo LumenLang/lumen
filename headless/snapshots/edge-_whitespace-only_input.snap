@@ -1,0 +1,5 @@
+case: edge: whitespace-only input
+input:     
+runner: STATEMENT
+env: <empty>
+suggestions: 0

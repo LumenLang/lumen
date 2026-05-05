@@ -1,0 +1,14 @@
+case: long: garbage stream of unrelated words
+input: lorem ipsum dolor sit amet consectetur
+runner: STATEMENT
+env: <empty>
+suggestions: 2
+  [#0] set %name:IDENT% to %val:EXPR%
+    confidence: 0.500
+    issues:
+      - typo: 'sit' (col 18) should be 'set'
+  [#1] set %i:ITEMSTACK_POSSESSIVE% lore [to] %lore:STRING%
+    confidence: 0.380
+    issues:
+      - typo: 'sit' (col 18) should be 'set'
+      - type mismatch: 'amet' (col 22) is not a ITEMSTACK_POSSESSIVE ('amet' must use possessive form (e.g. item's))

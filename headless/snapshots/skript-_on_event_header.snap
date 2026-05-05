@@ -1,0 +1,13 @@
+case: skript: on event header
+input: on rightclick on a sign:
+runner: BLOCK
+env: <empty>
+suggestions: 2
+  [#0] on %def:EXPR%
+    confidence: 1.000
+    issues: <none>
+  [#1] in %n:NUMBER% (tick|second|minute|hour|day)[s]
+    confidence: 0.380
+    issues:
+      - typo: 'on' (col 0) should be 'in'
+      - type mismatch: 'rightclick' (col 3) is not a NUMBER ('rightclick' is not a valid number)

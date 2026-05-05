@@ -1,0 +1,14 @@
+case: typo: digit substitution 'set x t0 5'
+input: set x t0 5
+runner: STATEMENT
+env: <empty>
+suggestions: 2
+  [#0] set %name:IDENT% to %val:EXPR%
+    confidence: 0.950
+    issues:
+      - typo: 't0' (col 6) should be 'to'
+  [#1] get %loc:LOCATION% (x|y|z|yaw|pitch)
+    confidence: 0.630
+    issues:
+      - typo: 'set' (col 0) should be 'get'
+      - type mismatch: 'x' (col 4) is not a LOCATION ('x' is a int, not a location)

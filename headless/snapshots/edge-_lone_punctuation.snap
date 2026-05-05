@@ -1,0 +1,5 @@
+case: edge: lone punctuation
+input: :
+runner: STATEMENT
+env: <empty>
+suggestions: 0

@@ -1,0 +1,5 @@
+case: python: f-string
+input: send(f"hello {player.name}")
+runner: STATEMENT
+env: <empty>
+suggestions: 0

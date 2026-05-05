@@ -1,0 +1,5 @@
+case: ruby: symbol literal
+input: player.send :hello
+runner: STATEMENT
+env: <empty>
+suggestions: 0

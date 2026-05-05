@@ -1,0 +1,15 @@
+case: combo: typo on verb + reordered args
+input: tp l to p
+runner: STATEMENT
+env:
+  var p: player
+  var l: location
+suggestions: 2
+  [#0] %s:STRING% to lowercase
+    confidence: 0.750
+    issues:
+      - typo: 'tp' (col 0) should be 'to'
+  [#1] %s:STRING% to lower
+    confidence: 0.750
+    issues:
+      - typo: 'tp' (col 0) should be 'to'

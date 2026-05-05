@@ -1,5 +1,6 @@
 package dev.lumenlang.console.element;
 
+import dev.lumenlang.console.element.util.VisibleLength;
 import dev.lumenlang.console.terminal.TerminalCapabilities;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,20 +16,20 @@ public final class Renderer {
     /**
      * Renders {@code root} into a newline-joined string. When the element's preferred width or
      * height is flexible ({@code -1}), {@code defaultWidth} or {@code defaultHeight} is used.
+     * Trailing visible whitespace on each line is removed.
      */
     public static @NotNull String render(@NotNull Element root, int defaultWidth, int defaultHeight) {
         int w = root.width() < 0 ? defaultWidth : root.width();
         int h = root.height() < 0 ? defaultHeight : root.height();
-        String[] lines = root.render(w, h);
-        return String.join("\n", lines);
+        return joinStripped(root.render(w, h));
     }
 
     /**
      * Renders {@code root} into a newline-joined string using its preferred size. The element must
-     * not have flexible dimensions.
+     * not have flexible dimensions. Trailing visible whitespace on each line is removed.
      */
     public static @NotNull String render(@NotNull Element root) {
-        return String.join("\n", root.render(root.width(), root.height()));
+        return joinStripped(root.render(root.width(), root.height()));
     }
 
     /**
@@ -37,5 +38,14 @@ public final class Renderer {
      */
     public static @NotNull String renderToTerminal(@NotNull Element root) {
         return render(root, TerminalCapabilities.columns(), 1);
+    }
+
+    private static @NotNull String joinStripped(@NotNull String[] lines) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < lines.length; i++) {
+            if (i > 0) sb.append('\n');
+            sb.append(VisibleLength.stripTrailing(lines[i]));
+        }
+        return sb.toString();
     }
 }

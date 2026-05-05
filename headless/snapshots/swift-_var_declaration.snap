@@ -1,0 +1,15 @@
+case: swift: var declaration
+input: var count: Int = 5
+runner: STATEMENT
+env: <empty>
+suggestions: 2
+  [#0] %s:EXPR% as integer
+    confidence: 0.475
+    issues:
+      - typo: 'Int' (col 11) should be 'integer'
+      - type mismatch: 'var' (col 0) is not a EXPR ('EXPR' rejected the input)
+  [#1] %s:STRING% as integer
+    confidence: 0.333
+    issues:
+      - typo: 'Int' (col 11) should be 'integer'
+      - missing literal: 'as' (after token 0)

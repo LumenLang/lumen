@@ -1,0 +1,5 @@
+case: skript: give named item
+input: give player a diamond sword named "sharp"
+runner: STATEMENT
+env: <empty>
+suggestions: 0

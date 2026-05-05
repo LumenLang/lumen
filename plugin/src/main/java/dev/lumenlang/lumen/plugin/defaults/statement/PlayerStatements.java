@@ -4,9 +4,7 @@ import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.pattern.Categories;
-import dev.lumenlang.lumen.plugin.defaults.util.AttributeNames;
 import dev.lumenlang.lumen.plugin.text.LumenText;
-import org.bukkit.attribute.Attribute;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -39,40 +37,6 @@ public final class PlayerStatements {
                 .category(Categories.PLAYER)
                 .handler(ctx -> ctx.out()
                         .line(ctx.java("who") + ".setHealth(" + ctx.java("val") + ");")));
-
-        api.patterns().statement(b -> b
-                .by("Lumen")
-                .patterns("(teleport|tp) %who:PLAYER% [to] %target:PLAYER%")
-                .description("Teleports a player to another player.")
-                .example("teleport player to target")
-                .since("1.0.0")
-                .category(Categories.PLAYER)
-                .handler(ctx -> ctx.out()
-                        .line(ctx.java("who") + ".teleport(" + ctx.java("target") + ");")));
-
-        api.patterns().statement(b -> b
-                .by("Lumen")
-                .pattern("(teleport|tp) %who:PLAYER% [to] %loc:LOCATION%")
-                .description("Teleports a player to a location.")
-                .example("teleport player to loc")
-                .since("1.0.0")
-                .category(Categories.PLAYER)
-                .handler(ctx -> ctx.out()
-                        .line(ctx.java("who") + ".teleport(" + ctx.java("loc") + ");")));
-
-        api.patterns().statement(b -> b
-                .by("Lumen")
-                .pattern("(heal|restore) [the] %who:PLAYER%")
-                .description("Fully heals a player to their maximum health.")
-                .example("heal player")
-                .since("1.0.0")
-                .category(Categories.PLAYER)
-                .handler(ctx -> {
-                    String attrName = AttributeNames.resolve("max_health");
-                    ctx.codegen().addImport(Attribute.class.getName());
-                    ctx.out().line(ctx.java("who") + ".setHealth(" + ctx.java("who")
-                            + ".getAttribute(Attribute." + attrName + ").getValue());");
-                }));
 
         api.patterns().statement(b -> b
                 .by("Lumen")

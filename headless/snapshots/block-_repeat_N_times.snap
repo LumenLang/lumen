@@ -1,0 +1,8 @@
+case: block: repeat N times
+input: repeat 5 times
+runner: BLOCK
+env: <empty>
+suggestions: 1
+  [#0] repeat %n:INT% [time|times]
+    confidence: 1.000
+    issues: <none>

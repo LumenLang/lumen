@@ -1,0 +1,5 @@
+case: css: rule
+input: .player { color: red; }
+runner: STATEMENT
+env: <empty>
+suggestions: 0

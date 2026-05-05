@@ -1,0 +1,5 @@
+case: skript: every percent placeholder
+input: send "%player% joined" to console
+runner: STATEMENT
+env: <empty>
+suggestions: 0

@@ -1,0 +1,5 @@
+case: sql: select
+input: SELECT health FROM players WHERE name = "alice"
+runner: STATEMENT
+env: <empty>
+suggestions: 0

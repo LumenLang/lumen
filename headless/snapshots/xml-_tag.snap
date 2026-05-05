@@ -1,0 +1,9 @@
+case: xml: tag
+input: <player name="alice" health="20" />
+runner: STATEMENT
+env: <empty>
+suggestions: 1
+  [#0] name[:] %n:STRING%
+    confidence: 0.300
+    issues:
+      - typo: 'name' (col 8) should be 'name:'

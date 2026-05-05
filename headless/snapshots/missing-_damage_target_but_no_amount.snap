@@ -1,0 +1,10 @@
+case: missing: damage target but no amount
+input: damage p by
+runner: STATEMENT
+env:
+  var p: player
+suggestions: 1
+  [#0] damage %e:LIVING_ENTITY% [by] %val:INT%
+    confidence: 0.730
+    issues:
+      - missing binding: INT (col 12)

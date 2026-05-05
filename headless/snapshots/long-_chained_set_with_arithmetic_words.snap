@@ -1,0 +1,10 @@
+case: long: chained set with arithmetic words
+input: set count to 1 plus 2 plus 3 plus 4 plus 5
+runner: STATEMENT
+env:
+  var count: int
+suggestions: 1
+  [#0] set %name:IDENT% to %val:EXPR%
+    confidence: 0.750
+    issues:
+      - handler rejected: Cannot resolve expression

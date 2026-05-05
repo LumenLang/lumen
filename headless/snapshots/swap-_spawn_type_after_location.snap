@@ -1,0 +1,16 @@
+case: swap: spawn type after location
+input: spawn at l zombie
+runner: STATEMENT
+env:
+  var l: location
+suggestions: 2
+  [#0] spawn %type:ENTITY_TYPE% [at] %loc:LOCATION%
+    confidence: 0.730
+    issues:
+      - missing binding: ENTITY_TYPE (col 5)
+      - extra tokens: 'zombie' (col 11)
+  [#1] spawn %type:ENTITY_TYPE% at %who:PLAYER%
+    confidence: 0.510
+    issues:
+      - missing binding: ENTITY_TYPE (col 5)
+      - type mismatch: 'l' (col 9) is not a PLAYER ('l' is a location, not a player)

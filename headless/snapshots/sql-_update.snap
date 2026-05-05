@@ -1,0 +1,5 @@
+case: sql: update
+input: UPDATE players SET health = 20 WHERE name = "alice"
+runner: STATEMENT
+env: <empty>
+suggestions: 0

@@ -15,10 +15,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * Matches tokenized input against compiled {@link Pattern} objects.
@@ -168,12 +170,18 @@ public final class PatternMatcher {
 
         if (part instanceof PatternPart.Literal lit) {
             if (ti >= tokens.size()) {
-                if (progress != null) progress.recordFailure(ti, lit, null, null, List.of());
+                if (progress != null) {
+                    progress.recordFailure(ti, lit, null, null, List.of());
+                    progress.recordIncomplete(ti, lit.text());
+                }
                 return -1;
             }
             int merged = tryMergeTokens(tokens, ti, lit.text());
             if (merged < 0) {
-                if (progress != null) progress.recordFailure(ti, lit, null, null, List.of(tokens.get(ti)));
+                if (progress != null) {
+                    progress.recordFailure(ti, lit, null, null, List.of(tokens.get(ti)));
+                    if (ti > 0) progress.recordIncomplete(ti, lit.text());
+                }
                 return -1;
             }
             ti += merged;
@@ -183,7 +191,10 @@ public final class PatternMatcher {
 
         if (part instanceof PatternPart.FlexLiteral flex) {
             if (ti >= tokens.size()) {
-                if (progress != null) progress.recordFailure(ti, flex, null, null, List.of());
+                if (progress != null) {
+                    progress.recordFailure(ti, flex, null, null, List.of());
+                    progress.recordIncomplete(ti, flex.forms().get(0));
+                }
                 return -1;
             }
             int bestConsumed = -1;
@@ -192,7 +203,10 @@ public final class PatternMatcher {
                 if (merged > 0 && merged > bestConsumed) bestConsumed = merged;
             }
             if (bestConsumed < 0) {
-                if (progress != null) progress.recordFailure(ti, flex, null, null, List.of(tokens.get(ti)));
+                if (progress != null) {
+                    progress.recordFailure(ti, flex, null, null, List.of(tokens.get(ti)));
+                    if (ti > 0) progress.recordIncomplete(ti, flex.forms().get(0));
+                }
                 return -1;
             }
             ti += bestConsumed;
@@ -201,23 +215,19 @@ public final class PatternMatcher {
         }
 
         if (part instanceof PatternPart.Group group) {
-            List<PatternPart> tail = parts.subList(pi + 1, parts.size());
             for (List<PatternPart> alt : group.alternatives()) {
-                List<PatternPart> combined = new ArrayList<>(alt.size() + tail.size());
-                combined.addAll(alt);
-                combined.addAll(tail);
-                Map<String, BoundValue> snapshot = new LinkedHashMap<>(map);
+                int mapSnapshot = map.size();
                 int choicesSnapshot = choices.size();
                 if (group.required()) {
                     choices.add(altText(alt));
                 }
-                int result = tryMatch(tokens, ti, combined, 0, types, env, map, choices, validator, progress);
-                if (result >= 0) return result;
-
-                map.clear();
-                map.putAll(snapshot);
-                while (choices.size() > choicesSnapshot)
-                    choices.remove(choices.size() - 1);
+                int afterAlt = tryMatch(tokens, ti, alt, 0, types, env, map, choices, validator, progress);
+                if (afterAlt >= 0) {
+                    int afterTail = tryMatch(tokens, afterAlt, parts, pi + 1, types, env, map, choices, validator, progress);
+                    if (afterTail >= 0) return afterTail;
+                }
+                trimTrailingEntries(map, mapSnapshot);
+                trimTrailingEntries(choices, choicesSnapshot);
             }
 
             if (!group.required()) {
@@ -233,7 +243,7 @@ public final class PatternMatcher {
             TypeBinding binding = types.get(ph.typeId());
             if (binding == null) {
                 if (progress != null)
-                    progress.recordFailure(ti, pp, ph.typeId(), "no type binding registered for '" + ph.typeId() + "'", List.of());
+                    progress.recordFailure(ti, pp, ph.typeId(), () -> "no type binding registered for '" + ph.typeId() + "'", List.of());
                 return -1;
             }
 
@@ -252,7 +262,7 @@ public final class PatternMatcher {
             List<Token> remaining = tokens.subList(ti, tokens.size());
             ConsumeOutcome consumeOutcome = safeConsumeCount(binding, remaining, env);
             int consumeCount = consumeOutcome.consumeCount();
-            String latestReason = consumeOutcome.reason();
+            Supplier<String> latestReason = consumeOutcome.reason();
 
             boolean skipGreedy = false;
             if (consumeOutcome.rejected()) {
@@ -273,6 +283,7 @@ public final class PatternMatcher {
                     }
                     latestReason = parsed.reason();
                 }
+                skipGreedy = true;
             }
 
             if (!skipGreedy) {
@@ -297,28 +308,25 @@ public final class PatternMatcher {
                         }
                     }
 
-                    Map<String, BoundValue> snapshot = new LinkedHashMap<>(map);
+                    int mapSnapshot = map.size();
                     int choicesSnapshot = choices.size();
                     map.put(ph.name(), new BoundValue(ph, slice, value, binding));
                     int result = tryMatch(tokens, end, parts, pi + 1, types, env, map, choices, validator, progress);
                     if (result >= 0) return result;
-
-                    map.clear();
-                    map.putAll(snapshot);
-                    while (choices.size() > choicesSnapshot)
-                        choices.remove(choices.size() - 1);
+                    trimTrailingEntries(map, mapSnapshot);
+                    trimTrailingEntries(choices, choicesSnapshot);
                 }
             }
             if (progress != null) {
                 List<Token> fTokens = ti < tokens.size() ? List.of(tokens.get(ti)) : List.of();
                 int effectiveConsume = consumeCount > 0 ? consumeCount : 1;
-                String reason = latestReason != null ? latestReason : "'" + binding.id() + "' rejected the input";
+                Supplier<String> reason = latestReason != null ? latestReason : () -> "'" + binding.id() + "' rejected the input";
                 if (ti < tokens.size()) {
                     progress.recordBindingFailure(ti, binding.id(), reason, fTokens);
                     int cEnd = ti + effectiveConsume;
                     if (cEnd <= tokens.size()) {
                         MatchProgress contProgress = new MatchProgress();
-                        Map<String, BoundValue> cSnapshot = new LinkedHashMap<>(map);
+                        int cMapSnapshot = map.size();
                         int cChoices = choices.size();
                         map.put(ph.name(), new BoundValue(ph, tokens.subList(ti, cEnd), PARSE_FAILED, binding));
                         int contResult = tryMatch(tokens, cEnd, parts, pi + 1, types, env, map, choices, validator, contProgress);
@@ -331,9 +339,8 @@ public final class PatternMatcher {
                         } else if (contProgress.furthestTokenIndex() > progress.furthestTokenIndex()) {
                             progress.recordFailure(contProgress.furthestTokenIndex(), pp, binding.id(), reason, fTokens);
                         }
-                        map.clear();
-                        map.putAll(cSnapshot);
-                        while (choices.size() > cChoices) choices.remove(choices.size() - 1);
+                        trimTrailingEntries(map, cMapSnapshot);
+                        trimTrailingEntries(choices, cChoices);
                     }
                     discoverDownstreamFailures(tokens, ti + effectiveConsume, parts, pi + 1, types, env, progress);
                 }
@@ -358,7 +365,7 @@ public final class PatternMatcher {
      * @param consumeCount the number of tokens to consume, or {@link #CONSUME_REJECTED} when rejected
      * @param reason       a binding authored rejection reason when rejected, otherwise null
      */
-    private record ConsumeOutcome(int consumeCount, @Nullable String reason) {
+    private record ConsumeOutcome(int consumeCount, @Nullable Supplier<String> reason) {
         boolean rejected() {
             return consumeCount == CONSUME_REJECTED;
         }
@@ -367,14 +374,14 @@ public final class PatternMatcher {
     /**
      * Result of a guarded {@link TypeBinding#parse} call.
      *
-     * <p>When {@link #failed()} is true, {@link #reason()} carries the binding authored
-     * rejection message. Otherwise {@code reason} is null and {@code value} is the
-     * parsed value.
+     * <p>When {@link #failed()} is true, {@link #reason()} carries a lazy supplier of the
+     * binding authored rejection message. Otherwise {@code reason} is null and {@code value}
+     * is the parsed value.
      *
      * @param value  the parsed value, or {@link #PARSE_FAILED} when rejected
-     * @param reason a binding authored rejection reason when failed, otherwise null
+     * @param reason lazy supplier of the binding authored rejection reason when failed, otherwise null
      */
-    private record ParseOutcome(@Nullable Object value, @Nullable String reason) {
+    private record ParseOutcome(@Nullable Object value, @Nullable Supplier<String> reason) {
         boolean failed() {
             return value == PARSE_FAILED;
         }
@@ -384,10 +391,10 @@ public final class PatternMatcher {
         try {
             return new ConsumeOutcome(binding.consumeCount(tokens, env), null);
         } catch (ParseFailureException e) {
-            return new ConsumeOutcome(CONSUME_REJECTED, messageOrInternalError(binding, e));
+            return new ConsumeOutcome(CONSUME_REJECTED, lazyMessage(binding, e));
         } catch (RuntimeException e) {
             LumenLogger.warning("Type binding '" + binding.id() + "' threw unexpected " + e.getClass().getSimpleName() + " in consumeCount: " + e.getMessage() + ". Treating as non-match.");
-            return new ConsumeOutcome(CONSUME_REJECTED, internalError(binding, e));
+            return new ConsumeOutcome(CONSUME_REJECTED, () -> internalError(binding, e));
         }
     }
 
@@ -395,17 +402,39 @@ public final class PatternMatcher {
         try {
             return new ParseOutcome(binding.parse(tokens, env), null);
         } catch (ParseFailureException e) {
-            LumenLogger.debug("PatternMatcher.match", "  parse threw: " + e.getMessage());
-            return new ParseOutcome(PARSE_FAILED, messageOrInternalError(binding, e));
+            if (LumenLogger.isFullDebug()) {
+                LumenLogger.debug("PatternMatcher.match", "  parse threw: " + e.getMessage());
+            }
+            return new ParseOutcome(PARSE_FAILED, lazyMessage(binding, e));
         } catch (RuntimeException e) {
             LumenLogger.warning("Type binding '" + binding.id() + "' threw unexpected " + e.getClass().getSimpleName() + " in parse: " + e.getMessage() + ". Treating as non-match.");
-            return new ParseOutcome(PARSE_FAILED, internalError(binding, e));
+            return new ParseOutcome(PARSE_FAILED, () -> internalError(binding, e));
         }
     }
 
-    private static @NotNull String messageOrInternalError(@NotNull TypeBinding binding, @NotNull RuntimeException e) {
-        String msg = e.getMessage();
-        return msg != null ? msg : internalError(binding, e);
+    private static @NotNull Supplier<String> lazyMessage(@NotNull TypeBinding binding, @NotNull RuntimeException e) {
+        return () -> {
+            String msg = e.getMessage();
+            return msg != null ? msg : internalError(binding, e);
+        };
+    }
+
+    private static void trimTrailingEntries(@NotNull Map<String, BoundValue> map, int target) {
+        if (map.size() <= target) return;
+        if (target == 0) {
+            map.clear();
+            return;
+        }
+        Iterator<Map.Entry<String, BoundValue>> it = map.entrySet().iterator();
+        for (int i = 0; i < target && it.hasNext(); i++) it.next();
+        while (it.hasNext()) {
+            it.next();
+            it.remove();
+        }
+    }
+
+    private static void trimTrailingEntries(@NotNull List<String> list, int target) {
+        while (list.size() > target) list.remove(list.size() - 1);
     }
 
     private static @NotNull String internalError(@NotNull TypeBinding binding, @NotNull RuntimeException e) {

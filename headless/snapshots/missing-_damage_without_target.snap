@@ -1,0 +1,9 @@
+case: missing: damage without target
+input: damage by 5
+runner: STATEMENT
+env: <empty>
+suggestions: 1
+  [#0] damage %e:LIVING_ENTITY% [by] %val:INT%
+    confidence: 0.730
+    issues:
+      - missing binding: LIVING_ENTITY (col 6)
