@@ -25,9 +25,6 @@ import java.util.function.Function;
  *   <li>Data class names resolved through a lookup function</li>
  * </ul>
  *
- * <p>Types are resolved through {@link LumenType#fromName(String)} and the provided data schema
- * lookup. This class does not hardcode any specific types.
- *
  * @param type            the resolved type
  * @param tokensConsumed  the number of tokens consumed from the input
  * @param dataSchemaName  the data schema name if this type was resolved from a data class declaration, or {@code null}

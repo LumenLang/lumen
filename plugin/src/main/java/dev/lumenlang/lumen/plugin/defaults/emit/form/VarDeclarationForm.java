@@ -44,18 +44,6 @@ import java.util.Map;
 @SuppressWarnings({"unused", "DataFlowIssue"})
 public final class VarDeclarationForm {
 
-    @Call
-    public void register(@NotNull LumenAPI api) {
-        api.patterns().statement(b -> b
-                .by("Lumen")
-                .pattern("set %name:IDENT% to %val:EXPR%")
-                .description("Declares or reassigns a variable.")
-                .example("set x to 5")
-                .since("1.0.0")
-                .category(Categories.VARIABLE)
-                .handler(VarDeclarationForm::handle));
-    }
-
     private static void handle(@NotNull HandlerContext ctx) {
         HandlerContextImpl emitCtx = (HandlerContextImpl) ctx;
         TypeEnvImpl env = (TypeEnvImpl) ctx.env();
@@ -79,12 +67,7 @@ public final class VarDeclarationForm {
                 emitScopedGlobalSet(name, globalInfo, exprTokens, emitCtx, env);
                 return;
             }
-            throw new DiagnosticException(LumenDiagnostic.error("Cannot resolve expression")
-                    .at(emitCtx.source().currentLine(), emitCtx.source().currentRaw())
-                    .highlight(exprTokens.get(0).start(), exprTokens.get(exprTokens.size() - 1).end())
-                    .label("not a recognized expression")
-                    .help("check spelling or ensure the variable or expression is defined")
-                    .build());
+            throw new DiagnosticException(buildExpressionDiagnostic(exprTokens, emitCtx.source().currentLine(), emitCtx.source().currentRaw(), env));
         }
 
         emitDeclaration(name, exprTokens, nameToken, emitCtx, env);
@@ -187,6 +170,10 @@ public final class VarDeclarationForm {
             env.markNullState(name, TypeEnvImpl.NullState.NULL, ctx.source().currentLine(), ctx.source().currentRaw());
             return true;
         }
+        if (exprTokens.size() >= 2 && exprTokens.get(0).text().equalsIgnoreCase("nullable")) {
+            reassignNullable(name, ref, exprTokens, ctx, env);
+            return true;
+        }
         TypedExpression resolved = resolveExpressionTyped(exprTokens, ctx, env);
         if (resolved == null) {
             return false;
@@ -207,6 +194,39 @@ public final class VarDeclarationForm {
             }
         }
         return true;
+    }
+
+    private static void reassignNullable(@NotNull String name, @NotNull VarRef ref, @NotNull List<Token> exprTokens, @NotNull HandlerContextImpl ctx, @NotNull TypeEnvImpl env) {
+        TypeAnnotationParser.ParseResult result = TypeAnnotationParser.parseDetailed(exprTokens, 0, env::lookupDataSchema);
+        if (result instanceof TypeAnnotationParser.ParseResult.Failure f) {
+            throw new DiagnosticException(SuggestionDiagnostics.buildTypeFailure("Invalid nullable type", ctx.source().currentLine(), ctx.source().currentRaw(), exprTokens, f));
+        }
+        TypeAnnotationParser parsed = ((TypeAnnotationParser.ParseResult.Success) result).parser();
+        NullableType nullableType = (NullableType) parsed.type();
+        int colStart = exprTokens.get(0).start();
+        int colEnd = exprTokens.get(Math.min(parsed.tokensConsumed(), exprTokens.size()) - 1).end();
+        LumenDiagnostic typeDiag = TypeChecker.checkAssignment(ref.type(), nullableType, name, ctx.source().currentLine(), ctx.source().currentRaw(), colStart, colEnd);
+        if (typeDiag != null) throw new DiagnosticException(typeDiag);
+
+        int consumed = parsed.tokensConsumed();
+        List<Token> valueTokens = consumed < exprTokens.size() ? exprTokens.subList(consumed, exprTokens.size()) : null;
+        boolean isNone = valueTokens != null && valueTokens.size() == 1 && isNullKeyword(valueTokens.get(0).text());
+        String java;
+        TypeEnvImpl.NullState nullState;
+        if (valueTokens == null || isNone) {
+            java = resolveNullableDefault(nullableType, isNone, ctx);
+            nullState = isNone || java.equals("null") ? TypeEnvImpl.NullState.NULL : TypeEnvImpl.NullState.NON_NULL;
+        } else {
+            TypedExpression typed = resolveExpressionTyped(valueTokens, ctx, env);
+            if (typed == null)
+                throw new DiagnosticException(buildExpressionDiagnostic(valueTokens, ctx.source().currentLine(), ctx.source().currentRaw(), env));
+            LumenDiagnostic valDiag = TypeChecker.checkAssignment(nullableType.inner(), typed.type(), name, ctx.source().currentLine(), ctx.source().currentRaw(), valueTokens.get(0).start(), valueTokens.get(valueTokens.size() - 1).end());
+            if (valDiag != null) throw new DiagnosticException(valDiag);
+            java = widenLiteralToTarget(typed.java(), typed.type(), nullableType.inner());
+            nullState = TypeEnvImpl.NullState.NON_NULL;
+        }
+        ctx.out().line(ref.java() + " = " + java + ";");
+        env.markNullState(name, nullState, ctx.source().currentLine(), ctx.source().currentRaw());
     }
 
     private static void emitDeclaration(@NotNull String name, @NotNull List<Token> exprTokens, @NotNull Token nameToken, @NotNull HandlerContextImpl ctx, @NotNull TypeEnvImpl env) {
@@ -247,9 +267,9 @@ public final class VarDeclarationForm {
                 Token varToken = exprTokens.get(0);
                 String suggestion = FuzzyMatch.closest(r.name(), env.allVisibleVarNames());
                 LumenDiagnostic.Builder diagBuilder = LumenDiagnostic.error("Variable '" + r.name() + "' not found")
-                            .at(ctx.source().currentLine(), ctx.source().currentRaw())
-                            .highlight(varToken.start(), varToken.end())
-                            .label("undefined variable");
+                        .at(ctx.source().currentLine(), ctx.source().currentRaw())
+                        .highlight(varToken.start(), varToken.end())
+                        .label("undefined variable");
                 if (suggestion != null) diagBuilder.help("did you mean '" + suggestion + "'?");
                 else diagBuilder.help("make sure the variable is defined before using it");
                 LumenDiagnostic diag = diagBuilder.build();
@@ -347,7 +367,8 @@ public final class VarDeclarationForm {
             nullState = isNone || java.equals("null") ? TypeEnvImpl.NullState.NULL : TypeEnvImpl.NullState.NON_NULL;
         } else {
             TypedExpression typed = resolveExpressionTyped(valueTokens, ctx, env);
-            if (typed == null) throw new DiagnosticException(buildExpressionDiagnostic(valueTokens, ctx.source().currentLine(), ctx.source().currentRaw(), env));
+            if (typed == null)
+                throw new DiagnosticException(buildExpressionDiagnostic(valueTokens, ctx.source().currentLine(), ctx.source().currentRaw(), env));
             java = widenLiteralToTarget(typed.java(), typed.type(), nullableType.inner());
             nullState = TypeEnvImpl.NullState.NON_NULL;
         }
@@ -440,9 +461,6 @@ public final class VarDeclarationForm {
         return new TypedExpression(single.text(), PrimitiveType.STRING);
     }
 
-    private record TypedExpression(@NotNull String java, @NotNull LumenType type) {
-    }
-
     private static @NotNull String widenLiteralToTarget(@NotNull String java, @NotNull LumenType source, @NotNull LumenType target) {
         LumenType src = source.unwrap();
         LumenType tgt = target.unwrap();
@@ -478,5 +496,20 @@ public final class VarDeclarationForm {
             return SuggestionDiagnostics.build("Cannot resolve expression", line, raw, tokens, suggestions, env);
         }
         return SuggestionDiagnostics.buildNoSuggestion("Cannot resolve expression", line, raw, tokens, env);
+    }
+
+    @Call
+    public void register(@NotNull LumenAPI api) {
+        api.patterns().statement(b -> b
+                .by("Lumen")
+                .pattern("set %name:IDENT% to %val:EXPR%")
+                .description("Declares or reassigns a variable.")
+                .example("set x to 5")
+                .since("1.0.0")
+                .category(Categories.VARIABLE)
+                .handler(VarDeclarationForm::handle));
+    }
+
+    private record TypedExpression(@NotNull String java, @NotNull LumenType type) {
     }
 }
