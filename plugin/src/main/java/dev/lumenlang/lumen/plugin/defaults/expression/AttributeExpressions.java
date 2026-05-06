@@ -30,9 +30,9 @@ public final class AttributeExpressions {
     public void register(@NotNull LumenAPI api) {
         api.patterns().expression(b -> b
                 .by("Lumen")
-                .pattern("get %e:ENTITY_POSSESSIVE% %attr:ATTRIBUTE% [base] [value]")
+                .pattern("get %e:ENTITY_POSSESSIVE% attribute %attr:ATTRIBUTE% [base] [value]")
                 .description("Returns the base value of an attribute on a living entity, or 0 if the entity does not have the attribute.")
-                .example("set hp to mob's max_health")
+                .example("set hp to mob's attribute max_health")
                 .since("1.0.0")
                 .category(Categories.ATTRIBUTE)
                 .handler(ctx -> {
@@ -52,9 +52,9 @@ public final class AttributeExpressions {
 
         api.patterns().expression(b -> b
                 .by("Lumen")
-                .pattern("get %e:ENTITY_POSSESSIVE% %attr:ATTRIBUTE% (effective|total) [value]")
+                .pattern("get %e:ENTITY_POSSESSIVE% attribute %attr:ATTRIBUTE% (effective|total) [value]")
                 .description("Returns the effective (total with modifiers) value of an attribute on a living entity, or 0 if the entity does not have the attribute.")
-                .example("set totalHp to mob's max_health effective")
+                .example("set totalHp to mob's attribute max_health effective")
                 .since("1.0.0")
                 .category(Categories.ATTRIBUTE)
                 .handler(ctx -> {
@@ -74,9 +74,9 @@ public final class AttributeExpressions {
 
         api.patterns().expression(b -> b
                 .by("Lumen")
-                .pattern("get %e:ENTITY_POSSESSIVE% %attr:ATTRIBUTE% default [value]")
+                .pattern("get %e:ENTITY_POSSESSIVE% attribute %attr:ATTRIBUTE% default [value]")
                 .description("Returns the default value of an attribute on a living entity, or 0 if the entity does not have the attribute.")
-                .example("set defaultHp to mob's max_health default")
+                .example("set defaultHp to mob's attribute max_health default")
                 .since("1.0.0")
                 .category(Categories.ATTRIBUTE)
                 .handler(ctx -> {

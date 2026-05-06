@@ -323,7 +323,11 @@ public final class GlobalBlock implements BlockFormHandler {
                 return "new LinkedHashMap<" + boxedJavaType(ct.typeArguments().get(0)) + ", " + boxedJavaType(ct.typeArguments().get(1)) + ">()";
             }
         }
-        if (declaredType instanceof NullableType) return "null";
+        if (declaredType instanceof NullableType nt) {
+            String inner = nt.inner().javaType();
+            if (inner.contains(".")) ctx.codegen().addImport(inner);
+            return "null";
+        }
 
         throw new DiagnosticException(LumenDiagnostic.error("Non-nullable type '" + declaredType.displayName() + "' requires a default value")
                 .at(line, raw)

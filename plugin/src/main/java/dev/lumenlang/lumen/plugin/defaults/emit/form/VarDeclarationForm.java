@@ -172,10 +172,6 @@ public final class VarDeclarationForm {
             env.markNullState(name, TypeEnvImpl.NullState.NULL, ctx.source().currentLine(), ctx.source().currentRaw());
             return true;
         }
-        if (exprTokens.size() >= 2 && exprTokens.get(0).text().equalsIgnoreCase("nullable")) {
-            reassignNullable(name, ref, exprTokens, ctx, env);
-            return true;
-        }
         TypedExpression resolved = resolveExpressionTyped(exprTokens, ctx, env);
         if (resolved == null) {
             return false;
@@ -239,11 +235,6 @@ public final class VarDeclarationForm {
                     .highlight(nameToken.start(), nameToken.end())
                     .label("invalid variable name")
                     .build());
-        }
-
-        if (exprTokens.size() >= 2 && exprTokens.get(0).text().equalsIgnoreCase("nullable")) {
-            emitNullableDeclaration(name, exprTokens, nameToken, ctx, env);
-            return;
         }
 
         Expr e = ExprParser.parse(exprTokens, env, ctx.source().currentLine(), ctx.source().currentRaw());
@@ -347,40 +338,6 @@ public final class VarDeclarationForm {
                 env.markNullState(name, TypeEnvImpl.NullState.NON_NULL, ctx.source().currentLine(), ctx.source().currentRaw());
             }
         }
-        if (env.blockContext().parent() != null) {
-            env.blockContext().parent().defineVar(name, varRef);
-        }
-    }
-
-    private static void emitNullableDeclaration(@NotNull String name, @NotNull List<Token> exprTokens, @NotNull Token nameToken, @NotNull HandlerContextImpl ctx, @NotNull TypeEnvImpl env) {
-        ParseResult result = TypeAnnotationParser.parse(exprTokens, 0, env::lookupDataSchema);
-        if (!result.ok()) {
-            throw new DiagnosticException(SuggestionDiagnostics.buildTypeFailure("Invalid nullable type", ctx.source().currentLine(), ctx.source().currentRaw(), exprTokens, result));
-        }
-        ParsedType parsed = result.parsed();
-        NullableType nullableType = (NullableType) parsed.type();
-        int consumed = parsed.tokensConsumed();
-        List<Token> valueTokens = consumed < exprTokens.size() ? exprTokens.subList(consumed, exprTokens.size()) : null;
-        boolean isNone = valueTokens != null && valueTokens.size() == 1 && isNullKeyword(valueTokens.get(0).text());
-        String java;
-        TypeEnvImpl.NullState nullState;
-        if (valueTokens == null || isNone) {
-            java = resolveNullableDefault(nullableType, isNone, ctx);
-            nullState = isNone || java.equals("null") ? TypeEnvImpl.NullState.NULL : TypeEnvImpl.NullState.NON_NULL;
-        } else {
-            TypedExpression typed = resolveExpressionTyped(valueTokens, ctx, env);
-            if (typed == null)
-                throw new DiagnosticException(buildExpressionDiagnostic(valueTokens, ctx.source().currentLine(), ctx.source().currentRaw(), env));
-            java = widenLiteralToTarget(typed.java(), typed.type(), nullableType.inner());
-            nullState = TypeEnvImpl.NullState.NON_NULL;
-        }
-        ctx.out().line(nullableType.javaTypeName() + " " + name + " = " + java + ";");
-        Map<String, Object> metadata = parsed.dataSchemaName() != null ? Map.of("data_type", parsed.dataSchemaName()) : Map.of();
-        VarRef varRef = new VarRef(name, nullableType, name, metadata);
-        env.defineVar(name, varRef);
-        env.recordDeclaration(name, ctx.source().currentLine(), ctx.source().currentRaw());
-        env.recordNullableVarInfo(name, new TypeEnvImpl.NullableVarInfo(ctx.source().currentLine(), ctx.source().currentRaw()));
-        env.markNullState(name, nullState, ctx.source().currentLine(), ctx.source().currentRaw());
         if (env.blockContext().parent() != null) {
             env.blockContext().parent().defineVar(name, varRef);
         }

@@ -40,9 +40,9 @@ public final class AttributeStatements {
     public void register(@NotNull LumenAPI api) {
         api.patterns().statement(b -> b
                 .by("Lumen")
-                .pattern("set %e:ENTITY_POSSESSIVE% %attr:ATTRIBUTE% [base] [value] [to] %val:DOUBLE%")
+                .pattern("set %e:ENTITY_POSSESSIVE% attribute %attr:ATTRIBUTE% [base] [value] [to] %val:DOUBLE%")
                 .description("Sets the base value of an attribute on a living entity.")
-                .example("set mob's max_health to 40")
+                .example("set mob's attribute max_health to 40")
                 .since("1.0.0")
                 .category(Categories.ATTRIBUTE)
                 .handler(ctx -> {
@@ -58,9 +58,9 @@ public final class AttributeStatements {
 
         api.patterns().statement(b -> b
                 .by("Lumen")
-                .pattern("reset %e:ENTITY_POSSESSIVE% %attr:ATTRIBUTE%")
+                .pattern("reset %e:ENTITY_POSSESSIVE% attribute %attr:ATTRIBUTE%")
                 .description("Resets an entity's attribute base value to its default value.")
-                .example("reset mob's max_health")
+                .example("reset mob's attribute max_health")
                 .since("1.0.0")
                 .category(Categories.ATTRIBUTE)
                 .handler(ctx -> {
@@ -75,9 +75,9 @@ public final class AttributeStatements {
 
         api.patterns().statement(b -> b
                 .by("Lumen")
-                .pattern("add %val:DOUBLE% [to] %e:ENTITY_POSSESSIVE% %attr:ATTRIBUTE%")
+                .pattern("add %val:DOUBLE% [to] %e:ENTITY_POSSESSIVE% attribute %attr:ATTRIBUTE%")
                 .description("Adds a value to an entity's attribute base value.")
-                .example("add 10 to mob's max_health")
+                .example("add 10 to mob's attribute max_health")
                 .since("1.0.0")
                 .category(Categories.ATTRIBUTE)
                 .handler(ctx -> {
