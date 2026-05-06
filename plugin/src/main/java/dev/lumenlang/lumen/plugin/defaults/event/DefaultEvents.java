@@ -316,11 +316,6 @@ public final class DefaultEvents {
         api.events().register(api.events().builder("interact").by("Lumen")
                 .className(PlayerInteractEvent.class.getName())
                 .description("Fires when a player interacts with a block or air.")
-                .example("on interact:")
-                .example(of(
-                        top("on interact:"),
-                        secondly("if action is \"LEFT_CLICK_BLOCK\":"),
-                        thirdly("message player \"You left clicked a block!\"")))
                 .example(of(
                         top("on interact:"),
                         secondly("if action is \"RIGHT_CLICK_BLOCK\":"),
@@ -357,8 +352,7 @@ public final class DefaultEvents {
 
         api.events().register(api.events().builder("inventory_click").by("Lumen")
                 .className(InventoryClickEvent.class.getName())
-                .description("Fires when a player clicks inside an inventory. Provides the clicked slot, click type, inventory title, clicked item, and cursor item.")
-                .example("on inventory_click:")
+                .description("Fires when a player clicks inside an inventory.")
                 .example(of(
                         top("on inventory_click:"),
                         secondly("if name is \"main_menu\":"),
