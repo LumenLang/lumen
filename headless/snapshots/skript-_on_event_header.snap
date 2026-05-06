@@ -3,7 +3,7 @@ input: on rightclick on a sign:
 runner: BLOCK
 env: <empty>
 suggestions: 2
-  [#0] on %def:EXPR%
+  [#0] on %def:EVENT%
     confidence: 1.000
     issues: <none>
   [#1] in %n:NUMBER% (tick|second|minute|hour|day)[s]

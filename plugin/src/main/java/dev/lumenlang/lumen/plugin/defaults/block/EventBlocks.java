@@ -43,11 +43,11 @@ public final class EventBlocks {
     public void register(@NotNull LumenAPI api) {
         api.patterns().block(b -> b
                 .by("Lumen")
-                .pattern("on %def:EXPR%")
+                .pattern("on %def:EVENT%")
                 .description("Declares a block that listens for a Bukkit events.")
                 .example(of(
                         top("on join:"),
-                        secondly("send player \"Welcome!\"")))
+                        secondly("message player \"Welcome!\"")))
                 .since("1.0.0")
                 .category(Categories.EVENT)
                 .supportsRootLevel(true)
@@ -164,11 +164,11 @@ public final class EventBlocks {
 
         api.patterns().block(b -> b
                 .by("Lumen")
-                .pattern("command %name:EXPR%")
+                .pattern("command %name:COMMAND%")
                 .description("Declares a custom command with automatic argument parsing.")
                 .example(of(
                         top("command hello:"),
-                        secondly("send player \"Hello!\"")))
+                        secondly("message player \"Hello!\"")))
                 .since("1.0.0")
                 .category(Categories.COMMAND)
                 .supportsRootLevel(true)
@@ -215,7 +215,7 @@ public final class EventBlocks {
                         ctx.codegen().addImport(ArrayList.class.getName());
                         ctx.codegen().addImport(Arrays.class.getName());
                         ctx.codegen().addImport(World.class.getName());
-                        ctx.out().line("public void cmd_" + cmd + "(CommandSender __sender, String[] __args) {");
+                        ctx.out().line("public void cmd_" + cmd.replaceAll("[^A-Za-z0-9_]", "_") + "(CommandSender __sender, String[] __args) {");
                         ctx.out().line("List<String> args = new ArrayList<>(Arrays.asList(__args));");
                         ctx.out().line("Player player = __sender instanceof Player ? (Player) __sender : null;");
                         ctx.out().line("CommandSender sender = __sender;");

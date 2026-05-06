@@ -123,6 +123,8 @@ public final class DefaultTypeBindings {
         registerInventory(api);
         registerVar(api);
         registerLiteralList(api);
+        registerEvent(api);
+        registerCommand(api);
         registerEnums(api);
     }
 
@@ -1635,6 +1637,96 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull SemanticKind semanticKind() {
                 return SemanticKind.STRING;
+            }
+        });
+    }
+
+    private void registerEvent(@NotNull LumenAPI api) {
+        api.types().register(new AddonTypeBinding() {
+            @Override
+            public @NotNull String id() {
+                return "EVENT";
+            }
+
+            @Override
+            public @NotNull TypeBindingMeta meta() {
+                return new TypeBindingMeta(
+                        "an event name",
+                        "Captures all remaining tokens as an event name. Spaces between words are joined with underscores (e.g. 'block break' becomes 'block_break').",
+                        "String",
+                        List.of("on join:", "on block break:"),
+                        "1.0.0",
+                        false);
+            }
+
+            @Override
+            public int consumeCount(@NotNull List<String> tokens, @NotNull TypeEnv env) {
+                if (tokens.isEmpty())
+                    throw new ParseFailureException("expected an event name here");
+                return -1;
+            }
+
+            @Override
+            public Object parse(@NotNull List<String> tokens, @NotNull TypeEnv env) {
+                return String.join("_", tokens);
+            }
+
+            @Override
+            public @NotNull String toJava(Object v, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
+                return (String) v;
+            }
+
+            @Override
+            public @NotNull SemanticKind semanticKind() {
+                return SemanticKind.EVENT;
+            }
+        });
+    }
+
+    private void registerCommand(@NotNull LumenAPI api) {
+        api.types().register(new AddonTypeBinding() {
+            @Override
+            public @NotNull String id() {
+                return "COMMAND";
+            }
+
+            @Override
+            public @NotNull TypeBindingMeta meta() {
+                return new TypeBindingMeta(
+                        "a command name",
+                        "Captures the command name from the remaining tokens. A single leading '/' is stripped, so '/hello' becomes 'hello'; a doubled '//hello' keeps one slash and becomes '/hello'.",
+                        "String",
+                        List.of("command hello:", "command /tp:"),
+                        "1.0.0",
+                        false);
+            }
+
+            @Override
+            public int consumeCount(@NotNull List<String> tokens, @NotNull TypeEnv env) {
+                if (tokens.isEmpty())
+                    throw new ParseFailureException("expected a command name here");
+                return -1;
+            }
+
+            @Override
+            public Object parse(@NotNull List<String> tokens, @NotNull TypeEnv env) {
+                List<String> trimmed = tokens;
+                if (!tokens.isEmpty() && tokens.get(0).equals("/")) {
+                    trimmed = tokens.subList(1, tokens.size());
+                }
+                String joined = String.join(" ", trimmed);
+                if (joined.startsWith("/")) return joined.substring(1);
+                return joined;
+            }
+
+            @Override
+            public @NotNull String toJava(Object v, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
+                return (String) v;
+            }
+
+            @Override
+            public @NotNull SemanticKind semanticKind() {
+                return SemanticKind.FUNCTION;
             }
         });
     }
