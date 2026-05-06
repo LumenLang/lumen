@@ -1,12 +1,15 @@
 package dev.lumenlang.lumen.pipeline.addon.bridge;
 
 import dev.lumenlang.lumen.api.language.SemanticKind;
+import dev.lumenlang.lumen.api.language.Suggestion;
 import dev.lumenlang.lumen.api.type.AddonTypeBinding;
+import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.pipeline.codegen.CodegenContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.language.TypeBinding;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -51,5 +54,10 @@ public final class TypeBindingBridge implements TypeBinding {
     @Override
     public @NotNull SemanticKind semanticKind() {
         return apiBinding.semanticKind();
+    }
+
+    @Override
+    public @NotNull List<Suggestion> suggestions(@NotNull TypeEnvImpl env, @Nullable LumenType expectedType) {
+        return apiBinding.suggestions(env, expectedType);
     }
 }

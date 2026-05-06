@@ -161,6 +161,14 @@ public interface TypeEnv {
     @NotNull List<? extends VarHandle> allGlobals();
 
     /**
+     * Returns every variable visible to a lookup at the current scope: locals from the
+     * active block context, every enclosing block's locals, and globals.
+     *
+     * @return the in-scope variable handles
+     */
+    @NotNull List<? extends VarHandle> allInScope();
+
+    /**
      * Marks a variable as stored (persistent) with scope information.
      *
      * <p>Stored variables are auto-saved when modified by math operations.

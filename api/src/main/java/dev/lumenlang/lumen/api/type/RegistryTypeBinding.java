@@ -4,11 +4,15 @@ import dev.lumenlang.lumen.api.codegen.CodegenContext;
 import dev.lumenlang.lumen.api.codegen.TypeEnv;
 import dev.lumenlang.lumen.api.codegen.TypeEnv.VarHandle;
 import dev.lumenlang.lumen.api.exceptions.ParseFailureException;
+import dev.lumenlang.lumen.api.language.SemanticKind;
+import dev.lumenlang.lumen.api.language.Suggestion;
 import dev.lumenlang.lumen.api.util.FuzzyMatch;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -98,6 +102,16 @@ public final class RegistryTypeBinding {
                 }
                 ctx.addImport(fqcn);
                 return simpleName + "." + value;
+            }
+
+            @Override
+            public @NotNull List<Suggestion> suggestions(@NotNull TypeEnv env, @Nullable LumenType expectedType) {
+                List<Suggestion> out = new ArrayList<>();
+                String category = typeId.toLowerCase(Locale.ROOT).replace('_', ' ');
+                for (String name : frozen) {
+                    out.add(Suggestion.literal(name.toLowerCase(Locale.ROOT), category, SemanticKind.NAMESPACE));
+                }
+                return out;
             }
         };
     }

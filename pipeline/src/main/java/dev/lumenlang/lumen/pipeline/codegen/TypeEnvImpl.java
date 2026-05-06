@@ -540,6 +540,21 @@ public final class TypeEnvImpl implements TypeEnv {
     }
 
     @Override
+    public @NotNull List<VarRef> allInScope() {
+        List<VarRef> out = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
+        for (BlockContextImpl c = currentBlock; c != null; c = c.parent()) {
+            for (VarRef ref : c.localVars()) {
+                if (seen.add(ref.name())) out.add(ref);
+            }
+        }
+        for (VarRef ref : globalVars) {
+            if (seen.add(ref.name())) out.add(ref);
+        }
+        return out;
+    }
+
+    @Override
     public void markStored(@NotNull String name, @NotNull String keyExpr,
                            @NotNull String baseKey, @Nullable String scopeVar) {
         storedKeys.put(name, keyExpr);

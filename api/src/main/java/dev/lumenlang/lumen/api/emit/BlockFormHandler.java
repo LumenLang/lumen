@@ -1,6 +1,8 @@
 package dev.lumenlang.lumen.api.emit;
 
 import dev.lumenlang.lumen.api.codegen.HandlerContext;
+import dev.lumenlang.lumen.api.codegen.TypeEnv;
+import dev.lumenlang.lumen.api.language.Suggestion;
 import dev.lumenlang.lumen.api.pattern.PatternRegistrar;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,25 +19,6 @@ import java.util.List;
  * <p>Unlike block pattern handlers (registered via
  * {@link PatternRegistrar#block}), block form handlers
  * process children themselves rather than relying on the pipeline to recursively emit them.
- *
- * <h2>Example</h2>
- * <pre>{@code
- * api.emitters().blockForm(new BlockFormHandler() {
- *     public boolean matches(List<? extends ScriptToken> headTokens) {
- *         return headTokens.size() == 1
- *             && headTokens.get(0).text().equalsIgnoreCase("metadata");
- *     }
- *     public void handle(List<? extends ScriptToken> headTokens,
- *                        List<? extends ScriptLine> children,
- *                        HandlerContext ctx) {
- *         for (ScriptLine child : children) {
- *             // process each child line
- *         }
- *     }
- * });
- * }</pre>
- *
- * @see EmitRegistrar#blockForm(BlockFormHandler)
  */
 public interface BlockFormHandler {
 
@@ -56,7 +39,32 @@ public interface BlockFormHandler {
      * @param children   the child lines of the block
      * @param ctx        the handler context providing environment, codegen, and output access
      */
-    void handle(@NotNull List<? extends ScriptToken> headTokens,
-                @NotNull List<? extends ScriptLine> children,
-                @NotNull HandlerContext ctx);
+    void handle(@NotNull List<? extends ScriptToken> headTokens, @NotNull List<? extends ScriptLine> children, @NotNull HandlerContext ctx);
+
+    /**
+     * Returns completion suggestions for a line inside this block form's body.
+     *
+     * <p>Block forms parse their bodies themselves rather than going through pattern
+     * matching, so they own the completion experience for those lines. Implementations
+     * decide what makes sense based on the partial text the user has typed and the
+     * surrounding scope.
+     *
+     * <h2>{@code prefix}</h2>
+     *
+     * <p>The text typed on the cursor's line up to the cursor. Use it to pick which
+     * slot of the body grammar the user is in.
+     *
+     * <h2>Environment</h2>
+     *
+     * <p>{@code env} reflects the state at the start of this block form's body, not
+     * partway through it. Use it for outer-scope lookups, registered types, data
+     * classes, and other registry data.
+     *
+     * @param prefix the text typed on the cursor's line so far
+     * @param env    the type environment as of this block form's body start
+     * @return the suggestions, never null
+     */
+    default @NotNull List<Suggestion> bodySuggestions(@NotNull String prefix, @NotNull TypeEnv env) {
+        return List.of();
+    }
 }

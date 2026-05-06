@@ -1,18 +1,25 @@
 package dev.lumenlang.lumen.plugin.defaults.type;
 
+import dev.lumenlang.lumen.api.codegen.TypeEnv;
 import dev.lumenlang.lumen.api.exceptions.ParseFailureException;
 import dev.lumenlang.lumen.api.language.SemanticKind;
+import dev.lumenlang.lumen.api.language.Suggestion;
+import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.TypeBindingMeta;
 import dev.lumenlang.lumen.pipeline.codegen.CodegenContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.language.TypeBinding;
+import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
+import dev.lumenlang.lumen.pipeline.language.pattern.registered.RegisteredExpression;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.language.tokenization.TokenKind;
 import dev.lumenlang.lumen.pipeline.placeholder.PlaceholderExpander;
 import dev.lumenlang.lumen.pipeline.typebinding.TypeRegistry;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -102,6 +109,11 @@ public final class BuiltinTypeBindings {
             @Override
             public @NotNull SemanticKind semanticKind() {
                 return SemanticKind.PASSTHROUGH;
+            }
+
+            @Override
+            public @NotNull List<Suggestion> suggestions(@NotNull TypeEnvImpl env, @Nullable LumenType expectedType) {
+                return exprSuggestions(env, expectedType);
             }
         });
     }
@@ -208,6 +220,23 @@ public final class BuiltinTypeBindings {
                 .replace("\n", "\\n")
                 .replace("\r", "\\r")
                 .replace("\t", "\\t");
+    }
+
+    static @NotNull List<Suggestion> varSuggestions(@NotNull TypeEnv env, @Nullable LumenType expectedType) {
+        List<Suggestion> out = new ArrayList<>();
+        for (TypeEnv.VarHandle handle : env.allInScope()) {
+            if (expectedType != null && !expectedType.assignableFrom(handle.type())) continue;
+            out.add(Suggestion.variable(handle));
+        }
+        return out;
+    }
+
+    static @NotNull List<Suggestion> exprSuggestions(@NotNull TypeEnvImpl env, @Nullable LumenType expectedType) {
+        List<Suggestion> out = new ArrayList<>(varSuggestions(env, expectedType));
+        for (RegisteredExpression reg : PatternRegistry.instance().getExpressions()) {
+            out.add(Suggestion.expression(reg.pattern().raw()));
+        }
+        return out;
     }
 
     private static void registerIdent(@NotNull TypeRegistry types) {

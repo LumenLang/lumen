@@ -6,14 +6,20 @@ import dev.lumenlang.lumen.api.annotations.Registration;
 import dev.lumenlang.lumen.api.codegen.CodegenContext;
 import dev.lumenlang.lumen.api.codegen.TypeEnv;
 import dev.lumenlang.lumen.api.exceptions.ParseFailureException;
+import dev.lumenlang.lumen.api.language.SemanticKind;
+import dev.lumenlang.lumen.api.language.Suggestion;
 import dev.lumenlang.lumen.api.type.AddonTypeBinding;
+import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.TypeBindingMeta;
 import dev.lumenlang.lumen.api.util.FuzzyMatch;
 import dev.lumenlang.lumen.plugin.defaults.util.AttributeNames;
 import org.bukkit.attribute.Attribute;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Registers the {@code ATTRIBUTE} type binding.
@@ -68,6 +74,15 @@ public final class AttributeBinding {
             public @NotNull String toJava(Object value, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
                 ctx.addImport(Attribute.class.getName());
                 return "Attribute." + value;
+            }
+
+            @Override
+            public @NotNull List<Suggestion> suggestions(@NotNull TypeEnv env, @Nullable LumenType expectedType) {
+                List<Suggestion> out = new ArrayList<>();
+                for (String name : AttributeNames.knownNames()) {
+                    out.add(Suggestion.literal(name.toLowerCase(Locale.ROOT), "attribute", SemanticKind.NAMESPACE));
+                }
+                return out;
             }
         });
     }

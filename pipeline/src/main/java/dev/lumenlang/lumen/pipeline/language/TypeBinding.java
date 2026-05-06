@@ -2,12 +2,15 @@ package dev.lumenlang.lumen.pipeline.language;
 
 import dev.lumenlang.lumen.api.exceptions.ParseFailureException;
 import dev.lumenlang.lumen.api.language.SemanticKind;
+import dev.lumenlang.lumen.api.language.Suggestion;
+import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.pipeline.codegen.CodegenContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.language.pattern.Pattern;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.typebinding.TypeRegistry;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -198,5 +201,32 @@ public interface TypeBinding {
      */
     default @NotNull SemanticKind semanticKind() {
         return SemanticKind.defaultKind();
+    }
+
+    /**
+     * Returns completion suggestions for a token this binding would consume.
+     *
+     * <p>Build entries with the {@link Suggestion} factories.
+     *
+     * <h2>{@code expectedType}</h2>
+     *
+     * <p>Set when the surrounding statement narrows the slot to a specific type,
+     * for instance the right-hand side of {@code set x to ...} when {@code x}
+     * was already declared. Skip any candidate whose type is not assignable to
+     * it:
+     *
+     * <pre>{@code
+     * if (expectedType != null && !expectedType.assignableFrom(candidate)) continue;
+     * }</pre>
+     *
+     * <p>{@code null} when no narrowing applies. Return everything you have in
+     * that case.
+     *
+     * @param env          the type environment as of the cursor line
+     * @param expectedType the type the slot must produce, or {@code null}
+     * @return the suggestions, never null
+     */
+    default @NotNull List<Suggestion> suggestions(@NotNull TypeEnvImpl env, @Nullable LumenType expectedType) {
+        return List.of();
     }
 }

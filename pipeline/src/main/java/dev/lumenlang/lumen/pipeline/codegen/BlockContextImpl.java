@@ -9,6 +9,7 @@ import dev.lumenlang.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -82,6 +83,10 @@ public final class BlockContextImpl implements BlockContext {
 
     public @NotNull Set<String> varNames() {
         return vars.keySet();
+    }
+
+    public @NotNull Collection<VarRef> localVars() {
+        return vars.values();
     }
 
     @Override

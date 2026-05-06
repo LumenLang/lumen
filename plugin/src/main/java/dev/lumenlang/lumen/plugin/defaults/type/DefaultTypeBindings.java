@@ -8,6 +8,7 @@ import dev.lumenlang.lumen.api.codegen.TypeEnv;
 import dev.lumenlang.lumen.api.codegen.TypeEnv.VarHandle;
 import dev.lumenlang.lumen.api.exceptions.ParseFailureException;
 import dev.lumenlang.lumen.api.language.SemanticKind;
+import dev.lumenlang.lumen.api.language.Suggestion;
 import dev.lumenlang.lumen.api.type.AddonTypeBinding;
 import dev.lumenlang.lumen.api.type.BuiltinLumenTypes;
 import dev.lumenlang.lumen.api.type.CollectionType;
@@ -15,10 +16,14 @@ import dev.lumenlang.lumen.api.type.EnumTypeBinding;
 import dev.lumenlang.lumen.api.type.LumenType;
 import dev.lumenlang.lumen.api.type.MinecraftTypes;
 import dev.lumenlang.lumen.api.type.ObjectType;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.api.type.RegistryTypeBinding;
 import dev.lumenlang.lumen.api.type.TypeBindingMeta;
 import dev.lumenlang.lumen.api.util.FuzzyMatch;
 import dev.lumenlang.lumen.api.version.MinecraftVersion;
+import dev.lumenlang.lumen.pipeline.conditions.registry.RegisteredCondition;
+import dev.lumenlang.lumen.pipeline.events.EventDefRegistry;
+import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.java.compiled.DataInstance;
 import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
 import org.bukkit.DyeColor;
@@ -36,7 +41,11 @@ import org.bukkit.entity.Villager;
 import org.bukkit.event.block.Action;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Predicate;
+
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -203,6 +212,11 @@ public final class DefaultTypeBindings {
             public @NotNull SemanticKind semanticKind() {
                 return SemanticKind.NUMBER;
             }
+
+            @Override
+            public @NotNull List<Suggestion> suggestions(@NotNull TypeEnv env, @Nullable LumenType expectedType) {
+                return varsOfType(env, PrimitiveType.INT, expectedType);
+            }
         });
     }
 
@@ -260,6 +274,11 @@ public final class DefaultTypeBindings {
             public @NotNull SemanticKind semanticKind() {
                 return SemanticKind.NUMBER;
             }
+
+            @Override
+            public @NotNull List<Suggestion> suggestions(@NotNull TypeEnv env, @Nullable LumenType expectedType) {
+                return varsOfType(env, PrimitiveType.LONG, expectedType);
+            }
         });
     }
 
@@ -312,6 +331,11 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull SemanticKind semanticKind() {
                 return SemanticKind.NUMBER;
+            }
+
+            @Override
+            public @NotNull List<Suggestion> suggestions(@NotNull TypeEnv env, @Nullable LumenType expectedType) {
+                return varsOfType(env, PrimitiveType.DOUBLE, expectedType);
             }
         });
     }
@@ -388,6 +412,11 @@ public final class DefaultTypeBindings {
             public @NotNull SemanticKind semanticKind() {
                 return SemanticKind.NUMBER;
             }
+
+            @Override
+            public @NotNull List<Suggestion> suggestions(@NotNull TypeEnv env, @Nullable LumenType expectedType) {
+                return varsOfType(env, PrimitiveType.DOUBLE, expectedType);
+            }
         });
     }
 
@@ -430,6 +459,16 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull SemanticKind semanticKind() {
                 return SemanticKind.KEYWORD;
+            }
+
+            @Override
+            public @NotNull List<Suggestion> suggestions(@NotNull TypeEnv env, @Nullable LumenType expectedType) {
+                List<Suggestion> out = new ArrayList<>();
+                for (String literal : List.of("true", "false", "yes", "no", "on", "off")) {
+                    out.add(Suggestion.literal(literal, "boolean", SemanticKind.KEYWORD));
+                }
+                out.addAll(varsOfType(env, PrimitiveType.BOOLEAN, expectedType));
+                return out;
             }
         });
     }
@@ -476,6 +515,15 @@ public final class DefaultTypeBindings {
                 }
                 return "Material." + value;
             }
+
+            @Override
+            public @NotNull List<Suggestion> suggestions(@NotNull TypeEnv env, @Nullable LumenType expectedType) {
+                List<Suggestion> out = new ArrayList<>();
+                for (String mat : frozenMats) {
+                    out.add(Suggestion.literal(mat.toLowerCase(Locale.ROOT), "material", SemanticKind.NAMESPACE));
+                }
+                return out;
+            }
         });
     }
 
@@ -521,6 +569,11 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull SemanticKind semanticKind() {
                 return SemanticKind.FUNCTION;
+            }
+
+            @Override
+            public @NotNull List<Suggestion> suggestions(@NotNull TypeEnv env, @Nullable LumenType expectedType) {
+                return varsOfType(env, MinecraftTypes.PLAYER, expectedType);
             }
 
             private boolean isPlayer(@NotNull VarHandle ref) {
@@ -570,6 +623,11 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull SemanticKind semanticKind() {
                 return SemanticKind.FUNCTION;
+            }
+
+            @Override
+            public @NotNull List<Suggestion> suggestions(@NotNull TypeEnv env, @Nullable LumenType expectedType) {
+                return varsOfType(env, MinecraftTypes.PLAYER, expectedType);
             }
 
             private boolean isPlayer(@NotNull VarHandle ref) {
@@ -622,6 +680,11 @@ public final class DefaultTypeBindings {
                 return SemanticKind.FUNCTION;
             }
 
+            @Override
+            public @NotNull List<Suggestion> suggestions(@NotNull TypeEnv env, @Nullable LumenType expectedType) {
+                return varsOfType(env, MinecraftTypes.OFFLINE_PLAYER, expectedType);
+            }
+
             private boolean isOfflinePlayer(@NotNull VarHandle ref) {
                 return MinecraftTypes.OFFLINE_PLAYER.equals(ref.type().unwrap());
             }
@@ -671,6 +734,11 @@ public final class DefaultTypeBindings {
                 return SemanticKind.FUNCTION;
             }
 
+            @Override
+            public @NotNull List<Suggestion> suggestions(@NotNull TypeEnv env, @Nullable LumenType expectedType) {
+                return varsOfType(env, MinecraftTypes.OFFLINE_PLAYER, expectedType);
+            }
+
             private boolean isOfflinePlayer(@NotNull VarHandle ref) {
                 return MinecraftTypes.OFFLINE_PLAYER.equals(ref.type().unwrap());
             }
@@ -688,7 +756,7 @@ public final class DefaultTypeBindings {
             public @NotNull TypeBindingMeta meta() {
                 return new TypeBindingMeta(
                         "a condition",
-                        "Captures all remaining tokens as a raw condition string. Used internally for conditional expressions.",
+                        "Captures all remaining tokens as a raw condition string.",
                         "String",
                         List.of(),
                         "1.0.0",
@@ -713,6 +781,15 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull SemanticKind semanticKind() {
                 return SemanticKind.PASSTHROUGH;
+            }
+
+            @Override
+            public @NotNull List<Suggestion> suggestions(@NotNull TypeEnv env, @Nullable LumenType expectedType) {
+                List<Suggestion> out = new ArrayList<>(varsOfType(env, PrimitiveType.BOOLEAN, expectedType));
+                for (RegisteredCondition cond : PatternRegistry.instance().getConditionRegistry().getConditions()) {
+                    out.add(Suggestion.condition(cond.pattern().raw()));
+                }
+                return out;
             }
         });
     }
@@ -877,6 +954,11 @@ public final class DefaultTypeBindings {
                 return SemanticKind.FUNCTION;
             }
 
+            @Override
+            public @NotNull List<Suggestion> suggestions(@NotNull TypeEnv env, @Nullable LumenType expectedType) {
+                return varsOfType(env, MinecraftTypes.ENTITY, expectedType);
+            }
+
             private boolean isEntity(@NotNull VarHandle ref) {
                 LumenType unwrapped = ref.type().unwrap();
                 return unwrapped instanceof ObjectType obj && (obj.equals(MinecraftTypes.ENTITY) || obj.isSubtypeOf(MinecraftTypes.ENTITY));
@@ -925,6 +1007,11 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull SemanticKind semanticKind() {
                 return SemanticKind.FUNCTION;
+            }
+
+            @Override
+            public @NotNull List<Suggestion> suggestions(@NotNull TypeEnv env, @Nullable LumenType expectedType) {
+                return varsOfType(env, MinecraftTypes.ENTITY, expectedType);
             }
 
             private boolean isEntity(@NotNull VarHandle ref) {
@@ -984,6 +1071,15 @@ public final class DefaultTypeBindings {
                 ctx.addImport(EntityType.class.getName());
                 return "EntityType." + value;
             }
+
+            @Override
+            public @NotNull List<Suggestion> suggestions(@NotNull TypeEnv env, @Nullable LumenType expectedType) {
+                List<Suggestion> out = new ArrayList<>();
+                for (String name : knownEntities) {
+                    out.add(Suggestion.literal(name.toLowerCase(Locale.ROOT), "entity type", SemanticKind.NAMESPACE));
+                }
+                return out;
+            }
         });
     }
 
@@ -1029,6 +1125,11 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull SemanticKind semanticKind() {
                 return SemanticKind.FUNCTION;
+            }
+
+            @Override
+            public @NotNull List<Suggestion> suggestions(@NotNull TypeEnv env, @Nullable LumenType expectedType) {
+                return varsOfType(env, MinecraftTypes.LIVING_ENTITY, expectedType);
             }
 
             private boolean isLivingEntity(@NotNull VarHandle ref) {
@@ -1079,6 +1180,11 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull SemanticKind semanticKind() {
                 return SemanticKind.FUNCTION;
+            }
+
+            @Override
+            public @NotNull List<Suggestion> suggestions(@NotNull TypeEnv env, @Nullable LumenType expectedType) {
+                return varsOfType(env, MinecraftTypes.LIVING_ENTITY, expectedType);
             }
 
             private boolean isLivingEntity(@NotNull VarHandle ref) {
@@ -1139,10 +1245,18 @@ public final class DefaultTypeBindings {
                 ctx.addImport(ItemStack.class.getName());
                 ctx.addImport(Material.class.getName());
                 if (value instanceof VarHandle ref) {
-                    return "new ItemStack(Material.valueOf(String.valueOf(" + ref.java()
-                            + ").toUpperCase()))";
+                    return "new ItemStack(Material.valueOf(String.valueOf(" + ref.java() + ").toUpperCase()))";
                 }
                 return "new ItemStack(Material." + value + ")";
+            }
+
+            @Override
+            public @NotNull List<Suggestion> suggestions(@NotNull TypeEnv env, @Nullable LumenType expectedType) {
+                List<Suggestion> out = new ArrayList<>();
+                for (String mat : knownMaterials) {
+                    out.add(Suggestion.literal(mat.toLowerCase(Locale.ROOT), "item", SemanticKind.NAMESPACE));
+                }
+                return out;
             }
         });
     }
@@ -1188,6 +1302,11 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull SemanticKind semanticKind() {
                 return SemanticKind.FUNCTION;
+            }
+
+            @Override
+            public @NotNull List<Suggestion> suggestions(@NotNull TypeEnv env, @Nullable LumenType expectedType) {
+                return varsOfType(env, MinecraftTypes.ITEMSTACK, expectedType);
             }
 
             private boolean isItemStack(@NotNull VarHandle ref) {
@@ -1238,6 +1357,11 @@ public final class DefaultTypeBindings {
                 return SemanticKind.FUNCTION;
             }
 
+            @Override
+            public @NotNull List<Suggestion> suggestions(@NotNull TypeEnv env, @Nullable LumenType expectedType) {
+                return varsOfType(env, MinecraftTypes.ITEMSTACK, expectedType);
+            }
+
             private boolean isItemStack(@NotNull VarHandle ref) {
                 return MinecraftTypes.ITEMSTACK.equals(ref.type().unwrap());
             }
@@ -1281,6 +1405,11 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull SemanticKind semanticKind() {
                 return SemanticKind.FUNCTION;
+            }
+
+            @Override
+            public @NotNull List<Suggestion> suggestions(@NotNull TypeEnv env, @Nullable LumenType expectedType) {
+                return varsOfType(env, MinecraftTypes.WORLD, expectedType);
             }
 
             private boolean isWorld(@NotNull VarHandle ref) {
@@ -1328,6 +1457,11 @@ public final class DefaultTypeBindings {
                 return SemanticKind.FUNCTION;
             }
 
+            @Override
+            public @NotNull List<Suggestion> suggestions(@NotNull TypeEnv env, @Nullable LumenType expectedType) {
+                return varsOfType(env, MinecraftTypes.LOCATION, expectedType);
+            }
+
             private boolean isLocation(@NotNull VarHandle ref) {
                 return MinecraftTypes.LOCATION.equals(ref.type().unwrap());
             }
@@ -1371,6 +1505,11 @@ public final class DefaultTypeBindings {
                     return ref.java();
                 }
                 throw new RuntimeException("Cannot generate Java for null list reference");
+            }
+
+            @Override
+            public @NotNull List<Suggestion> suggestions(@NotNull TypeEnv env, @Nullable LumenType expectedType) {
+                return varsMatching(env, this::isList, expectedType);
             }
 
             private boolean isList(@NotNull VarHandle ref) {
@@ -1418,6 +1557,11 @@ public final class DefaultTypeBindings {
                 throw new RuntimeException("Cannot generate Java for null map reference");
             }
 
+            @Override
+            public @NotNull List<Suggestion> suggestions(@NotNull TypeEnv env, @Nullable LumenType expectedType) {
+                return varsMatching(env, this::isMap, expectedType);
+            }
+
             private boolean isMap(@NotNull VarHandle ref) {
                 return ref.type().unwrap() instanceof CollectionType ct && ct.rawType().id().equals("MAP");
             }
@@ -1458,6 +1602,11 @@ public final class DefaultTypeBindings {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null data reference");
                 return ((VarHandle) v).java();
+            }
+
+            @Override
+            public @NotNull List<Suggestion> suggestions(@NotNull TypeEnv env, @Nullable LumenType expectedType) {
+                return varsOfType(env, BuiltinLumenTypes.DATA, expectedType);
             }
 
             private boolean isData(@NotNull VarHandle ref) {
@@ -1507,6 +1656,11 @@ public final class DefaultTypeBindings {
                 return SemanticKind.FUNCTION;
             }
 
+            @Override
+            public @NotNull List<Suggestion> suggestions(@NotNull TypeEnv env, @Nullable LumenType expectedType) {
+                return varsOfType(env, MinecraftTypes.BLOCK, expectedType);
+            }
+
             private boolean isBlock(@NotNull VarHandle ref) {
                 return MinecraftTypes.BLOCK.equals(ref.type().unwrap());
             }
@@ -1554,6 +1708,11 @@ public final class DefaultTypeBindings {
                 return SemanticKind.FUNCTION;
             }
 
+            @Override
+            public @NotNull List<Suggestion> suggestions(@NotNull TypeEnv env, @Nullable LumenType expectedType) {
+                return varsOfType(env, MinecraftTypes.INVENTORY, expectedType);
+            }
+
             private boolean isInventory(@NotNull VarHandle ref) {
                 return MinecraftTypes.INVENTORY.equals(ref.type().unwrap());
             }
@@ -1595,6 +1754,11 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull SemanticKind semanticKind() {
                 return SemanticKind.VARIABLE;
+            }
+
+            @Override
+            public @NotNull List<Suggestion> suggestions(@NotNull TypeEnv env, @Nullable LumenType expectedType) {
+                return varsOfType(env, null, expectedType);
             }
         });
     }
@@ -1679,6 +1843,14 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull SemanticKind semanticKind() {
                 return SemanticKind.EVENT;
+            }
+
+            @Override
+            public @NotNull List<Suggestion> suggestions(@NotNull TypeEnv env, @Nullable LumenType expectedType) {
+                List<Suggestion> out = new ArrayList<>();
+                for (String name : EventDefRegistry.defs().keySet()) out.add(Suggestion.event(name));
+                for (String name : EventDefRegistry.advancedDefs().keySet()) out.add(Suggestion.event(name));
+                return out;
             }
         });
     }
@@ -1769,5 +1941,25 @@ public final class DefaultTypeBindings {
     private static @NotNull String joinNegative(@NotNull List<String> tokens) {
         if (hasNegativeLiteral(tokens)) return "-" + tokens.get(1);
         return tokens.get(0);
+    }
+
+    private static @NotNull List<Suggestion> varsOfType(@NotNull TypeEnv env, @Nullable LumenType wantedType, @Nullable LumenType expectedType) {
+        List<Suggestion> out = new ArrayList<>();
+        for (TypeEnv.VarHandle handle : env.allInScope()) {
+            if (wantedType != null && !wantedType.assignableFrom(handle.type().unwrap())) continue;
+            if (expectedType != null && !expectedType.assignableFrom(handle.type())) continue;
+            out.add(Suggestion.variable(handle));
+        }
+        return out;
+    }
+
+    private static @NotNull List<Suggestion> varsMatching(@NotNull TypeEnv env, @NotNull Predicate<VarHandle> filter, @Nullable LumenType expectedType) {
+        List<Suggestion> out = new ArrayList<>();
+        for (TypeEnv.VarHandle handle : env.allInScope()) {
+            if (!filter.test(handle)) continue;
+            if (expectedType != null && !expectedType.assignableFrom(handle.type())) continue;
+            out.add(Suggestion.variable(handle));
+        }
+        return out;
     }
 }
