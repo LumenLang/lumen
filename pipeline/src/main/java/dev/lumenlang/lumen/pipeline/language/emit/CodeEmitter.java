@@ -212,19 +212,14 @@ public final class CodeEmitter {
             @NotNull List<LumenScriptException> errors) {
         for (int i = 0; i < children.size(); i++) {
             Node child = children.get(i);
-            boolean isStatement = child instanceof StatementNode;
-            if (parentBlock == null || isStatement) {
-                try {
-                    emit(child, parentBlock, children, i, reg, env, ctx, out, errors);
-                } catch (LumenScriptException e) {
-                    errors.add(e);
-                } catch (DiagnosticException e) {
-                    errors.add(new LumenScriptException(e));
-                } catch (RuntimeException e) {
-                    errors.add(new LumenScriptException(child.line(), child.raw(), e.getMessage(), e));
-                }
-            } else {
+            try {
                 emit(child, parentBlock, children, i, reg, env, ctx, out, errors);
+            } catch (LumenScriptException e) {
+                errors.add(e);
+            } catch (DiagnosticException e) {
+                errors.add(new LumenScriptException(e));
+            } catch (RuntimeException e) {
+                errors.add(new LumenScriptException(child.line(), child.raw(), e.getMessage(), e));
             }
         }
     }
@@ -424,51 +419,60 @@ public final class CodeEmitter {
         RegisteredBlockMatch bm = reg.matchBlock(head, env);
         if (bm == null) {
             List<PatternSimulator.Suggestion> suggestions = PatternSimulator.suggestBlocks(head, reg, env);
-            if (!suggestions.isEmpty()) {
-                throw new LumenScriptException(new DiagnosticException(SuggestionDiagnostics.build("Unknown block", b.line(), b.raw(), head, suggestions)));
-            }
-            throw new LumenScriptException(new DiagnosticException(SuggestionDiagnostics.buildNoSuggestion("Unknown block", b.line(), b.raw(), head)));
+            LumenDiagnostic diag = !suggestions.isEmpty()
+                    ? SuggestionDiagnostics.build("Unknown block", b.line(), b.raw(), head, suggestions)
+                    : SuggestionDiagnostics.buildNoSuggestion("Unknown block", b.line(), b.raw(), head);
+            errors.add(new LumenScriptException(new DiagnosticException(diag)));
+            emitChildren(b, blockCtx, reg, env, ctx, out, errors);
+            return;
         }
 
         HandlerContextImpl hctx = new HandlerContextImpl(bm.match(), env, ctx, blockCtx, out);
 
+        boolean beginFailed = false;
         try {
             bm.reg().handler().begin(hctx);
         } catch (LumenScriptException e) {
-            throw e;
+            errors.add(e);
+            beginFailed = true;
         } catch (RuntimeException e) {
-            throw wrapRuntimeException(b.line(), b.raw(), e);
+            errors.add(wrapRuntimeException(b.line(), b.raw(), e));
+            beginFailed = true;
         }
 
         HandlerContextImpl hookCtx = new HandlerContextImpl(null, env, ctx, blockCtx, out);
-        for (BlockEnterHook hook : emitReg.blockEnterHooks()) {
-            try {
-                hook.onBlockEnter(hookCtx);
-            } catch (LumenScriptException e) {
-                throw e;
-            } catch (RuntimeException e) {
-                throw wrapRuntimeException(b.line(), b.raw(), e);
+        if (!beginFailed) {
+            for (BlockEnterHook hook : emitReg.blockEnterHooks()) {
+                try {
+                    hook.onBlockEnter(hookCtx);
+                } catch (LumenScriptException e) {
+                    throw e;
+                } catch (RuntimeException e) {
+                    throw wrapRuntimeException(b.line(), b.raw(), e);
+                }
             }
         }
 
         emitChildren(b, blockCtx, reg, env, ctx, out, errors);
 
-        for (BlockExitHook hook : emitReg.blockExitHooks()) {
+        if (!beginFailed) {
+            for (BlockExitHook hook : emitReg.blockExitHooks()) {
+                try {
+                    hook.onBlockExit(hookCtx);
+                } catch (LumenScriptException e) {
+                    throw e;
+                } catch (RuntimeException e) {
+                    throw wrapRuntimeException(b.line(), b.raw(), e);
+                }
+            }
+
             try {
-                hook.onBlockExit(hookCtx);
+                bm.reg().handler().end(hctx);
             } catch (LumenScriptException e) {
                 throw e;
             } catch (RuntimeException e) {
                 throw wrapRuntimeException(b.line(), b.raw(), e);
             }
-        }
-
-        try {
-            bm.reg().handler().end(hctx);
-        } catch (LumenScriptException e) {
-            throw e;
-        } catch (RuntimeException e) {
-            throw wrapRuntimeException(b.line(), b.raw(), e);
         }
     }
 
