@@ -13,6 +13,7 @@ import java.util.List;
  * All subsequent lines at a greater indentation level become {@link #children()}.
  */
 public non-sealed class BlockNode implements Node {
+    private int id;
     private final int indent;
     private final int line;
     private final String raw;
@@ -24,6 +25,16 @@ public non-sealed class BlockNode implements Node {
         this.line = line;
         this.raw = raw;
         this.head = head;
+    }
+
+    @Override
+    public int id() {
+        return id;
+    }
+
+    @Override
+    public void id(int id) {
+        this.id = id;
     }
 
     @Override

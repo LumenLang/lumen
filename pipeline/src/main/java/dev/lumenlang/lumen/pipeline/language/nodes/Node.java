@@ -13,6 +13,20 @@ import java.util.List;
 public sealed interface Node permits BlockNode, StatementNode {
 
     /**
+     * Returns the stable identity of this node.
+     *
+     * <p>Identifiers are assigned during parsing and copied onto matching nodes during
+     * incremental re-parsing so that cached match results can be looked up by id.
+     */
+    int id();
+
+    /**
+     * Reassigns the identity of this node, used during incremental diffing to carry
+     * the previous parse's id onto an unchanged node in the new parse.
+     */
+    void id(int id);
+
+    /**
      * Returns the indentation level (in spaces) of this node's source line.
      *
      * @return indentation in spaces (tabs are counted as 4 spaces by the tokenizer)

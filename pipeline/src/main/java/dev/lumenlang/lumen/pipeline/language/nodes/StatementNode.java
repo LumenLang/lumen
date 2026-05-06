@@ -11,6 +11,7 @@ import java.util.List;
  * the full token list for that line.
  */
 public final class StatementNode implements Node {
+    private int id;
     private final int indent;
     private final int line;
     private final String raw;
@@ -21,6 +22,16 @@ public final class StatementNode implements Node {
         this.line = line;
         this.raw = raw;
         this.tokens = tokens;
+    }
+
+    @Override
+    public int id() {
+        return id;
+    }
+
+    @Override
+    public void id(int id) {
+        this.id = id;
     }
 
     @Override

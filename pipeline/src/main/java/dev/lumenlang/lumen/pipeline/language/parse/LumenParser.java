@@ -27,6 +27,8 @@ public final class LumenParser {
      */
     public @NotNull BlockNode parse(@NotNull List<Line> lines) {
         BlockNode root = new BlockNode(-1, -1, "", List.of());
+        int[] nextId = {1};
+        root.id(nextId[0]++);
         Deque<BlockNode> stack = new ArrayDeque<>();
         stack.push(root);
 
@@ -56,6 +58,7 @@ public final class LumenParser {
                 } else {
                     block = new BlockNode(l.indent(), l.lineNumber(), l.raw(), head);
                 }
+                block.id(nextId[0]++);
 
                 if (parent == null) {
                     throw new RuntimeException("Internal parser error: no parent block for line " + l.lineNumber());
@@ -66,7 +69,9 @@ public final class LumenParser {
                 if (parent == null) {
                     throw new RuntimeException("Internal parser error: no parent block for line " + l.lineNumber());
                 }
-                parent.children().add(new StatementNode(l.indent(), l.lineNumber(), l.raw(), head));
+                StatementNode stmt = new StatementNode(l.indent(), l.lineNumber(), l.raw(), head);
+                stmt.id(nextId[0]++);
+                parent.children().add(stmt);
             }
         }
 

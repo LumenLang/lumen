@@ -16,6 +16,8 @@ import dev.lumenlang.lumen.pipeline.codegen.source.SourceMapImpl;
 import dev.lumenlang.lumen.pipeline.java.JavaBuilder;
 import dev.lumenlang.lumen.pipeline.language.exceptions.LumenScriptException;
 import dev.lumenlang.lumen.pipeline.language.exceptions.TokenCarryingException;
+import dev.lumenlang.lumen.pipeline.language.incremental.IncrementalParseContext;
+import dev.lumenlang.lumen.pipeline.language.incremental.MatchCache;
 import dev.lumenlang.lumen.pipeline.language.nodes.BlockNode;
 import dev.lumenlang.lumen.pipeline.language.nodes.Node;
 import dev.lumenlang.lumen.pipeline.language.nodes.RawBlockNode;
@@ -99,6 +101,26 @@ public final class CodeEmitter {
             @NotNull TypeEnvImpl env,
             @NotNull CodegenContextImpl ctx,
             @NotNull JavaBuilder out) {
+        generate(src, reg, env, ctx, out, MatchCache.NOOP);
+    }
+
+    /**
+     * Convenience overload accepting a {@link MatchCache} for incremental analysis.
+     *
+     * @param src   the raw Lumen script source text
+     * @param reg   the pattern registry
+     * @param env   the type environment
+     * @param ctx   the code generation context
+     * @param out   the Java code builder
+     * @param cache the per-script match cache; pass {@link MatchCache#NOOP} to disable
+     */
+    public static void generate(
+            @NotNull String src,
+            @NotNull PatternRegistry reg,
+            @NotNull TypeEnvImpl env,
+            @NotNull CodegenContextImpl ctx,
+            @NotNull JavaBuilder out,
+            @NotNull MatchCache cache) {
         Tokenizer tokenizer = new Tokenizer();
         LumenParser parser = new LumenParser();
         List<Line> tokenizedLines = tokenizer.tokenize(src);
@@ -106,8 +128,13 @@ public final class CodeEmitter {
         for (LumenDiagnostic d : IndentDiagnostics.analyze(src)) {
             env.addWarning(d);
         }
-        Node script = parser.parse(tokenizedLines);
-        generate(script, reg, env, ctx, out, tokenizer.diagnostics());
+        BlockNode script = parser.parse(tokenizedLines);
+        cache.beginParse(script);
+        try {
+            generate(script, reg, env, ctx, out, tokenizer.diagnostics(), cache);
+        } finally {
+            cache.commit(script);
+        }
     }
 
     /**
@@ -125,7 +152,7 @@ public final class CodeEmitter {
             @NotNull TypeEnvImpl env,
             @NotNull CodegenContextImpl ctx,
             @NotNull JavaBuilder out) {
-        generate(root, reg, env, ctx, out, List.of());
+        generate(root, reg, env, ctx, out, List.of(), MatchCache.NOOP);
     }
 
     private static void generate(
@@ -134,9 +161,15 @@ public final class CodeEmitter {
             @NotNull TypeEnvImpl env,
             @NotNull CodegenContextImpl ctx,
             @NotNull JavaBuilder out,
-            @NotNull List<LumenDiagnostic> preErrors) {
+            @NotNull List<LumenDiagnostic> preErrors,
+            @NotNull MatchCache cache) {
+        IncrementalParseContext.set(new IncrementalParseContext(cache));
         List<LumenScriptException> errors = new ArrayList<>();
-        emitChildren(root, null, reg, env, ctx, out, errors);
+        try {
+            emitChildren(root, null, reg, env, ctx, out, errors);
+        } finally {
+            IncrementalParseContext.clear();
+        }
 
         Set<Integer> seenLines = new HashSet<>();
         List<LumenDiagnostic> warnings = new ArrayList<>();
@@ -281,23 +314,29 @@ public final class CodeEmitter {
         ExecutorService pool = pool();
         List<Future<BlockResult>> futures = new ArrayList<>(independentIndices.size());
 
+        IncrementalParseContext parentCtx = IncrementalParseContext.current();
         for (int idx : independentIndices) {
             final int blockIndex = idx;
             futures.add(pool.submit(() -> {
-                TypeEnvImpl forkedEnv = env.fork();
-                JavaBuilder blockOut = new JavaBuilder();
-                List<LumenScriptException> blockErrors = new ArrayList<>();
+                IncrementalParseContext.set(parentCtx);
                 try {
-                    emit(children.get(blockIndex), null, children, blockIndex, reg, forkedEnv, ctx, blockOut, blockErrors);
-                } catch (LumenScriptException e) {
-                    blockErrors.add(e);
-                } catch (DiagnosticException e) {
-                    blockErrors.add(new LumenScriptException(e));
-                } catch (RuntimeException e) {
-                    Node node = children.get(blockIndex);
-                    blockErrors.add(new LumenScriptException(node.line(), node.raw(), e.getMessage(), e));
+                    TypeEnvImpl forkedEnv = env.fork();
+                    JavaBuilder blockOut = new JavaBuilder();
+                    List<LumenScriptException> blockErrors = new ArrayList<>();
+                    try {
+                        emit(children.get(blockIndex), null, children, blockIndex, reg, forkedEnv, ctx, blockOut, blockErrors);
+                    } catch (LumenScriptException e) {
+                        blockErrors.add(e);
+                    } catch (DiagnosticException e) {
+                        blockErrors.add(new LumenScriptException(e));
+                    } catch (RuntimeException e) {
+                        Node node = children.get(blockIndex);
+                        blockErrors.add(new LumenScriptException(node.line(), node.raw(), e.getMessage(), e));
+                    }
+                    return new BlockResult(blockOut, blockErrors, forkedEnv.warnings());
+                } finally {
+                    IncrementalParseContext.clear();
                 }
-                return new BlockResult(blockOut, blockErrors, forkedEnv.warnings());
             }));
         }
 
@@ -416,12 +455,21 @@ public final class CodeEmitter {
             }
         }
 
-        RegisteredBlockMatch bm = reg.matchBlock(head, env);
+        MatchCache cache = IncrementalParseContext.current().cache();
+        RegisteredBlockMatch bm = cache.block(b);
         if (bm == null) {
-            List<PatternSimulator.Suggestion> suggestions = PatternSimulator.suggestBlocks(head, reg, env);
-            LumenDiagnostic diag = !suggestions.isEmpty()
-                    ? SuggestionDiagnostics.build("Unknown block", b.line(), b.raw(), head, suggestions)
-                    : SuggestionDiagnostics.buildNoSuggestion("Unknown block", b.line(), b.raw(), head);
+            bm = reg.matchBlock(head, env);
+            if (bm != null) cache.putBlock(b, bm);
+        }
+        if (bm == null) {
+            LumenDiagnostic diag = cache.blockDiagnostic(b);
+            if (diag == null) {
+                List<PatternSimulator.Suggestion> suggestions = PatternSimulator.suggestBlocks(head, reg, env);
+                diag = !suggestions.isEmpty()
+                        ? SuggestionDiagnostics.build("Unknown block", b.line(), b.raw(), head, suggestions)
+                        : SuggestionDiagnostics.buildNoSuggestion("Unknown block", b.line(), b.raw(), head);
+                cache.putBlockDiagnostic(b, diag);
+            }
             errors.add(new LumenScriptException(new DiagnosticException(diag)));
             emitChildren(b, blockCtx, reg, env, ctx, out, errors);
             return;
@@ -430,14 +478,23 @@ public final class CodeEmitter {
         HandlerContextImpl hctx = new HandlerContextImpl(bm.match(), env, ctx, blockCtx, out);
 
         boolean beginFailed = false;
-        try {
-            bm.reg().handler().begin(hctx);
-        } catch (LumenScriptException e) {
-            errors.add(e);
+        LumenDiagnostic cachedBeginDiag = cache.beginDiagnostic(b);
+        if (cachedBeginDiag != null) {
+            errors.add(new LumenScriptException(new DiagnosticException(cachedBeginDiag)));
             beginFailed = true;
-        } catch (RuntimeException e) {
-            errors.add(wrapRuntimeException(b.line(), b.raw(), e));
-            beginFailed = true;
+        } else {
+            try {
+                bm.reg().handler().begin(hctx);
+            } catch (LumenScriptException e) {
+                errors.add(e);
+                if (e.diagnostic() != null) cache.putBeginDiagnostic(b, e.diagnostic());
+                beginFailed = true;
+            } catch (RuntimeException e) {
+                LumenScriptException wrapped = wrapRuntimeException(b.line(), b.raw(), e);
+                errors.add(wrapped);
+                if (wrapped.diagnostic() != null) cache.putBeginDiagnostic(b, wrapped.diagnostic());
+                beginFailed = true;
+            }
         }
 
         HandlerContextImpl hookCtx = new HandlerContextImpl(null, env, ctx, blockCtx, out);
@@ -489,7 +546,16 @@ public final class CodeEmitter {
         EmitRegistry emitReg = EmitRegistry.instance();
         List<Token> tokens = st.head();
 
-        TypedStatement ts = StatementClassifier.classify(st, reg, env);
+        MatchCache stmtCache = IncrementalParseContext.current().cache();
+        LumenDiagnostic cachedStmtDiag = stmtCache.statementDiagnostic(st);
+        if (cachedStmtDiag != null) {
+            throw new DiagnosticException(cachedStmtDiag);
+        }
+        TypedStatement ts = stmtCache.statement(st);
+        if (ts == null) {
+            ts = StatementClassifier.classify(st, reg, env);
+            stmtCache.putStatement(st, ts);
+        }
 
         if (ts instanceof TypedStatement.PatternStmt ps && ps.match().reg().meta().deprecated()) {
             RegisteredPatternMatch sm = ps.match();
@@ -497,9 +563,12 @@ public final class CodeEmitter {
             try {
                 sm.reg().handler().handle(hctx);
             } catch (LumenScriptException e) {
+                if (e.diagnostic() != null) stmtCache.putStatementDiagnostic(st, e.diagnostic());
                 throw e;
             } catch (RuntimeException e) {
-                throw wrapRuntimeException(st.line(), st.raw(), e);
+                LumenScriptException wrapped = wrapRuntimeException(st.line(), st.raw(), e);
+                if (wrapped.diagnostic() != null) stmtCache.putStatementDiagnostic(st, wrapped.diagnostic());
+                throw wrapped;
             }
             return;
         }
@@ -530,9 +599,12 @@ public final class CodeEmitter {
             try {
                 sm.reg().handler().handle(hctx);
             } catch (LumenScriptException e) {
+                if (e.diagnostic() != null) stmtCache.putStatementDiagnostic(st, e.diagnostic());
                 throw e;
             } catch (RuntimeException e) {
-                throw wrapRuntimeException(st.line(), st.raw(), e);
+                LumenScriptException wrapped = wrapRuntimeException(st.line(), st.raw(), e);
+                if (wrapped.diagnostic() != null) stmtCache.putStatementDiagnostic(st, wrapped.diagnostic());
+                throw wrapped;
             }
             return;
         }
@@ -543,9 +615,12 @@ public final class CodeEmitter {
                 ExpressionResult result = es.match().reg().handler().handle(hctx);
                 out.line(asStatement(result.java()));
             } catch (LumenScriptException e) {
+                if (e.diagnostic() != null) stmtCache.putStatementDiagnostic(st, e.diagnostic());
                 throw e;
             } catch (RuntimeException e) {
-                throw wrapRuntimeException(st.line(), st.raw(), e);
+                LumenScriptException wrapped = wrapRuntimeException(st.line(), st.raw(), e);
+                if (wrapped.diagnostic() != null) stmtCache.putStatementDiagnostic(st, wrapped.diagnostic());
+                throw wrapped;
             }
             return;
         }

@@ -13,6 +13,7 @@ import dev.lumenlang.lumen.pipeline.java.formatter.MiniJavaCleaner;
 import dev.lumenlang.lumen.pipeline.language.emit.CodeEmitter;
 import dev.lumenlang.lumen.pipeline.language.emit.TransformerRegistry;
 import dev.lumenlang.lumen.pipeline.language.exceptions.LumenScriptException;
+import dev.lumenlang.lumen.pipeline.language.incremental.ScriptMatchCache;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
 import dev.lumenlang.lumen.pipeline.persist.GlobalVars;
@@ -55,6 +56,8 @@ import static dev.lumenlang.lumen.plugin.scripts.ScriptManagerEvents.postScriptU
 public final class ScriptManager {
 
     private static final Map<String, LoadedScript> scripts = new ConcurrentHashMap<>();
+
+    private static final Map<String, ScriptMatchCache> matchCaches = new ConcurrentHashMap<>();
 
     private static final ExecutorService COMPILE_POOL = Executors.newFixedThreadPool(
             Math.max(1, Runtime.getRuntime().availableProcessors() / 2),
@@ -115,6 +118,7 @@ public final class ScriptManager {
      */
     public static void unload(@NotNull String name) {
         LoadedScript s = scripts.remove(name);
+        matchCaches.remove(name);
         if (s == null)
             return;
 
@@ -464,7 +468,8 @@ public final class ScriptManager {
         JavaBuilder output = new JavaBuilder();
         TypeEnvImpl env = new TypeEnvImpl();
 
-        CodeEmitter.generate(source, PatternRegistry.instance(), env, gen, output);
+        ScriptMatchCache cache = matchCaches.computeIfAbsent(name, k -> new ScriptMatchCache());
+        CodeEmitter.generate(source, PatternRegistry.instance(), env, gen, output, cache);
 
         if (LumenConfiguration.LANGUAGE.EXPERIMENTAL.CODE_TRANSFORM) {
             TransformerRegistry.instance().transform(output, gen);
