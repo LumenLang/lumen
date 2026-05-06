@@ -14,6 +14,8 @@ import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.data.DataSchema;
 import dev.lumenlang.lumen.pipeline.java.compiled.DataInstance;
 import dev.lumenlang.lumen.pipeline.language.simulator.suggestions.SuggestionDiagnostics;
+import dev.lumenlang.lumen.pipeline.type.ParseResult;
+import dev.lumenlang.lumen.pipeline.type.ParsedType;
 import dev.lumenlang.lumen.pipeline.type.TypeAnnotationParser;
 import org.jetbrains.annotations.NotNull;
 
@@ -143,12 +145,12 @@ public final class DataBlockForm implements BlockFormHandler {
                 }
             }
 
-            TypeAnnotationParser.ParseResult result = TypeAnnotationParser.parseDetailed(tokens, typeStart, env::lookupDataSchema);
-            if (result instanceof TypeAnnotationParser.ParseResult.Failure f) {
-                throw new DiagnosticException(SuggestionDiagnostics.buildTypeFailure("Invalid field type in data class '" + typeName + "'", child.lineNumber(), child.raw(), tokens, f));
+            ParseResult result = TypeAnnotationParser.parse(tokens, typeStart, env::lookupDataSchema);
+            if (!result.ok()) {
+                throw new DiagnosticException(SuggestionDiagnostics.buildTypeFailure("Invalid field type in data class '" + typeName + "'", child.lineNumber(), child.raw(), tokens, result));
             }
 
-            TypeAnnotationParser parsed = ((TypeAnnotationParser.ParseResult.Success) result).parser();
+            ParsedType parsed = result.parsed();
             LumenType fieldType = parsed.type();
             int expectedTokens = typeStart + parsed.tokensConsumed();
             if (tokens.size() != expectedTokens) {

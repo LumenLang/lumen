@@ -27,6 +27,8 @@ import dev.lumenlang.lumen.pipeline.language.typed.Expr;
 import dev.lumenlang.lumen.pipeline.language.typed.ExprParser;
 import dev.lumenlang.lumen.pipeline.language.validator.VarNameValidator;
 import dev.lumenlang.lumen.pipeline.placeholder.PlaceholderExpander;
+import dev.lumenlang.lumen.pipeline.type.ParseResult;
+import dev.lumenlang.lumen.pipeline.type.ParsedType;
 import dev.lumenlang.lumen.pipeline.type.TypeAnnotationParser;
 import dev.lumenlang.lumen.pipeline.type.TypeChecker;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
@@ -197,11 +199,11 @@ public final class VarDeclarationForm {
     }
 
     private static void reassignNullable(@NotNull String name, @NotNull VarRef ref, @NotNull List<Token> exprTokens, @NotNull HandlerContextImpl ctx, @NotNull TypeEnvImpl env) {
-        TypeAnnotationParser.ParseResult result = TypeAnnotationParser.parseDetailed(exprTokens, 0, env::lookupDataSchema);
-        if (result instanceof TypeAnnotationParser.ParseResult.Failure f) {
-            throw new DiagnosticException(SuggestionDiagnostics.buildTypeFailure("Invalid nullable type", ctx.source().currentLine(), ctx.source().currentRaw(), exprTokens, f));
+        ParseResult result = TypeAnnotationParser.parse(exprTokens, 0, env::lookupDataSchema);
+        if (!result.ok()) {
+            throw new DiagnosticException(SuggestionDiagnostics.buildTypeFailure("Invalid nullable type", ctx.source().currentLine(), ctx.source().currentRaw(), exprTokens, result));
         }
-        TypeAnnotationParser parsed = ((TypeAnnotationParser.ParseResult.Success) result).parser();
+        ParsedType parsed = result.parsed();
         NullableType nullableType = (NullableType) parsed.type();
         int colStart = exprTokens.get(0).start();
         int colEnd = exprTokens.get(Math.min(parsed.tokensConsumed(), exprTokens.size()) - 1).end();
@@ -351,11 +353,11 @@ public final class VarDeclarationForm {
     }
 
     private static void emitNullableDeclaration(@NotNull String name, @NotNull List<Token> exprTokens, @NotNull Token nameToken, @NotNull HandlerContextImpl ctx, @NotNull TypeEnvImpl env) {
-        TypeAnnotationParser.ParseResult result = TypeAnnotationParser.parseDetailed(exprTokens, 0, env::lookupDataSchema);
-        if (result instanceof TypeAnnotationParser.ParseResult.Failure f) {
-            throw new DiagnosticException(SuggestionDiagnostics.buildTypeFailure("Invalid nullable type", ctx.source().currentLine(), ctx.source().currentRaw(), exprTokens, f));
+        ParseResult result = TypeAnnotationParser.parse(exprTokens, 0, env::lookupDataSchema);
+        if (!result.ok()) {
+            throw new DiagnosticException(SuggestionDiagnostics.buildTypeFailure("Invalid nullable type", ctx.source().currentLine(), ctx.source().currentRaw(), exprTokens, result));
         }
-        TypeAnnotationParser parsed = ((TypeAnnotationParser.ParseResult.Success) result).parser();
+        ParsedType parsed = result.parsed();
         NullableType nullableType = (NullableType) parsed.type();
         int consumed = parsed.tokensConsumed();
         List<Token> valueTokens = consumed < exprTokens.size() ? exprTokens.subList(consumed, exprTokens.size()) : null;

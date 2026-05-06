@@ -27,6 +27,8 @@ import dev.lumenlang.lumen.pipeline.language.validator.VarNameValidator;
 import dev.lumenlang.lumen.pipeline.persist.PersistentStorage;
 import dev.lumenlang.lumen.pipeline.persist.PersistentVars;
 import dev.lumenlang.lumen.pipeline.placeholder.PlaceholderExpander;
+import dev.lumenlang.lumen.pipeline.type.ParseResult;
+import dev.lumenlang.lumen.pipeline.type.ParsedType;
 import dev.lumenlang.lumen.pipeline.type.TypeAnnotationParser;
 import dev.lumenlang.lumen.pipeline.var.VarRef;
 import org.jetbrains.annotations.NotNull;
@@ -200,11 +202,11 @@ public final class GlobalBlock implements BlockFormHandler {
                     .build());
         }
 
-        TypeAnnotationParser.ParseResult typeParseResult = TypeAnnotationParser.parseDetailed(tokens, idx, env::lookupDataSchema);
-        if (typeParseResult instanceof TypeAnnotationParser.ParseResult.Failure f) {
-            throw new DiagnosticException(SuggestionDiagnostics.buildTypeFailure("Invalid type annotation", line, raw, tokens, f));
+        ParseResult typeParseResult = TypeAnnotationParser.parse(tokens, idx, env::lookupDataSchema);
+        if (!typeParseResult.ok()) {
+            throw new DiagnosticException(SuggestionDiagnostics.buildTypeFailure("Invalid type annotation", line, raw, tokens, typeParseResult));
         }
-        TypeAnnotationParser typeResult = ((TypeAnnotationParser.ParseResult.Success) typeParseResult).parser();
+        ParsedType typeResult = typeParseResult.parsed();
 
         LumenType declaredType = typeResult.type();
         idx += typeResult.tokensConsumed();

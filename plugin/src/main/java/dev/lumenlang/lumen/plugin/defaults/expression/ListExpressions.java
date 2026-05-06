@@ -17,6 +17,8 @@ import dev.lumenlang.lumen.pipeline.codegen.HandlerContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.language.simulator.suggestions.SuggestionDiagnostics;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
+import dev.lumenlang.lumen.pipeline.type.ParseResult;
+import dev.lumenlang.lumen.pipeline.type.ParsedType;
 import dev.lumenlang.lumen.pipeline.type.TypeAnnotationParser;
 import org.jetbrains.annotations.NotNull;
 
@@ -63,11 +65,11 @@ public final class ListExpressions {
                     HandlerContextImpl hctx = (HandlerContextImpl) ctx;
                     TypeEnvImpl env = (TypeEnvImpl) ctx.env();
                     List<Token> typeTokens = hctx.bound("type").tokens();
-                    TypeAnnotationParser.ParseResult result = TypeAnnotationParser.parseDetailed(typeTokens, 0, env::lookupDataSchema);
-                    if (result instanceof TypeAnnotationParser.ParseResult.Failure f) {
-                        throw new DiagnosticException(SuggestionDiagnostics.buildTypeFailure("Invalid list element type", ctx.source().currentLine(), ctx.source().currentRaw(), typeTokens, f));
+                    ParseResult result = TypeAnnotationParser.parse(typeTokens, 0, env::lookupDataSchema);
+                    if (!result.ok()) {
+                        throw new DiagnosticException(SuggestionDiagnostics.buildTypeFailure("Invalid list element type", ctx.source().currentLine(), ctx.source().currentRaw(), typeTokens, result));
                     }
-                    TypeAnnotationParser parsed = ((TypeAnnotationParser.ParseResult.Success) result).parser();
+                    ParsedType parsed = result.parsed();
                     LumenType elementType = parsed.type();
                     if (parsed.dataSchemaName() != null) return new ExpressionResult("new ArrayList<>()", BuiltinLumenTypes.listOf(elementType), Map.of("element_type", parsed.dataSchemaName()));
                     return new ExpressionResult("new ArrayList<>()", BuiltinLumenTypes.listOf(elementType));

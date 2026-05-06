@@ -11,7 +11,7 @@ import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.language.simulator.PatternSimulator;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.language.tokenization.TokenKind;
-import dev.lumenlang.lumen.pipeline.type.TypeAnnotationParser;
+import dev.lumenlang.lumen.pipeline.type.ParseResult;
 import dev.lumenlang.lumen.pipeline.typebinding.TypeRegistry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -239,24 +239,17 @@ public final class SuggestionDiagnostics {
     }
 
     /**
-     * Builds a diagnostic from a {@link TypeAnnotationParser.ParseResult.Failure}.
-     *
-     * @param title   the diagnostic title
-     * @param line    the source line number
-     * @param raw     the raw source text
-     * @param tokens  the tokens that were being parsed
-     * @param failure the parse failure result
-     * @return a fully constructed diagnostic
+     * Builds a diagnostic from a failed {@link ParseResult}.
      */
-    public static @NotNull LumenDiagnostic buildTypeFailure(@NotNull String title, int line, @NotNull String raw, @NotNull List<? extends ScriptToken> tokens, @NotNull TypeAnnotationParser.ParseResult.Failure failure) {
-        TypeAnnotationParser.ParseError error = failure.error();
-        int errorIdx = Math.min(error.tokenOffset(), tokens.size() - 1);
+    public static @NotNull LumenDiagnostic buildTypeFailure(@NotNull String title, int line, @NotNull String raw, @NotNull List<? extends ScriptToken> tokens, @NotNull ParseResult failure) {
+        int errorIdx = Math.min(failure.errorOffset(), tokens.size() - 1);
         ScriptToken errorToken = tokens.get(errorIdx);
         LumenDiagnostic.Builder diag = LumenDiagnostic.error(title)
                 .at(line, raw)
                 .highlight(errorToken.start(), errorToken.end());
-        if (error.suggestion() != null) diag.label(error.message() + ", did you mean '" + error.suggestion() + "'?");
-        else diag.label(error.message());
+        String message = failure.errorMessage() != null ? failure.errorMessage() : "";
+        if (failure.errorSuggestion() != null) diag.label(message + ", did you mean '" + failure.errorSuggestion() + "'?");
+        else diag.label(message);
         diag.help("see https://lumenlang.dev/types for available types");
         return diag.build();
     }

@@ -17,6 +17,7 @@ import dev.lumenlang.lumen.pipeline.codegen.HandlerContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.language.simulator.suggestions.SuggestionDiagnostics;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
+import dev.lumenlang.lumen.pipeline.type.ParseResult;
 import dev.lumenlang.lumen.pipeline.type.TypeAnnotationParser;
 import org.jetbrains.annotations.NotNull;
 
@@ -67,17 +68,17 @@ public final class MapExpressions {
                     HandlerContextImpl hctx = (HandlerContextImpl) ctx;
                     TypeEnvImpl env = (TypeEnvImpl) ctx.env();
                     List<Token> keyTokens = hctx.bound("keyType").tokens();
-                    TypeAnnotationParser.ParseResult keyResult = TypeAnnotationParser.parseDetailed(keyTokens, 0, env::lookupDataSchema);
-                    if (keyResult instanceof TypeAnnotationParser.ParseResult.Failure f) {
-                        throw new DiagnosticException(SuggestionDiagnostics.buildTypeFailure("Invalid map key type", ctx.source().currentLine(), ctx.source().currentRaw(), keyTokens, f));
+                    ParseResult keyResult = TypeAnnotationParser.parse(keyTokens, 0, env::lookupDataSchema);
+                    if (!keyResult.ok()) {
+                        throw new DiagnosticException(SuggestionDiagnostics.buildTypeFailure("Invalid map key type", ctx.source().currentLine(), ctx.source().currentRaw(), keyTokens, keyResult));
                     }
                     List<Token> valueTokens = hctx.bound("valueType").tokens();
-                    TypeAnnotationParser.ParseResult valueResult = TypeAnnotationParser.parseDetailed(valueTokens, 0, env::lookupDataSchema);
-                    if (valueResult instanceof TypeAnnotationParser.ParseResult.Failure f) {
-                        throw new DiagnosticException(SuggestionDiagnostics.buildTypeFailure("Invalid map value type", ctx.source().currentLine(), ctx.source().currentRaw(), valueTokens, f));
+                    ParseResult valueResult = TypeAnnotationParser.parse(valueTokens, 0, env::lookupDataSchema);
+                    if (!valueResult.ok()) {
+                        throw new DiagnosticException(SuggestionDiagnostics.buildTypeFailure("Invalid map value type", ctx.source().currentLine(), ctx.source().currentRaw(), valueTokens, valueResult));
                     }
-                    LumenType keyType = ((TypeAnnotationParser.ParseResult.Success) keyResult).parser().type();
-                    LumenType valueType = ((TypeAnnotationParser.ParseResult.Success) valueResult).parser().type();
+                    LumenType keyType = keyResult.parsed().type();
+                    LumenType valueType = valueResult.parsed().type();
                     return new ExpressionResult("new HashMap<>()", BuiltinLumenTypes.mapOf(keyType, valueType));
                 }));
 
