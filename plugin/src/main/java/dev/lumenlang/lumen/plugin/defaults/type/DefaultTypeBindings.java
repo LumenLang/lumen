@@ -7,6 +7,7 @@ import dev.lumenlang.lumen.api.codegen.CodegenContext;
 import dev.lumenlang.lumen.api.codegen.TypeEnv;
 import dev.lumenlang.lumen.api.codegen.TypeEnv.VarHandle;
 import dev.lumenlang.lumen.api.exceptions.ParseFailureException;
+import dev.lumenlang.lumen.api.language.SemanticKind;
 import dev.lumenlang.lumen.api.type.AddonTypeBinding;
 import dev.lumenlang.lumen.api.type.BuiltinLumenTypes;
 import dev.lumenlang.lumen.api.type.CollectionType;
@@ -195,6 +196,11 @@ public final class DefaultTypeBindings {
                 }
                 return value.toString();
             }
+
+            @Override
+            public @NotNull SemanticKind semanticKind() {
+                return SemanticKind.NUMBER;
+            }
         });
     }
 
@@ -247,6 +253,11 @@ public final class DefaultTypeBindings {
                 }
                 return value + "L";
             }
+
+            @Override
+            public @NotNull SemanticKind semanticKind() {
+                return SemanticKind.NUMBER;
+            }
         });
     }
 
@@ -294,6 +305,11 @@ public final class DefaultTypeBindings {
                     return "((double) " + ref.java() + ")";
                 }
                 return formatDouble((Double) value);
+            }
+
+            @Override
+            public @NotNull SemanticKind semanticKind() {
+                return SemanticKind.NUMBER;
             }
         });
     }
@@ -365,6 +381,11 @@ public final class DefaultTypeBindings {
                 }
                 return value.toString();
             }
+
+            @Override
+            public @NotNull SemanticKind semanticKind() {
+                return SemanticKind.NUMBER;
+            }
         });
     }
 
@@ -402,6 +423,11 @@ public final class DefaultTypeBindings {
                     return "Boolean.parseBoolean(String.valueOf(" + ref.java() + "))";
                 }
                 return value.toString();
+            }
+
+            @Override
+            public @NotNull SemanticKind semanticKind() {
+                return SemanticKind.KEYWORD;
             }
         });
     }
@@ -490,6 +516,11 @@ public final class DefaultTypeBindings {
                 return ((VarHandle) v).java();
             }
 
+            @Override
+            public @NotNull SemanticKind semanticKind() {
+                return SemanticKind.FUNCTION;
+            }
+
             private boolean isPlayer(@NotNull VarHandle ref) {
                 return MinecraftTypes.PLAYER.equals(ref.type().unwrap());
             }
@@ -532,6 +563,11 @@ public final class DefaultTypeBindings {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null player reference");
                 return ((VarHandle) v).java();
+            }
+
+            @Override
+            public @NotNull SemanticKind semanticKind() {
+                return SemanticKind.FUNCTION;
             }
 
             private boolean isPlayer(@NotNull VarHandle ref) {
@@ -579,6 +615,11 @@ public final class DefaultTypeBindings {
                 return ((VarHandle) v).java();
             }
 
+            @Override
+            public @NotNull SemanticKind semanticKind() {
+                return SemanticKind.FUNCTION;
+            }
+
             private boolean isOfflinePlayer(@NotNull VarHandle ref) {
                 return MinecraftTypes.OFFLINE_PLAYER.equals(ref.type().unwrap());
             }
@@ -623,6 +664,11 @@ public final class DefaultTypeBindings {
                 return ((VarHandle) v).java();
             }
 
+            @Override
+            public @NotNull SemanticKind semanticKind() {
+                return SemanticKind.FUNCTION;
+            }
+
             private boolean isOfflinePlayer(@NotNull VarHandle ref) {
                 return MinecraftTypes.OFFLINE_PLAYER.equals(ref.type().unwrap());
             }
@@ -660,6 +706,11 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull String toJava(Object v, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
                 return (String) v;
+            }
+
+            @Override
+            public @NotNull SemanticKind semanticKind() {
+                return SemanticKind.PASSTHROUGH;
             }
         });
     }
@@ -772,6 +823,11 @@ public final class DefaultTypeBindings {
             public @NotNull String toJava(Object v, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
                 return (String) v;
             }
+
+            @Override
+            public @NotNull SemanticKind semanticKind() {
+                return SemanticKind.KEYWORD;
+            }
         });
     }
 
@@ -812,6 +868,11 @@ public final class DefaultTypeBindings {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null entity reference");
                 return ((VarHandle) v).java();
+            }
+
+            @Override
+            public @NotNull SemanticKind semanticKind() {
+                return SemanticKind.FUNCTION;
             }
 
             private boolean isEntity(@NotNull VarHandle ref) {
@@ -857,6 +918,11 @@ public final class DefaultTypeBindings {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null entity reference");
                 return ((VarHandle) v).java();
+            }
+
+            @Override
+            public @NotNull SemanticKind semanticKind() {
+                return SemanticKind.FUNCTION;
             }
 
             private boolean isEntity(@NotNull VarHandle ref) {
@@ -958,6 +1024,11 @@ public final class DefaultTypeBindings {
                 return ((VarHandle) v).java();
             }
 
+            @Override
+            public @NotNull SemanticKind semanticKind() {
+                return SemanticKind.FUNCTION;
+            }
+
             private boolean isLivingEntity(@NotNull VarHandle ref) {
                 LumenType unwrapped = ref.type().unwrap();
                 return unwrapped instanceof ObjectType obj && (obj.equals(MinecraftTypes.LIVING_ENTITY) || obj.isSubtypeOf(MinecraftTypes.LIVING_ENTITY));
@@ -1001,6 +1072,11 @@ public final class DefaultTypeBindings {
                 if (v == null)
                     throw new RuntimeException("Cannot generate Java for null living entity reference");
                 return ((VarHandle) v).java();
+            }
+
+            @Override
+            public @NotNull SemanticKind semanticKind() {
+                return SemanticKind.FUNCTION;
             }
 
             private boolean isLivingEntity(@NotNull VarHandle ref) {
@@ -1107,6 +1183,11 @@ public final class DefaultTypeBindings {
                 return ((VarHandle) v).java();
             }
 
+            @Override
+            public @NotNull SemanticKind semanticKind() {
+                return SemanticKind.FUNCTION;
+            }
+
             private boolean isItemStack(@NotNull VarHandle ref) {
                 return MinecraftTypes.ITEMSTACK.equals(ref.type().unwrap());
             }
@@ -1150,6 +1231,11 @@ public final class DefaultTypeBindings {
                 return ((VarHandle) v).java();
             }
 
+            @Override
+            public @NotNull SemanticKind semanticKind() {
+                return SemanticKind.FUNCTION;
+            }
+
             private boolean isItemStack(@NotNull VarHandle ref) {
                 return MinecraftTypes.ITEMSTACK.equals(ref.type().unwrap());
             }
@@ -1190,6 +1276,11 @@ public final class DefaultTypeBindings {
                 return ((VarHandle) v).java();
             }
 
+            @Override
+            public @NotNull SemanticKind semanticKind() {
+                return SemanticKind.FUNCTION;
+            }
+
             private boolean isWorld(@NotNull VarHandle ref) {
                 return MinecraftTypes.WORLD.equals(ref.type().unwrap());
             }
@@ -1228,6 +1319,11 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull String toJava(Object v, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
                 return ((VarHandle) v).java();
+            }
+
+            @Override
+            public @NotNull SemanticKind semanticKind() {
+                return SemanticKind.FUNCTION;
             }
 
             private boolean isLocation(@NotNull VarHandle ref) {
@@ -1404,6 +1500,11 @@ public final class DefaultTypeBindings {
                 return ((VarHandle) v).java();
             }
 
+            @Override
+            public @NotNull SemanticKind semanticKind() {
+                return SemanticKind.FUNCTION;
+            }
+
             private boolean isBlock(@NotNull VarHandle ref) {
                 return MinecraftTypes.BLOCK.equals(ref.type().unwrap());
             }
@@ -1446,6 +1547,11 @@ public final class DefaultTypeBindings {
                 return ((VarHandle) v).java();
             }
 
+            @Override
+            public @NotNull SemanticKind semanticKind() {
+                return SemanticKind.FUNCTION;
+            }
+
             private boolean isInventory(@NotNull VarHandle ref) {
                 return MinecraftTypes.INVENTORY.equals(ref.type().unwrap());
             }
@@ -1483,6 +1589,11 @@ public final class DefaultTypeBindings {
             public @NotNull String toJava(Object v, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
                 return ((VarHandle) v).java();
             }
+
+            @Override
+            public @NotNull SemanticKind semanticKind() {
+                return SemanticKind.VARIABLE;
+            }
         });
     }
 
@@ -1519,6 +1630,11 @@ public final class DefaultTypeBindings {
             @Override
             public @NotNull String toJava(Object v, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
                 return (String) v;
+            }
+
+            @Override
+            public @NotNull SemanticKind semanticKind() {
+                return SemanticKind.STRING;
             }
         });
     }

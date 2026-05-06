@@ -1,6 +1,7 @@
 package dev.lumenlang.lumen.pipeline.language;
 
 import dev.lumenlang.lumen.api.exceptions.ParseFailureException;
+import dev.lumenlang.lumen.api.language.SemanticKind;
 import dev.lumenlang.lumen.pipeline.codegen.CodegenContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.language.pattern.Pattern;
@@ -185,5 +186,17 @@ public interface TypeBinding {
         if (tokens.isEmpty())
             throw new ParseFailureException("expected a value here");
         return 1;
+    }
+
+    /**
+     * Returns the editor semantic-token category that best describes the tokens this
+     * binding consumes. Read by language servers to colour the binding's slot in the
+     * source view; the pipeline never reads it.
+     *
+     * <p>The default is {@link SemanticKind#defaultKind()}. Override when a more
+     * specific category fits.
+     */
+    default @NotNull SemanticKind semanticKind() {
+        return SemanticKind.defaultKind();
     }
 }

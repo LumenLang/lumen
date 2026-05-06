@@ -3,6 +3,7 @@ package dev.lumenlang.lumen.api.type;
 import dev.lumenlang.lumen.api.codegen.CodegenContext;
 import dev.lumenlang.lumen.api.codegen.TypeEnv;
 import dev.lumenlang.lumen.api.exceptions.ParseFailureException;
+import dev.lumenlang.lumen.api.language.SemanticKind;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -88,5 +89,17 @@ public interface AddonTypeBinding {
      */
     default @NotNull TypeBindingMeta meta() {
         return TypeBindingMeta.EMPTY;
+    }
+
+    /**
+     * Returns the editor semantic-token category that best describes the tokens this
+     * binding consumes. Read by language servers to colour the binding's slot in the
+     * source view; the pipeline never reads it.
+     *
+     * <p>The default is {@link SemanticKind#defaultKind()}. Override when a more
+     * specific category fits.
+     */
+    default @NotNull SemanticKind semanticKind() {
+        return SemanticKind.defaultKind();
     }
 }

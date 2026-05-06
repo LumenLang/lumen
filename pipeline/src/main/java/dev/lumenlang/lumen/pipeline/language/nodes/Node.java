@@ -14,15 +14,11 @@ public sealed interface Node permits BlockNode, StatementNode {
 
     /**
      * Returns the stable identity of this node.
-     *
-     * <p>Identifiers are assigned during parsing and copied onto matching nodes during
-     * incremental re-parsing so that cached match results can be looked up by id.
      */
     int id();
 
     /**
-     * Reassigns the identity of this node, used during incremental diffing to carry
-     * the previous parse's id onto an unchanged node in the new parse.
+     * Reassigns the identity of this node.
      */
     void id(int id);
 

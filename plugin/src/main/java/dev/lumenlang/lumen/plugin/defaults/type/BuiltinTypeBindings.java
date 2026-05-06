@@ -1,6 +1,7 @@
 package dev.lumenlang.lumen.plugin.defaults.type;
 
 import dev.lumenlang.lumen.api.exceptions.ParseFailureException;
+import dev.lumenlang.lumen.api.language.SemanticKind;
 import dev.lumenlang.lumen.api.type.TypeBindingMeta;
 import dev.lumenlang.lumen.pipeline.codegen.CodegenContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
@@ -97,6 +98,11 @@ public final class BuiltinTypeBindings {
                                 : t.text())
                         .collect(Collectors.joining(" "));
             }
+
+            @Override
+            public @NotNull SemanticKind semanticKind() {
+                return SemanticKind.PASSTHROUGH;
+            }
         });
     }
 
@@ -137,6 +143,11 @@ public final class BuiltinTypeBindings {
                     return PlaceholderExpander.expandString(tl.tokens().get(0), env);
                 }
                 return PlaceholderExpander.expandTokens(tl.tokens(), env);
+            }
+
+            @Override
+            public @NotNull SemanticKind semanticKind() {
+                return SemanticKind.STRING;
             }
         });
     }
@@ -183,6 +194,11 @@ public final class BuiltinTypeBindings {
                 }
                 return PlaceholderExpander.expandTokens(tl.tokens(), env);
             }
+
+            @Override
+            public @NotNull SemanticKind semanticKind() {
+                return SemanticKind.STRING;
+            }
         });
     }
 
@@ -216,6 +232,11 @@ public final class BuiltinTypeBindings {
             @Override
             public @NotNull String toJava(Object value, @NotNull CodegenContextImpl ctx, @NotNull TypeEnvImpl env) {
                 return (String) value;
+            }
+
+            @Override
+            public @NotNull SemanticKind semanticKind() {
+                return SemanticKind.VARIABLE;
             }
         });
     }

@@ -1,5 +1,6 @@
 package dev.lumenlang.lumen.pipeline.addon.bridge;
 
+import dev.lumenlang.lumen.api.language.SemanticKind;
 import dev.lumenlang.lumen.api.type.AddonTypeBinding;
 import dev.lumenlang.lumen.pipeline.codegen.CodegenContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
@@ -45,5 +46,10 @@ public final class TypeBindingBridge implements TypeBinding {
                 .map(Token::text)
                 .collect(Collectors.toList());
         return apiBinding.consumeCount(texts, env);
+    }
+
+    @Override
+    public @NotNull SemanticKind semanticKind() {
+        return apiBinding.semanticKind();
     }
 }

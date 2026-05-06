@@ -4,6 +4,7 @@ import dev.lumenlang.lumen.api.codegen.CodegenContext;
 import dev.lumenlang.lumen.api.codegen.TypeEnv;
 import dev.lumenlang.lumen.api.codegen.TypeEnv.VarHandle;
 import dev.lumenlang.lumen.api.exceptions.ParseFailureException;
+import dev.lumenlang.lumen.api.language.SemanticKind;
 import dev.lumenlang.lumen.api.util.FuzzyMatch;
 import org.jetbrains.annotations.NotNull;
 
