@@ -143,6 +143,7 @@ public final class HeadlessLumen {
      */
     public void parse(@NotNull String source, @NotNull String scriptName) {
         CodegenContextImpl ctx = new CodegenContextImpl(scriptName);
+        ctx.setRawJavaEnabled(true);
         TypeEnvImpl env = new TypeEnvImpl();
         CodeEmitter.generate(source, patternRegistry, env, ctx, new JavaBuilder());
     }
