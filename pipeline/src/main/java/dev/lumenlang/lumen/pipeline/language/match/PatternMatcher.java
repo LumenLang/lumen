@@ -278,12 +278,18 @@ public final class PatternMatcher {
                     List<Token> slice = tokens.subList(ti, end);
                     ParseOutcome parsed = safeParse(binding, slice, env);
                     if (!parsed.failed()) {
+                        int mapSnapshot = map.size();
+                        int choicesSnapshot = choices.size();
                         map.put(ph.name(), new BoundValue(ph, slice, parsed.value(), binding));
-                        return tryMatch(tokens, end, parts, pi + 1, types, env, map, choices, validator, progress);
+                        int result = tryMatch(tokens, end, parts, pi + 1, types, env, map, choices, validator, progress);
+                        if (result >= 0) return result;
+                        trimTrailingEntries(map, mapSnapshot);
+                        trimTrailingEntries(choices, choicesSnapshot);
+                    } else {
+                        latestReason = parsed.reason();
                     }
-                    latestReason = parsed.reason();
                 }
-                skipGreedy = true;
+                if (validator == null) skipGreedy = true;
             }
 
             if (!skipGreedy) {
@@ -297,10 +303,11 @@ public final class PatternMatcher {
                 boolean allowInlineExpr = validator != null;
                 for (int end = maxEnd; end > ti; end--) {
                     List<Token> slice = tokens.subList(ti, end);
-                    ParseOutcome parsed = safeParse(binding, slice, env);
-                    Object value = parsed.value();
-                    if (parsed.failed()) {
-                        latestReason = parsed.reason();
+                    boolean exceedsConsume = consumeCount > 0 && slice.size() > consumeCount;
+                    ParseOutcome parsed = exceedsConsume ? null : safeParse(binding, slice, env);
+                    Object value = parsed != null ? parsed.value() : null;
+                    if (parsed == null || parsed.failed()) {
+                        if (parsed != null) latestReason = parsed.reason();
                         if (allowInlineExpr && slice.size() > 1 && validator.canResolve(slice, env)) {
                             value = new InlineExpr(List.copyOf(slice));
                         } else {

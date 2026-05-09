@@ -77,21 +77,7 @@ public final class ListExpressions {
 
         api.patterns().expression(b -> b
                 .by("Lumen")
-                .pattern("size of %list:LIST%")
-                .description("Returns the number of elements in a list.")
-                .example("set count to size of myList")
-                .since("1.0.0")
-                .category(Categories.LIST)
-                .handler(ctx -> {
-                    ctx.codegen().addImport(List.class.getName());
-                    return new ExpressionResult(
-                            "((List<?>) " + ctx.java("list") + ").size()",
-                            PrimitiveType.INT);
-                }));
-
-        api.patterns().expression(b -> b
-                .by("Lumen")
-                .pattern("%list:LIST% size")
+                .patterns("%list:LIST% size", "size of %list:LIST%")
                 .description("Returns the number of elements in a list (postfix syntax).")
                 .example("set count to myList size")
                 .since("1.0.0")
