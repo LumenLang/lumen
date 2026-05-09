@@ -5,6 +5,7 @@ import dev.lumenlang.lumen.api.exceptions.ParseFailureException;
 import dev.lumenlang.lumen.api.language.SemanticKind;
 import dev.lumenlang.lumen.api.language.Suggestion;
 import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.api.type.TypeBindingMeta;
 import dev.lumenlang.lumen.pipeline.codegen.CodegenContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
@@ -138,8 +139,11 @@ public final class BuiltinTypeBindings {
                     Token t = tokens.get(0);
                     if (t.kind() != TokenKind.STRING) {
                         VarRef ref = env.lookupVar(t.text());
-                        if (ref != null)
+                        if (ref != null) {
+                            if (!PrimitiveType.STRING.equals(ref.type().unwrap()))
+                                throw new ParseFailureException("'" + t.text() + "' is a " + ref.type().displayName() + ", not a string");
                             return ref;
+                        }
                     }
                 }
                 return new TokenList(List.copyOf(tokens));
@@ -147,9 +151,7 @@ public final class BuiltinTypeBindings {
 
             @Override
             public @NotNull String toJava(Object value, @NotNull CodegenContextImpl ctx, @NotNull TypeEnvImpl env) {
-                if (value instanceof VarRef ref) {
-                    return "String.valueOf(" + ref.java() + ")";
-                }
+                if (value instanceof VarRef ref) return ref.java();
                 TokenList tl = (TokenList) value;
                 if (tl.tokens().size() == 1 && tl.tokens().get(0).kind() == TokenKind.STRING) {
                     return PlaceholderExpander.expandString(tl.tokens().get(0), env);
@@ -188,8 +190,11 @@ public final class BuiltinTypeBindings {
                     Token t = tokens.get(0);
                     if (t.kind() != TokenKind.STRING) {
                         VarRef ref = env.lookupVar(t.text());
-                        if (ref != null)
+                        if (ref != null) {
+                            if (!PrimitiveType.STRING.equals(ref.type().unwrap()))
+                                throw new ParseFailureException("'" + t.text() + "' is a " + ref.type().displayName() + ", not a string");
                             return ref;
+                        }
                     }
                 }
                 return new TokenList(List.copyOf(tokens));
@@ -197,9 +202,7 @@ public final class BuiltinTypeBindings {
 
             @Override
             public @NotNull String toJava(Object value, @NotNull CodegenContextImpl ctx, @NotNull TypeEnvImpl env) {
-                if (value instanceof VarRef ref) {
-                    return "String.valueOf(" + ref.java() + ")";
-                }
+                if (value instanceof VarRef ref) return ref.java();
                 TokenList tl = (TokenList) value;
                 if (tl.tokens().size() == 1 && tl.tokens().get(0).kind() == TokenKind.STRING) {
                     return PlaceholderExpander.expandString(tl.tokens().get(0), env);

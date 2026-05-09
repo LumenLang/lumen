@@ -18,27 +18,12 @@ public final class StringConditions {
     public void register(@NotNull LumenAPI api) {
         api.patterns().condition(b -> b
                 .by("Lumen")
-                .pattern("%a:STRING% (is|equals|is not|does not equal) %b:QSTRING%")
-                .description("Checks if two strings are equal or not equal (case-insensitive).")
-                .examples("if myVar is \"hello\":", "if myVar is not \"hello\":")
-                .since("1.0.0")
-                .category(Categories.TEXT)
-                .handler(ctx -> {
-                    String choice = ctx.choice(0);
-                    boolean negated = choice.equals("is not") || choice.equals("does not equal");
-                    return (negated ? "!" : "") + "String.valueOf(" + ctx.java("a") + ").equalsIgnoreCase(String.valueOf(" + ctx.java("b") + "))";
-                }));
-
-        api.patterns().condition(b -> b
-                .by("Lumen")
                 .pattern("%a:STRING% (is|equals) exactly %b:QSTRING%")
                 .description("Checks if two strings are exactly equal (case-sensitive).")
                 .example("if myVar is exactly \"Hello\":")
                 .since("1.0.0")
                 .category(Categories.TEXT)
-                .handler(ctx ->
-                        "String.valueOf(" + ctx.java("a") + ").equals(String.valueOf("
-                                + ctx.java("b") + "))"));
+                .handler(ctx -> ctx.java("a") + ".equals(" + ctx.java("b") + ")"));
 
         api.patterns().condition(b -> b
                 .by("Lumen")
@@ -49,7 +34,7 @@ public final class StringConditions {
                 .category(Categories.TEXT)
                 .handler(ctx -> {
                     boolean negated = ctx.choice(0).equals("does not contain");
-                    return (negated ? "!" : "") + "String.valueOf(" + ctx.java("a") + ").contains(String.valueOf(" + ctx.java("b") + "))";
+                    return (negated ? "!" : "") + ctx.java("a") + ".contains(" + ctx.java("b") + ")";
                 }));
 
         api.patterns().condition(b -> b
@@ -59,9 +44,7 @@ public final class StringConditions {
                 .example("if myVar starts with \"he\":")
                 .since("1.0.0")
                 .category(Categories.TEXT)
-                .handler(ctx ->
-                        "String.valueOf(" + ctx.java("a") + ").startsWith(String.valueOf("
-                                + ctx.java("b") + "))"));
+                .handler(ctx -> ctx.java("a") + ".startsWith(" + ctx.java("b") + ")"));
 
         api.patterns().condition(b -> b
                 .by("Lumen")
@@ -70,9 +53,7 @@ public final class StringConditions {
                 .example("if myVar ends with \"lo\":")
                 .since("1.0.0")
                 .category(Categories.TEXT)
-                .handler(ctx ->
-                        "String.valueOf(" + ctx.java("a") + ").endsWith(String.valueOf("
-                                + ctx.java("b") + "))"));
+                .handler(ctx -> ctx.java("a") + ".endsWith(" + ctx.java("b") + ")"));
 
         api.patterns().condition(b -> b
                 .by("Lumen")
@@ -83,7 +64,7 @@ public final class StringConditions {
                 .category(Categories.TEXT)
                 .handler(ctx -> {
                     boolean negated = ctx.choice(0).equals("is not");
-                    return (negated ? "!" : "") + "String.valueOf(" + ctx.java("s") + ").isEmpty()";
+                    return (negated ? "!" : "") + ctx.java("s") + ".isEmpty()";
                 }));
 
         api.patterns().condition(b -> b
@@ -93,9 +74,7 @@ public final class StringConditions {
                 .example("if length of myVar >= 5:")
                 .since("1.0.0")
                 .category(Categories.TEXT)
-                .handler(ctx ->
-                        "String.valueOf(" + ctx.java("s") + ").length() "
-                                + ctx.java("op") + " " + ctx.java("n")));
+                .handler(ctx -> ctx.java("s") + ".length() " + ctx.java("op") + " " + ctx.java("n")));
 
         api.patterns().condition(b -> b
                 .by("Lumen")
@@ -104,9 +83,7 @@ public final class StringConditions {
                 .example("if myVar matches \"[0-9]+\":")
                 .since("1.0.0")
                 .category(Categories.TEXT)
-                .handler(ctx ->
-                        "String.valueOf(" + ctx.java("a") + ").matches(String.valueOf("
-                                + ctx.java("b") + "))"));
+                .handler(ctx -> ctx.java("a") + ".matches(" + ctx.java("b") + ")"));
 
         api.patterns().condition(b -> b
                 .by("Lumen")
@@ -117,8 +94,7 @@ public final class StringConditions {
                 .category(Categories.TEXT)
                 .handler(ctx -> {
                     ctx.codegen().addImport(Truthiness.class.getName());
-                    return "Truthiness.check("
-                            + ctx.java("a") + ")";
+                    return "Truthiness.check("+ ctx.java("a") + ")";
                 }));
 
         api.patterns().condition(b -> b
@@ -130,8 +106,7 @@ public final class StringConditions {
                 .category(Categories.TEXT)
                 .handler(ctx -> {
                     ctx.codegen().addImport(Truthiness.class.getName());
-                    return "!Truthiness.check("
-                            + ctx.java("a") + ")";
+                    return "!Truthiness.check("+ ctx.java("a") + ")";
                 }));
     }
 }

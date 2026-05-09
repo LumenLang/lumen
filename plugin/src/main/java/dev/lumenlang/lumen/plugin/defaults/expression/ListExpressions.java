@@ -82,12 +82,7 @@ public final class ListExpressions {
                 .example("set count to myList size")
                 .since("1.0.0")
                 .category(Categories.LIST)
-                .handler(ctx -> {
-                    ctx.codegen().addImport(List.class.getName());
-                    return new ExpressionResult(
-                            "((List<?>) " + ctx.java("list") + ").size()",
-                            PrimitiveType.INT);
-                }));
+                .handler(ctx -> new ExpressionResult(ctx.java("list") + ".size()", PrimitiveType.INT)));
 
         api.patterns().expression(b -> b
                 .by("Lumen")
@@ -97,30 +92,9 @@ public final class ListExpressions {
                 .since("1.0.0")
                 .category(Categories.LIST)
                 .handler(ctx -> {
-                    ctx.codegen().addImport(List.class.getName());
-                    Object listVal = ctx.value("list");
-                    LumenType elementType = PrimitiveType.STRING;
-                    if (listVal instanceof TypeEnv.VarHandle ref && ref.type() instanceof CollectionType ct && !ct.typeArguments().isEmpty()) {
-                        elementType = ct.typeArguments().get(0);
-                    }
-                    String castType = (elementType instanceof PrimitiveType pt) ? pt.boxedName() : elementType.javaTypeName();
-                    return new ExpressionResult(
-                            "(" + castType + ") ((List<?>) " + ctx.java("list") + ").get(" + ctx.java("i") + ")",
-                            elementType);
-                }));
-
-        api.patterns().expression(b -> b
-                .by("Lumen")
-                .pattern("%list:LIST% index of %val:EXPR%")
-                .description("Returns the index of the first occurrence of a value in a list.")
-                .example("set idx to myList index of \"hello\"")
-                .since("1.0.0")
-                .category(Categories.LIST)
-                .handler(ctx -> {
-                    ctx.codegen().addImport(List.class.getName());
-                    return new ExpressionResult(
-                            "((List<?>) " + ctx.java("list") + ").indexOf(" + ctx.java("val") + ")",
-                            PrimitiveType.INT);
+                    CollectionType ct = (CollectionType) ((TypeEnv.VarHandle) ctx.value("list")).type();
+                    LumenType elementType = ct.typeArguments().get(0);
+                    return new ExpressionResult(ctx.java("list") + ".get(" + ctx.java("i") + ")", elementType);
                 }));
 
         api.patterns().expression(b -> b

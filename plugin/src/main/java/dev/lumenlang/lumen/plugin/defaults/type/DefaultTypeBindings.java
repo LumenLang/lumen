@@ -195,8 +195,11 @@ public final class DefaultTypeBindings {
                     return Integer.parseInt(text);
                 } catch (NumberFormatException e) {
                     VarHandle ref = env.lookupVar(text);
-                    if (ref != null)
+                    if (ref != null) {
+                        if (!ref.type().unwrap().numeric())
+                            throw new ParseFailureException("'" + text + "' is a " + ref.type().displayName() + ", not an integer");
                         return ref;
+                    }
                     throw new ParseFailureException("'" + text + "' is not a valid integer");
                 }
             }
@@ -257,17 +260,18 @@ public final class DefaultTypeBindings {
                     return Long.parseLong(stripped);
                 } catch (NumberFormatException e) {
                     VarHandle ref = env.lookupVar(text);
-                    if (ref != null)
+                    if (ref != null) {
+                        if (!ref.type().unwrap().numeric())
+                            throw new ParseFailureException("'" + text + "' is a " + ref.type().displayName() + ", not a long");
                         return ref;
+                    }
                     throw new ParseFailureException("'" + text + "' is not a valid long");
                 }
             }
 
             @Override
             public @NotNull String toJava(Object value, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
-                if (value instanceof VarHandle ref) {
-                    return "((long) " + ref.java() + ")";
-                }
+                if (value instanceof VarHandle ref) return ref.java();
                 return value + "L";
             }
 
@@ -315,17 +319,18 @@ public final class DefaultTypeBindings {
                     return Double.parseDouble(text);
                 } catch (NumberFormatException e) {
                     VarHandle ref = env.lookupVar(text);
-                    if (ref != null)
+                    if (ref != null) {
+                        if (!ref.type().unwrap().numeric())
+                            throw new ParseFailureException("'" + text + "' is a " + ref.type().displayName() + ", not a number");
                         return ref;
+                    }
                     throw new ParseFailureException("'" + text + "' is not a number");
                 }
             }
 
             @Override
             public @NotNull String toJava(Object value, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
-                if (value instanceof VarHandle ref) {
-                    return "((double) " + ref.java() + ")";
-                }
+                if (value instanceof VarHandle ref) return ref.java();
                 return formatDouble((Double) value);
             }
 
@@ -388,8 +393,11 @@ public final class DefaultTypeBindings {
                         return Long.parseLong(text);
                     } catch (NumberFormatException e2) {
                         VarHandle ref = env.lookupVar(text);
-                        if (ref != null)
+                        if (ref != null) {
+                            if (!ref.type().unwrap().numeric())
+                                throw new ParseFailureException("'" + text + "' is a " + ref.type().displayName() + ", not a number");
                             return ref;
+                        }
                         throw new ParseFailureException("'" + text + "' is not a valid number");
                     }
                 }
@@ -397,9 +405,7 @@ public final class DefaultTypeBindings {
 
             @Override
             public @NotNull String toJava(Object value, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
-                if (value instanceof VarHandle ref) {
-                    return "((double) " + ref.java() + ")";
-                }
+                if (value instanceof VarHandle ref) return ref.java();
                 if (value instanceof Double d) {
                     return formatDouble(d);
                 }
@@ -432,9 +438,9 @@ public final class DefaultTypeBindings {
             public @NotNull TypeBindingMeta meta() {
                 return new TypeBindingMeta(
                         "a boolean (true or false)",
-                        "Parses a boolean from a single token using truthiness: true/yes/on map to true, and false/no/off map to false.",
+                        "Resolves to a boolean literal (true/false/yes/no/on/off) or to a boolean variable reference.",
                         "boolean",
-                        List.of("set %e:ENTITY% gravity [to] %val:BOOLEAN%"),
+                        List.of("set ready to true", "if ready: ..."),
                         "1.0.0",
                         false);
             }
@@ -445,15 +451,17 @@ public final class DefaultTypeBindings {
                 if (raw.equals("true") || raw.equals("yes") || raw.equals("on")) return Boolean.TRUE;
                 if (raw.equals("false") || raw.equals("no") || raw.equals("off")) return Boolean.FALSE;
                 VarHandle ref = env.lookupVar(tokens.get(0));
-                if (ref != null) return ref;
+                if (ref != null) {
+                    if (!PrimitiveType.BOOLEAN.equals(ref.type().unwrap()))
+                        throw new ParseFailureException("'" + tokens.get(0) + "' is a " + ref.type().displayName() + ", not a boolean");
+                    return ref;
+                }
                 throw new ParseFailureException("'" + tokens.get(0) + "' is not a valid boolean (expected true/false, yes/no, or on/off)");
             }
 
             @Override
             public @NotNull String toJava(Object value, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
-                if (value instanceof VarHandle ref) {
-                    return "Boolean.parseBoolean(String.valueOf(" + ref.java() + "))";
-                }
+                if (value instanceof VarHandle ref) return ref.java();
                 return value.toString();
             }
 
