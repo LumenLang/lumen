@@ -119,6 +119,7 @@ public final class DefaultTypeBindings {
         registerOfflinePlayer(api);
         registerCond(api);
         registerOp(api);
+        registerOpEq(api);
         registerEntity(api);
         registerLivingEntity(api);
         registerItem(api);
@@ -895,6 +896,73 @@ public final class DefaultTypeBindings {
                             default -> throw new ParseFailureException("'" + joined + "' is not a valid operator");
                         };
                     }
+                };
+            }
+
+            @Override
+            public @NotNull String toJava(Object v, @NotNull CodegenContext ctx, @NotNull TypeEnv env) {
+                return (String) v;
+            }
+
+            @Override
+            public @NotNull SemanticKind semanticKind() {
+                return SemanticKind.KEYWORD;
+            }
+        });
+    }
+
+    private void registerOpEq(@NotNull LumenAPI api) {
+        api.types().register(new AddonTypeBinding() {
+            @Override
+            public @NotNull String id() {
+                return "OP_EQ";
+            }
+
+            @Override
+            public @NotNull TypeBindingMeta meta() {
+                return new TypeBindingMeta(
+                        "an equality operator (e.g. 'is', '==', 'is not', '!=')",
+                        "Parses an equality-only operator into '==' or '!='. Rejects ordering operators like '>' or 'less than'.",
+                        "String",
+                        List.of("%a:VAR% %op:OP_EQ% %b:QSTRING%"),
+                        "1.0.0",
+                        false);
+            }
+
+            @Override
+            public int consumeCount(@NotNull List<String> tokens, @NotNull TypeEnv env) {
+                if (tokens.isEmpty())
+                    throw new ParseFailureException("expected an equality operator here");
+                String first = tokens.get(0).toLowerCase(Locale.ROOT);
+                if (tokens.size() >= 4) {
+                    String second = tokens.get(1).toLowerCase(Locale.ROOT);
+                    String third = tokens.get(2).toLowerCase(Locale.ROOT);
+                    String fourth = tokens.get(3).toLowerCase(Locale.ROOT);
+                    if (first.equals("is") && second.equals("not") && third.equals("equal") && fourth.equals("to")) return 4;
+                }
+                if (tokens.size() >= 3) {
+                    String second = tokens.get(1).toLowerCase(Locale.ROOT);
+                    String third = tokens.get(2).toLowerCase(Locale.ROOT);
+                    if (first.equals("does") && second.equals("not") && third.equals("equal")) return 3;
+                    if (first.equals("not") && second.equals("equal") && third.equals("to")) return 3;
+                }
+                if (tokens.size() >= 2) {
+                    String second = tokens.get(1).toLowerCase(Locale.ROOT);
+                    if (first.equals("equal") && second.equals("to")) return 2;
+                    if (first.equals("is") && second.equals("not")) return 2;
+                    if (first.equals("=") && second.equals("=")) return 2;
+                    if (first.equals("!") && second.equals("=")) return 2;
+                }
+                return 1;
+            }
+
+            @Override
+            public Object parse(@NotNull List<String> tokens, @NotNull TypeEnv env) {
+                String joined = String.join(" ", tokens).toLowerCase(Locale.ROOT);
+                return switch (joined) {
+                    case "==", "equals", "is", "equal to" -> "==";
+                    case "!=", "is not", "not equal to", "does not equal", "is not equal to" -> "!=";
+                    default -> throw new ParseFailureException("'" + joined + "' is not a valid equality operator");
                 };
             }
 

@@ -7,7 +7,7 @@ suggestions: 2
     confidence: 0.750
     issues:
       - handler rejected: Variable name '{' must start with a letter or digit, but starts with '{'
-  [#1] set %e:ENTITY_POSSESSIVE% %attr:ATTRIBUTE% [base] [value] [to] %val:DOUBLE%
-    confidence: 0.730
+  [#1] set %e:ENTITY_POSSESSIVE% player created [to] %val:BOOLEAN%
+    confidence: 0.425
     issues:
-      - missing binding: ATTRIBUTE (col 21)
+      - missing literal: 'player' (after token 8)

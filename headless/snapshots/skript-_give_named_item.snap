@@ -2,4 +2,10 @@ case: skript: give named item
 input: give player a diamond sword named "sharp"
 runner: STATEMENT
 env: <empty>
-suggestions: 0
+suggestions: 1
+  [#0] [get] %b:BLOCK% world
+    confidence: 0.309
+    issues:
+      - typo: 'sword' (col 22) should be 'world'
+      - type mismatch: 'diamond' (col 14) is not a BLOCK ('diamond' does not exist in this scope)
+      - extra tokens: 'named' (col 28), 'sharp' (col 34)

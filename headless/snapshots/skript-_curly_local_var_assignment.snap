@@ -7,7 +7,7 @@ suggestions: 2
     confidence: 0.750
     issues:
       - handler rejected: Variable name '{' must start with a letter or digit, but starts with '{'
-  [#1] set %e:ENTITY_POSSESSIVE% %attr:ATTRIBUTE% [base] [value] [to] %val:DOUBLE%
-    confidence: 0.730
+  [#1] set %list:LIST% at [index] %i:INT% to %val:EXPR%
+    confidence: 0.417
     issues:
-      - missing binding: ATTRIBUTE (col 12)
+      - missing literal: 'at' (after token 3)

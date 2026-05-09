@@ -7,7 +7,7 @@ suggestions: 2
   [#0] get %e:ENTITY_POSSESSIVE% health
     confidence: 1.000
     issues: <none>
-  [#1] get %e:ENTITY_POSSESSIVE% %attr:ATTRIBUTE% [base] [value]
+  [#1] get %i:ITEMSTACK_POSSESSIVE% lore
     confidence: 0.730
     issues:
-      - type mismatch: 'health' (col 8) is not a ATTRIBUTE ('health' is not a valid attribute)
+      - type mismatch: 'p's' (col 4) is not a ITEMSTACK_POSSESSIVE ('p' is a player, not an item)
