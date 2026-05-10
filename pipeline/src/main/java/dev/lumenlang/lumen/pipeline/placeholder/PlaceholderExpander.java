@@ -156,10 +156,7 @@ public final class PlaceholderExpander {
 
     /**
      * Resolves a placeholder expression (e.g. {@code "player_y"}) into a raw Java expression.
-     * This is used by ExprParser and MathEngine when placeholders appear outside of strings.
-     *
-     * <p>Unlike {@link #resolveForString}, this does NOT wrap numeric results in
-     * {@code String.valueOf()}, making the result suitable for math and var assignments.
+     * Used by ExprParser and MathEngine when placeholders appear outside of strings.
      *
      * @param placeholder the placeholder text without braces (e.g. "player_y")
      * @param env         the type environment for variable lookups
@@ -223,10 +220,6 @@ public final class PlaceholderExpander {
             return "\"<unknown:" + placeholder + ">\"";
         }
 
-        PlaceholderType type = resolveType(placeholder, env);
-        if (type == PlaceholderType.NUMBER) {
-            return "String.valueOf(" + java + ")";
-        }
         return java;
     }
 
@@ -236,15 +229,15 @@ public final class PlaceholderExpander {
         if (fullRef != null) {
             ObjectType type = fullRef.objectType();
             if (type == null) {
-                return "String.valueOf(" + fullRef.java() + ")";
+                return fullRef.java();
             }
             String defaultProp = PlaceholderRegistry.getDefault(type);
             if (defaultProp == null) {
-                return "String.valueOf(" + fullRef.java() + ")";
+                return fullRef.java();
             }
             String template = PlaceholderRegistry.getProperty(type, defaultProp);
             if (template == null) {
-                return "String.valueOf(" + fullRef.java() + ")";
+                return fullRef.java();
             }
             return PlaceholderRegistry.expand(template, fullRef.java());
         }

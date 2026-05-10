@@ -23,8 +23,8 @@ import dev.lumenlang.lumen.api.util.FuzzyMatch;
 import dev.lumenlang.lumen.api.version.MinecraftVersion;
 import dev.lumenlang.lumen.pipeline.conditions.registry.RegisteredCondition;
 import dev.lumenlang.lumen.pipeline.events.EventDefRegistry;
-import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.java.compiled.DataInstance;
+import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
 import org.bukkit.DyeColor;
 import org.bukkit.GameMode;
@@ -43,14 +43,13 @@ import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.Predicate;
-
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 
 /**
  * Registers all built-in type bindings for the default Lumen language.
@@ -196,7 +195,7 @@ public final class DefaultTypeBindings {
                 } catch (NumberFormatException e) {
                     VarHandle ref = env.lookupVar(text);
                     if (ref != null) {
-                        if (!ref.type().unwrap().numeric())
+                        if (!PrimitiveType.INT.assignableFrom(ref.type().unwrap()))
                             throw new ParseFailureException("'" + text + "' is a " + ref.type().displayName() + ", not an integer");
                         return ref;
                     }
@@ -261,7 +260,7 @@ public final class DefaultTypeBindings {
                 } catch (NumberFormatException e) {
                     VarHandle ref = env.lookupVar(text);
                     if (ref != null) {
-                        if (!ref.type().unwrap().numeric())
+                        if (!PrimitiveType.LONG.assignableFrom(ref.type().unwrap()))
                             throw new ParseFailureException("'" + text + "' is a " + ref.type().displayName() + ", not a long");
                         return ref;
                     }
@@ -320,7 +319,7 @@ public final class DefaultTypeBindings {
                 } catch (NumberFormatException e) {
                     VarHandle ref = env.lookupVar(text);
                     if (ref != null) {
-                        if (!ref.type().unwrap().numeric())
+                        if (!PrimitiveType.DOUBLE.assignableFrom(ref.type().unwrap()))
                             throw new ParseFailureException("'" + text + "' is a " + ref.type().displayName() + ", not a number");
                         return ref;
                     }
@@ -394,7 +393,7 @@ public final class DefaultTypeBindings {
                     } catch (NumberFormatException e2) {
                         VarHandle ref = env.lookupVar(text);
                         if (ref != null) {
-                            if (!ref.type().unwrap().numeric())
+                            if (!PrimitiveType.DOUBLE.assignableFrom(ref.type().unwrap()))
                                 throw new ParseFailureException("'" + text + "' is a " + ref.type().displayName() + ", not a number");
                             return ref;
                         }

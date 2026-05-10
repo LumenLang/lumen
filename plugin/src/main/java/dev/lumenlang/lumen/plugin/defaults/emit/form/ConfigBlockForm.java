@@ -121,12 +121,18 @@ public final class ConfigBlockForm implements BlockFormHandler {
                 configType = PrimitiveType.DOUBLE;
             } else {
                 try {
-                    Long.parseLong(java);
-                    fieldType = "long";
-                    configType = PrimitiveType.LONG;
-                } catch (NumberFormatException e) {
-                    fieldType = "String";
-                    configType = PrimitiveType.STRING;
+                    Integer.parseInt(java);
+                    fieldType = "int";
+                    configType = PrimitiveType.INT;
+                } catch (NumberFormatException e1) {
+                    try {
+                        Long.parseLong(java);
+                        fieldType = "long";
+                        configType = PrimitiveType.LONG;
+                    } catch (NumberFormatException e2) {
+                        fieldType = "String";
+                        configType = PrimitiveType.STRING;
+                    }
                 }
             }
             ctx.codegen().addField("private " + fieldType + " " + name + " = " + java + ";");

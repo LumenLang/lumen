@@ -131,10 +131,7 @@ public final class UnusedVarTransformer implements CodeTransformer {
         return null;
     }
 
-    private static boolean isUsedInRange(@NotNull String varName, int taggedIndex,
-                                         int start, int end,
-                                         @NotNull Set<Integer> removable,
-                                         @NotNull List<TaggedLine> allLines) {
+    private static boolean isUsedInRange(@NotNull String varName, int taggedIndex, int start, int end, @NotNull Set<Integer> removable, @NotNull List<TaggedLine> allLines) {
         for (int i = start; i <= end; i++) {
             if (i == taggedIndex) {
                 continue;
