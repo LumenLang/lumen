@@ -37,7 +37,6 @@ import java.util.concurrent.CompletableFuture;
  * Loads and warms up Lumen scripts. Lifecycle queries (isLoaded, unload, ...)
  * live on {@link ScriptLifecycle}.
  */
-@SuppressWarnings("unchecked")
 public final class Scripts {
 
     private Scripts() {
@@ -50,18 +49,18 @@ public final class Scripts {
     public static @NotNull CompletableFuture<CompileTimings> load(@NotNull String name, @NotNull String source) {
         return CompletableFuture.supplyAsync(() -> {
             PreparedScript prepared = prepareOne(name, source);
-            ScriptClassLoader loader = LumenConfiguration.PERFORMANCE.ASYNC_DEFINE_CLASS ? ScriptActivator.buildLoader(prepared.bytecodes()) : null;
-            return Map.entry(prepared, (Object) loader);
+            Map<String, ScriptClassLoader> loaders = LumenConfiguration.PERFORMANCE.ASYNC_DEFINE_CLASS ? Map.of(prepared.fqcn(), ScriptActivator.buildLoader(prepared.bytecodes())) : Map.of();
+            return Map.entry(prepared, loaders);
         }).thenCompose(entry -> {
             PreparedScript prepared = entry.getKey();
-            ScriptClassLoader loader = (ScriptClassLoader) entry.getValue();
+            Map<String, ScriptClassLoader> loaders = entry.getValue();
             CompletableFuture<CompileTimings> future = new CompletableFuture<>();
             Bukkit.getScheduler().runTask(Lumen.instance(), () -> {
                 try {
                     if (ScriptLifecycle.tearDownForReload(name)) {
                         ScriptLifecycle.postUnloaded(name);
                     }
-                    bind(prepared, loader);
+                    bind(prepared, loaders.get(prepared.fqcn()));
                     ScriptLifecycle.postLoaded(name);
                     future.complete(prepared.timings());
                 } catch (Throwable t) {

@@ -85,7 +85,6 @@ public final class DebugMessageRouter {
      * @param conn the active client connection
      * @param msg  the parsed message map
      */
-    @SuppressWarnings("unchecked")
     public void handle(@NotNull WebSocket conn, @NotNull Map<String, Object> msg) {
         String type = (String) msg.get("type");
         if (type == null) {

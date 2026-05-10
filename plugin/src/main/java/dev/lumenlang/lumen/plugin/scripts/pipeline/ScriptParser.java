@@ -73,8 +73,4 @@ public final class ScriptParser {
         }
         return generated;
     }
-
-    public static void invalidateCache(@NotNull String name) {
-        MATCH_CACHES.remove(name);
-    }
 }
