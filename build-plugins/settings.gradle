@@ -1,0 +1,4 @@
+rootProject.name = 'lumen-build-plugins'
+
+include 'core'
+include 'gradle'

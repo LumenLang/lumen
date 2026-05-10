@@ -19,6 +19,8 @@ import java.util.List;
  */
 public final class SidecarMapper {
 
+    private static final String LUMEN_ANNOTATION_PREFIX = "dev.lumenlang.lumen.api.pattern.annotation.";
+
     private SidecarMapper() {
     }
 
@@ -40,7 +42,9 @@ public final class SidecarMapper {
     private static @NotNull List<String> importsOf(@NotNull ParsedHandlerSource parsed) {
         List<String> result = new ArrayList<>();
         for (ImportDeclaration imp : parsed.compilationUnit().imports()) {
-            if (!imp.isStatic() && !imp.isWildcard()) result.add(imp.name());
+            if (imp.isStatic() || imp.isWildcard()) continue;
+            if (imp.name().startsWith(LUMEN_ANNOTATION_PREFIX)) continue;
+            result.add(imp.name());
         }
         return List.copyOf(result);
     }

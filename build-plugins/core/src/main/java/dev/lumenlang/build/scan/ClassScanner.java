@@ -4,17 +4,6 @@ import dev.lumenlang.build.scan.handler.HandlerKind;
 import dev.lumenlang.build.scan.handler.HandlerMeta;
 import dev.lumenlang.build.scan.handler.ScannedHandler;
 import dev.lumenlang.build.scan.param.InjectParam;
-import dev.lumenlang.lumen.api.pattern.annotation.Category;
-import dev.lumenlang.lumen.api.pattern.annotation.Condition;
-import dev.lumenlang.lumen.api.pattern.annotation.Description;
-import dev.lumenlang.lumen.api.pattern.annotation.Example;
-import dev.lumenlang.lumen.api.pattern.annotation.Examples;
-import dev.lumenlang.lumen.api.pattern.annotation.Expression;
-import dev.lumenlang.lumen.api.pattern.annotation.Inject;
-import dev.lumenlang.lumen.api.pattern.annotation.Pattern;
-import dev.lumenlang.lumen.api.pattern.annotation.Patterns;
-import dev.lumenlang.lumen.api.pattern.annotation.Since;
-import dev.lumenlang.lumen.api.pattern.annotation.Statement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.ClassReader;
@@ -42,18 +31,20 @@ import java.util.stream.Stream;
  */
 public final class ClassScanner {
 
-    private static final String STATEMENT_DESC = Type.getDescriptor(Statement.class);
-    private static final String EXPRESSION_DESC = Type.getDescriptor(Expression.class);
-    private static final String CONDITION_DESC = Type.getDescriptor(Condition.class);
-    private static final String PATTERN_DESC = Type.getDescriptor(Pattern.class);
-    private static final String PATTERNS_DESC = Type.getDescriptor(Patterns.class);
-    private static final String INJECT_DESC = Type.getDescriptor(Inject.class);
-    private static final String DESCRIPTION_DESC = Type.getDescriptor(Description.class);
-    private static final String EXAMPLE_DESC = Type.getDescriptor(Example.class);
-    private static final String EXAMPLES_DESC = Type.getDescriptor(Examples.class);
-    private static final String SINCE_DESC = Type.getDescriptor(Since.class);
-    private static final String CATEGORY_DESC = Type.getDescriptor(Category.class);
-    private static final String DEPRECATED_DESC = Type.getDescriptor(Deprecated.class);
+    private static final String ANNOTATION_PKG = "Ldev/lumenlang/lumen/api/pattern/annotation/";
+    private static final String STATEMENT_DESC = ANNOTATION_PKG + "Statement;";
+    private static final String EXPRESSION_DESC = ANNOTATION_PKG + "Expression;";
+    private static final String CONDITION_DESC = ANNOTATION_PKG + "Condition;";
+    private static final String PATTERN_DESC = ANNOTATION_PKG + "Pattern;";
+    private static final String PATTERNS_DESC = ANNOTATION_PKG + "Patterns;";
+    private static final String INJECT_DESC = ANNOTATION_PKG + "Inject;";
+    private static final String DESCRIPTION_DESC = ANNOTATION_PKG + "Description;";
+    private static final String EXAMPLE_DESC = ANNOTATION_PKG + "Example;";
+    private static final String EXAMPLES_DESC = ANNOTATION_PKG + "Examples;";
+    private static final String SINCE_DESC = ANNOTATION_PKG + "Since;";
+    private static final String CATEGORY_DESC = ANNOTATION_PKG + "Category;";
+    private static final String DEPRECATED_DESC = "Ljava/lang/Deprecated;";
+    private static final String METHOD_BASED_DESC = ANNOTATION_PKG + "MethodBased;";
 
     private ClassScanner() {
     }
@@ -99,8 +90,17 @@ public final class ClassScanner {
 
         List<InjectParam> injects = collectInjectParams(method);
         HandlerMeta meta = collectMeta(method);
+        boolean methodBased = hasAnnotation(method, METHOD_BASED_DESC);
 
-        return new ScannedHandler(owner.name, classFile, method.name, method.desc, kind, patterns, injects, meta);
+        return new ScannedHandler(owner.name, classFile, method.name, method.desc, kind, patterns, injects, meta, methodBased);
+    }
+
+    private static boolean hasAnnotation(@NotNull MethodNode method, @NotNull String desc) {
+        if (method.visibleAnnotations == null) return false;
+        for (AnnotationNode a : method.visibleAnnotations) {
+            if (desc.equals(a.desc)) return true;
+        }
+        return false;
     }
 
     private static @Nullable HandlerKind kindOf(@NotNull MethodNode method) {
@@ -163,11 +163,8 @@ public final class ClassScanner {
         }
         if (method.localVariables != null) {
             int targetSlot = isStatic ? paramIndex : paramIndex + 1;
-            int seen = 0;
             for (LocalVariableNode lv : method.localVariables) {
-                if (lv.index <= targetSlot) {
-                    if (lv.index == targetSlot && seen++ == 0) return lv.name;
-                }
+                if (lv.index == targetSlot) return lv.name;
             }
         }
         return null;

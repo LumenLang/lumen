@@ -6,12 +6,12 @@ import dev.lumenlang.lumen.api.handler.ExpressionHandler;
 import dev.lumenlang.lumen.api.handler.StatementHandler;
 import dev.lumenlang.lumen.api.inject.index.IndexedHandler;
 import dev.lumenlang.lumen.api.inject.index.IndexedMeta;
-import dev.lumenlang.lumen.api.inject.index.IndexedParam;
 import dev.lumenlang.lumen.api.pattern.Categories;
 import dev.lumenlang.lumen.api.pattern.builder.ConditionBuilder;
 import dev.lumenlang.lumen.api.pattern.builder.ExpressionBuilder;
 import dev.lumenlang.lumen.api.pattern.builder.StatementBuilder;
 import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.pipeline.inject.sidecar.Descriptors;
 import dev.lumenlang.lumen.pipeline.inject.sidecar.SidecarConditionHandler;
 import dev.lumenlang.lumen.pipeline.inject.sidecar.SidecarExpressionHandler;
 import dev.lumenlang.lumen.pipeline.inject.sidecar.SidecarStatementHandler;
@@ -19,7 +19,6 @@ import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -75,19 +74,21 @@ public final class AnnotatedHandlerLoader {
 
     private static void applyStatement(@NotNull StatementBuilder b, @NotNull String owner, @NotNull IndexedHandler entry) {
         applyCommon(b, owner, entry);
-        StatementHandler handler = new SidecarStatementHandler(entry.owner(), entry.method(), entry.descriptor(), placeholderNames(entry));
+        StatementHandler handler = new SidecarStatementHandler(entry.owner(), entry.method(), entry.descriptor(), entry.params(), entry.methodBased());
         b.handler(handler);
     }
 
     private static void applyExpression(@NotNull ExpressionBuilder b, @NotNull String owner, @NotNull IndexedHandler entry) {
         applyCommon(b, owner, entry);
-        ExpressionHandler handler = new SidecarExpressionHandler(entry.owner(), entry.method(), entry.descriptor(), placeholderNames(entry), expressionReturnType(entry));
+        String javaReturnType = returnJavaTypeOf(entry);
+        LumenType lumenReturnType = lumenTypeOf(entry, javaReturnType);
+        ExpressionHandler handler = new SidecarExpressionHandler(entry.owner(), entry.method(), entry.descriptor(), entry.params(), lumenReturnType, javaReturnType);
         b.handler(handler);
     }
 
     private static void applyCondition(@NotNull ConditionBuilder b, @NotNull String owner, @NotNull IndexedHandler entry) {
         applyCommon(b, owner, entry);
-        ConditionHandler handler = new SidecarConditionHandler(entry.owner(), entry.method(), entry.descriptor(), placeholderNames(entry));
+        ConditionHandler handler = new SidecarConditionHandler(entry.owner(), entry.method(), entry.descriptor(), entry.params());
         b.handler(handler);
     }
 
@@ -131,23 +132,14 @@ public final class AnnotatedHandlerLoader {
         if (meta.deprecated()) b.deprecated(true);
     }
 
-    private static @NotNull List<String> placeholderNames(@NotNull IndexedHandler entry) {
-        List<String> names = new ArrayList<>(entry.params().size());
-        for (IndexedParam p : entry.params()) names.add(p.name());
-        return List.copyOf(names);
-    }
-
-    /**
-     * Resolves the Lumen return type for an expression handler from the
-     * descriptor's return slot. Throws when the descriptor's Java type is not
-     * in the registry; the handler's return type must be one Lumen knows
-     * about.
-     */
-    private static @NotNull LumenType expressionReturnType(@NotNull IndexedHandler entry) {
+    private static @NotNull String returnJavaTypeOf(@NotNull IndexedHandler entry) {
         String desc = entry.descriptor();
         int close = desc.indexOf(')');
-        String returnDesc = close < 0 ? "" : desc.substring(close + 1);
-        String javaType = descriptorToJavaType(returnDesc);
+        if (close < 0) throw new IllegalArgumentException("Bad method descriptor: " + desc);
+        return Descriptors.javaTypeOf(desc.substring(close + 1));
+    }
+
+    private static @NotNull LumenType lumenTypeOf(@NotNull IndexedHandler entry, @NotNull String javaType) {
         LumenType resolved = LumenType.fromJavaType(javaType);
         if (resolved == null) {
             throw new IllegalStateException("Expression handler " + entry.owner() + "#" + entry.method() + " returns '" + javaType + "' which is not a registered Lumen type");
@@ -155,23 +147,4 @@ public final class AnnotatedHandlerLoader {
         return resolved;
     }
 
-    private static @NotNull String descriptorToJavaType(@NotNull String descriptor) {
-        return switch (descriptor) {
-            case "I" -> "int";
-            case "J" -> "long";
-            case "D" -> "double";
-            case "F" -> "float";
-            case "Z" -> "boolean";
-            case "B" -> "byte";
-            case "S" -> "short";
-            case "C" -> "char";
-            case "V" -> "void";
-            default -> {
-                if (descriptor.startsWith("L") && descriptor.endsWith(";")) {
-                    yield descriptor.substring(1, descriptor.length() - 1).replace('/', '.');
-                }
-                yield "java.lang.Object";
-            }
-        };
-    }
 }

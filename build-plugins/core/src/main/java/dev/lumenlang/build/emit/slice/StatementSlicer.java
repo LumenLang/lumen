@@ -79,16 +79,21 @@ public final class StatementSlicer {
         return current;
     }
 
+    /**
+     * Exclusive 0-indexed end-of-body line. Statements on source line N occupy
+     * {@code lines[N-1]}; the line AFTER the last statement is {@code lines[N]},
+     * which is what we return so the slicer stops at it.
+     */
     private static int lastLine(@NotNull BlockStatement body) {
         int last = body.line();
         for (Statement s : body.statements()) if (s.line() > last) last = s.line();
-        return last + 1;
+        return last;
     }
 
     private static @NotNull String sliceLines(@NotNull String[] lines, int startInclusive, int endExclusive) {
         StringBuilder sb = new StringBuilder();
         for (int i = startInclusive; i < endExclusive && i < lines.length; i++) {
-            if (sb.length() > 0) sb.append('\n');
+            if (!sb.isEmpty()) sb.append('\n');
             sb.append(lines[i]);
         }
         return sb.toString().strip();

@@ -19,9 +19,10 @@ import java.util.List;
  * @param patterns          pattern strings from {@code @Pattern} (one or more)
  * @param injectParams      parameters carrying {@code @Inject}, in declaration order
  * @param meta              optional documentation metadata
+ * @param methodBased       true when {@code @MethodBased} is present on the handler (statements only)
  */
 public record ScannedHandler(@NotNull String ownerInternalName, @NotNull Path classFile, @NotNull String methodName,
                              @NotNull String methodDescriptor, @NotNull HandlerKind kind,
                              @NotNull List<String> patterns, @NotNull List<InjectParam> injectParams,
-                             @NotNull HandlerMeta meta) {
+                             @NotNull HandlerMeta meta, boolean methodBased) {
 }

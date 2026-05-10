@@ -1,0 +1,30 @@
+plugins {
+    id 'java-gradle-plugin'
+    id 'com.gradle.plugin-publish' version '1.3.0'
+}
+
+repositories {
+    maven { url = 'https://repository.vansencool.net' }
+}
+
+dependencies {
+    implementation project(':core')
+}
+
+java {
+    withSourcesJar()
+}
+
+gradlePlugin {
+    website = 'https://lumenlang.dev'
+    vcsUrl = 'https://github.com/LumenLang/lumen'
+    plugins {
+        lumenBuild {
+            id = 'dev.lumenlang.lumen-build'
+            implementationClass = 'dev.lumenlang.build.gradle.LumenGradlePlugin'
+            displayName = 'Lumen build plugin'
+            description = 'Lets your Lumen addon use the annotation API for handlers.'
+            tags.set(['lumen', 'minecraft', 'addon', 'annotations'])
+        }
+    }
+}

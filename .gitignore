@@ -41,6 +41,8 @@
 
 /build/
 /*/build/
+/build-plugins/.gradle/
 /build-plugins/*/build/
+/build-plugins/*/.gradle/
 plugin/run/
 plugin/.gradle/
