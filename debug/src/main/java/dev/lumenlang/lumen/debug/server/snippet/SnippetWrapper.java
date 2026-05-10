@@ -1,7 +1,6 @@
 package dev.lumenlang.lumen.debug.server.snippet;
 
 import dev.lumenlang.lumen.api.type.LumenType;
-import dev.lumenlang.lumen.debug.LumenDebugAddon;
 import dev.lumenlang.lumen.debug.hook.ScriptHooks;
 import dev.lumenlang.lumen.debug.session.DebugSession;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +35,7 @@ public final class SnippetWrapper {
                 if (value == null) continue;
                 LumenType type = resolveLumenType(value);
                 if (type == null) continue;
-                meta.put(entry.getKey(), LumenDebugAddon.resolveType(value));
+                meta.put(entry.getKey(), SnippetTypeResolver.metaOf(value));
                 resolvedTypes.put(entry.getKey(), type);
             }
             ScriptHooks.snippetVars(vars);

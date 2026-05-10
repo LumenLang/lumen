@@ -1,6 +1,5 @@
-package dev.lumenlang.lumen.plugin.scripts;
+package dev.lumenlang.lumen.plugin.scripts.cache;
 
-import dev.lumenlang.lumen.pipeline.java.compiled.ScriptSourceMap;
 import dev.lumenlang.lumen.pipeline.java.version.JavaVersions;
 import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
 import dev.lumenlang.lumen.plugin.Lumen;
@@ -19,30 +18,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 /**
- * Manages a persistent on-disk cache of compiled script bytecodes.
- *
- * <p>
- * Each script gets its own subdirectory under
- * {@code <dataFolder>/compiled/<scriptName>/}.
- * That directory contains:
- * <ul>
- * <li>{@code metadata.txt} - a text file recording the SHA-256 of the script
- * source and the
- * Java specification version at compile time, separated by a newline.</li>
- * <li>{@code <ClassName>.class} - one raw bytecode file per compiled class
- * (including inner
- * classes produced by the compiler).</li>
- * </ul>
- *
- * <p>
- * A cache entry is considered a hit only when both the source checksum and the
- * Java version
- * match the values recorded in the {@code metadata.txt} file. Either changing
- * the script source or
- * running under a different JVM version invalidates the cache and triggers a
- * fresh compile.
- *
- * @see ScriptManager
+ * On-disk cache of compiled script bytecodes.
  */
 @SuppressWarnings("unused")
 public final class CompiledClassCache {
@@ -51,22 +27,10 @@ public final class CompiledClassCache {
     }
 
     /**
-     * Attempts to load cached bytecodes for a script.
+     * Reads the cached bundle for {@code scriptName} if its checksum, Java
+     * version, and Lumen version all match the current values.
      *
-     * <p>
-     * Returns {@code null} when:
-     * <ul>
-     * <li>caching is disabled via {@code performance.cache-compiled-classes}</li>
-     * <li>no cache directory exists for the script</li>
-     * <li>the stored checksum does not match the current source</li>
-     * <li>the stored Java version does not match the running JVM</li>
-     * <li>any I/O error occurs reading the cache</li>
-     * </ul>
-     *
-     * @param scriptName the file name of the script (e.g. {@code "hello.luma"})
-     * @param source     the current source text of the script
-     * @return a map of fully-qualified class name → bytecodes, or {@code null} on a
-     * cache miss
+     * @return class name to bytecode bytes, or null on miss
      */
     public static @Nullable Map<String, byte[]> load(@NotNull String scriptName, @NotNull String source) {
         Path dir = cacheDir(scriptName);
@@ -96,14 +60,12 @@ public final class CompiledClassCache {
             }
 
             if (!currentJava.equals(storedJava)) {
-                LumenLogger.debug("CompiledClassCache",
-                        "Cache miss (java version changed " + storedJava + " to " + currentJava + "): " + scriptName);
+                LumenLogger.debug("CompiledClassCache", "Cache miss (java version changed " + storedJava + " to " + currentJava + "): " + scriptName);
                 return null;
             }
 
             if (!currentLumen.equals(storedLumen)) {
-                LumenLogger.debug("CompiledClassCache", "Cache miss (lumen version changed " + storedLumen + " to "
-                        + currentLumen + "): " + scriptName);
+                LumenLogger.debug("CompiledClassCache", "Cache miss (lumen version changed " + storedLumen + " to " + currentLumen + "): " + scriptName);
                 return null;
             }
 
@@ -111,10 +73,9 @@ public final class CompiledClassCache {
             try (Stream<Path> entries = Files.list(dir)) {
                 for (Path entry : entries.toList()) {
                     String fileName = entry.getFileName().toString();
-                    if (!fileName.endsWith(".class"))
-                        continue;
+                    if (!fileName.endsWith(".class")) continue;
                     String className = fileName.substring(0, fileName.length() - ".class".length());
-                    bytecodes.put(decodeClassName(className), Files.readAllBytes(entry));
+                    bytecodes.put(className.replace('%', '.'), Files.readAllBytes(entry));
                 }
             }
 
@@ -131,25 +92,7 @@ public final class CompiledClassCache {
         }
     }
 
-    /**
-     * Persists compiled bytecodes for a script to disk.
-     *
-     * <p>
-     * Writes the {@code metadata.txt} file (checksum + Java version) and one
-     * {@code .class} file per
-     * entry in {@code bytecodes}. Any existing cache directory for this script is
-     * cleared first.
-     * When an I/O error occurs, the failure is logged at debug level and silently
-     * ignored so that
-     * a cache write error never prevents the script from running.
-     *
-     * @param scriptName the file name of the script (e.g. {@code "hello.luma"})
-     * @param source     the source text that was compiled
-     * @param bytecodes  the full map of class name → bytecodes returned by the
-     *                   compiler
-     */
-    public static void save(@NotNull String scriptName, @NotNull String source,
-                            @NotNull Map<String, byte[]> bytecodes) {
+    public static void save(@NotNull String scriptName, @NotNull String source, @NotNull Map<String, byte[]> bytecodes) {
         Path dir = cacheDir(scriptName);
         if (bytecodes.isEmpty()) {
             LumenLogger.debug("CompiledClassCache", "Not caching " + scriptName + ": bytecodes map is empty");
@@ -160,37 +103,20 @@ public final class CompiledClassCache {
             Files.createDirectories(dir);
 
             String meta = checksum(source) + "\n" + JavaVersions.current().value() + "\n" + Lumen.instance().getDescription().getVersion();
-            Path metaFile = dir.resolve("metadata.txt");
-            Files.writeString(metaFile, meta);
+            Files.writeString(dir.resolve("metadata.txt"), meta);
 
             int classCount = 0;
             for (var entry : bytecodes.entrySet()) {
-                String fileName = encodeClassName(entry.getKey()) + ".class";
-                Files.write(dir.resolve(fileName), entry.getValue());
+                Files.write(dir.resolve(entry.getKey().replace('.', '%') + ".class"), entry.getValue());
                 classCount++;
             }
 
-            LumenLogger.debug("CompiledClassCache",
-                    "Saved " + classCount + " classes to " + dir + " for " + scriptName);
+            LumenLogger.debug("CompiledClassCache", "Saved " + classCount + " classes to " + dir + " for " + scriptName);
         } catch (IOException e) {
-            LumenLogger.severe(
-                    "[CompiledClassCache] Cache write error for " + scriptName + " to " + dir + ": " + e.getMessage(),
-                    e);
+            LumenLogger.severe("[CompiledClassCache] Cache write error for " + scriptName + " to " + dir + ": " + e.getMessage(), e);
         }
     }
 
-    /**
-     * Persists the generated Java source for a script alongside its compiled
-     * bytecodes so that {@link ScriptSourceMap}
-     * can be restored when the script is loaded from cache on subsequent server
-     * starts.
-     *
-     * <p>
-     * Failures are logged at debug level and silently ignored.
-     *
-     * @param scriptName the file name of the script (e.g. {@code "hello.luma"})
-     * @param javaSource the generated Java source produced by the code emitter
-     */
     public static void saveJavaSource(@NotNull String scriptName, @NotNull String javaSource) {
         Path dir = cacheDir(scriptName);
         try {
@@ -201,17 +127,9 @@ public final class CompiledClassCache {
         }
     }
 
-    /**
-     * Loads the previously saved generated Java source for a script.
-     *
-     * @param scriptName the file name of the script (e.g. {@code "hello.luma"})
-     * @return the generated Java source, or {@code null} if not present or unreadable
-     */
     public static @Nullable String loadJavaSource(@NotNull String scriptName) {
         Path file = cacheDir(scriptName).resolve("sourcemap.java");
-        if (!Files.isRegularFile(file)) {
-            return null;
-        }
+        if (!Files.isRegularFile(file)) return null;
         try {
             return Files.readString(file);
         } catch (IOException e) {
@@ -220,25 +138,14 @@ public final class CompiledClassCache {
         }
     }
 
-    /**
-     * Deletes the cache directory for the given script, if it exists.
-     *
-     * @param scriptName the file name of the script
-     */
     public static void invalidate(@NotNull String scriptName) {
         try {
             clearDir(cacheDir(scriptName));
         } catch (IOException e) {
-            LumenLogger.debug("CompiledClassCache",
-                    "Cache invalidation error for " + scriptName + ": " + e.getMessage());
+            LumenLogger.debug("CompiledClassCache", "Cache invalidation error for " + scriptName + ": " + e.getMessage());
         }
     }
 
-    /**
-     * Returns the {@code <dataFolder>/compiled} directory root.
-     *
-     * @return the compiled cache root path
-     */
     public static @NotNull Path compiledRoot() {
         return Lumen.instance().getDataFolder().toPath().resolve("compiled");
     }
@@ -250,8 +157,7 @@ public final class CompiledClassCache {
 
     private static @NotNull String checksum(@NotNull String source) {
         try {
-            byte[] digest = MessageDigest.getInstance("SHA-256")
-                    .digest(source.getBytes(StandardCharsets.UTF_8));
+            byte[] digest = MessageDigest.getInstance("SHA-256").digest(source.getBytes(StandardCharsets.UTF_8));
             return HexFormat.of().formatHex(digest);
         } catch (NoSuchAlgorithmException e) {
             try {
@@ -259,31 +165,13 @@ public final class CompiledClassCache {
                 LumenLogger.severe("SHA-256 not available, using MD5 for CompiledClassCache checksums");
                 return HexFormat.of().formatHex(fallback);
             } catch (NoSuchAlgorithmException e2) {
-                // This should never happen
                 throw new RuntimeException("No suitable hashing algorithm available for CompiledClassCache", e2);
             }
         }
     }
 
-    /**
-     * Encodes a fully-qualified class name so it can be used as a safe filename.
-     * Dots are replaced with {@code %} to avoid clashing with the file extension.
-     */
-    private static @NotNull String encodeClassName(@NotNull String className) {
-        return className.replace('.', '%');
-    }
-
-    /**
-     * Decodes a filename produced by {@link #encodeClassName(String)} back to a
-     * class name.
-     */
-    private static @NotNull String decodeClassName(@NotNull String encoded) {
-        return encoded.replace('%', '.');
-    }
-
     private static void clearDir(@NotNull Path dir) throws IOException {
-        if (!Files.isDirectory(dir))
-            return;
+        if (!Files.isDirectory(dir)) return;
         try (Stream<Path> entries = Files.list(dir)) {
             for (Path entry : entries.toList()) {
                 String fileName = entry.getFileName().toString();

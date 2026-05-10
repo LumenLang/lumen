@@ -23,7 +23,6 @@ import java.util.regex.Pattern;
 @SuppressWarnings("unused")
 public final class ScriptSourceMap {
 
-    private static final String COMPILED_PREFIX = "dev.lumenlang.lumen.java.compiled.";
     private static final String MARKER_PREFIX = "// @lumen:";
 
     private static final Pattern NPE_INVOKE = Pattern.compile("Cannot invoke \"([^\"]+)\" because \"([^\"]+)\" is null");
@@ -69,7 +68,7 @@ public final class ScriptSourceMap {
      * @param normalizedClassName the normalized class name (without package prefix)
      */
     public static void unregisterByClassName(@NotNull String normalizedClassName) {
-        String prefix = COMPILED_PREFIX + normalizedClassName;
+        String prefix = ClassBuilder.PACKAGE + "." + normalizedClassName;
         SOURCES.keySet().removeIf(k -> k.equals(prefix) || k.startsWith(prefix + "$"));
     }
 
@@ -155,7 +154,7 @@ public final class ScriptSourceMap {
     public static @Nullable ScriptLineMapping findFromException(@NotNull Throwable throwable) {
         for (StackTraceElement element : throwable.getStackTrace()) {
             String className = element.getClassName();
-            if (className.startsWith(COMPILED_PREFIX) && element.getLineNumber() > 0) {
+            if (className.startsWith(ClassBuilder.PACKAGE + ".") && element.getLineNumber() > 0) {
                 ScriptLineMapping mapping = findScriptLine(className, element.getLineNumber());
                 if (mapping != null) return mapping;
             }

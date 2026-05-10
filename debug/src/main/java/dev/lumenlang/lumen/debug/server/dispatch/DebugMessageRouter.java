@@ -7,9 +7,10 @@ import dev.lumenlang.lumen.debug.server.override.ScriptOverrideStore;
 import dev.lumenlang.lumen.debug.server.snippet.SnippetWrapper;
 import dev.lumenlang.lumen.debug.session.DebugSession;
 import dev.lumenlang.lumen.debug.transform.LineInstrumentTransformer;
+import dev.lumenlang.lumen.pipeline.java.compiled.ClassBuilder;
 import dev.lumenlang.lumen.pipeline.java.compiled.ScriptSourceMap;
 import dev.lumenlang.lumen.pipeline.language.exceptions.LumenScriptException;
-import dev.lumenlang.lumen.plugin.scripts.ScriptSourceLoader;
+import dev.lumenlang.lumen.plugin.scripts.source.ScriptSourceLoader;
 import org.java_websocket.WebSocket;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,7 +32,7 @@ import java.util.function.BiFunction;
 public final class DebugMessageRouter {
 
     private static final String SNIPPET_SCRIPT = "__debug_snippet__.luma";
-    private static final String SNIPPET_FQCN = "dev.lumenlang.lumen.java.compiled.__debug_snippet__";
+    private static final String SNIPPET_FQCN = ClassBuilder.fqcn("__debug_snippet__");
 
     private final @NotNull DebugSession session;
     private final @NotNull LineInstrumentTransformer transformer;

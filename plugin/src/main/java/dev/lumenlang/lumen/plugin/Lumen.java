@@ -40,10 +40,11 @@ import dev.lumenlang.lumen.plugin.inject.InjectableHandlerFactoryImpl;
 import dev.lumenlang.lumen.plugin.platform.ServerPlatform;
 import dev.lumenlang.lumen.plugin.scanner.RegistrationScannerBackend;
 import dev.lumenlang.lumen.plugin.scheduler.ScriptScheduler;
-import dev.lumenlang.lumen.plugin.scripts.ExampleCopier;
-import dev.lumenlang.lumen.plugin.scripts.ScriptManager;
-import dev.lumenlang.lumen.plugin.scripts.ScriptSourceLoader;
-import dev.lumenlang.lumen.plugin.scripts.ScriptWatcher;
+import dev.lumenlang.lumen.plugin.scripts.Scripts;
+import dev.lumenlang.lumen.plugin.scripts.runtime.ScriptLifecycle;
+import dev.lumenlang.lumen.plugin.scripts.source.ExampleCopier;
+import dev.lumenlang.lumen.plugin.scripts.source.ScriptSourceLoader;
+import dev.lumenlang.lumen.plugin.scripts.watcher.ScriptWatcher;
 import dev.lumenlang.lumen.plugin.util.BukkitValueResolver;
 import dev.lumenlang.lumen.plugin.util.InventoryHotReload;
 import net.vansencool.lsyaml.binding.watcher.ConfigWatcher;
@@ -133,8 +134,9 @@ public final class Lumen extends JavaPlugin {
             scriptWatcher = null;
         }
         ConfigWatcher.shutdown();
-        ScriptManager.unloadAllSync();
-        ScriptManager.shutdownPool();
+        for (String name : ScriptLifecycle.loadedNames()) {
+            ScriptLifecycle.unload(name);
+        }
         InventoryHotReload.clear();
         if (eventBus != null) eventBus.shutdown();
         RegistrationScanner.teardown();
@@ -212,7 +214,7 @@ public final class Lumen extends JavaPlugin {
         if (!LumenConfiguration.SCRIPTS.LOAD_ALL_ON_STARTUP) return;
         if (LumenConfiguration.PERFORMANCE.LOAD_SCRIPTS_ASYNC_ON_STARTUP) {
             long startTime = System.nanoTime();
-            ScriptManager.loadAll().whenComplete((prepared, err) -> {
+            Scripts.loadAll().whenComplete((prepared, err) -> {
                 long durationMs = (System.nanoTime() - startTime) / 1_000_000;
                 if (err != null) {
                     LumenLogger.severe("Failed to load scripts on startup (async): " + err.getMessage());
@@ -223,7 +225,7 @@ public final class Lumen extends JavaPlugin {
         } else {
             try {
                 long startTime = System.nanoTime();
-                ScriptManager.loadAllSync();
+                Scripts.loadAllBlocking();
                 long durationMs = (System.nanoTime() - startTime) / 1_000_000;
                 LumenLogger.info("Loaded all scripts in " + durationMs + "ms");
             } catch (Throwable t) {
@@ -270,7 +272,7 @@ public final class Lumen extends JavaPlugin {
         CompilerClasspath.setReduceClasspath(LumenConfiguration.PERFORMANCE.REDUCE_CLASSPATH);
         ScriptCompiler.setBackend(pickBackend());
         if (LumenConfiguration.PERFORMANCE.WARMUP_ON_STARTUP) {
-            Thread warmup = new Thread(ScriptManager::warmup, "Lumen-Warmup");
+            Thread warmup = new Thread(Scripts::warmup, "Lumen-Warmup");
             warmup.setDaemon(true);
             warmup.start();
         }

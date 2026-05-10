@@ -6,9 +6,6 @@ import dev.lumenlang.lumen.api.ConfigOverride;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.LumenAddon;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler;
-import dev.lumenlang.lumen.api.type.LumenType;
-import dev.lumenlang.lumen.api.type.LumenTypeRegistry;
-import dev.lumenlang.lumen.api.type.ObjectType;
 import dev.lumenlang.lumen.api.type.PrimitiveType;
 import dev.lumenlang.lumen.debug.auth.policy.AuthManager;
 import dev.lumenlang.lumen.debug.auth.store.TrustStore;
@@ -16,21 +13,16 @@ import dev.lumenlang.lumen.debug.command.LumenDebugCommand;
 import dev.lumenlang.lumen.debug.hook.ScriptHooks;
 import dev.lumenlang.lumen.debug.log.AnsiBanner;
 import dev.lumenlang.lumen.debug.server.DebugServer;
+import dev.lumenlang.lumen.debug.server.snippet.SnippetTypeResolver;
 import dev.lumenlang.lumen.debug.session.DebugSession;
 import dev.lumenlang.lumen.debug.transform.LineInstrumentTransformer;
 import dev.lumenlang.lumen.plugin.Lumen;
 import dev.lumenlang.lumen.plugin.configuration.LumenConfiguration;
-import dev.lumenlang.lumen.plugin.scripts.CompiledClassCache;
-import dev.lumenlang.lumen.plugin.scripts.ScriptManager;
+import dev.lumenlang.lumen.plugin.scripts.Scripts;
+import dev.lumenlang.lumen.plugin.scripts.cache.CompiledClassCache;
 import org.jetbrains.annotations.NotNull;
 
-import java.nio.file.Path;
-import java.util.ArrayDeque;
-import java.util.Collections;
-import java.util.Deque;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -58,55 +50,8 @@ public final class LumenDebugAddon implements LumenAddon {
                         return new ExpressionHandler.ExpressionResult("ScriptHooks.snippetVars().get(\"" + varName + "\")", PrimitiveType.STRING);
                     }
                     if (meta.importClass() != null) ctx.codegen().addImport(meta.importClass());
-                    LumenType type = resolveSnippetType(meta);
-                    String java = "((" + meta.castType() + ") ScriptHooks.snippetVars().get(\"" + varName + "\"))";
-                    return new ExpressionHandler.ExpressionResult(java, type);
+                    return new ExpressionHandler.ExpressionResult("((" + meta.castType() + ") ScriptHooks.snippetVars().get(\"" + varName + "\"))", SnippetTypeResolver.lumenTypeOf(meta));
                 }));
-    }
-
-    private static @NotNull LumenType resolveSnippetType(@NotNull ScriptHooks.SnippetVarMeta meta) {
-        if (meta.refTypeId() != null) {
-            ObjectType ot = LumenTypeRegistry.byId(meta.refTypeId());
-            if (ot != null) return ot;
-        }
-        if (meta.javaType() != null) {
-            PrimitiveType p = PrimitiveType.fromJavaType(meta.javaType());
-            if (p != null) return p;
-        }
-        return PrimitiveType.STRING;
-    }
-
-    /**
-     * Resolves the Lumen type metadata for a live runtime object by walking the class
-     * hierarchy and interface tree and matching each type against the registered
-     * {@link LumenTypeRegistry}.
-     *
-     * @param value the runtime object
-     */
-    public static @NotNull ScriptHooks.SnippetVarMeta resolveType(@NotNull Object value) {
-        if (value instanceof String) return new ScriptHooks.SnippetVarMeta("String", null, "String", null);
-        if (value instanceof Integer) return new ScriptHooks.SnippetVarMeta("Integer", null, "int", null);
-        if (value instanceof Double) return new ScriptHooks.SnippetVarMeta("Double", null, "double", null);
-        if (value instanceof Long) return new ScriptHooks.SnippetVarMeta("Long", null, "long", null);
-        if (value instanceof Float) return new ScriptHooks.SnippetVarMeta("Float", null, "float", null);
-        if (value instanceof Boolean) return new ScriptHooks.SnippetVarMeta("Boolean", null, "boolean", null);
-        return resolveObjectType(value.getClass());
-    }
-
-    private static @NotNull ScriptHooks.SnippetVarMeta resolveObjectType(@NotNull Class<?> start) {
-        Deque<Class<?>> queue = new ArrayDeque<>();
-        Set<Class<?>> visited = new HashSet<>();
-        queue.add(start);
-        while (!queue.isEmpty()) {
-            Class<?> cls = queue.poll();
-            if (cls == null || cls == Object.class || !visited.add(cls)) continue;
-            ObjectType found = LumenTypeRegistry.fromJava(cls.getName());
-            if (found != null)
-                return new ScriptHooks.SnippetVarMeta(cls.getSimpleName(), found.id(), null, cls.getName());
-            if (cls.getSuperclass() != null) queue.add(cls.getSuperclass());
-            Collections.addAll(queue, cls.getInterfaces());
-        }
-        return new ScriptHooks.SnippetVarMeta("Object", null, null, null);
     }
 
     @Override
@@ -143,13 +88,11 @@ public final class LumenDebugAddon implements LumenAddon {
         registerSnippetVarExpression(api);
 
         LumenConfiguration.Debug.Service cfg = LumenConfiguration.DEBUG.SERVICE;
-        Path trustFile = Lumen.instance().getDataFolder().toPath().resolve("debug-trust.json");
-        TrustStore trust = new TrustStore(trustFile);
-        AuthManager auth = new AuthManager(trust);
+        AuthManager auth = new AuthManager(new TrustStore(Lumen.instance().getDataFolder().toPath().resolve("debug-trust.json")));
 
         server = new DebugServer(cfg.BIND_HOST, cfg.PORT, auth, session, transformer, (name, source) -> {
             CompiledClassCache.invalidate(name);
-            return ScriptManager.load(name, source);
+            return Scripts.load(name, source);
         });
 
         LumenDebugCommand.register(auth, req -> {

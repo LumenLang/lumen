@@ -1,5 +1,6 @@
 package dev.lumenlang.lumen.pipeline.addon;
 
+import dev.lumenlang.lumen.api.binder.BindingMode;
 import dev.lumenlang.lumen.api.binder.ScriptAnnotationBinder;
 import dev.lumenlang.lumen.api.binder.ScriptBinderRegistrar;
 import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
@@ -9,8 +10,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * Internal implementation of {@link ScriptBinderRegistrar} that stores registered
- * binders and exposes them for use by the script binding system.
+ * Stores registered binders and dispatches bind/unbind calls to all of them.
  */
 public final class ScriptBinderManager implements ScriptBinderRegistrar {
 
@@ -21,30 +21,18 @@ public final class ScriptBinderManager implements ScriptBinderRegistrar {
         binders.add(binder);
     }
 
-    /**
-     * Binds all registered binders to the given script instance.
-     *
-     * @param instance the script instance
-     * @param clazz    the script class
-     */
     public void bindAll(@NotNull Object instance, @NotNull Class<?> clazz) {
         for (ScriptAnnotationBinder binder : binders) {
             binder.bind(instance, clazz);
         }
     }
 
-    /**
-     * Unbinds all registered binders from the given script instance.
-     *
-     * @param instance the script instance
-     */
-    public void unbindAll(@NotNull Object instance) {
+    public void unbindAll(@NotNull Object instance, @NotNull BindingMode mode) {
         for (ScriptAnnotationBinder binder : binders) {
             try {
-                binder.unbind(instance);
+                binder.unbind(instance, mode);
             } catch (Throwable t) {
-                LumenLogger.severe("Failed to unbind " + binder.getClass().getSimpleName()
-                        + " for " + instance.getClass().getSimpleName(), t);
+                LumenLogger.severe("Failed to unbind " + binder.getClass().getSimpleName() + " for " + instance.getClass().getSimpleName(), t);
             }
         }
     }

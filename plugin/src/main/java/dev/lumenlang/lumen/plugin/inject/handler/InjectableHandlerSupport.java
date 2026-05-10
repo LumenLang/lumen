@@ -2,6 +2,7 @@ package dev.lumenlang.lumen.plugin.inject.handler;
 
 import dev.lumenlang.lumen.api.codegen.CodegenContext;
 import dev.lumenlang.lumen.api.type.LumenType;
+import dev.lumenlang.lumen.pipeline.java.compiled.ClassBuilder;
 import dev.lumenlang.lumen.plugin.inject.bytecode.ExtractedBody;
 import dev.lumenlang.lumen.plugin.inject.bytecode.InjectableMethod;
 import dev.lumenlang.lumen.plugin.inject.bytecode.InjectableRegistry;
@@ -264,7 +265,7 @@ public final class InjectableHandlerSupport {
                 sig.append(" }");
                 codegen.addMethod(sig.toString());
 
-                InjectableRegistry.register("dev.lumenlang.lumen.java.compiled." + codegen.className(), new InjectableMethod(methodName, returnType, paramTypes, paramBindings, extractedBody));
+                InjectableRegistry.register(ClassBuilder.fqcn(codegen.className()), new InjectableMethod(methodName, returnType, paramTypes, paramBindings, extractedBody));
             }
         }
 

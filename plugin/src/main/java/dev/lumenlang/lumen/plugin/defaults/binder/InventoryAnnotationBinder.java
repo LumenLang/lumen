@@ -3,6 +3,7 @@ package dev.lumenlang.lumen.plugin.defaults.binder;
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.annotations.Call;
 import dev.lumenlang.lumen.api.annotations.Registration;
+import dev.lumenlang.lumen.api.binder.BindingMode;
 import dev.lumenlang.lumen.api.binder.ScriptAnnotationBinder;
 import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
 import dev.lumenlang.lumen.plugin.annotations.LumenInventory;
@@ -45,7 +46,7 @@ public final class InventoryAnnotationBinder implements ScriptAnnotationBinder {
     }
 
     @Override
-    public void unbind(@NotNull Object instance) {
+    public void unbind(@NotNull Object instance, @NotNull BindingMode mode) {
         InventoryRegistry.clearInstance(instance);
     }
 }

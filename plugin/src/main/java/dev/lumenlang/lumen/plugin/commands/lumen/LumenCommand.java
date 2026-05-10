@@ -3,8 +3,9 @@ package dev.lumenlang.lumen.plugin.commands.lumen;
 import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
 import dev.lumenlang.lumen.pipeline.persist.PersistentVars;
 import dev.lumenlang.lumen.plugin.commands.CommandRegistry;
-import dev.lumenlang.lumen.plugin.scripts.ScriptManager;
-import dev.lumenlang.lumen.plugin.scripts.ScriptSourceLoader;
+import dev.lumenlang.lumen.plugin.scripts.Scripts;
+import dev.lumenlang.lumen.plugin.scripts.runtime.ScriptLifecycle;
+import dev.lumenlang.lumen.plugin.scripts.source.ScriptSourceLoader;
 import dev.lumenlang.lumen.plugin.text.LumenText;
 import net.vansencool.lsyaml.binding.ConfigLoader;
 import org.bukkit.command.Command;
@@ -57,7 +58,7 @@ public final class LumenCommand implements CommandExecutor, TabCompleter {
             String target = args[1];
 
             if (target.equalsIgnoreCase("scripts")) {
-                ScriptManager.loadAll().thenAccept(prepared -> {
+                Scripts.loadAll().thenAccept(prepared -> {
                     if (prepared.isEmpty()) {
                         LumenText.send(sender, OK + "No scripts found");
                         return;
@@ -105,7 +106,7 @@ public final class LumenCommand implements CommandExecutor, TabCompleter {
 
             try {
                 String src = ScriptSourceLoader.load(target);
-                ScriptManager.load(target, src).thenAccept(time -> LumenText.send(sender, OK +
+                Scripts.load(target, src).thenAccept(time -> LumenText.send(sender, OK +
                         "Reloaded " + target +
                         " | parse " + (time.parseNanos() / 1_000_000.0) + "ms" +
                         " | compile " + (time.compileNanos() / 1_000_000.0) + "ms")).exceptionally(t -> {
@@ -131,7 +132,7 @@ public final class LumenCommand implements CommandExecutor, TabCompleter {
             String name = args[1];
 
             try {
-                ScriptManager.unload(name);
+                ScriptLifecycle.unload(name);
                 LumenText.send(sender, OK + "Unloaded script " + name);
             } catch (Throwable t) {
                 LumenText.send(sender, RED + "Unload failed: " + t.getMessage());

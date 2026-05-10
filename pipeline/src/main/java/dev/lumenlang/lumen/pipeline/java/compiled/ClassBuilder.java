@@ -18,15 +18,26 @@ import java.util.TreeMap;
  */
 public final class ClassBuilder {
 
+    /**
+     * Package every generated script class is emitted into.
+     */
+    public static final String PACKAGE = "dev.lumenlang.lumen.java.compiled";
+
+    /**
+     * Fully qualified class name for a script class with the given simple name.
+     */
+    public static @NotNull String fqcn(@NotNull String className) {
+        return PACKAGE + "." + normalize(className);
+    }
+
     public static String buildClass(@NotNull String className, @NotNull CodegenContextImpl ctx, @NotNull JavaBuilder code) {
         return buildClass(className, ctx, code, true);
     }
 
     public static String buildClass(@NotNull String className, @NotNull CodegenContextImpl ctx, @NotNull JavaBuilder code, boolean formatted) {
-
         StringBuilder sb = new StringBuilder();
 
-        sb.append("package dev.lumenlang.lumen.java.compiled;\n\n");
+        sb.append("package ").append(PACKAGE).append(";\n\n");
 
         for (String defaultImport : DefaultImportRegistry.all()) {
             ctx.addImport(defaultImport);
