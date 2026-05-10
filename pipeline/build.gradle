@@ -1,5 +1,8 @@
 dependencies {
     api project(':api')
+    // pinned to 2.10 to match the version transitively pulled into :plugin so a
+    // single Gson lands in the shaded jar.
+    api 'com.google.code.gson:gson:2.10'
 }
 
 jar {

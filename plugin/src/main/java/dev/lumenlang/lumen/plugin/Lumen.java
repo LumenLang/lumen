@@ -7,6 +7,7 @@ import dev.lumenlang.lumen.api.LumenAddon;
 import dev.lumenlang.lumen.api.LumenProvider;
 import dev.lumenlang.lumen.api.StringConfigOverride;
 import dev.lumenlang.lumen.api.scanner.RegistrationScanner;
+import dev.lumenlang.lumen.pipeline.inject.loader.AnnotatedHandlerLoader;
 import dev.lumenlang.lumen.api.type.BuiltinLumenTypes;
 import dev.lumenlang.lumen.api.type.MinecraftTypes;
 import dev.lumenlang.lumen.api.version.MinecraftVersion;
@@ -204,6 +205,7 @@ public final class Lumen extends JavaPlugin {
 
         RegistrationScanner.init(new RegistrationScannerBackend(lumenApi));
         RegistrationScanner.scan("dev.lumenlang.lumen.plugin.defaults");
+        AnnotatedHandlerLoader.load(lumenApi, Lumen.class.getClassLoader(), "Lumen");
         patternRegistry.warmup();
     }
 

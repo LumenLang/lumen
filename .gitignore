@@ -30,13 +30,17 @@
 !headless/
 !headless/**
 
+!build-plugins/
+!build-plugins/**
+
 !docs/
 !docs/**
 
 !LICENSE*
 !README.md
 
-build/
-**/build/
+/build/
+/*/build/
+/build-plugins/*/build/
 plugin/run/
 plugin/.gradle/

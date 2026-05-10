@@ -5,3 +5,6 @@ plugins {
 rootProject.name = 'lumen'
 
 include 'api', 'pipeline', 'plugin', 'debug', 'console-utils', 'headless'
+
+include ':build-plugin-core'
+project(':build-plugin-core').projectDir = file('build-plugins/core')
