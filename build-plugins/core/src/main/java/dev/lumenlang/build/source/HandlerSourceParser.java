@@ -37,7 +37,6 @@ public final class HandlerSourceParser {
      */
     public static @Nullable ParsedHandlerSource parse(@NotNull Path sourceFile, @NotNull String simpleClassName, @NotNull String methodName, int parameterCount) throws IOException {
         String sourceText = Files.readString(sourceFile);
-        List<PhaseMarker> markers = PhaseMarkerScanner.scan(sourceText);
 
         List<Token> tokens = new Lexer(sourceText).tokenize();
         CompilationUnit unit = new Parser(tokens).parse();
@@ -48,6 +47,7 @@ public final class HandlerSourceParser {
         MethodDeclaration method = findMethod(owner, methodName, parameterCount);
         if (method == null) return null;
 
+        List<PhaseMarker> markers = PhaseMarkerScanner.scan(unit.commentTable());
         return new ParsedHandlerSource(sourceFile, sourceText, unit, method, markers);
     }
 

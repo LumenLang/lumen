@@ -8,6 +8,7 @@ import dev.lumenlang.build.io.BuildInputs;
 import dev.lumenlang.build.result.BuildResult;
 import dev.lumenlang.build.result.Diagnostic;
 import dev.lumenlang.build.result.Severity;
+import dev.lumenlang.build.rewrite.MethodTrimmer;
 import dev.lumenlang.build.scan.ClassScanner;
 import dev.lumenlang.build.scan.handler.ScannedHandler;
 import dev.lumenlang.build.source.HandlerSourceParser;
@@ -59,8 +60,21 @@ public final class BuildPipeline {
             return new BuildResult(0, 0, List.copyOf(diagnostics));
         }
 
+        trimCompileSections(parsedByHandler, diagnostics);
+        if (hasErrors(diagnostics)) return new BuildResult(0, 0, List.copyOf(diagnostics));
+
         int sourceEntries = writeSidecars(scanned, parsedByHandler, inputs, diagnostics);
         return new BuildResult(scanned.size(), sourceEntries, List.copyOf(diagnostics));
+    }
+
+    private static void trimCompileSections(@NotNull Map<ScannedHandler, ParsedHandlerSource> parsedByHandler, @NotNull List<Diagnostic> diagnostics) {
+        for (Map.Entry<ScannedHandler, ParsedHandlerSource> entry : parsedByHandler.entrySet()) {
+            try {
+                MethodTrimmer.trim(entry.getKey(), entry.getValue());
+            } catch (IOException e) {
+                diagnostics.add(new Diagnostic(Severity.ERROR, "Failed to trim runtime section out of '" + entry.getKey().methodName() + "': " + e.getMessage(), entry.getValue().sourceFile(), 0, 0));
+            }
+        }
     }
 
     /**

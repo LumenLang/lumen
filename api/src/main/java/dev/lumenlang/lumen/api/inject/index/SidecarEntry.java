@@ -18,6 +18,7 @@ import java.util.List;
  * @param runtimeBodyLines runtime body broken into top-level Java statements, in source order
  * @param returnExpression for single-{@code return} runtime bodies, the expression after {@code return} and before the trailing {@code ;}, otherwise null
  * @param alwaysThrows     true when the runtime body's only top-level statement is a {@code throw}
+ * @param wantsContext     true when the original method takes a {@code HandlerContext} first argument; runtime invokes the trimmed method at codegen
  */
-public record SidecarEntry(@NotNull String owner, @NotNull String method, @NotNull String descriptor, @NotNull List<String> imports, @Nullable String compileSource, @NotNull List<String> runtimeBodyLines, @Nullable String returnExpression, boolean alwaysThrows) {
+public record SidecarEntry(@NotNull String owner, @NotNull String method, @NotNull String descriptor, @NotNull List<String> imports, @Nullable String compileSource, @NotNull List<String> runtimeBodyLines, @Nullable String returnExpression, boolean alwaysThrows, boolean wantsContext) {
 }

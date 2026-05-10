@@ -52,7 +52,7 @@ public final class AnnotatedHandlerLoader {
         int registered = 0;
         for (IndexedHandler entry : entries) {
             try {
-                registerOne(api, owner, entry);
+                registerOne(api, owner, loader, entry);
                 registered++;
             } catch (Throwable t) {
                 LumenLogger.warning("Failed to register annotation handler '" + entry.method() + "' from '" + owner + "': " + t.getMessage());
@@ -63,32 +63,32 @@ public final class AnnotatedHandlerLoader {
         }
     }
 
-    private static void registerOne(@NotNull LumenAPI api, @NotNull String owner, @NotNull IndexedHandler entry) {
+    private static void registerOne(@NotNull LumenAPI api, @NotNull String owner, @NotNull ClassLoader loader, @NotNull IndexedHandler entry) {
         switch (entry.kind()) {
-            case "Statement" -> api.patterns().statement(b -> applyStatement(b, owner, entry));
-            case "Expression" -> api.patterns().expression(b -> applyExpression(b, owner, entry));
-            case "Condition" -> api.patterns().condition(b -> applyCondition(b, owner, entry));
+            case "Statement" -> api.patterns().statement(b -> applyStatement(b, owner, loader, entry));
+            case "Expression" -> api.patterns().expression(b -> applyExpression(b, owner, loader, entry));
+            case "Condition" -> api.patterns().condition(b -> applyCondition(b, owner, loader, entry));
             default -> throw new IllegalStateException("Unknown handler kind: " + entry.kind());
         }
     }
 
-    private static void applyStatement(@NotNull StatementBuilder b, @NotNull String owner, @NotNull IndexedHandler entry) {
+    private static void applyStatement(@NotNull StatementBuilder b, @NotNull String owner, @NotNull ClassLoader loader, @NotNull IndexedHandler entry) {
         applyCommon(b, owner, entry);
-        StatementHandler handler = new SidecarStatementHandler(entry.owner(), entry.method(), entry.descriptor(), entry.params(), entry.methodBased());
+        StatementHandler handler = new SidecarStatementHandler(entry, loader);
         b.handler(handler);
     }
 
-    private static void applyExpression(@NotNull ExpressionBuilder b, @NotNull String owner, @NotNull IndexedHandler entry) {
+    private static void applyExpression(@NotNull ExpressionBuilder b, @NotNull String owner, @NotNull ClassLoader loader, @NotNull IndexedHandler entry) {
         applyCommon(b, owner, entry);
         String javaReturnType = returnJavaTypeOf(entry);
         LumenType lumenReturnType = lumenTypeOf(entry, javaReturnType);
-        ExpressionHandler handler = new SidecarExpressionHandler(entry.owner(), entry.method(), entry.descriptor(), entry.params(), lumenReturnType, javaReturnType);
+        ExpressionHandler handler = new SidecarExpressionHandler(entry, loader, lumenReturnType, javaReturnType);
         b.handler(handler);
     }
 
-    private static void applyCondition(@NotNull ConditionBuilder b, @NotNull String owner, @NotNull IndexedHandler entry) {
+    private static void applyCondition(@NotNull ConditionBuilder b, @NotNull String owner, @NotNull ClassLoader loader, @NotNull IndexedHandler entry) {
         applyCommon(b, owner, entry);
-        ConditionHandler handler = new SidecarConditionHandler(entry.owner(), entry.method(), entry.descriptor(), entry.params());
+        ConditionHandler handler = new SidecarConditionHandler(entry, loader);
         b.handler(handler);
     }
 

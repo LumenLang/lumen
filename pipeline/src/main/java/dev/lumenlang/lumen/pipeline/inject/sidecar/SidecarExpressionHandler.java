@@ -2,6 +2,7 @@ package dev.lumenlang.lumen.pipeline.inject.sidecar;
 
 import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import dev.lumenlang.lumen.api.handler.ExpressionHandler;
+import dev.lumenlang.lumen.api.inject.index.IndexedHandler;
 import dev.lumenlang.lumen.api.inject.index.IndexedParam;
 import dev.lumenlang.lumen.api.inject.index.SidecarEntry;
 import dev.lumenlang.lumen.api.type.LumenType;
@@ -19,28 +20,27 @@ import java.util.Map;
  */
 public final class SidecarExpressionHandler implements ExpressionHandler {
 
-    private final @NotNull String owner;
-    private final @NotNull String method;
-    private final @NotNull String descriptor;
+    private final @NotNull IndexedHandler indexed;
+    private final @NotNull ClassLoader addonLoader;
     private final @NotNull List<IndexedParam> params;
     private final @NotNull LumenType returnType;
     private final @NotNull String javaReturnType;
 
-    public SidecarExpressionHandler(@NotNull String owner, @NotNull String method, @NotNull String descriptor, @NotNull List<IndexedParam> params, @NotNull LumenType returnType, @NotNull String javaReturnType) {
-        this.owner = owner;
-        this.method = method;
-        this.descriptor = descriptor;
-        this.params = params;
+    public SidecarExpressionHandler(@NotNull IndexedHandler indexed, @NotNull ClassLoader addonLoader, @NotNull LumenType returnType, @NotNull String javaReturnType) {
+        this.indexed = indexed;
+        this.addonLoader = addonLoader;
+        this.params = indexed.params();
         this.returnType = returnType;
         this.javaReturnType = javaReturnType;
     }
 
     @Override
     public @NotNull ExpressionResult handle(@NotNull HandlerContext ctx) {
-        SidecarEntry entry = SidecarReader.find(owner, method, descriptor);
+        SidecarEntry entry = SidecarReader.find(indexed.owner(), indexed.method(), indexed.descriptor());
         if (entry == null) {
-            throw new IllegalStateException("No sidecar entry for expression handler " + owner + "#" + method + descriptor);
+            throw new IllegalStateException("No sidecar entry for expression handler " + indexed.owner() + "#" + indexed.method() + indexed.descriptor());
         }
+        if (entry.wantsContext()) CompileSectionInvoker.invoke(addonLoader, indexed, ctx);
         if (entry.returnExpression() != null) {
             SidecarBindings.addImports(ctx, entry);
             Map<String, String> bindings = SidecarBindings.resolve(ctx, placeholderNames());

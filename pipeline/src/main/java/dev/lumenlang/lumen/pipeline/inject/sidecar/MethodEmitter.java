@@ -1,39 +1,52 @@
 package dev.lumenlang.lumen.pipeline.inject.sidecar;
 
+import dev.lumenlang.lumen.api.codegen.CodegenContext;
 import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import dev.lumenlang.lumen.api.inject.index.IndexedParam;
 import dev.lumenlang.lumen.api.inject.index.SidecarEntry;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.WeakHashMap;
 
 /**
  * Emits a static method onto the script class and returns a call expression
  * to it. Used when a handler body has more than a single statement so the
  * runtime body cannot be inlined as a value.
+ *
+ * <p>Each handler emits at most one method per script: subsequent calls in
+ * the same script reuse the previously chosen name. The method name is the
+ * handler's own method name with each {@code @Inject} parameter's simple
+ * class name appended (first letter uppercased). On collision with a name
+ * already used in the script class, a numeric suffix ({@code 2}, {@code 3},
+ * ...) is appended.
  */
 public final class MethodEmitter {
 
-    private static final String METHOD_PREFIX = "__lumen_inj_";
+    private static final Map<CodegenContext, Map<String, String>> CACHED_NAMES = Collections.synchronizedMap(new WeakHashMap<>());
+    private static final Map<CodegenContext, Set<String>> USED_NAMES = Collections.synchronizedMap(new WeakHashMap<>());
 
     private MethodEmitter() {
     }
 
-    /**
-     * @param ctx        active handler context
-     * @param entry      preserved sidecar source for the handler
-     * @param params     {@code @Inject} param descriptors in declaration order
-     * @param returnType Java return type of the handler (e.g. {@code "boolean"}, {@code "org.bukkit.Location"}, {@code "void"})
-     * @return a call expression like {@code __lumen_inj_setFire_3(player)} that
-     * invokes the emitted method with each placeholder bound through {@code ctx.java(name)}
-     */
     public static @NotNull String emit(@NotNull HandlerContext ctx, @NotNull SidecarEntry entry, @NotNull List<IndexedParam> params, @NotNull String returnType) {
         SidecarBindings.addImports(ctx, entry);
         addParamImports(ctx, params);
         addImportFor(ctx, returnType);
 
-        String methodName = METHOD_PREFIX + entry.method() + "_" + ctx.codegen().nextMethodId();
-        ctx.codegen().addMethod(buildMethodSource(methodName, entry, params, simpleNameOf(returnType)));
+        String key = entry.owner() + "#" + entry.method() + entry.descriptor();
+        Map<String, String> namesForCtx = CACHED_NAMES.computeIfAbsent(ctx.codegen(), k -> new HashMap<>());
+        String methodName = namesForCtx.get(key);
+        if (methodName == null) {
+            methodName = pickName(ctx.codegen(), entry, params);
+            namesForCtx.put(key, methodName);
+            ctx.codegen().addMethod(buildMethodSource(methodName, entry, params, simpleNameOf(returnType)));
+        }
 
         StringBuilder call = new StringBuilder();
         call.append(methodName).append('(');
@@ -43,6 +56,26 @@ public final class MethodEmitter {
         }
         call.append(')');
         return call.toString();
+    }
+
+    private static @NotNull String pickName(@NotNull CodegenContext codegen, @NotNull SidecarEntry entry, @NotNull List<IndexedParam> params) {
+        String base = baseName(entry.method(), params);
+        Set<String> used = USED_NAMES.computeIfAbsent(codegen, k -> new HashSet<>());
+        if (used.add(base)) return base;
+        int suffix = 2;
+        while (!used.add(base + suffix)) suffix++;
+        return base + suffix;
+    }
+
+    private static @NotNull String baseName(@NotNull String methodName, @NotNull List<IndexedParam> params) {
+        StringBuilder sb = new StringBuilder(methodName);
+        for (IndexedParam p : params) sb.append(capitalize(Descriptors.simpleNameOf(p.descriptor())));
+        return sb.toString();
+    }
+
+    private static @NotNull String capitalize(@NotNull String s) {
+        if (s.isEmpty()) return s;
+        return Character.toUpperCase(s.charAt(0)) + s.substring(1);
     }
 
     private static @NotNull String buildMethodSource(@NotNull String name, @NotNull SidecarEntry entry, @NotNull List<IndexedParam> params, @NotNull String returnTypeSimple) {

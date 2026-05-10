@@ -5,13 +5,17 @@ import dev.lumenlang.build.io.BuildInputs;
 import dev.lumenlang.build.result.BuildResult;
 import dev.lumenlang.build.result.Diagnostic;
 import dev.lumenlang.build.result.Severity;
+import dev.lumenlang.build.validate.inject.BindingTableLoader;
 import dev.lumenlang.build.validate.inject.BindingTypeTable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.DirectoryProperty;
+import org.gradle.api.provider.Property;
+import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputDirectory;
 import org.gradle.api.tasks.InputFiles;
+import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
 import org.jetbrains.annotations.NotNull;
@@ -37,6 +41,15 @@ public abstract class LumenBuildTask extends DefaultTask {
     @OutputDirectory
     public abstract DirectoryProperty getResourcesDir();
 
+    /**
+     * URL of the gzipped {@code .ldoc} doc bundle whose {@code typeBindings}
+     * entries seed the inject-type validator. Defaults to the official
+     * Lumen distribution.
+     */
+    @Input
+    @Optional
+    public abstract Property<String> getDocUrl();
+
     @TaskAction
     public void run() {
         Path classesDir = getClassesDir().get().getAsFile().toPath();
@@ -44,7 +57,8 @@ public abstract class LumenBuildTask extends DefaultTask {
         List<Path> sourceDirs = new ArrayList<>();
         for (File f : getSourceDirs().getFiles()) sourceDirs.add(f.toPath());
 
-        BuildResult result = LumenBuild.run(new BuildInputs(classesDir, sourceDirs, resourcesDir, new BindingTypeTable(Map.of()), false, new GradleBridgeLogger(this)));
+        BindingTypeTable bindings = loadBindings();
+        BuildResult result = LumenBuild.run(new BuildInputs(classesDir, sourceDirs, resourcesDir, bindings, false, new GradleBridgeLogger(this)));
 
         boolean hasError = false;
         for (Diagnostic d : result.diagnostics()) {
@@ -56,9 +70,20 @@ public abstract class LumenBuildTask extends DefaultTask {
                 getLogger().warn("[Lumen] {}", message);
             }
         }
-        getLogger().lifecycle("[Lumen] processed={} sidecarEntries={}", result.rewrittenClasses(), result.sourceEntriesEmitted());
+        getLogger().lifecycle("[Lumen] processed={} sidecarEntries={} bindingsLoaded={}", result.rewrittenClasses(), result.sourceEntriesEmitted(), bindings.bindings().size());
         if (hasError) {
             throw new GradleException("Lumen build failed; see diagnostics above.");
+        }
+    }
+
+    private @NotNull BindingTypeTable loadBindings() {
+        String url = getDocUrl().getOrElse("https://lumenlang.dev/Lumen-documentation.ldoc");
+        Path cacheDir = getProject().getGradle().getGradleUserHomeDir().toPath().resolve("caches/lumen");
+        try {
+            return BindingTableLoader.loadFromUrl(url, cacheDir);
+        } catch (Exception e) {
+            getLogger().warn("[Lumen] Failed to load binding table from {}: {}. Type checks will warn instead of error.", url, e.getMessage());
+            return new BindingTypeTable(Map.of());
         }
     }
 

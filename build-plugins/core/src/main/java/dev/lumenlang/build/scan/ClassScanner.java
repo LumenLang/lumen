@@ -45,6 +45,7 @@ public final class ClassScanner {
     private static final String CATEGORY_DESC = ANNOTATION_PKG + "Category;";
     private static final String DEPRECATED_DESC = "Ljava/lang/Deprecated;";
     private static final String METHOD_BASED_DESC = ANNOTATION_PKG + "MethodBased;";
+    private static final String HANDLER_CONTEXT_DESC = "Ldev/lumenlang/lumen/api/codegen/HandlerContext;";
 
     private ClassScanner() {
     }
@@ -91,8 +92,14 @@ public final class ClassScanner {
         List<InjectParam> injects = collectInjectParams(method);
         HandlerMeta meta = collectMeta(method);
         boolean methodBased = hasAnnotation(method, METHOD_BASED_DESC);
+        boolean wantsContext = firstParamIsContext(method);
 
-        return new ScannedHandler(owner.name, classFile, method.name, method.desc, kind, patterns, injects, meta, methodBased);
+        return new ScannedHandler(owner.name, classFile, method.name, method.desc, kind, patterns, injects, meta, methodBased, wantsContext);
+    }
+
+    private static boolean firstParamIsContext(@NotNull MethodNode method) {
+        Type[] argTypes = Type.getArgumentTypes(method.desc);
+        return argTypes.length > 0 && HANDLER_CONTEXT_DESC.equals(argTypes[0].getDescriptor());
     }
 
     private static boolean hasAnnotation(@NotNull MethodNode method, @NotNull String desc) {

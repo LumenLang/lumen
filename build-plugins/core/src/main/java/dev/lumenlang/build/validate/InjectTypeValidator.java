@@ -23,8 +23,8 @@ import java.util.Map;
  * diagnostic.
  *
  * <p>Unknown binding ids (not present in the supplied {@link BindingTypeTable})
- * fall through as warnings, never as errors. The table is best-effort because
- * the build plugin runs without the full Lumen type registry available.
+ * are skipped without diagnostic. The table is best-effort and other addons
+ * register their own bindings the build plugin cannot see.
  */
 public final class InjectTypeValidator {
 
@@ -46,10 +46,7 @@ public final class InjectTypeValidator {
             }
 
             String expected = table.descriptorOf(bindingId);
-            if (expected == null) {
-                diagnostics.add(new Diagnostic(Severity.WARNING, "Type binding '" + bindingId + "' is not in the build-time table; @Inject parameter '" + name + "' type cannot be verified", parsed.sourceFile(), parsed.method().line(), 0));
-                continue;
-            }
+            if (expected == null) continue;
 
             if (!expected.equals(param.javaType())) {
                 diagnostics.add(new Diagnostic(Severity.ERROR, "@Inject parameter '" + name + "' has type '" + param.javaType() + "' but binding '" + bindingId + "' produces '" + expected + "'", parsed.sourceFile(), parsed.method().line(), 0));

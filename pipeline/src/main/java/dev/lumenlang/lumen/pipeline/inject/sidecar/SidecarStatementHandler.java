@@ -2,6 +2,7 @@ package dev.lumenlang.lumen.pipeline.inject.sidecar;
 
 import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import dev.lumenlang.lumen.api.handler.StatementHandler;
+import dev.lumenlang.lumen.api.inject.index.IndexedHandler;
 import dev.lumenlang.lumen.api.inject.index.IndexedParam;
 import dev.lumenlang.lumen.api.inject.index.SidecarEntry;
 import dev.lumenlang.lumen.pipeline.inject.loader.SidecarReader;
@@ -19,26 +20,25 @@ import java.util.Map;
  */
 public final class SidecarStatementHandler implements StatementHandler {
 
-    private final @NotNull String owner;
-    private final @NotNull String method;
-    private final @NotNull String descriptor;
+    private final @NotNull IndexedHandler indexed;
+    private final @NotNull ClassLoader addonLoader;
     private final @NotNull List<IndexedParam> params;
     private final boolean methodBased;
 
-    public SidecarStatementHandler(@NotNull String owner, @NotNull String method, @NotNull String descriptor, @NotNull List<IndexedParam> params, boolean methodBased) {
-        this.owner = owner;
-        this.method = method;
-        this.descriptor = descriptor;
-        this.params = params;
-        this.methodBased = methodBased;
+    public SidecarStatementHandler(@NotNull IndexedHandler indexed, @NotNull ClassLoader addonLoader) {
+        this.indexed = indexed;
+        this.addonLoader = addonLoader;
+        this.params = indexed.params();
+        this.methodBased = indexed.methodBased();
     }
 
     @Override
     public void handle(@NotNull HandlerContext ctx) {
-        SidecarEntry entry = SidecarReader.find(owner, method, descriptor);
+        SidecarEntry entry = SidecarReader.find(indexed.owner(), indexed.method(), indexed.descriptor());
         if (entry == null) {
-            throw new IllegalStateException("No sidecar entry for handler " + owner + "#" + method + descriptor);
+            throw new IllegalStateException("No sidecar entry for handler " + indexed.owner() + "#" + indexed.method() + indexed.descriptor());
         }
+        if (entry.wantsContext()) CompileSectionInvoker.invoke(addonLoader, indexed, ctx);
         if (methodBased) {
             ctx.out().line(MethodEmitter.emit(ctx, entry, params, "void") + ";");
             return;

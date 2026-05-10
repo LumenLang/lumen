@@ -37,6 +37,7 @@ public final class SidecarMapper {
                 List.copyOf(bodyLines),
                 StatementSlicer.returnExpression(runtimeStatements),
                 StatementSlicer.alwaysThrows(runtimeStatements));
+                // scanned.wantsContext()
     }
 
     private static @NotNull List<String> importsOf(@NotNull ParsedHandlerSource parsed) {
