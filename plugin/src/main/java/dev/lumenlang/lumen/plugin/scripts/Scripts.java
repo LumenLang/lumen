@@ -6,7 +6,6 @@ import dev.lumenlang.lumen.pipeline.java.compiler.ScriptClassLoader;
 import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
 import dev.lumenlang.lumen.plugin.Lumen;
 import dev.lumenlang.lumen.plugin.configuration.LumenConfiguration;
-import dev.lumenlang.lumen.plugin.inject.bytecode.InjectableRegistry;
 import dev.lumenlang.lumen.plugin.scripts.cache.CompiledClassCache;
 import dev.lumenlang.lumen.plugin.scripts.model.compiled.CompileTimings;
 import dev.lumenlang.lumen.plugin.scripts.model.compiled.PreparedScript;
@@ -221,12 +220,7 @@ public final class Scripts {
             LumenLogger.info("[Compilation] Parsed " + name + " in " + String.format("%.3f", parseNanos / 1_000_000.0) + " ms");
         }
 
-        try {
-            return ScriptCompilation.compileOne(generated, parseNanos);
-        } catch (RuntimeException e) {
-            InjectableRegistry.clear(generated.fqcn());
-            throw e;
-        }
+        return ScriptCompilation.compileOne(generated, parseNanos);
     }
 
     private static @Nullable PreparedScript tryCache(@NotNull String name, @NotNull String source) {

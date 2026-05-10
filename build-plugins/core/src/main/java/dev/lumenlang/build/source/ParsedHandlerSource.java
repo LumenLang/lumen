@@ -13,11 +13,13 @@ import java.util.List;
  * downstream checks have access to imports, sibling members, etc.), the
  * matched method declaration, the file path, and the captured phase markers.
  *
- * @param sourceFile     {@code .java} file the AST came from
- * @param sourceText     the file's full text, for slicing and the sidecar
+ * @param sourceFile      {@code .java} file the AST came from
+ * @param sourceText      the file's full text, for slicing and the sidecar
  * @param compilationUnit the parsed AST root
- * @param method         the {@link MethodDeclaration} that owns the handler body
- * @param markers        every phase marker captured before parsing, in source order
+ * @param method          the {@link MethodDeclaration} that owns the handler body
+ * @param markers         every phase marker captured before parsing, in source order
  */
-public record ParsedHandlerSource(@NotNull Path sourceFile, @NotNull String sourceText, @NotNull CompilationUnit compilationUnit, @NotNull MethodDeclaration method, @NotNull List<PhaseMarker> markers) {
+public record ParsedHandlerSource(@NotNull Path sourceFile, @NotNull String sourceText,
+                                  @NotNull CompilationUnit compilationUnit, @NotNull MethodDeclaration method,
+                                  @NotNull List<PhaseMarker> markers) {
 }

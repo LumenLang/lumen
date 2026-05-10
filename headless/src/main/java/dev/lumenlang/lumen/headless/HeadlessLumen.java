@@ -14,7 +14,6 @@ import dev.lumenlang.lumen.pipeline.bus.LumenEventBus;
 import dev.lumenlang.lumen.pipeline.codegen.CodegenContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.events.EventDefRegistry;
-import dev.lumenlang.lumen.pipeline.inject.InjectableHandlers;
 import dev.lumenlang.lumen.pipeline.java.JavaBuilder;
 import dev.lumenlang.lumen.pipeline.language.emit.CodeEmitter;
 import dev.lumenlang.lumen.pipeline.language.emit.EmitRegistry;
@@ -23,7 +22,6 @@ import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
 import dev.lumenlang.lumen.pipeline.typebinding.TypeRegistry;
 import dev.lumenlang.lumen.plugin.defaults.type.BuiltinTypeBindings;
-import dev.lumenlang.lumen.plugin.inject.InjectableHandlerFactoryImpl;
 import dev.lumenlang.lumen.plugin.scanner.RegistrationScannerBackend;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,7 +52,6 @@ public final class HeadlessLumen {
         MinecraftVersion.detect("1.20");
         MinecraftTypes.registerAll();
         BuiltinLumenTypes.registerAll();
-        InjectableHandlers.factory(new InjectableHandlerFactoryImpl());
 
         typeRegistry = new TypeRegistry();
         BuiltinTypeBindings.register(typeRegistry);

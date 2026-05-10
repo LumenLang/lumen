@@ -28,10 +28,10 @@ public final class HandlerSourceParser {
     }
 
     /**
-     * @param sourceFile        absolute path to the handler's source file
-     * @param simpleClassName   simple name of the class declaring the handler
-     * @param methodName        the handler method's identifier
-     * @param parameterCount    number of declared parameters on the handler
+     * @param sourceFile      absolute path to the handler's source file
+     * @param simpleClassName simple name of the class declaring the handler
+     * @param methodName      the handler method's identifier
+     * @param parameterCount  number of declared parameters on the handler
      * @return the parsed result, or null when the source can't be matched
      * @throws IOException when the file cannot be read
      */

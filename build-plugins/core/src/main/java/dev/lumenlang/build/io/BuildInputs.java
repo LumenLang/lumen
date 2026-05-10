@@ -17,5 +17,6 @@ import java.util.List;
  * @param validateOnly skip class rewrite and sidecar emit; only run validation
  * @param logger       log sink wired to the build system
  */
-public record BuildInputs(@NotNull Path classesDir, @NotNull List<Path> sourceDirs, @NotNull Path resourcesDir, @NotNull BindingTypeTable bindingTypes, boolean validateOnly, @NotNull BuildLogger logger) {
+public record BuildInputs(@NotNull Path classesDir, @NotNull List<Path> sourceDirs, @NotNull Path resourcesDir,
+                          @NotNull BindingTypeTable bindingTypes, boolean validateOnly, @NotNull BuildLogger logger) {
 }

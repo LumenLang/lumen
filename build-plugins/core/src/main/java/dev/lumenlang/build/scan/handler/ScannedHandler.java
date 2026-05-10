@@ -20,5 +20,8 @@ import java.util.List;
  * @param injectParams      parameters carrying {@code @Inject}, in declaration order
  * @param meta              optional documentation metadata
  */
-public record ScannedHandler(@NotNull String ownerInternalName, @NotNull Path classFile, @NotNull String methodName, @NotNull String methodDescriptor, @NotNull HandlerKind kind, @NotNull List<String> patterns, @NotNull List<InjectParam> injectParams, @NotNull HandlerMeta meta) {
+public record ScannedHandler(@NotNull String ownerInternalName, @NotNull Path classFile, @NotNull String methodName,
+                             @NotNull String methodDescriptor, @NotNull HandlerKind kind,
+                             @NotNull List<String> patterns, @NotNull List<InjectParam> injectParams,
+                             @NotNull HandlerMeta meta) {
 }

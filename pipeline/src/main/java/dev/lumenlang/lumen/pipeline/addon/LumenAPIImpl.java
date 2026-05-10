@@ -20,9 +20,6 @@ import dev.lumenlang.lumen.api.handler.ExpressionHandler;
 import dev.lumenlang.lumen.api.handler.LoopHandler;
 import dev.lumenlang.lumen.api.handler.StatementHandler;
 import dev.lumenlang.lumen.api.imports.ImportRegistrar;
-import dev.lumenlang.lumen.api.inject.body.InjectableBody;
-import dev.lumenlang.lumen.api.inject.body.InjectableCondition;
-import dev.lumenlang.lumen.api.inject.body.InjectableExpression;
 import dev.lumenlang.lumen.api.pattern.PatternRegistrar;
 import dev.lumenlang.lumen.api.pattern.builder.BlockBuilder;
 import dev.lumenlang.lumen.api.pattern.builder.ConditionBuilder;
@@ -37,7 +34,6 @@ import dev.lumenlang.lumen.api.type.TypeRegistrar;
 import dev.lumenlang.lumen.pipeline.addon.bridge.TypeBindingBridge;
 import dev.lumenlang.lumen.pipeline.events.EventDefRegistry;
 import dev.lumenlang.lumen.pipeline.events.def.EventDef;
-import dev.lumenlang.lumen.pipeline.inject.InjectableHandlers;
 import dev.lumenlang.lumen.pipeline.java.compiled.DefaultImportRegistry;
 import dev.lumenlang.lumen.pipeline.java.compiler.CompilerClasspath;
 import dev.lumenlang.lumen.pipeline.language.emit.EmitRegistry;
@@ -163,36 +159,6 @@ public final class LumenAPIImpl implements LumenAPI {
             @Override
             public void loop(@NotNull Consumer<LoopBuilder> builderConsumer) {
                 patternRegistry.loop(builderConsumer);
-            }
-
-            @Override
-            public void injectable(@NotNull String pattern, @NotNull InjectableBody body) {
-                patternRegistry.statement(pattern, InjectableHandlers.statement(body, false));
-            }
-
-            @Override
-            public void injectable(@NotNull List<String> patterns, @NotNull InjectableBody body) {
-                patternRegistry.statement(patterns, InjectableHandlers.statement(body, false));
-            }
-
-            @Override
-            public void injectableExpression(@NotNull String pattern, @NotNull InjectableExpression expression) {
-                patternRegistry.expression(pattern, InjectableHandlers.expression(expression));
-            }
-
-            @Override
-            public void injectableExpression(@NotNull List<String> patterns, @NotNull InjectableExpression expression) {
-                patternRegistry.expression(patterns, InjectableHandlers.expression(expression));
-            }
-
-            @Override
-            public void injectableCondition(@NotNull String pattern, @NotNull InjectableCondition condition) {
-                patternRegistry.condition(pattern, InjectableHandlers.condition(condition));
-            }
-
-            @Override
-            public void injectableCondition(@NotNull List<String> patterns, @NotNull InjectableCondition condition) {
-                patternRegistry.condition(patterns, InjectableHandlers.condition(condition));
             }
         };
 

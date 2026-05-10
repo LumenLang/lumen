@@ -2,15 +2,12 @@ package dev.lumenlang.build;
 
 import dev.lumenlang.build.emit.map.IndexMapper;
 import dev.lumenlang.build.emit.map.SidecarMapper;
-import dev.lumenlang.lumen.api.inject.index.IndexedHandler;
-import dev.lumenlang.lumen.api.inject.index.SidecarEntry;
 import dev.lumenlang.build.emit.write.HandlersIndexWriter;
 import dev.lumenlang.build.emit.write.SourceSidecarWriter;
 import dev.lumenlang.build.io.BuildInputs;
 import dev.lumenlang.build.result.BuildResult;
 import dev.lumenlang.build.result.Diagnostic;
 import dev.lumenlang.build.result.Severity;
-import dev.lumenlang.build.rewrite.HandlerRewriter;
 import dev.lumenlang.build.scan.ClassScanner;
 import dev.lumenlang.build.scan.handler.ScannedHandler;
 import dev.lumenlang.build.source.HandlerSourceParser;
@@ -18,6 +15,8 @@ import dev.lumenlang.build.source.ParsedHandlerSource;
 import dev.lumenlang.build.source.SourceLocator;
 import dev.lumenlang.build.validate.InjectTypeValidator;
 import dev.lumenlang.build.validate.PhaseScopeValidator;
+import dev.lumenlang.lumen.api.inject.index.IndexedHandler;
+import dev.lumenlang.lumen.api.inject.index.SidecarEntry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,9 +60,7 @@ public final class BuildPipeline {
         }
 
         int sourceEntries = writeSidecars(scanned, parsedByHandler, inputs, diagnostics);
-        int rewritten = rewriteClasses(scanned, inputs, diagnostics);
-
-        return new BuildResult(rewritten, sourceEntries, List.copyOf(diagnostics));
+        return new BuildResult(scanned.size(), sourceEntries, List.copyOf(diagnostics));
     }
 
     /**
@@ -121,14 +118,6 @@ public final class BuildPipeline {
         return entries.size();
     }
 
-    private static int rewriteClasses(@NotNull List<ScannedHandler> scanned, @NotNull BuildInputs inputs, @NotNull List<Diagnostic> diagnostics) {
-        try {
-            return HandlerRewriter.rewrite(scanned);
-        } catch (IOException e) {
-            diagnostics.add(new Diagnostic(Severity.ERROR, "Failed to rewrite handler classes: " + e.getMessage(), inputs.classesDir(), 0, 0));
-            return 0;
-        }
-    }
 
     private static boolean hasErrors(@NotNull List<Diagnostic> diagnostics) {
         for (Diagnostic d : diagnostics) if (d.severity() == Severity.ERROR) return true;

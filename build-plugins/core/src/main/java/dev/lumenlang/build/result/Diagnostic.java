@@ -14,5 +14,6 @@ import java.nio.file.Path;
  * @param line     1-based line, or 0 when unknown
  * @param column   1-based column, or 0 when unknown
  */
-public record Diagnostic(@NotNull Severity severity, @NotNull String message, @Nullable Path file, int line, int column) {
+public record Diagnostic(@NotNull Severity severity, @NotNull String message, @Nullable Path file, int line,
+                         int column) {
 }

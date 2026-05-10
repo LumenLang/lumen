@@ -14,7 +14,8 @@ import java.util.List;
  * @param category    value of {@code @Category}, or null
  * @param deprecated  whether {@link Deprecated} is present
  */
-public record HandlerMeta(@Nullable String description, @NotNull List<String> examples, @Nullable String since, @Nullable String category, boolean deprecated) {
+public record HandlerMeta(@Nullable String description, @NotNull List<String> examples, @Nullable String since,
+                          @Nullable String category, boolean deprecated) {
 
     public static final HandlerMeta EMPTY = new HandlerMeta(null, List.of(), null, null, false);
 }

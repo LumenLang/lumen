@@ -6,8 +6,6 @@ import dev.lumenlang.lumen.plugin.compiler.ScriptCompiler;
 import dev.lumenlang.lumen.plugin.compiler.system.CompilationFailedException;
 import dev.lumenlang.lumen.plugin.compiler.system.SourceFile;
 import dev.lumenlang.lumen.plugin.configuration.LumenConfiguration;
-import dev.lumenlang.lumen.plugin.inject.bytecode.BytecodeInjector;
-import dev.lumenlang.lumen.plugin.inject.bytecode.InjectableRegistry;
 import dev.lumenlang.lumen.plugin.scripts.cache.CompiledClassCache;
 import dev.lumenlang.lumen.plugin.scripts.model.compiled.CompileTimings;
 import dev.lumenlang.lumen.plugin.scripts.model.compiled.PreparedScript;
@@ -42,12 +40,10 @@ public final class ScriptCompilation {
             for (CompilationFailedException.CompileError err : e.errors()) {
                 msg.append("Line ").append(err.javaLine()).append(": ").append(err.message()).append("\n");
             }
-            InjectableRegistry.clear(source.fqcn());
             throw new RuntimeException(msg.toString(), e);
         } catch (Exception e) {
             BytecodeDump.dump(source);
             LumenLogger.severe("[Script " + source.scriptName() + "] Unexpected compiler error: " + e.getMessage());
-            InjectableRegistry.clear(source.fqcn());
             throw new RuntimeException("Compilation failed for script: " + source.scriptName(), e);
         }
 
@@ -112,7 +108,6 @@ public final class ScriptCompilation {
     }
 
     private static void finishOne(@NotNull GeneratedSource source, @NotNull Map<String, byte[]> bytecodes) {
-        BytecodeInjector.inject(bytecodes);
         boolean internal = source.scriptName().startsWith("__");
         if (!internal) BytecodeDump.dump(source);
         if (!internal && LumenConfiguration.PERFORMANCE.CACHE_COMPILED_CLASSES) {

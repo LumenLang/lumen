@@ -1,13 +1,13 @@
 package dev.lumenlang.build.emit.map;
 
 import dev.lumenlang.build.scan.handler.HandlerKind;
-import dev.lumenlang.lumen.api.inject.index.IndexedHandler;
-import dev.lumenlang.lumen.api.inject.index.IndexedMeta;
-import dev.lumenlang.lumen.api.inject.index.IndexedParam;
 import dev.lumenlang.build.scan.handler.HandlerMeta;
 import dev.lumenlang.build.scan.handler.ScannedHandler;
 import dev.lumenlang.build.scan.param.InjectParam;
 import dev.lumenlang.build.validate.inject.Placeholders;
+import dev.lumenlang.lumen.api.inject.index.IndexedHandler;
+import dev.lumenlang.lumen.api.inject.index.IndexedMeta;
+import dev.lumenlang.lumen.api.inject.index.IndexedParam;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;

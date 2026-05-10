@@ -16,7 +16,6 @@ import dev.lumenlang.lumen.pipeline.addon.LumenAPIImpl;
 import dev.lumenlang.lumen.pipeline.addon.ScriptBinderManager;
 import dev.lumenlang.lumen.pipeline.binder.ScriptBinder;
 import dev.lumenlang.lumen.pipeline.bus.LumenEventBus;
-import dev.lumenlang.lumen.pipeline.inject.InjectableHandlers;
 import dev.lumenlang.lumen.pipeline.java.compiled.DefaultImportRegistry;
 import dev.lumenlang.lumen.pipeline.java.compiler.CompilerClasspath;
 import dev.lumenlang.lumen.pipeline.language.emit.EmitRegistry;
@@ -37,7 +36,6 @@ import dev.lumenlang.lumen.plugin.compiler.system.SystemCompiler;
 import dev.lumenlang.lumen.plugin.configuration.LumenConfiguration;
 import dev.lumenlang.lumen.plugin.defaults.type.BuiltinTypeBindings;
 import dev.lumenlang.lumen.plugin.documentation.DocumentationDumper;
-import dev.lumenlang.lumen.plugin.inject.InjectableHandlerFactoryImpl;
 import dev.lumenlang.lumen.plugin.platform.ServerPlatform;
 import dev.lumenlang.lumen.plugin.scanner.RegistrationScannerBackend;
 import dev.lumenlang.lumen.plugin.scheduler.ScriptScheduler;
@@ -160,7 +158,6 @@ public final class Lumen extends JavaPlugin {
     private void initApi() {
         MinecraftTypes.registerAll();
         BuiltinLumenTypes.registerAll();
-        InjectableHandlers.factory(new InjectableHandlerFactoryImpl());
         TypeRegistry types = new TypeRegistry();
         BuiltinTypeBindings.register(types);
         patternRegistry = new PatternRegistry(types);
