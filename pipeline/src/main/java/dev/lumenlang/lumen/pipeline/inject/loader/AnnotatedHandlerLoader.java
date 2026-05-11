@@ -49,17 +49,12 @@ public final class AnnotatedHandlerLoader {
             LumenLogger.warning("Failed to read META-INF/lumen/sources.gson.gz for '" + owner + "': " + e.getMessage());
         }
 
-        int registered = 0;
         for (IndexedHandler entry : entries) {
             try {
                 registerOne(api, owner, loader, entry);
-                registered++;
             } catch (Throwable t) {
                 LumenLogger.warning("Failed to register annotation handler '" + entry.method() + "' from '" + owner + "': " + t.getMessage());
             }
-        }
-        if (registered > 0) {
-            LumenLogger.info("Loaded " + registered + " annotation-form handler(s) from '" + owner + "'");
         }
     }
 
@@ -92,7 +87,7 @@ public final class AnnotatedHandlerLoader {
         b.handler(handler);
     }
 
-    private static <B> void applyCommon(@NotNull Object builder, @NotNull String owner, @NotNull IndexedHandler entry) {
+    private static void applyCommon(@NotNull Object builder, @NotNull String owner, @NotNull IndexedHandler entry) {
         if (builder instanceof StatementBuilder s) {
             s.by(owner);
             for (String pattern : entry.patterns()) s.pattern(pattern);

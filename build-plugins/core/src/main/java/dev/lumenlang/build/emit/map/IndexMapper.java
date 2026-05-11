@@ -33,8 +33,7 @@ public final class IndexMapper {
             String binding = placeholders.getOrDefault(name, "");
             params.add(new IndexedParam(name, binding, p.javaType()));
         }
-        // return new IndexedHandler(kindLabel(scanned.kind()), scanned.ownerInternalName(), scanned.methodName(), scanned.methodDescriptor(), List.copyOf(scanned.patterns()), List.copyOf(params), mapMeta(scanned.meta()), scanned.methodBased(), scanned.wantsContext());
-        return new IndexedHandler(kindLabel(scanned.kind()), scanned.ownerInternalName(), scanned.methodName(), scanned.methodDescriptor(), List.copyOf(scanned.patterns()), List.copyOf(params), mapMeta(scanned.meta()), scanned.methodBased());
+        return new IndexedHandler(kindLabel(scanned.kind()), scanned.ownerInternalName(), scanned.methodName(), scanned.methodDescriptor(), List.copyOf(scanned.patterns()), List.copyOf(params), mapMeta(scanned.meta()), scanned.methodBased(), scanned.wantsContext());
     }
 
     private static @NotNull String kindLabel(@NotNull HandlerKind kind) {

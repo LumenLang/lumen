@@ -6,6 +6,7 @@ import dev.lumenlang.build.scan.handler.ScannedHandler;
 import dev.lumenlang.build.scan.param.InjectParam;
 import dev.lumenlang.build.source.ParsedHandlerSource;
 import dev.lumenlang.build.source.phase.Phase;
+import dev.lumenlang.build.source.phase.PhaseMarker;
 import dev.lumenlang.build.validate.scope.ScopeStack;
 import dev.lumenlang.build.validate.walk.AstWalker;
 import dev.lumenlang.build.validate.walk.PhaseLookup;
@@ -34,6 +35,22 @@ public final class PhaseScopeValidator {
         List<Diagnostic> diagnostics = new ArrayList<>();
         MethodDeclaration method = parsed.method();
         if (method.body() == null) return diagnostics;
+
+        int methodStart = method.line();
+        int methodEnd = method.body().statements().isEmpty() ? methodStart : method.body().statements().get(method.body().statements().size() - 1).line();
+        int compileCount = 0;
+        int runtimeCount = 0;
+        for (PhaseMarker m : parsed.markers()) {
+            if (m.line() < methodStart || m.line() > methodEnd) continue;
+            if (m.phase() == Phase.COMPILE) compileCount++;
+            else if (m.phase() == Phase.RUNTIME) runtimeCount++;
+        }
+        if (compileCount > 1) {
+            diagnostics.add(new Diagnostic(Severity.ERROR, "Handler '" + method.name() + "' declares " + compileCount + " // lumen:compile sections; collapse them into one", parsed.sourceFile(), methodStart, 0));
+        }
+        if (runtimeCount > 1) {
+            diagnostics.add(new Diagnostic(Severity.ERROR, "Handler '" + method.name() + "' declares " + runtimeCount + " // lumen:runtime sections; collapse them into one", parsed.sourceFile(), methodStart, 0));
+        }
 
         Set<String> injectNames = new HashSet<>();
         for (InjectParam p : scanned.injectParams()) injectNames.add(p.placeholderName());

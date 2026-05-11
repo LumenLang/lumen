@@ -2,6 +2,7 @@ package dev.lumenlang.lumen.pipeline.inject.sidecar;
 
 import dev.lumenlang.lumen.api.codegen.HandlerContext;
 import dev.lumenlang.lumen.api.inject.index.IndexedHandler;
+import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +35,7 @@ public final class CompileSectionInvoker {
         try {
             handle.invokeWithArguments(args);
         } catch (Throwable t) {
-            throw new IllegalStateException("Compile section of " + entry.owner() + "#" + entry.method() + " threw", t);
+            LumenLogger.warning("Compile section of " + entry.owner() + "#" + entry.method() + " threw: " + t);
         }
     }
 

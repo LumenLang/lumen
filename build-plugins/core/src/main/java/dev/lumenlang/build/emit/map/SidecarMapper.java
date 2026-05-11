@@ -6,6 +6,7 @@ import dev.lumenlang.build.emit.slice.StatementSlicer;
 import dev.lumenlang.build.scan.handler.ScannedHandler;
 import dev.lumenlang.build.source.ParsedHandlerSource;
 import dev.lumenlang.lumen.api.inject.index.SidecarEntry;
+import dev.lumenlang.lumen.api.pattern.annotation.Statement;
 import net.vansencool.vanta.parser.ast.declaration.ImportDeclaration;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,7 +20,7 @@ import java.util.List;
  */
 public final class SidecarMapper {
 
-    private static final String LUMEN_ANNOTATION_PREFIX = "dev.lumenlang.lumen.api.pattern.annotation.";
+    private static final String LUMEN_ANNOTATION_PREFIX = Statement.class.getPackage().getName() + ".";
 
     private SidecarMapper() {
     }
@@ -36,8 +37,8 @@ public final class SidecarMapper {
                 SourceSlicer.compileSection(parsed),
                 List.copyOf(bodyLines),
                 StatementSlicer.returnExpression(runtimeStatements),
-                StatementSlicer.alwaysThrows(runtimeStatements));
-                // scanned.wantsContext()
+                StatementSlicer.alwaysThrows(runtimeStatements),
+                scanned.wantsContext());
     }
 
     private static @NotNull List<String> importsOf(@NotNull ParsedHandlerSource parsed) {

@@ -13,7 +13,9 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.LineNumberNode;
+import org.objectweb.asm.tree.LocalVariableNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import java.io.IOException;
@@ -22,8 +24,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Rewrites annotated handler bytecode in place: drops every instruction that
@@ -65,29 +69,32 @@ public final class MethodTrimmer {
         for (AbstractInsnNode insn = method.instructions.getFirst(); insn != null; insn = insn.getNext()) snapshot.add(insn);
 
         InsnList kept = new InsnList();
-        boolean sawCompile = false;
         for (AbstractInsnNode insn : snapshot) {
-            Integer line = insnLines.get(insn);
-            if (line == null) {
+            if (insn instanceof LabelNode) {
                 kept.add(insn);
                 continue;
             }
-            Phase phase = phaseAt(line, markers);
-            if (phase == Phase.COMPILE) {
-                sawCompile = true;
-                kept.add(insn);
-            } else if (sawCompile) {
-                break;
-            } else {
-                kept.add(insn);
-            }
+            Integer line = insnLines.get(insn);
+            if (line != null && phaseAt(line, markers) == Phase.RUNTIME) continue;
+            kept.add(insn);
         }
         appendReturn(kept, Type.getReturnType(method.desc));
         method.instructions = kept;
-        method.localVariables = null;
+        method.localVariables = filterLocalVariables(method.localVariables, kept);
         method.tryCatchBlocks = new ArrayList<>();
         method.maxStack = 0;
         method.maxLocals = 0;
+    }
+
+    private static List<LocalVariableNode> filterLocalVariables(List<LocalVariableNode> originals, @NotNull InsnList kept) {
+        if (originals == null) return null;
+        Set<AbstractInsnNode> alive = new HashSet<>();
+        for (AbstractInsnNode insn = kept.getFirst(); insn != null; insn = insn.getNext()) alive.add(insn);
+        List<LocalVariableNode> out = new ArrayList<>();
+        for (LocalVariableNode lv : originals) {
+            if (alive.contains(lv.start) && alive.contains(lv.end)) out.add(lv);
+        }
+        return out;
     }
 
     private static @NotNull Map<AbstractInsnNode, Integer> mapInsnLines(@NotNull InsnList insns) {

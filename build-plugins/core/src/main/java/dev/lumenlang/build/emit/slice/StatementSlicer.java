@@ -31,19 +31,31 @@ public final class StatementSlicer {
         BlockStatement body = method.body();
         if (body == null) return List.of();
 
-        List<Statement> runtimeStatements = filterRuntime(body.statements(), parsed.markers());
+        List<Statement> bodyStatements = body.statements();
+        List<Statement> runtimeStatements = filterRuntime(bodyStatements, parsed.markers());
         if (runtimeStatements.isEmpty()) return List.of();
 
         String[] lines = parsed.sourceText().split("\\R", -1);
         List<SourceStatement> out = new ArrayList<>(runtimeStatements.size());
-        for (int i = 0; i < runtimeStatements.size(); i++) {
-            Statement stmt = runtimeStatements.get(i);
+        for (Statement stmt : runtimeStatements) {
             int start = stmt.line() - 1;
-            int end = i + 1 < runtimeStatements.size() ? runtimeStatements.get(i + 1).line() - 1 : lastLine(body);
+            int end = sliceEnd(bodyStatements, parsed.markers(), stmt) - 1;
             String text = sliceLines(lines, start, end);
             out.add(new SourceStatement(stmt, text));
         }
         return out;
+    }
+
+    private static int sliceEnd(@NotNull List<Statement> bodyStatements, @NotNull List<PhaseMarker> markers, @NotNull Statement current) {
+        int bound = current.line() + 1;
+        int currentIndex = bodyStatements.indexOf(current);
+        if (currentIndex >= 0 && currentIndex + 1 < bodyStatements.size()) {
+            bound = bodyStatements.get(currentIndex + 1).line();
+        }
+        for (PhaseMarker m : markers) {
+            if (m.line() > current.line() && m.line() < bound) bound = m.line();
+        }
+        return bound;
     }
 
     public static @Nullable String returnExpression(@NotNull List<SourceStatement> statements) {
@@ -77,17 +89,6 @@ public final class StatementSlicer {
             current = m.phase();
         }
         return current;
-    }
-
-    /**
-     * Exclusive 0-indexed end-of-body line. Statements on source line N occupy
-     * {@code lines[N-1]}; the line AFTER the last statement is {@code lines[N]},
-     * which is what we return so the slicer stops at it.
-     */
-    private static int lastLine(@NotNull BlockStatement body) {
-        int last = body.line();
-        for (Statement s : body.statements()) if (s.line() > last) last = s.line();
-        return last;
     }
 
     private static @NotNull String sliceLines(@NotNull String[] lines, int startInclusive, int endExclusive) {

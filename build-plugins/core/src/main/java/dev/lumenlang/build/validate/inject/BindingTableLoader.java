@@ -23,8 +23,8 @@ import java.util.zip.GZIPInputStream;
 /**
  * Loads {@link BindingTypeTable} entries from a Lumen {@code .ldoc} file. The
  * doc bundles every registered binding's {@code javaType} (Java source-level
- * name); this loader converts each into a JVMS field descriptor for
- * {@link InjectTypeValidator}.
+ * name); this loader converts each into a JVMS field descriptor for the
+ * inject-type validator.
  */
 public final class BindingTableLoader {
 

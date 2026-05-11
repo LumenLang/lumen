@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -38,8 +39,9 @@ public final class HandlerSourceParser {
     public static @Nullable ParsedHandlerSource parse(@NotNull Path sourceFile, @NotNull String simpleClassName, @NotNull String methodName, int parameterCount) throws IOException {
         String sourceText = Files.readString(sourceFile);
 
-        List<Token> tokens = new Lexer(sourceText).tokenize();
-        CompilationUnit unit = new Parser(tokens).parse();
+        Lexer lexer = new Lexer(sourceText);
+        List<Token> tokens = lexer.tokenize();
+        CompilationUnit unit = new Parser(tokens, sourceText, sourceFile.toString(), lexer.comments()).parse();
 
         ClassDeclaration owner = findClass(unit, simpleClassName);
         if (owner == null) return null;
@@ -47,8 +49,23 @@ public final class HandlerSourceParser {
         MethodDeclaration method = findMethod(owner, methodName, parameterCount);
         if (method == null) return null;
 
-        List<PhaseMarker> markers = PhaseMarkerScanner.scan(unit.commentTable());
+        List<PhaseMarker> allMarkers = PhaseMarkerScanner.scan(unit.commentTable());
+        int methodStart = method.line();
+        int methodEnd = nextMemberLine(owner, method);
+        List<PhaseMarker> markers = new ArrayList<>();
+        for (PhaseMarker m : allMarkers) {
+            if (m.line() >= methodStart && m.line() < methodEnd) markers.add(m);
+        }
         return new ParsedHandlerSource(sourceFile, sourceText, unit, method, markers);
+    }
+
+    private static int nextMemberLine(@NotNull ClassDeclaration owner, @NotNull MethodDeclaration method) {
+        int next = Integer.MAX_VALUE;
+        for (AstNode member : owner.members()) {
+            if (member == method) continue;
+            if (member instanceof MethodDeclaration md && md.line() > method.line() && md.line() < next) next = md.line();
+        }
+        return next;
     }
 
     private static @Nullable ClassDeclaration findClass(@NotNull CompilationUnit unit, @NotNull String simpleName) {

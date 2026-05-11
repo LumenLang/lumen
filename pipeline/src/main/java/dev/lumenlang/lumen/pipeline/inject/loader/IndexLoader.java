@@ -12,9 +12,12 @@ import java.lang.reflect.Type;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Reads {@code META-INF/lumen/handlers.json} from a {@link ClassLoader} and
@@ -26,6 +29,8 @@ public final class IndexLoader {
     private static final Gson GSON = new Gson();
     private static final Type ENVELOPE_TYPE = new TypeToken<Map<String, List<IndexedHandler>>>() {}.getType();
 
+    private static final Set<String> SEEN_URLS = Collections.synchronizedSet(new HashSet<>());
+
     private IndexLoader() {
     }
 
@@ -34,6 +39,7 @@ public final class IndexLoader {
         Enumeration<URL> urls = loader.getResources(RESOURCE_PATH);
         while (urls.hasMoreElements()) {
             URL url = urls.nextElement();
+            if (!SEEN_URLS.add(url.toString())) continue;
             try (InputStream in = url.openStream();
                  InputStreamReader reader = new InputStreamReader(in, StandardCharsets.UTF_8)) {
                 Map<String, List<IndexedHandler>> envelope = GSON.fromJson(reader, ENVELOPE_TYPE);

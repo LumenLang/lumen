@@ -4,6 +4,19 @@ import dev.lumenlang.build.scan.handler.HandlerKind;
 import dev.lumenlang.build.scan.handler.HandlerMeta;
 import dev.lumenlang.build.scan.handler.ScannedHandler;
 import dev.lumenlang.build.scan.param.InjectParam;
+import dev.lumenlang.lumen.api.codegen.HandlerContext;
+import dev.lumenlang.lumen.api.pattern.annotation.Category;
+import dev.lumenlang.lumen.api.pattern.annotation.Condition;
+import dev.lumenlang.lumen.api.pattern.annotation.Description;
+import dev.lumenlang.lumen.api.pattern.annotation.Example;
+import dev.lumenlang.lumen.api.pattern.annotation.Examples;
+import dev.lumenlang.lumen.api.pattern.annotation.Expression;
+import dev.lumenlang.lumen.api.pattern.annotation.Inject;
+import dev.lumenlang.lumen.api.pattern.annotation.MethodBased;
+import dev.lumenlang.lumen.api.pattern.annotation.Pattern;
+import dev.lumenlang.lumen.api.pattern.annotation.Patterns;
+import dev.lumenlang.lumen.api.pattern.annotation.Since;
+import dev.lumenlang.lumen.api.pattern.annotation.Statement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.ClassReader;
@@ -31,21 +44,20 @@ import java.util.stream.Stream;
  */
 public final class ClassScanner {
 
-    private static final String ANNOTATION_PKG = "Ldev/lumenlang/lumen/api/pattern/annotation/";
-    private static final String STATEMENT_DESC = ANNOTATION_PKG + "Statement;";
-    private static final String EXPRESSION_DESC = ANNOTATION_PKG + "Expression;";
-    private static final String CONDITION_DESC = ANNOTATION_PKG + "Condition;";
-    private static final String PATTERN_DESC = ANNOTATION_PKG + "Pattern;";
-    private static final String PATTERNS_DESC = ANNOTATION_PKG + "Patterns;";
-    private static final String INJECT_DESC = ANNOTATION_PKG + "Inject;";
-    private static final String DESCRIPTION_DESC = ANNOTATION_PKG + "Description;";
-    private static final String EXAMPLE_DESC = ANNOTATION_PKG + "Example;";
-    private static final String EXAMPLES_DESC = ANNOTATION_PKG + "Examples;";
-    private static final String SINCE_DESC = ANNOTATION_PKG + "Since;";
-    private static final String CATEGORY_DESC = ANNOTATION_PKG + "Category;";
-    private static final String DEPRECATED_DESC = "Ljava/lang/Deprecated;";
-    private static final String METHOD_BASED_DESC = ANNOTATION_PKG + "MethodBased;";
-    private static final String HANDLER_CONTEXT_DESC = "Ldev/lumenlang/lumen/api/codegen/HandlerContext;";
+    private static final String STATEMENT_DESC = Type.getDescriptor(Statement.class);
+    private static final String EXPRESSION_DESC = Type.getDescriptor(Expression.class);
+    private static final String CONDITION_DESC = Type.getDescriptor(Condition.class);
+    private static final String PATTERN_DESC = Type.getDescriptor(Pattern.class);
+    private static final String PATTERNS_DESC = Type.getDescriptor(Patterns.class);
+    private static final String INJECT_DESC = Type.getDescriptor(Inject.class);
+    private static final String DESCRIPTION_DESC = Type.getDescriptor(Description.class);
+    private static final String EXAMPLE_DESC = Type.getDescriptor(Example.class);
+    private static final String EXAMPLES_DESC = Type.getDescriptor(Examples.class);
+    private static final String SINCE_DESC = Type.getDescriptor(Since.class);
+    private static final String CATEGORY_DESC = Type.getDescriptor(Category.class);
+    private static final String DEPRECATED_DESC = Type.getDescriptor(Deprecated.class);
+    private static final String METHOD_BASED_DESC = Type.getDescriptor(MethodBased.class);
+    private static final String HANDLER_CONTEXT_DESC = Type.getDescriptor(HandlerContext.class);
 
     private ClassScanner() {
     }
@@ -91,23 +103,17 @@ public final class ClassScanner {
 
         List<InjectParam> injects = collectInjectParams(method);
         HandlerMeta meta = collectMeta(method);
-        boolean methodBased = hasAnnotation(method, METHOD_BASED_DESC);
-        boolean wantsContext = firstParamIsContext(method);
+
+        boolean methodBased = false;
+        if (method.visibleAnnotations != null) {
+            for (AnnotationNode a : method.visibleAnnotations) {
+                if (METHOD_BASED_DESC.equals(a.desc)) { methodBased = true; break; }
+            }
+        }
+        Type[] argTypes = Type.getArgumentTypes(method.desc);
+        boolean wantsContext = argTypes.length > 0 && HANDLER_CONTEXT_DESC.equals(argTypes[0].getDescriptor());
 
         return new ScannedHandler(owner.name, classFile, method.name, method.desc, kind, patterns, injects, meta, methodBased, wantsContext);
-    }
-
-    private static boolean firstParamIsContext(@NotNull MethodNode method) {
-        Type[] argTypes = Type.getArgumentTypes(method.desc);
-        return argTypes.length > 0 && HANDLER_CONTEXT_DESC.equals(argTypes[0].getDescriptor());
-    }
-
-    private static boolean hasAnnotation(@NotNull MethodNode method, @NotNull String desc) {
-        if (method.visibleAnnotations == null) return false;
-        for (AnnotationNode a : method.visibleAnnotations) {
-            if (desc.equals(a.desc)) return true;
-        }
-        return false;
     }
 
     private static @Nullable HandlerKind kindOf(@NotNull MethodNode method) {
@@ -125,12 +131,12 @@ public final class ClassScanner {
         List<String> out = new ArrayList<>();
         for (AnnotationNode a : method.visibleAnnotations) {
             if (PATTERN_DESC.equals(a.desc)) {
-                String value = stringValue(a, "value");
+                String value = stringValue(a);
                 if (value != null) out.add(value);
             } else if (PATTERNS_DESC.equals(a.desc)) {
-                List<AnnotationNode> nested = arrayValue(a, "value");
+                List<AnnotationNode> nested = arrayValue(a);
                 for (AnnotationNode n : nested) {
-                    String value = stringValue(n, "value");
+                    String value = stringValue(n);
                     if (value != null) out.add(value);
                 }
             }
@@ -150,9 +156,14 @@ public final class ClassScanner {
 
         for (int i = 0; i < argTypes.length; i++) {
             List<AnnotationNode> ann = i < paramAnnotations.length ? paramAnnotations[i] : null;
-            AnnotationNode inject = findAnnotation(ann, INJECT_DESC);
+            AnnotationNode inject = null;
+            if (ann != null) {
+                for (AnnotationNode a : ann) {
+                    if (INJECT_DESC.equals(a.desc)) { inject = a; break; }
+                }
+            }
             if (inject != null) {
-                String overrideName = stringValue(inject, "value");
+                String overrideName = stringValue(inject);
                 if (overrideName != null && overrideName.isEmpty()) overrideName = null;
                 String sourceName = paramName(method, i, isStatic);
                 if (sourceName == null) sourceName = "arg" + i;
@@ -187,20 +198,20 @@ public final class ClassScanner {
 
         for (AnnotationNode a : method.visibleAnnotations) {
             if (DESCRIPTION_DESC.equals(a.desc)) {
-                description = stringValue(a, "value");
+                description = stringValue(a);
             } else if (EXAMPLE_DESC.equals(a.desc)) {
-                String value = stringValue(a, "value");
+                String value = stringValue(a);
                 if (value != null) examples.add(value);
             } else if (EXAMPLES_DESC.equals(a.desc)) {
-                List<AnnotationNode> nested = arrayValue(a, "value");
+                List<AnnotationNode> nested = arrayValue(a);
                 for (AnnotationNode n : nested) {
-                    String value = stringValue(n, "value");
+                    String value = stringValue(n);
                     if (value != null) examples.add(value);
                 }
             } else if (SINCE_DESC.equals(a.desc)) {
-                since = stringValue(a, "value");
+                since = stringValue(a);
             } else if (CATEGORY_DESC.equals(a.desc)) {
-                category = stringValue(a, "value");
+                category = stringValue(a);
             } else if (DEPRECATED_DESC.equals(a.desc)) {
                 deprecated = true;
             }
@@ -208,27 +219,18 @@ public final class ClassScanner {
         return new HandlerMeta(description, List.copyOf(examples), since, category, deprecated);
     }
 
-    private static @Nullable AnnotationNode findAnnotation(@Nullable List<AnnotationNode> list, @NotNull String desc) {
-        if (list == null) return null;
-        for (AnnotationNode a : list) {
-            if (desc.equals(a.desc)) return a;
-        }
-        return null;
-    }
-
-    private static @Nullable String stringValue(@NotNull AnnotationNode a, @NotNull String key) {
+    private static @Nullable String stringValue(@NotNull AnnotationNode a) {
         if (a.values == null) return null;
         for (int i = 0; i < a.values.size(); i += 2) {
-            if (key.equals(a.values.get(i)) && a.values.get(i + 1) instanceof String s) return s;
+            if ("value".equals(a.values.get(i)) && a.values.get(i + 1) instanceof String s) return s;
         }
         return null;
     }
 
-    @SuppressWarnings("unchecked")
-    private static @NotNull List<AnnotationNode> arrayValue(@NotNull AnnotationNode a, @NotNull String key) {
+    private static @NotNull List<AnnotationNode> arrayValue(@NotNull AnnotationNode a) {
         if (a.values == null) return List.of();
         for (int i = 0; i < a.values.size(); i += 2) {
-            if (key.equals(a.values.get(i)) && a.values.get(i + 1) instanceof List<?> list) {
+            if ("value".equals(a.values.get(i)) && a.values.get(i + 1) instanceof List<?> list) {
                 List<AnnotationNode> out = new ArrayList<>(list.size());
                 for (Object o : list) {
                     if (o instanceof AnnotationNode n) out.add(n);
