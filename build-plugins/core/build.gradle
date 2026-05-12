@@ -5,3 +5,7 @@ dependencies {
     api 'com.google.code.gson:gson:2.14.0'
     api 'net.vansencool:Vanta:1.0.1-BETA'
 }
+
+base {
+    archivesName = 'lumen-addon-core'
+}
