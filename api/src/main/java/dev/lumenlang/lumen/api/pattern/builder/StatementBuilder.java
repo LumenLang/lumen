@@ -1,7 +1,6 @@
 package dev.lumenlang.lumen.api.pattern.builder;
 
 import dev.lumenlang.lumen.api.handler.StatementHandler;
-import dev.lumenlang.lumen.api.inject.body.InjectableBody;
 import dev.lumenlang.lumen.api.pattern.Category;
 import dev.lumenlang.lumen.api.pattern.PatternMeta;
 import dev.lumenlang.lumen.api.pattern.PatternRegistrar;
@@ -42,10 +41,6 @@ public final class StatementBuilder {
     private @Nullable Category category;
     private boolean deprecated;
     private @Nullable StatementHandler handler;
-    private @Nullable InjectableBody injectableBody;
-    private @Nullable Class<?> injectableClass;
-    private @Nullable String injectableMethodName;
-    private boolean methodBased;
 
     /**
      * Sets the addon name that registers this statement pattern.
@@ -61,8 +56,7 @@ public final class StatementBuilder {
     /**
      * Adds a pattern string for this statement.
      *
-     * @param pattern the statement pattern (e.g.
-     *                {@code "message %who:PLAYER% %text:STRING%"})
+     * @param pattern the statement pattern
      * @return this builder
      */
     public @NotNull StatementBuilder pattern(@NotNull String pattern) {
@@ -137,11 +131,8 @@ public final class StatementBuilder {
     }
 
     /**
-     * Marks this statement as deprecated.
-     *
-     * <p>
-     * Deprecated patterns will still work but will be flagged
-     * in documentation as patterns that should be avoided.
+     * Marks this statement as deprecated. Deprecated patterns still work but
+     * are flagged in generated documentation.
      *
      * @param deprecated true if this statement is deprecated
      * @return this builder
@@ -162,70 +153,15 @@ public final class StatementBuilder {
         return this;
     }
 
-    /**
-     * Sets an injectable body whose bytecode will be extracted and injected
-     * into the compiled script class. This is an alternative to {@link #handler}.
-     *
-     * @param body the injectable body
-     * @return this builder
-     */
-    public @NotNull StatementBuilder injectableHandler(@NotNull InjectableBody body) {
-        this.injectableBody = body;
-        return this;
-    }
-
-    /**
-     * Sets a static method whose bytecode will be extracted and injected
-     * into the compiled script class. This is an alternative to {@link #handler}.
-     *
-     * @param clazz the class containing the static method
-     * @param methodName the name of the static method
-     * @return this builder
-     */
-    public @NotNull StatementBuilder injectableHandler(@NotNull Class<?> clazz, @NotNull String methodName) {
-        this.injectableClass = clazz;
-        this.injectableMethodName = methodName;
-        return this;
-    }
-
-    /**
-     * Forces method based injection instead of inline.
-     *
-     * <p>By default, injectable handlers use inline mode where the decompiled body
-     * is emitted directly at the call site. Calling this forces the handler to
-     * generate a bridge method with bytecode injection instead.
-     *
-     * @return this builder
-     */
-    public @NotNull StatementBuilder methodBased() {
-        this.methodBased = true;
-        return this;
-    }
-
     public @NotNull List<String> getPatterns() {
         return patterns;
     }
 
     public @NotNull StatementHandler getHandler() {
-        if (handler == null)
+        if (handler == null) {
             throw new IllegalStateException("Statement handler cannot be null for pattern: " + patterns.get(0));
+        }
         return handler;
-    }
-
-    public @Nullable InjectableBody getInjectableBody() {
-        return injectableBody;
-    }
-
-    public @Nullable Class<?> getInjectableClass() {
-        return injectableClass;
-    }
-
-    public @Nullable String getInjectableMethodName() {
-        return injectableMethodName;
-    }
-
-    public boolean isMethodBased() {
-        return methodBased;
     }
 
     public @NotNull PatternMeta buildMeta() {
@@ -236,14 +172,8 @@ public final class StatementBuilder {
         if (patterns.isEmpty()) {
             throw new IllegalStateException("Statement builder requires at least one pattern");
         }
-        if (handler == null && injectableBody == null && injectableClass == null) {
-            throw new IllegalStateException("Statement builder requires a handler or injectableHandler");
-        }
-        if (handler != null && (injectableBody != null || injectableClass != null)) {
-            throw new IllegalStateException("Only one of handler or injectableHandler may be set");
-        }
-        if (injectableBody != null && injectableClass != null) {
-            throw new IllegalStateException("Only one injectable source may be set: use either injectableHandler(InjectableBody) or injectableHandler(Class, String)");
+        if (handler == null) {
+            throw new IllegalStateException("Statement builder requires a handler");
         }
         if (by == null) {
             throw new IllegalStateException("Statement builder requires a 'by' (addon name)");

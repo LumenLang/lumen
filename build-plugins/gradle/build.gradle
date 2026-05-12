@@ -1,0 +1,60 @@
+plugins {
+    id 'java-gradle-plugin'
+    id 'com.gradle.plugin-publish' version '2.1.1'
+}
+
+group = 'dev.lumenlang'
+version = '1.0.0'
+
+repositories {
+    maven { url = 'https://repository.vansencool.net' }
+}
+
+configurations {
+    bundled
+    compileOnly.extendsFrom(bundled)
+}
+
+dependencies {
+    bundled project(':core')
+}
+
+java {
+    withSourcesJar()
+}
+
+base {
+    archivesName = 'lumen-gradle-plugin'
+}
+
+afterEvaluate {
+    publishing.publications.named('pluginMaven') {
+        artifactId = 'lumen-gradle-plugin'
+    }
+}
+
+jar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from {
+        configurations.bundled.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
+
+gradlePlugin {
+    website = 'https://lumenlang.dev'
+    vcsUrl = 'https://github.com/LumenLang/lumen'
+    plugins {
+        lumenApi {
+            id = 'dev.lumenlang.api'
+            implementationClass = 'dev.lumenlang.build.gradle.LumenGradlePlugin'
+            displayName = 'Lumen API plugin'
+            description = 'Lets your Lumen addon use the modern API for handlers.'
+            tags.set(['lumen', 'minecraft', 'addon', 'annotations'])
+            compatibility {
+                features {
+                    configurationCache = false
+                }
+            }
+        }
+    }
+}

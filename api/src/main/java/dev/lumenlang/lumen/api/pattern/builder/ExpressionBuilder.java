@@ -1,7 +1,6 @@
 package dev.lumenlang.lumen.api.pattern.builder;
 
 import dev.lumenlang.lumen.api.handler.ExpressionHandler;
-import dev.lumenlang.lumen.api.inject.body.InjectableExpression;
 import dev.lumenlang.lumen.api.pattern.Category;
 import dev.lumenlang.lumen.api.pattern.PatternMeta;
 import dev.lumenlang.lumen.api.pattern.PatternRegistrar;
@@ -42,9 +41,6 @@ public final class ExpressionBuilder {
     private @Nullable Category category;
     private boolean deprecated;
     private @Nullable ExpressionHandler handler;
-    private @Nullable InjectableExpression injectableExpression;
-    private @Nullable Class<?> injectableClass;
-    private @Nullable String injectableMethodName;
 
     /**
      * Sets the addon name that registers this expression pattern.
@@ -161,52 +157,15 @@ public final class ExpressionBuilder {
         return this;
     }
 
-    /**
-     * Sets an injectable expression whose bytecode will be extracted and injected
-     * into the compiled script class. This is an alternative to {@link #handler}.
-     *
-     * @param expression the injectable expression
-     * @return this builder
-     */
-    public @NotNull ExpressionBuilder injectableHandler(@NotNull InjectableExpression expression) {
-        this.injectableExpression = expression;
-        return this;
-    }
-
-    /**
-     * Sets a static method whose bytecode will be extracted and injected
-     * into the compiled script class. This is an alternative to {@link #handler}.
-     *
-     * @param clazz the class containing the static method
-     * @param methodName the name of the static method
-     * @return this builder
-     */
-    public @NotNull ExpressionBuilder injectableHandler(@NotNull Class<?> clazz, @NotNull String methodName) {
-        this.injectableClass = clazz;
-        this.injectableMethodName = methodName;
-        return this;
-    }
-
     public @NotNull List<String> getPatterns() {
         return patterns;
     }
 
     public @NotNull ExpressionHandler getHandler() {
-        if (handler == null)
+        if (handler == null) {
             throw new IllegalStateException("Expression handler is not set for pattern: " + patterns.get(0));
+        }
         return handler;
-    }
-
-    public @Nullable InjectableExpression getInjectableExpression() {
-        return injectableExpression;
-    }
-
-    public @Nullable Class<?> getInjectableClass() {
-        return injectableClass;
-    }
-
-    public @Nullable String getInjectableMethodName() {
-        return injectableMethodName;
     }
 
     public @NotNull PatternMeta buildMeta() {
@@ -217,14 +176,8 @@ public final class ExpressionBuilder {
         if (patterns.isEmpty()) {
             throw new IllegalStateException("Expression builder requires at least one pattern");
         }
-        if (handler == null && injectableExpression == null && injectableClass == null) {
-            throw new IllegalStateException("Expression builder requires a handler or injectableHandler");
-        }
-        if (handler != null && (injectableExpression != null || injectableClass != null)) {
-            throw new IllegalStateException("Only one of handler or injectableHandler may be set");
-        }
-        if (injectableExpression != null && injectableClass != null) {
-            throw new IllegalStateException("Only one injectable source may be set: use either injectableHandler(InjectableExpression) or injectableHandler(Class, String)");
+        if (handler == null) {
+            throw new IllegalStateException("Expression builder requires a handler");
         }
         if (by == null) {
             throw new IllegalStateException("Expression builder requires a 'by' (addon name)");

@@ -2,6 +2,7 @@ package dev.lumenlang.lumen.pipeline.addon;
 
 import dev.lumenlang.lumen.api.LumenAPI;
 import dev.lumenlang.lumen.api.LumenAddon;
+import dev.lumenlang.lumen.pipeline.inject.loader.AnnotatedHandlerLoader;
 import dev.lumenlang.lumen.pipeline.java.compiler.CompilerClasspath;
 import dev.lumenlang.lumen.pipeline.java.compiler.ScriptClassLoader;
 import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
@@ -175,6 +176,7 @@ public final class AddonManager {
     private void enableSingle(@NotNull LumenAddon addon) {
         try {
             addon.onEnable(api);
+            AnnotatedHandlerLoader.load(api, addon.getClass().getClassLoader(), addon.name());
             LumenLogger.info("Enabled addon: " + addon.name() + " v" + addon.version());
         } catch (Throwable e) {
             LumenLogger.severe("Error enabling addon " + addon.name() + " v" + addon.version(), e);
