@@ -254,21 +254,6 @@ public final class SuggestionDiagnostics {
         return diag.build();
     }
 
-    /**
-     * Formats reordered tokens into a human readable description for diagnostic labels.
-     *
-     * @param reordered the tokens that appear in the wrong order
-     * @return formatted description
-     */
-    public static @NotNull String reorderNote(@NotNull List<Token> reordered) {
-        if (reordered.size() == 2) return reordered.get(0).text() + "' and '" + reordered.get(1).text();
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < reordered.size(); i++) {
-            if (i > 0) sb.append(i == reordered.size() - 1 ? "' and '" : "', '");
-            sb.append(reordered.get(i).text());
-        }
-        return sb.toString();
-    }
 
     private static @Nullable PatternSimulator.SuggestionIssue findPrimary(@NotNull List<PatternSimulator.SuggestionIssue> issues) {
         PatternSimulator.SuggestionIssue best = null;
@@ -286,12 +271,10 @@ public final class SuggestionDiagnostics {
     private static int issuePriority(@NotNull PatternSimulator.SuggestionIssue issue) {
         if (issue instanceof PatternSimulator.SuggestionIssue.HandlerDiagnostic) return 5;
         if (issue instanceof PatternSimulator.SuggestionIssue.Typo) return 4;
-        if (issue instanceof PatternSimulator.SuggestionIssue.ExtraTokens) return 3;
         if (issue instanceof PatternSimulator.SuggestionIssue.TypeMismatch) return 2;
         if (issue instanceof PatternSimulator.SuggestionIssue.IncompleteInput) return 2;
         if (issue instanceof PatternSimulator.SuggestionIssue.MissingLiteral) return 2;
         if (issue instanceof PatternSimulator.SuggestionIssue.MissingBinding) return 1;
-        if (issue instanceof PatternSimulator.SuggestionIssue.Reorder) return 1;
         return 0;
     }
 
@@ -300,14 +283,6 @@ public final class SuggestionDiagnostics {
             boolean validated = top.progress() != null && top.progress().succeeded();
             builder.highlight(typo.token().start(), typo.token().end());
             builder.label(validated ? "replace with '" + typo.expected() + "'" : "did you mean '" + typo.expected() + "'?");
-        } else if (issue instanceof PatternSimulator.SuggestionIssue.ExtraTokens extra) {
-            Token first = extra.tokens().get(0);
-            if (extra.tokens().size() == 1) {
-                builder.highlight(first.start(), first.end()).label("remove '" + first.text() + "'");
-            } else {
-                Token last = extra.tokens().get(extra.tokens().size() - 1);
-                builder.highlight(first.start(), last.end()).label("remove " + extra.tokens().size() + " extra tokens");
-            }
         } else if (issue instanceof PatternSimulator.SuggestionIssue.TypeMismatch mismatch) {
             builder.highlight(mismatch.token().start(), mismatch.token().end());
             builder.label(mismatch.reason());
@@ -319,10 +294,6 @@ public final class SuggestionDiagnostics {
             } else {
                 builder.label(label);
             }
-        } else if (issue instanceof PatternSimulator.SuggestionIssue.Reorder reorder) {
-            int start = reorder.tokens().stream().mapToInt(Token::start).min().orElse(0);
-            int end = reorder.tokens().stream().mapToInt(Token::end).max().orElse(0);
-            builder.highlight(start, end).label("tokens '" + reorderNote(reorder.tokens()) + "' may be in the wrong order");
         } else if (issue instanceof PatternSimulator.SuggestionIssue.MissingLiteral missing) {
             Token anchor = anchorTokenAfter(top, missing.afterTokenIndex());
             int point = anchor != null ? anchor.end() : 0;
@@ -339,10 +310,6 @@ public final class SuggestionDiagnostics {
     private static void applySubHighlight(@NotNull LumenDiagnostic.Builder builder, @NotNull PatternSimulator.SuggestionIssue issue, @NotNull TypeRegistry types, @NotNull String raw) {
         if (issue instanceof PatternSimulator.SuggestionIssue.Typo typo) {
             builder.subHighlight(typo.token().start(), typo.token().end(), "did you mean '" + typo.expected() + "'?");
-        } else if (issue instanceof PatternSimulator.SuggestionIssue.ExtraTokens extra) {
-            for (Token t : extra.tokens()) {
-                builder.subHighlight(t.start(), t.end(), "extra token");
-            }
         } else if (issue instanceof PatternSimulator.SuggestionIssue.TypeMismatch mismatch) {
             builder.subHighlight(mismatch.token().start(), mismatch.token().end(), mismatch.reason());
         } else if (issue instanceof PatternSimulator.SuggestionIssue.MissingBinding missing) {
@@ -352,10 +319,6 @@ public final class SuggestionDiagnostics {
                 builder.subHighlight(col, col + 1, label);
             } else {
                 builder.note(label);
-            }
-        } else if (issue instanceof PatternSimulator.SuggestionIssue.Reorder reorder) {
-            for (Token t : reorder.tokens()) {
-                builder.subHighlight(t.start(), t.end(), "out of order");
             }
         } else if (issue instanceof PatternSimulator.SuggestionIssue.MissingLiteral missing) {
             builder.note("also missing keyword '" + missing.literal() + "'");

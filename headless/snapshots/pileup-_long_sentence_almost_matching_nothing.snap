@@ -1,5 +1,0 @@
-case: pileup: long sentence almost matching nothing
-input: the quick brown fox jumps over the lazy dog
-runner: STATEMENT
-env: <empty>
-suggestions: 0

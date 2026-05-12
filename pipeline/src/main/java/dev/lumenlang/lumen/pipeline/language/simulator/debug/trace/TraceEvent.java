@@ -41,18 +41,6 @@ public sealed interface TraceEvent {
     }
 
     /**
-     * One BFS removal level finished for a candidate.
-     *
-     * @param pattern              the candidate pattern
-     * @param level                BFS removal depth
-     * @param combinationsExplored combinations of token removals actually tried
-     * @param succeeded            {@code true} when at least one combination matched
-     */
-    record BfsLevel(@NotNull Pattern pattern, int level, int combinationsExplored,
-                    boolean succeeded) implements TraceEvent {
-    }
-
-    /**
      * An input token was treated as a typo of an expected literal.
      *
      * @param pattern  candidate pattern containing the literal
@@ -92,8 +80,8 @@ public sealed interface TraceEvent {
      * One {@code matchWithProgress} call completed against a candidate pattern.
      *
      * @param pattern  the candidate pattern
-     * @param stage    label describing which sub-step issued the call (level-0, BFS-k extra,
-     *                 typo-corrected, shape-match, partial-typo recheck)
+     * @param stage    label describing which sub-step issued the call (level-0, typo-corrected,
+     *                 partial-typo recheck)
      * @param progress full match progress including failed bindings, literal typos, and trailing
      *                 tokens
      */
@@ -131,31 +119,6 @@ public sealed interface TraceEvent {
     record TypoCandidate(@NotNull Pattern pattern, int tokenIndex, @NotNull String tokenText,
                          @NotNull String form, int distance, int threshold,
                          boolean keptAsBest) implements TraceEvent {
-    }
-
-    /**
-     * The shape-match step constructed and matched a token sequence for the reorder fallback.
-     *
-     * @param pattern  the candidate pattern
-     * @param shaped   the synthesised token sequence fed to the matcher
-     * @param progress match progress against the synthesised sequence, or {@code null} when shape
-     *                 construction produced no sequence
-     */
-    record ShapeAttempt(@NotNull Pattern pattern, @NotNull List<Token> shaped,
-                        @Nullable MatchProgress progress) implements TraceEvent {
-    }
-
-    /**
-     * One BFS combination explored within a removal level.
-     *
-     * @param pattern        candidate pattern
-     * @param level          BFS removal depth
-     * @param removedIndices token indices removed in this combination
-     * @param matched        {@code true} when the reduced sequence matched
-     * @param furthestIndex  furthest input token index reached by the matcher
-     */
-    record BfsCombination(@NotNull Pattern pattern, int level, int[] removedIndices,
-                          boolean matched, int furthestIndex) implements TraceEvent {
     }
 
     /**

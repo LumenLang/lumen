@@ -15,7 +15,7 @@ import java.util.Map;
  * <h2>Example</h2>
  * <pre>{@code
  * SimulatorOptions opts = SimulatorOptions.builder()
- *     .set(SimulatorOption.MAX_REMOVAL_DEPTH, 5)
+ *     .set(SimulatorOption.MAX_CANDIDATES, 5)
  *     .set(SimulatorOption.TYPO_PENALTY, 0.10)
  *     .build();
  * }</pre>

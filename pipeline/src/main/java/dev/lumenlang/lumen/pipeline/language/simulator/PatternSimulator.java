@@ -40,24 +40,12 @@ import java.util.function.Supplier;
 /**
  * Finds near matches when input tokens fail all normal matching paths.
  *
- * <p>This class is invoked after a statement, expression, condition, or block fails to match
- * any registered pattern through the normal pipeline. It uses a multi-pass approach:
+ * <p>Pipeline: pre-filter ranks every registered pattern by fuzzy literal coverage and keeps
+ * the top N. Each survivor goes through a level-0 match, a single-token typo retry, a partial
+ * typo fallback, and a type-mismatch fallback that surfaces structured binding failures.
  *
- * <ol>
- *   <li><b>Pre-filter</b>: scores all registered patterns against input tokens using fuzzy
- *       literal matching with prefix-aware distance. Keeps the top N candidates.</li>
- *   <li><b>BFS token removal</b>: for each candidate, tries removing 0 to k tokens from the
- *       input and matching against the real pattern matcher. At each removal level, also
- *       attempts single typo correction on the remaining tokens.</li>
- *   <li><b>Reorder fallback</b>: if BFS fails, attempts to rearrange tokens to match the
- *       pattern's expected order.</li>
- *   <li><b>Type mismatch fallback</b>: if all else fails, uses the match progress from
- *       level 0 to diagnose type binding failures.</li>
- * </ol>
- *
- * <h2>Configuration</h2>
- * <p>Tunable via {@link SimulatorOptions}. Each {@code suggest*} method exposes an
- * overload accepting custom options; the no-options form uses {@link SimulatorOptions#defaults()}.
+ * <p>Tunable via {@link SimulatorOptions}. Each {@code suggest*} method exposes an overload
+ * accepting custom options; the no-options form uses {@link SimulatorOptions#defaults()}.
  */
 public final class PatternSimulator {
 
@@ -66,13 +54,6 @@ public final class PatternSimulator {
 
     private static @NotNull String format(double v) {
         return String.format("%.3f", v);
-    }
-
-    private static int effectiveMaxK(int tokenCount, @NotNull SimulatorOptions opts) {
-        int base = opts.intValue(SimulatorOption.MAX_REMOVAL_DEPTH);
-        if (tokenCount > 25) return Math.min(base, 1);
-        if (tokenCount > 20) return Math.min(base, 2);
-        return base;
     }
 
     /**
@@ -280,7 +261,7 @@ public final class PatternSimulator {
             }
         }
         double minReport = opts.doubleValue(SimulatorOption.MIN_REPORT_CONFIDENCE);
-        List<Suggestion> results = new ArrayList<>(best.values().size());
+        List<Suggestion> results = new ArrayList<>(best.size());
         for (Suggestion s : best.values()) {
             if (s.confidence() >= minReport) results.add(s);
         }
@@ -306,160 +287,65 @@ public final class PatternSimulator {
         Pattern pattern = cs.pattern;
         boolean dt = debug.enabled(Verbosity.DEEP_TIMING);
         List<LiteralInfo> literals = extractLiterals(pattern);
-        int maxK = Math.min(effectiveMaxK(tokens.size(), opts), tokens.size() - 1);
-        int maxCombosPerLevel = opts.intValue(SimulatorOption.MAX_COMBINATIONS_PER_LEVEL);
         double sandboxRejectedPenalty = opts.doubleValue(SimulatorOption.SANDBOX_REJECTED_PENALTY);
-        MatchProgress level0Progress = null;
         TypoFix bestPartialTypo = null;
         MatchProgress bestPartialProgress = null;
-        for (int k = 0; k <= maxK; k++) {
-            if (k == 0) {
-                long lvl0Start = dt ? System.nanoTime() : 0L;
-                MatchProgress progress = PatternMatcher.matchWithProgress(tokens, pattern, types, env);
-                if (dt) Trace.deepTiming(debug, "  level-0 match " + pattern.raw(), System.nanoTime() - lvl0Start);
-                Trace.matchAttempt(debug, pattern, "level-0", progress);
-                level0Progress = progress;
-                if (progress.succeeded()) {
-                    Throwable sandbox = isBuiltin(cs.meta) && progress.match() != null ? runSandbox(cs.handler, progress.match(), env, pattern, "level-0", debug) : null;
-                    if (sandbox instanceof DiagnosticException de) {
-                        double confidence = computeConfidence(0, 0, true, opts) * sandboxRejectedPenalty;
-                        List<SuggestionIssue> issues = List.of(new SuggestionIssue.HandlerDiagnostic(de.diagnostic().title()));
-                        debug.trace(new TraceEvent.SuggestionFormed(pattern, confidence, "level-0 handler-diagnostic", issues));
-                        debug.emit(Verbosity.ISSUES, 2, () -> "level-0 syntactic match, handler rejected: " + de.diagnostic().title() + " (conf=" + format(confidence) + ")");
-                        return new Suggestion(pattern, confidence, issues, progress);
-                    }
-                    if (sandbox != null) {
-                        Trace.deep(debug, 3, () -> "level-0 succeeded but sandbox rejected (non-diagnostic throw), abort candidate");
-                        return null;
-                    }
-                    debug.trace(new TraceEvent.SuggestionFormed(pattern, 1.0, "level-0 clean", List.of()));
-                    debug.emit(Verbosity.ISSUES, 2, () -> "level-0 clean match, conf=1.000");
-                    return new Suggestion(pattern, 1.0, List.of(), progress);
-                }
-                long typoStart = dt ? System.nanoTime() : 0L;
-                TypoFix typo = findBestTypoFix(tokens, literals, pattern, debug);
-                if (dt)
-                    Trace.deepTiming(debug, "  level-0 typo lookup " + pattern.raw(), System.nanoTime() - typoStart);
-                if (typo != null) {
-                    long ctyStart = dt ? System.nanoTime() : 0L;
-                    List<Token> corrected = applyTypoFix(tokens, typo);
-                    MatchProgress corrProgress = PatternMatcher.matchWithProgress(corrected, pattern, types, env);
-                    if (dt)
-                        Trace.deepTiming(debug, "  level-0 typo retry " + pattern.raw(), System.nanoTime() - ctyStart);
-                    Trace.matchAttempt(debug, pattern, "level-0 typo-corrected '" + typo.token.text() + "'->'" + typo.expected + "'", corrProgress);
-                    boolean sandboxRejected = false;
-                    if (corrProgress.succeeded()) {
-                        if (isBuiltin(cs.meta) && corrProgress.match() != null && !tryHandlerSandbox(cs.handler, corrProgress.match(), env, pattern, "level-0 typo", debug)) {
-                            sandboxRejected = true;
-                        }
-                    }
-                    debug.trace(new TraceEvent.TypoConsidered(pattern, typo.token, typo.expected, FuzzyMatch.prefixAwareDistance(typo.token.text(), typo.expected)));
-                    if (!sandboxRejected && corrProgress.succeeded()) {
-                        double confidence = computeConfidence(0, 1, true, opts);
-                        List<SuggestionIssue> issues = List.of(new SuggestionIssue.Typo(typo.token, typo.expected));
-                        debug.trace(new TraceEvent.SuggestionFormed(pattern, confidence, "level-0 typo", issues));
-                        debug.emit(Verbosity.ISSUES, 2, () -> "level-0 typo accepted, conf=" + format(confidence) + " typo=" + typo.token.text() + "->" + typo.expected);
-                        return new Suggestion(pattern, confidence, issues, corrProgress);
-                    }
-                    if (sandboxRejected && corrProgress.succeeded()) {
-                        double confidence = computeConfidence(0, 1, true, opts) * sandboxRejectedPenalty;
-                        List<SuggestionIssue> issues = List.of(new SuggestionIssue.Typo(typo.token, typo.expected));
-                        debug.trace(new TraceEvent.SuggestionFormed(pattern, confidence, "level-0 typo (sandbox-penalised)", issues));
-                        debug.emit(Verbosity.ISSUES, 2, () -> "level-0 typo accepted but sandbox penalised, conf=" + format(confidence));
-                        return new Suggestion(pattern, confidence, issues, corrProgress);
-                    }
-                    if (corrProgress.furthestTokenIndex() >= progress.furthestTokenIndex()) {
-                        bestPartialTypo = typo;
-                        bestPartialProgress = corrProgress;
-                    }
-                }
-                continue;
+        long lvl0Start = dt ? System.nanoTime() : 0L;
+        MatchProgress level0Progress = PatternMatcher.matchWithProgress(tokens, pattern, types, env);
+        if (dt) Trace.deepTiming(debug, "  level-0 match " + pattern.raw(), System.nanoTime() - lvl0Start);
+        Trace.matchAttempt(debug, pattern, "level-0", level0Progress);
+        if (level0Progress.succeeded()) {
+            Throwable sandbox = isBuiltin(cs.meta) && level0Progress.match() != null ? runSandbox(cs.handler, level0Progress.match(), env, pattern, "level-0", debug) : null;
+            if (sandbox instanceof DiagnosticException de) {
+                double confidence = typoConfidence(0, true, opts) * sandboxRejectedPenalty;
+                List<SuggestionIssue> issues = List.of(new SuggestionIssue.HandlerDiagnostic(de.diagnostic().title()));
+                debug.trace(new TraceEvent.SuggestionFormed(pattern, confidence, "level-0 handler-diagnostic", issues));
+                debug.emit(Verbosity.ISSUES, 2, () -> "level-0 syntactic match, handler rejected: " + de.diagnostic().title() + " (conf=" + format(confidence) + ")");
+                return new Suggestion(pattern, confidence, issues, level0Progress);
             }
-            long bfsStart = dt ? System.nanoTime() : 0L;
-            boolean[] anchoredTokens = computeBfsLockedTokens(cs, tokens.size());
-            TypoCandidate[] perTokenTypo = perTokenBestTypos(tokens, literals);
-            List<Suggestion> levelResults = new ArrayList<>();
-            int[] combo = new int[k];
-            for (int ci = 0; ci < k; ci++) combo[ci] = ci;
-            int combinationsChecked = 0;
-            do {
-                if (touchesAnchored(combo, anchoredTokens)) continue;
-                if (combinationsChecked++ >= maxCombosPerLevel) break;
-                List<Token> reduced = removeIndices(tokens, combo);
-                MatchProgress progress = PatternMatcher.matchWithProgress(reduced, pattern, types, env);
-                Trace.matchAttempt(debug, pattern, "BFS-" + k + " reduced", progress);
-                Trace.bfsCombination(debug, pattern, k, combo.clone(), progress.succeeded(), progress.furthestTokenIndex());
-                if (progress.succeeded()) {
-                    int kx = k;
-                    if (isBuiltin(cs.meta) && progress.match() != null && !tryHandlerSandbox(cs.handler, progress.match(), env, pattern, "BFS-" + kx + " extra", debug)) {
-                        Trace.deep(debug, 4, () -> "BFS-" + kx + " match passed but sandbox rejected");
-                        progress = null;
-                    }
-                }
-                if (progress != null && progress.succeeded()) {
-                    boolean firstMatch = firstTokenMatches(tokens, literals) || firstTokenMatches(reduced, literals);
-                    double confidence = computeConfidence(k, 0, firstMatch, opts);
-                    List<Token> removed = extractIndices(tokens, combo);
-                    List<SuggestionIssue> issues = List.of(new SuggestionIssue.ExtraTokens(List.copyOf(removed)));
-                    int level = k;
-                    debug.trace(new TraceEvent.SuggestionFormed(pattern, confidence, "BFS-" + level + " extra", issues));
-                    debug.emit(Verbosity.ISSUES, 2, () -> "BFS-" + level + " extra accepted, conf=" + format(confidence) + " removed=" + removed.size() + " tok(s)");
-                    levelResults.add(new Suggestion(pattern, confidence, issues, progress));
-                    continue;
-                }
-                if (progress == null || progress.furthestTokenIndex() < 0) continue;
-                TypoFix typo = pickBestSurvivingTypo(perTokenTypo, combo, tokens.size());
-                if (typo != null) {
-                    List<Token> corrected = applyTypoFix(reduced, typo);
-                    MatchProgress corrProgress = PatternMatcher.matchWithProgress(corrected, pattern, types, env);
-                    Trace.matchAttempt(debug, pattern, "BFS-" + k + " typo-corrected '" + typo.token.text() + "'->'" + typo.expected + "'", corrProgress);
-                    if (corrProgress.succeeded()) {
-                        int kx = k;
-                        if (isBuiltin(cs.meta) && corrProgress.match() != null && !tryHandlerSandbox(cs.handler, corrProgress.match(), env, pattern, "BFS-" + kx + " extra+typo", debug)) {
-                            Trace.deep(debug, 4, () -> "BFS-" + kx + " typo-corrected match passed but sandbox rejected");
-                            corrProgress = null;
-                        }
-                    }
-                    if (corrProgress != null && corrProgress.succeeded()) {
-                        double confidence = computeConfidence(k, 1, true, opts);
-                        List<Token> removed = extractIndices(tokens, combo);
-                        List<SuggestionIssue> issues = List.of(new SuggestionIssue.ExtraTokens(List.copyOf(removed)), new SuggestionIssue.Typo(typo.token, typo.expected));
-                        int level = k;
-                        debug.trace(new TraceEvent.TypoConsidered(pattern, typo.token, typo.expected, FuzzyMatch.prefixAwareDistance(typo.token.text(), typo.expected)));
-                        debug.trace(new TraceEvent.SuggestionFormed(pattern, confidence, "BFS-" + level + " extra+typo", issues));
-                        debug.emit(Verbosity.ISSUES, 2, () -> "BFS-" + level + " extra+typo accepted, conf=" + format(confidence));
-                        levelResults.add(new Suggestion(pattern, confidence, issues, corrProgress));
-                        continue;
-                    }
-                    if (corrProgress != null && corrProgress.furthestTokenIndex() > (bestPartialProgress != null ? bestPartialProgress.furthestTokenIndex() : -1)) {
-                        bestPartialTypo = typo;
-                        bestPartialProgress = corrProgress;
-                    }
-                }
-            } while (nextCombination(combo, tokens.size()));
-            int explored = combinationsChecked;
-            int level = k;
-            boolean any = !levelResults.isEmpty();
-            if (dt)
-                Trace.deepTiming(debug, "  BFS k=" + level + " (" + explored + " combos) " + pattern.raw(), System.nanoTime() - bfsStart);
-            debug.trace(new TraceEvent.BfsLevel(pattern, level, explored, any));
-            debug.emit(Verbosity.MATCH, 2, () -> "BFS k=" + level + " explored=" + explored + " produced=" + (any ? "yes" : "no"));
-            if (!levelResults.isEmpty()) {
-                levelResults.sort(Comparator.comparingDouble(Suggestion::confidence).reversed().thenComparing(Comparator.comparingInt((Suggestion s) -> {
-                    for (PatternSimulator.SuggestionIssue si : s.issues()) {
-                        if (si instanceof SuggestionIssue.ExtraTokens extra)
-                            return extra.tokens().stream().mapToInt(Token::start).min().orElse(0);
-                    }
-                    return 0;
-                }).reversed()));
-                return levelResults.get(0);
+            if (sandbox != null) {
+                Trace.deep(debug, () -> "level-0 succeeded but sandbox rejected (non-diagnostic throw), abort candidate");
+                return null;
+            }
+            debug.trace(new TraceEvent.SuggestionFormed(pattern, 1.0, "level-0 clean", List.of()));
+            debug.emit(Verbosity.ISSUES, 2, () -> "level-0 clean match, conf=1.000");
+            return new Suggestion(pattern, 1.0, List.of(), level0Progress);
+        }
+        long typoStart = dt ? System.nanoTime() : 0L;
+        TypoFix typo = findBestTypoFix(tokens, literals, pattern, debug);
+        if (dt) Trace.deepTiming(debug, "  level-0 typo lookup " + pattern.raw(), System.nanoTime() - typoStart);
+        if (typo != null) {
+            long ctyStart = dt ? System.nanoTime() : 0L;
+            List<Token> corrected = applyTypoFix(tokens, typo);
+            MatchProgress corrProgress = PatternMatcher.matchWithProgress(corrected, pattern, types, env);
+            if (dt) Trace.deepTiming(debug, "  level-0 typo retry " + pattern.raw(), System.nanoTime() - ctyStart);
+            Trace.matchAttempt(debug, pattern, "level-0 typo-corrected '" + typo.token.text() + "'->'" + typo.expected + "'", corrProgress);
+            boolean sandboxRejected = corrProgress.succeeded() && isBuiltin(cs.meta) && corrProgress.match() != null && !tryHandlerSandbox(cs.handler, corrProgress.match(), env, pattern, "level-0 typo", debug);
+            debug.trace(new TraceEvent.TypoConsidered(pattern, typo.token, typo.expected, FuzzyMatch.prefixAwareDistance(typo.token.text(), typo.expected)));
+            if (!sandboxRejected && corrProgress.succeeded()) {
+                double confidence = typoConfidence(1, true, opts);
+                List<SuggestionIssue> issues = List.of(new SuggestionIssue.Typo(typo.token, typo.expected));
+                debug.trace(new TraceEvent.SuggestionFormed(pattern, confidence, "level-0 typo", issues));
+                debug.emit(Verbosity.ISSUES, 2, () -> "level-0 typo accepted, conf=" + format(confidence) + " typo=" + typo.token.text() + "->" + typo.expected);
+                return new Suggestion(pattern, confidence, issues, corrProgress);
+            }
+            if (sandboxRejected && corrProgress.succeeded()) {
+                double confidence = typoConfidence(1, true, opts) * sandboxRejectedPenalty;
+                List<SuggestionIssue> issues = List.of(new SuggestionIssue.Typo(typo.token, typo.expected));
+                debug.trace(new TraceEvent.SuggestionFormed(pattern, confidence, "level-0 typo (sandbox-penalised)", issues));
+                debug.emit(Verbosity.ISSUES, 2, () -> "level-0 typo accepted but sandbox penalised, conf=" + format(confidence));
+                return new Suggestion(pattern, confidence, issues, corrProgress);
+            }
+            if (corrProgress.furthestTokenIndex() >= level0Progress.furthestTokenIndex()) {
+                bestPartialTypo = typo;
+                bestPartialProgress = corrProgress;
             }
         }
         if (bestPartialTypo != null) {
             if (bestPartialProgress.furthestTokenIndex() <= bestPartialTypo.tokenIndex() + 1 && bestPartialProgress.failedBindingId() == null && bestPartialProgress.bindingFailures().isEmpty()) {
                 int furthest = bestPartialProgress.furthestTokenIndex();
                 int typoIdx = bestPartialTypo.tokenIndex();
-                Trace.deep(debug, 3, () -> "partial-typo discarded: shallow progress (furthest=" + furthest + ", typoIdx=" + typoIdx + ", no binding failures)");
+                Trace.deep(debug, () -> "partial-typo discarded: shallow progress (furthest=" + furthest + ", typoIdx=" + typoIdx + ", no binding failures)");
                 bestPartialTypo = null;
                 bestPartialProgress = null;
             }
@@ -470,7 +356,7 @@ public final class PatternSimulator {
                 MatchProgress check = PatternMatcher.matchWithProgress(corrected, pattern, types, env);
                 Trace.matchAttempt(debug, pattern, "partial-typo sandbox recheck", check);
                 if (check.succeeded() && check.match() != null && !tryHandlerSandbox(cs.handler, check.match(), env, pattern, "partial-typo recheck", debug)) {
-                    Trace.deep(debug, 3, () -> "partial-typo sandbox rejected, discard");
+                    Trace.deep(debug, () -> "partial-typo sandbox rejected, discard");
                     bestPartialTypo = null;
                     bestPartialProgress = null;
                 }
@@ -499,20 +385,17 @@ public final class PatternSimulator {
                     issues.add(new SuggestionIssue.Typo(lt.token(), lt.expected()));
                 }
             }
-            if (!bestPartialProgress.unmatchedTrailingTokens().isEmpty()) {
-                issues.add(new SuggestionIssue.ExtraTokens(bestPartialProgress.unmatchedTrailingTokens()));
-            }
             List<Token> correctedForFirstCheck = applyTypoFix(tokens, primaryTypo);
             boolean firstMatch = firstTokenMatches(tokens, literals) || firstTokenMatches(correctedForFirstCheck, literals) || isFirstLiteralToken(primaryTypo, tokens, literals);
             int totalTypos = 1 + (int) bestPartialProgress.literalTypos().stream().filter(lt -> !lt.token().text().equals(primaryTypo.token.text())).count();
-            double confidence = Math.min(computeConfidence(0, totalTypos, firstMatch, opts), computeTypeMatchConfidence(bestPartialProgress, tokens.size()));
+            double confidence = Math.min(typoConfidence(totalTypos, firstMatch, opts), typeMatchConfidence(bestPartialProgress, tokens.size()));
             List<SuggestionIssue> frozen = List.copyOf(issues);
             debug.trace(new TraceEvent.SuggestionFormed(pattern, confidence, "partial-typo fallback", frozen));
             debug.emit(Verbosity.ISSUES, 2, () -> "partial-typo fallback, conf=" + format(confidence) + " issues=" + frozen.size());
             return new Suggestion(pattern, confidence, frozen, bestPartialProgress);
         }
-        boolean hasIncomplete = level0Progress != null && level0Progress.incomplete() != null;
-        if (level0Progress != null && (level0Progress.failedBindingId() != null || !level0Progress.bindingFailures().isEmpty() || hasIncomplete)) {
+        boolean hasIncomplete = level0Progress.incomplete() != null;
+        if (level0Progress.failedBindingId() != null || !level0Progress.bindingFailures().isEmpty() || hasIncomplete) {
             List<SuggestionIssue> issues = new ArrayList<>();
             TypoFix heuristicTypo = findBestTypoFix(tokens, literals, pattern, debug);
             if (heuristicTypo != null && FuzzyMatch.prefixAwareDistance(heuristicTypo.token.text(), heuristicTypo.expected) <= 1) {
@@ -521,7 +404,7 @@ public final class PatternSimulator {
             if (!level0Progress.bindingFailures().isEmpty()) {
                 for (MatchProgress.BindingFailure bf : level0Progress.bindingFailures()) {
                     Token failed = bf.failedTokens().isEmpty() ? null : bf.failedTokens().get(0);
-                    if (failed == null || tokenIsLaterPatternLiteral(failed, pattern, literals)) {
+                    if (failed == null || tokenIsLaterPatternLiteral(failed, literals)) {
                         issues.add(new SuggestionIssue.MissingBinding(bf.bindingId(), missingBindingColumn(pattern, bf.bindingId(), failed, tokens)));
                     } else {
                         issues.add(new SuggestionIssue.TypeMismatch(failed, bf.bindingId(), bf.reason()));
@@ -532,7 +415,7 @@ public final class PatternSimulator {
                 String reason = level0Progress.failedReason();
                 String bindingId = level0Progress.failedBindingId();
                 if (failedToken != null && bindingId != null && reason != null) {
-                    if (tokenIsLaterPatternLiteral(failedToken, pattern, literals)) {
+                    if (tokenIsLaterPatternLiteral(failedToken, literals)) {
                         issues.add(new SuggestionIssue.MissingBinding(bindingId, missingBindingColumn(pattern, bindingId, failedToken, tokens)));
                     } else {
                         issues.add(new SuggestionIssue.TypeMismatch(failedToken, bindingId, reason));
@@ -547,31 +430,23 @@ public final class PatternSimulator {
                     issues.add(new SuggestionIssue.MissingLiteral(inc.expectedNext(), inc.afterTokenIndex() - 1));
                 }
             }
-            if (!level0Progress.unmatchedTrailingTokens().isEmpty()) {
-                issues.add(new SuggestionIssue.ExtraTokens(level0Progress.unmatchedTrailingTokens()));
-            }
-            double confidence = computeTypeMatchConfidence(level0Progress, tokens.size());
+            double confidence = typeMatchConfidence(level0Progress, tokens.size());
             List<SuggestionIssue> frozen = List.copyOf(issues);
             boolean missingLiteralOnly = !frozen.isEmpty() && frozen.stream().allMatch(i -> i instanceof SuggestionIssue.MissingLiteral);
             if (missingLiteralOnly) {
                 double prefilterFloor = opts.doubleValue(SimulatorOption.MISSING_LITERAL_PREFILTER_FLOOR);
                 if (cs.confidence < prefilterFloor) {
-                    Trace.deep(debug, 3, () -> "MissingLiteral fallback dropped, preFilter " + format(cs.confidence) + " < floor " + format(prefilterFloor) + ", trying reorder");
-                    return tryReorderMatch(tokens, cs, types, env, literals, opts, debug);
+                    Trace.deep(debug, () -> "MissingLiteral fallback dropped, preFilter " + format(cs.confidence) + " < floor " + format(prefilterFloor));
+                    return null;
                 }
                 confidence *= opts.doubleValue(SimulatorOption.MISSING_LITERAL_CONFIDENCE_FACTOR);
-                Suggestion reorderAlt = tryReorderMatch(tokens, cs, types, env, literals, opts, debug);
-                if (reorderAlt != null && reorderAlt.issues().stream().anyMatch(i -> i instanceof SuggestionIssue.Reorder) && reorderAlt.confidence() > confidence) {
-                    Trace.deep(debug, 3, () -> "reorder beat MissingLiteral, returning reorder");
-                    return reorderAlt;
-                }
             }
             double finalConfidence = confidence;
             debug.trace(new TraceEvent.SuggestionFormed(pattern, finalConfidence, "type-mismatch fallback", frozen));
             debug.emit(Verbosity.ISSUES, 2, () -> "type-mismatch fallback, conf=" + format(finalConfidence) + " issues=" + frozen.size());
             return new Suggestion(pattern, finalConfidence, frozen, level0Progress);
         }
-        return tryReorderMatch(tokens, cs, types, env, literals, opts, debug);
+        return null;
     }
 
     private static @Nullable PreFilterScore preFilter(@NotNull List<Token> tokens, @NotNull Pattern pattern, @NotNull PatternMeta meta, @Nullable Object handler, @NotNull SimulatorOptions opts, @NotNull SimulatorDebug debug) {
@@ -682,32 +557,6 @@ public final class PatternSimulator {
     }
 
     /**
-     * Computes the best literal typo candidate for each input token once. The result is reused
-     * across BFS combinations so the O(T x L x F) walk is done a single time per pattern.
-     */
-    private static @NotNull TypoCandidate[] perTokenBestTypos(@NotNull List<Token> tokens, @NotNull List<LiteralInfo> literals) {
-        TypoCandidate[] out = new TypoCandidate[tokens.size()];
-        for (int i = 0; i < tokens.size(); i++) {
-            Token token = tokens.get(i);
-            int bestDist = Integer.MAX_VALUE;
-            String bestForm = null;
-            for (LiteralInfo lit : literals) {
-                for (String form : lit.forms) {
-                    boolean shortLoose = canUseShortTokenLooseTypo(token, lit, tokens, literals);
-                    int dist = simDistance(token.text(), form, shortLoose);
-                    int threshold = effectiveThreshold(token.text(), form);
-                    if (dist > 0 && dist <= threshold && dist < bestDist) {
-                        bestDist = dist;
-                        bestForm = form;
-                    }
-                }
-            }
-            if (bestForm != null) out[i] = new TypoCandidate(token, bestForm, bestDist);
-        }
-        return out;
-    }
-
-    /**
      * The 1-char-loose typo path is enabled only when the candidate token is 1 character, the
      * target form is 2 characters, and every other required literal in the pattern has at least
      * one exact-match token elsewhere in the input.
@@ -730,38 +579,6 @@ public final class PatternSimulator {
             if (!satisfied) return false;
         }
         return true;
-    }
-
-    /**
-     * Picks the lowest-distance typo candidate whose token survived the BFS removal.
-     *
-     * @param perToken       original-position typo candidates from {@link #perTokenBestTypos}
-     * @param removedIndices sorted indices of tokens dropped at the current BFS level
-     * @param totalTokens    size of the pre-removal token list
-     * @return a {@link TypoFix} positioned within the reduced token list, or {@code null} if no
-     * surviving token has a typo candidate
-     */
-    private static @Nullable TypoFix pickBestSurvivingTypo(@NotNull TypoCandidate[] perToken, int[] removedIndices, int totalTokens) {
-        boolean[] removed = new boolean[totalTokens];
-        for (int idx : removedIndices) removed[idx] = true;
-        int bestDist = Integer.MAX_VALUE;
-        TypoCandidate best = null;
-        int bestReducedIdx = -1;
-        int reducedIdx = 0;
-        for (int i = 0; i < totalTokens; i++) {
-            if (removed[i]) {
-                continue;
-            }
-            TypoCandidate cand = perToken[i];
-            if (cand != null && cand.distance < bestDist) {
-                bestDist = cand.distance;
-                best = cand;
-                bestReducedIdx = reducedIdx;
-            }
-            reducedIdx++;
-        }
-        if (best == null) return null;
-        return new TypoFix(best.token, best.form, bestReducedIdx);
     }
 
     private static @Nullable TypoFix findBestTypoFix(@NotNull List<Token> tokens, @NotNull List<LiteralInfo> literals, @Nullable Pattern pattern, @NotNull SimulatorDebug debug) {
@@ -791,7 +608,8 @@ public final class PatternSimulator {
 
     private static @NotNull List<Token> applyTypoFix(@NotNull List<Token> tokens, @NotNull TypoFix fix) {
         List<Token> result = new ArrayList<>(tokens);
-        result.set(fix.tokenIndex, syntheticToken(fix.expected, tokens));
+        int line = tokens.isEmpty() ? 1 : tokens.get(0).line();
+        result.set(fix.tokenIndex, new Token(TokenKind.IDENT, fix.expected, line, 0, fix.expected.length()));
         return result;
     }
 
@@ -862,7 +680,7 @@ public final class PatternSimulator {
                 literalIdx = i;
             }
         }
-        if (placeholderIdx >= 0 && literalIdx >= 0 && literalIdx < placeholderIdx) {
+        if (literalIdx >= 0 && literalIdx < placeholderIdx) {
             return failed.end() + 1;
         }
         return Math.max(0, failed.start() - 1);
@@ -890,7 +708,7 @@ public final class PatternSimulator {
      * matcher fed this token to a placeholder, but the token actually belongs to a later literal
      * slot, so the placeholder should be reported as missing rather than as a type mismatch.
      */
-    private static boolean tokenIsLaterPatternLiteral(@NotNull Token failed, @NotNull Pattern pattern, @NotNull List<LiteralInfo> literals) {
+    private static boolean tokenIsLaterPatternLiteral(@NotNull Token failed, @NotNull List<LiteralInfo> literals) {
         String text = failed.text();
         for (LiteralInfo lit : literals) {
             for (String form : lit.forms) {
@@ -900,13 +718,13 @@ public final class PatternSimulator {
         return false;
     }
 
-    private static double computeConfidence(int removals, int typos, boolean firstTokenMatches, @NotNull SimulatorOptions opts) {
-        double base = 1.0 - (removals * opts.doubleValue(SimulatorOption.REMOVAL_PENALTY)) - (typos * opts.doubleValue(SimulatorOption.TYPO_PENALTY));
+    private static double typoConfidence(int typos, boolean firstTokenMatches, @NotNull SimulatorOptions opts) {
+        double base = 1.0 - typos * opts.doubleValue(SimulatorOption.TYPO_PENALTY);
         if (!firstTokenMatches) base *= opts.doubleValue(SimulatorOption.FIRST_TOKEN_MISS_MULTIPLIER);
         return Math.max(0.0, Math.min(1.0, base));
     }
 
-    private static double computeTypeMatchConfidence(@NotNull MatchProgress progress, int totalTokens) {
+    private static double typeMatchConfidence(@NotNull MatchProgress progress, int totalTokens) {
         double fraction = totalTokens > 0 ? (double) (progress.furthestTokenIndex() + 1) / totalTokens : 0.0;
         double base = Math.max(0.20, Math.min(0.85, fraction));
         int failures = progress.bindingFailures().size();
@@ -976,270 +794,6 @@ public final class PatternSimulator {
             counts[c]--;
         }
         return true;
-    }
-
-    private static @NotNull List<Token> removeIndices(@NotNull List<Token> tokens, int[] indices) {
-        boolean[] skip = new boolean[tokens.size()];
-        for (int idx : indices) skip[idx] = true;
-        List<Token> result = new ArrayList<>(tokens.size() - indices.length);
-        for (int i = 0; i < tokens.size(); i++) {
-            if (!skip[i]) result.add(tokens.get(i));
-        }
-        return result;
-    }
-
-    private static @NotNull List<Token> extractIndices(@NotNull List<Token> tokens, int[] indices) {
-        List<Token> result = new ArrayList<>(indices.length);
-        for (int idx : indices) result.add(tokens.get(idx));
-        return result;
-    }
-
-    private static boolean @NotNull [] computeBfsLockedTokens(@NotNull PreFilterScore cs, int tokenCount) {
-        boolean[] locked = new boolean[tokenCount];
-        int requiredAnchored = 0;
-        int requiredTotal = 0;
-        for (LiteralMatchResult m : cs.matchDetails) {
-            if (m.literal.optional) continue;
-            requiredTotal++;
-            if (m.tokenIndex >= 0 && m.distance == 0) requiredAnchored++;
-        }
-        if (requiredTotal == 0 || requiredAnchored < requiredTotal) return locked;
-        for (LiteralMatchResult m : cs.matchDetails) {
-            if (!m.literal.optional && m.tokenIndex >= 0 && m.tokenIndex < tokenCount && m.distance == 0)
-                locked[m.tokenIndex] = true;
-        }
-        return locked;
-    }
-
-    private static boolean touchesAnchored(int[] combo, boolean[] anchored) {
-        for (int idx : combo) {
-            if (idx < anchored.length && anchored[idx]) return true;
-        }
-        return false;
-    }
-
-    private static boolean nextCombination(int[] combo, int n) {
-        int k = combo.length;
-        int i = k - 1;
-        while (i >= 0 && combo[i] == n - k + i) i--;
-        if (i < 0) return false;
-        combo[i]++;
-        for (int j = i + 1; j < k; j++) combo[j] = combo[j - 1] + 1;
-        return true;
-    }
-
-    private static @Nullable Suggestion tryReorderMatch(@NotNull List<Token> tokens, @NotNull PreFilterScore cs, @NotNull TypeRegistry types, @NotNull TypeEnvImpl env, @NotNull List<LiteralInfo> literals, @NotNull SimulatorOptions opts, @NotNull SimulatorDebug debug) {
-        double prefilterFloor = opts.doubleValue(SimulatorOption.REORDER_PREFILTER_FLOOR);
-        if (cs.confidence < prefilterFloor) {
-            Trace.deep(debug, 2, () -> "reorder skipped: preFilter " + format(cs.confidence) + " < REORDER_PREFILTER_FLOOR " + format(prefilterFloor));
-            return null;
-        }
-        List<LiteralMatchResult> matchDetails = cs.matchDetails;
-        long anchoredCount = matchDetails.stream().filter(m -> m.tokenIndex >= 0).count();
-        int shapeLimit = opts.intValue(SimulatorOption.SHAPE_MATCH_TOKEN_LIMIT);
-        if (tokens.size() > shapeLimit) {
-            Trace.deep(debug, 2, () -> "reorder skipped: " + tokens.size() + " tokens > SHAPE_MATCH_TOKEN_LIMIT " + shapeLimit);
-            return null;
-        }
-        if (anchoredCount < 1) {
-            Trace.deep(debug, 2, () -> "reorder skipped: no anchored literals");
-            return null;
-        }
-        ShapeMatchResult shapeResult = tryShapeMatch(tokens, cs.pattern, matchDetails, types, env, debug);
-        if (shapeResult == null) {
-            Trace.deep(debug, 2, () -> "reorder skipped: shape produced nothing");
-            return null;
-        }
-        MatchProgress shaped = shapeResult.progress();
-        if (!shaped.succeeded()) {
-            Trace.deep(debug, 2, () -> "reorder skipped: shaped sequence did not match (furthest=" + shaped.furthestTokenIndex() + ")");
-            return null;
-        }
-        if (isBuiltin(cs.meta) && shaped.match() != null && !tryHandlerSandbox(cs.handler, shaped.match(), env, cs.pattern, "reorder shape-match", debug)) {
-            Trace.deep(debug, 2, () -> "reorder skipped: shaped match passed but sandbox rejected");
-            return null;
-        }
-        List<Token> shapeReordered = tokensThatChangedPosition(tokens, shapeResult.shapedTokens());
-        List<Token> reordered = shapeReordered.isEmpty() ? findReorderedFromAnchors(tokens, matchDetails) : shapeReordered;
-        List<SuggestionIssue.MissingLiteral> missing = findUnanchoredRequiredLiterals(matchDetails);
-        if (reordered.isEmpty() && missing.isEmpty()) {
-            Trace.deep(debug, 2, () -> "reorder skipped: no reordered tokens or missing literals identified");
-            return null;
-        }
-        boolean firstMatch = firstTokenMatches(tokens, literals);
-        double confidence = Math.max(opts.doubleValue(SimulatorOption.VALIDATED_REORDER_FLOOR), computeConfidence(0, 0, firstMatch, opts));
-        if (!missing.isEmpty()) confidence *= opts.doubleValue(SimulatorOption.MISSING_LITERAL_CONFIDENCE_FACTOR);
-        List<SuggestionIssue> issues = new ArrayList<>(missing.size() + (reordered.isEmpty() ? 0 : 1));
-        issues.addAll(missing);
-        if (!reordered.isEmpty()) issues.add(new SuggestionIssue.Reorder(reordered));
-        List<SuggestionIssue> frozen = List.copyOf(issues);
-        double finalConfidence = confidence;
-        debug.trace(new TraceEvent.SuggestionFormed(cs.pattern, finalConfidence, "reorder fallback", frozen));
-        debug.emit(Verbosity.ISSUES, 2, () -> "reorder fallback, conf=" + format(finalConfidence) + " reordered=" + reordered.size() + " tok(s) missing=" + missing.size());
-        return new Suggestion(cs.pattern, finalConfidence, frozen, shaped);
-    }
-
-    private static @Nullable ShapeMatchResult tryShapeMatch(@NotNull List<Token> tokens, @NotNull Pattern pattern, @NotNull List<LiteralMatchResult> matchDetails, @NotNull TypeRegistry types, @NotNull TypeEnvImpl env, @NotNull SimulatorDebug debug) {
-        List<LiteralMatchResult> anchored = matchDetails.stream().filter(m -> m.tokenIndex >= 0).sorted(Comparator.comparingInt(m -> m.literal.partIndex)).toList();
-        if (anchored.isEmpty()) return null;
-        boolean[] used = new boolean[tokens.size()];
-        for (LiteralMatchResult m : anchored) {
-            if (m.tokenIndex >= 0 && m.tokenIndex < tokens.size()) used[m.tokenIndex] = true;
-        }
-        List<Token> remaining = new ArrayList<>();
-        for (int j = 0; j < tokens.size(); j++) {
-            if (!used[j]) remaining.add(tokens.get(j));
-        }
-        List<List<Token>> permutations = boundedPermutations(remaining);
-        ShapeMatchResult fallback = null;
-        for (List<Token> perm : permutations) {
-            List<Token> shaped = buildShapedTokens(pattern, anchored, tokens, perm);
-            if (shaped.isEmpty()) continue;
-            MatchProgress shapedProgress = PatternMatcher.matchWithProgress(shaped, pattern, types, env);
-            Trace.shapeAttempt(debug, pattern, shaped, shapedProgress);
-            Trace.matchAttempt(debug, pattern, "shape-match", shapedProgress);
-            ShapeMatchResult result = new ShapeMatchResult(shapedProgress, List.copyOf(shaped));
-            if (shapedProgress.succeeded()) return result;
-            if (fallback == null) fallback = result;
-        }
-        return fallback;
-    }
-
-    /**
-     * Returns the input tokens whose position differs from the shape-matched order, walking from
-     * the leftmost difference to the rightmost so the highlight stays contiguous in source order.
-     * Synthetic literal tokens fabricated during shape match are skipped.
-     */
-    private static @NotNull List<Token> tokensThatChangedPosition(@NotNull List<Token> input, @NotNull List<Token> shaped) {
-        if (input.isEmpty() || shaped.isEmpty()) return List.of();
-        int firstDiff = -1;
-        int lastDiff = -1;
-        int limit = Math.min(input.size(), shaped.size());
-        for (int i = 0; i < limit; i++) {
-            if (input.get(i) != shaped.get(i)) {
-                if (firstDiff < 0) firstDiff = i;
-                lastDiff = i;
-            }
-        }
-        if (firstDiff < 0) return List.of();
-        List<Token> result = new ArrayList<>(lastDiff - firstDiff + 1);
-        for (int i = firstDiff; i <= lastDiff; i++) result.add(input.get(i));
-        return result.size() >= 2 ? List.copyOf(result) : List.of();
-    }
-
-    private static @NotNull List<Token> buildShapedTokens(@NotNull Pattern pattern, @NotNull List<LiteralMatchResult> anchored, @NotNull List<Token> tokens, @NotNull List<Token> remaining) {
-        List<PatternPart> parts = pattern.parts();
-        List<Token> shaped = new ArrayList<>();
-        int remIdx = 0;
-        for (PatternPart part : parts) {
-            if (part instanceof PatternPart.Literal lit) {
-                Token anchor = findAnchorToken(anchored, tokens, lit.text());
-                shaped.add(anchor != null ? anchor : syntheticToken(lit.text(), tokens));
-            } else if (part instanceof PatternPart.FlexLiteral flex) {
-                Token anchor = findFlexAnchorToken(anchored, tokens, flex.forms());
-                shaped.add(anchor != null ? anchor : syntheticToken(flex.forms().get(0), tokens));
-            } else if (part instanceof PatternPart.PlaceholderPart) {
-                if (remIdx < remaining.size()) {
-                    shaped.add(remaining.get(remIdx++));
-                }
-            } else if (part instanceof PatternPart.Group group) {
-                if (!group.required()) continue;
-                for (List<PatternPart> alt : group.alternatives()) {
-                    for (PatternPart ap : alt) {
-                        if (ap instanceof PatternPart.Literal gl) {
-                            Token a = findAnchorToken(anchored, tokens, gl.text());
-                            if (a != null) {
-                                shaped.add(a);
-                                break;
-                            }
-                        }
-                    }
-                    break;
-                }
-            }
-        }
-        while (remIdx < remaining.size()) {
-            shaped.add(remaining.get(remIdx++));
-        }
-        return shaped;
-    }
-
-    private static @NotNull List<List<Token>> boundedPermutations(@NotNull List<Token> input) {
-        if (input.size() <= 1) return List.of(input);
-        if (input.size() > 4) return List.of(input);
-        List<List<Token>> out = new ArrayList<>();
-        permute(new ArrayList<>(input), 0, out);
-        return out;
-    }
-
-    private static void permute(@NotNull List<Token> arr, int start, @NotNull List<List<Token>> out) {
-        if (start == arr.size() - 1) {
-            out.add(List.copyOf(arr));
-            return;
-        }
-        for (int i = start; i < arr.size(); i++) {
-            Token tmp = arr.get(start);
-            arr.set(start, arr.get(i));
-            arr.set(i, tmp);
-            permute(arr, start + 1, out);
-            tmp = arr.get(start);
-            arr.set(start, arr.get(i));
-            arr.set(i, tmp);
-        }
-    }
-
-    private static @Nullable Token findAnchorToken(@NotNull List<LiteralMatchResult> anchored, @NotNull List<Token> tokens, @NotNull String text) {
-        for (LiteralMatchResult m : anchored) {
-            if (m.tokenIndex >= 0 && m.tokenIndex < tokens.size() && m.literal.forms.stream().anyMatch(f -> f.equalsIgnoreCase(text))) {
-                return tokens.get(m.tokenIndex);
-            }
-        }
-        return null;
-    }
-
-    private static @Nullable Token findFlexAnchorToken(@NotNull List<LiteralMatchResult> anchored, @NotNull List<Token> tokens, @NotNull List<String> forms) {
-        for (String form : forms) {
-            Token found = findAnchorToken(anchored, tokens, form);
-            if (found != null) return found;
-        }
-        return null;
-    }
-
-    private static @NotNull List<Token> findReorderedFromAnchors(@NotNull List<Token> tokens, @NotNull List<LiteralMatchResult> matchDetails) {
-        List<LiteralMatchResult> anchored = matchDetails.stream().filter(m -> m.tokenIndex >= 0).sorted(Comparator.comparingInt(m -> m.literal.partIndex)).toList();
-        if (anchored.isEmpty()) return List.of();
-        List<Token> result = new ArrayList<>();
-        int expectedPos = 0;
-        for (LiteralMatchResult m : anchored) {
-            if (m.tokenIndex != expectedPos) {
-                for (int j = Math.min(expectedPos, m.tokenIndex); j <= Math.max(expectedPos, m.tokenIndex) && j < tokens.size(); j++) {
-                    if (!result.contains(tokens.get(j))) result.add(tokens.get(j));
-                }
-            }
-            expectedPos = m.tokenIndex + 1;
-        }
-        return result.size() >= 2 ? List.copyOf(result) : List.of();
-    }
-
-    private static @NotNull List<SuggestionIssue.MissingLiteral> findUnanchoredRequiredLiterals(@NotNull List<LiteralMatchResult> matchDetails) {
-        List<LiteralMatchResult> sorted = new ArrayList<>(matchDetails);
-        sorted.sort(Comparator.comparingInt(m -> m.literal.partIndex));
-        List<SuggestionIssue.MissingLiteral> result = new ArrayList<>();
-        int lastAnchorTokenIdx = -1;
-        for (LiteralMatchResult m : sorted) {
-            if (m.tokenIndex >= 0) {
-                lastAnchorTokenIdx = m.tokenIndex;
-                continue;
-            }
-            if (m.literal.optional) continue;
-            result.add(new SuggestionIssue.MissingLiteral(m.literal.primaryForm(), lastAnchorTokenIdx));
-        }
-        return List.copyOf(result);
-    }
-
-    private static @NotNull Token syntheticToken(@NotNull String text, @NotNull List<Token> reference) {
-        int line = reference.isEmpty() ? 1 : reference.get(0).line();
-        return new Token(TokenKind.IDENT, text, line, 0, text.length());
     }
 
     private static boolean isBuiltin(@NotNull PatternMeta meta) {
@@ -1340,25 +894,6 @@ public final class PatternSimulator {
      */
     public sealed interface SuggestionIssue {
 
-        private static @NotNull String renderPositioned(@NotNull List<Token> tokens) {
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < tokens.size(); i++) {
-                if (i > 0) sb.append(", ");
-                Token t = tokens.get(i);
-                sb.append("'").append(t.text()).append("' (col ").append(t.start()).append(")");
-            }
-            return sb.toString();
-        }
-
-        private static @NotNull String renderQuoted(@NotNull List<Token> tokens) {
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < tokens.size(); i++) {
-                if (i > 0) sb.append(", ");
-                sb.append("'").append(tokens.get(i).text()).append("'");
-            }
-            return sb.toString();
-        }
-
         /**
          * A token in the input that is a likely typo of a pattern literal.
          *
@@ -1369,30 +904,6 @@ public final class PatternSimulator {
             @Override
             public @NotNull String toString() {
                 return "typo: '" + token.text() + "' (col " + token.start() + ") should be '" + expected + "'";
-            }
-        }
-
-        /**
-         * Tokens in the input that are not part of the matched pattern.
-         *
-         * @param tokens the extra tokens that should be removed
-         */
-        record ExtraTokens(@NotNull List<Token> tokens) implements SuggestionIssue {
-            @Override
-            public @NotNull String toString() {
-                return "extra tokens: " + renderPositioned(tokens);
-            }
-        }
-
-        /**
-         * Tokens in the input that are in the wrong order relative to the pattern.
-         *
-         * @param tokens the tokens that need reordering
-         */
-        record Reorder(@NotNull List<Token> tokens) implements SuggestionIssue {
-            @Override
-            public @NotNull String toString() {
-                return "reorder: " + renderQuoted(tokens);
             }
         }
 
@@ -1468,29 +979,11 @@ public final class PatternSimulator {
     }
 
     /**
-     * Outcome of a shape-match attempt: the matcher's progress against the reshaped tokens and
-     * the shaped sequence itself. The shaped sequence reflects the order the simulator believes
-     * the input should be in.
-     */
-    private record ShapeMatchResult(@NotNull MatchProgress progress, @NotNull List<Token> shapedTokens) {
-    }
-
-    /**
-     * Per-token best literal-form typo candidate, cached across BFS combinations.
-     *
-     * @param token    the original input token
-     * @param form     the literal form the token is closest to
-     * @param distance edit distance between {@code token} and {@code form}
-     */
-    private record TypoCandidate(@NotNull Token token, @NotNull String form, int distance) {
-    }
-
-    /**
      * A single simulation result describing a near match and the issues found.
      *
      * @param pattern    the candidate pattern that closely matched the input
      * @param confidence confidence score between 0.0 and 1.0 (0% to 100%)
-     * @param issues     the specific issues detected (typos, extra tokens, reorders, type mismatches)
+     * @param issues     the specific issues detected (typos, type mismatches, missing parts)
      * @param progress   match progress from real simulation, or null if not enriched
      */
     public record Suggestion(@NotNull Pattern pattern, double confidence, @NotNull List<SuggestionIssue> issues,
@@ -1555,34 +1048,8 @@ public final class PatternSimulator {
             }
         }
 
-        static void bfsCombination(@NotNull SimulatorDebug debug, @NotNull Pattern pattern, int level, int[] removedIndices, boolean matched, int furthestIndex) {
-            debug.trace(new TraceEvent.BfsCombination(pattern, level, removedIndices, matched, furthestIndex));
-            if (!debug.enabled(Verbosity.MATCH)) return;
-            StringBuilder ix = new StringBuilder("[");
-            for (int i = 0; i < removedIndices.length; i++) {
-                if (i > 0) ix.append(',');
-                ix.append(removedIndices[i]);
-            }
-            ix.append(']');
-            String ixStr = ix.toString();
-            debug.emit(Verbosity.MATCH, 3, () -> "BFS-" + level + " remove=" + ixStr + " " + (matched ? "MATCH" : "no-match furthest=" + furthestIndex));
-        }
-
-        static void shapeAttempt(@NotNull SimulatorDebug debug, @NotNull Pattern pattern, @NotNull List<Token> shaped, @Nullable MatchProgress progress) {
-            debug.trace(new TraceEvent.ShapeAttempt(pattern, shaped, progress));
-            if (!debug.enabled(Verbosity.DEEP)) return;
-            StringBuilder sb = new StringBuilder("shape=[");
-            for (int i = 0; i < shaped.size(); i++) {
-                if (i > 0) sb.append(' ');
-                sb.append(shaped.get(i).text());
-            }
-            sb.append("] -> ").append(progress == null ? "null" : (progress.succeeded() ? "OK" : "FAIL furthest=" + progress.furthestTokenIndex()));
-            String line = sb.toString();
-            debug.emit(Verbosity.DEEP, 3, () -> line);
-        }
-
-        static void deep(@NotNull SimulatorDebug debug, int depth, @NotNull Supplier<String> line) {
-            debug.emit(Verbosity.DEEP, depth, line);
+        static void deep(@NotNull SimulatorDebug debug, @NotNull Supplier<String> line) {
+            debug.emit(Verbosity.DEEP, 3, line);
         }
 
         static void timing(@NotNull SimulatorDebug debug, @NotNull String stage, long nanos) {
