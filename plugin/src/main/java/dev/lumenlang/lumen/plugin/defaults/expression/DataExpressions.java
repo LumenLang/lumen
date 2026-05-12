@@ -20,6 +20,7 @@ import dev.lumenlang.lumen.pipeline.data.DataSchema;
 import dev.lumenlang.lumen.pipeline.java.compiled.DataInstance;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.language.simulator.PatternSimulator;
+import dev.lumenlang.lumen.pipeline.language.simulator.result.Suggestion;
 import dev.lumenlang.lumen.pipeline.language.simulator.suggestions.SuggestionDiagnostics;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.language.tokenization.TokenKind;
@@ -214,7 +215,7 @@ public final class DataExpressions {
                 if (spanEnd <= valueStart) spanEnd = Math.min(valueStart + 1, tokens.size());
                 List<? extends ScriptToken> spanTokens = tokens.subList(valueStart, spanEnd);
                 List<Token> pipelineValueTokens = HandlerContextImpl.toPipelineTokens(spanTokens);
-                List<PatternSimulator.Suggestion> suggestions = PatternSimulator.suggestExpressions(pipelineValueTokens, PatternRegistry.instance(), env);
+                List<Suggestion> suggestions = PatternSimulator.suggestExpressions(pipelineValueTokens, PatternRegistry.instance(), env);
                 LumenDiagnostic diag = !suggestions.isEmpty()
                         ? SuggestionDiagnostics.build("Cannot resolve value for field '" + fieldName + "'", line, raw, pipelineValueTokens, suggestions, env)
                         : SuggestionDiagnostics.buildNoSuggestion("Cannot resolve value for field '" + fieldName + "'", line, raw, pipelineValueTokens, env);

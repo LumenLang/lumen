@@ -91,6 +91,7 @@ public enum SimulatorOption {
     private final @NotNull Kind kind;
     private final double defaultValue;
     private final @NotNull Range range;
+
     SimulatorOption(@NotNull Kind kind, double defaultValue, @NotNull Range range) {
         this.kind = kind;
         this.defaultValue = defaultValue;

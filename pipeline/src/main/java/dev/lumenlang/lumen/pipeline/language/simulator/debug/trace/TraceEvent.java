@@ -2,12 +2,11 @@ package dev.lumenlang.lumen.pipeline.language.simulator.debug.trace;
 
 import dev.lumenlang.lumen.pipeline.language.match.MatchProgress;
 import dev.lumenlang.lumen.pipeline.language.pattern.Pattern;
-import dev.lumenlang.lumen.pipeline.language.simulator.PatternSimulator.Suggestion;
-import dev.lumenlang.lumen.pipeline.language.simulator.PatternSimulator.SuggestionIssue;
 import dev.lumenlang.lumen.pipeline.language.simulator.debug.ScoreBreakdown;
+import dev.lumenlang.lumen.pipeline.language.simulator.result.Suggestion;
+import dev.lumenlang.lumen.pipeline.language.simulator.result.SuggestionIssue;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 

@@ -21,6 +21,7 @@ import dev.lumenlang.lumen.pipeline.language.match.Match;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.language.resolve.ExprResolver;
 import dev.lumenlang.lumen.pipeline.language.simulator.PatternSimulator;
+import dev.lumenlang.lumen.pipeline.language.simulator.result.Suggestion;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.language.tokenization.TokenKind;
 import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
@@ -258,7 +259,7 @@ public final class HandlerContextImpl implements HandlerContext {
         try {
             expr = cp.parse(tokens, env);
         } catch (TokenCarryingException e) {
-            List<PatternSimulator.Suggestion> suggestions = PatternSimulator.suggestConditions(tokens, PatternRegistry.instance(), env);
+            List<Suggestion> suggestions = PatternSimulator.suggestConditions(tokens, PatternRegistry.instance(), env);
             if (!suggestions.isEmpty()) {
                 throw new TokenCarryingException("Unknown condition", tokens, suggestions);
             }
