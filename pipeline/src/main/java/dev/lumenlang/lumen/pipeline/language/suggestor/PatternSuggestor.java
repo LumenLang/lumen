@@ -38,7 +38,7 @@ public final class PatternSuggestor {
     private PatternSuggestor() {
     }
 
-    private static final SimulatorOptions EDITOR_OPTIONS = SimulatorOptions.builder().set(SimulatorOption.MAX_CANDIDATES, 50).set(SimulatorOption.MAX_SUGGESTIONS, 50).set(SimulatorOption.MIN_REPORT_CONFIDENCE, 0.0).build();
+    private static final SimulatorOptions EDITOR_OPTIONS = SimulatorOptions.builder().set(SimulatorOption.MAX_CANDIDATES, 15).set(SimulatorOption.MAX_SUGGESTIONS, 20).build();
 
     public static @NotNull SuggestorPlan suggest(@NotNull String rawLine, int cursorCol, @NotNull PatternRegistry reg, @NotNull TypeEnvImpl env, @NotNull PatternSimulator.Scope scope) {
         return suggest(rawLine, cursorCol, reg, env, scope, EDITOR_OPTIONS);

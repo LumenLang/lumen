@@ -210,18 +210,22 @@ public final class PatternSimulator {
     public static @NotNull List<Pattern> patternsFor(@NotNull PatternRegistry reg, @NotNull Scope scope) {
         List<Pattern> out = new ArrayList<>();
         switch (scope) {
-            case STATEMENT -> {
+            case ROOT_LEVEL -> {
+                for (RegisteredBlock rb : reg.getBlocks()) {
+                    if (rb.supportsRootLevel()) out.add(rb.pattern());
+                }
+            }
+            case INSIDE_BLOCK -> {
                 for (RegisteredPattern rp : reg.getStatements()) out.add(rp.pattern());
-                for (RegisteredBlock rb : reg.getBlocks()) out.add(rb.pattern());
+                for (RegisteredBlock rb : reg.getBlocks()) {
+                    if (rb.supportsBlock()) out.add(rb.pattern());
+                }
             }
             case EXPRESSION -> {
                 for (RegisteredExpression re : reg.getExpressions()) out.add(re.pattern());
             }
             case CONDITION -> {
                 for (RegisteredCondition rc : reg.getConditionRegistry().getConditions()) out.add(rc.pattern());
-            }
-            case BLOCK -> {
-                for (RegisteredBlock rb : reg.getBlocks()) out.add(rb.pattern());
             }
         }
         return out;
@@ -279,9 +283,14 @@ public final class PatternSimulator {
     public enum Scope {
 
         /**
-         * Statements plus standalone expressions used as statements.
+         * Top-level: block patterns that allow root-level usage only.
          */
-        STATEMENT,
+        ROOT_LEVEL,
+
+        /**
+         * Inside a block: statements plus block patterns that allow nesting.
+         */
+        INSIDE_BLOCK,
 
         /**
          * Expression patterns only.
@@ -291,11 +300,6 @@ public final class PatternSimulator {
         /**
          * Condition patterns.
          */
-        CONDITION,
-
-        /**
-         * Block headers.
-         */
-        BLOCK
+        CONDITION
     }
 }
