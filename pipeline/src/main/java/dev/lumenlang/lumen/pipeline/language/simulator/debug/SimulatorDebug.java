@@ -23,14 +23,6 @@ public record SimulatorDebug(@NotNull Verbosity verbosity, @NotNull DebugSink si
     public static final SimulatorDebug OFF = new SimulatorDebug(Verbosity.OFF, DebugSink.NOOP, SimulatorTracer.NOOP);
 
     /**
-     * Builds an instance that writes to {@link DebugSink#STDERR} at the given verbosity, with a
-     * no-op tracer.
-     */
-    public static @NotNull SimulatorDebug stderr(@NotNull Verbosity verbosity) {
-        return new SimulatorDebug(verbosity, DebugSink.STDERR, SimulatorTracer.NOOP);
-    }
-
-    /**
      * {@code true} when the configured verbosity is at least {@code level}.
      */
     public boolean enabled(@NotNull Verbosity level) {

@@ -13,6 +13,7 @@ import dev.lumenlang.lumen.pipeline.conditions.registry.RegisteredConditionMatch
 import dev.lumenlang.lumen.pipeline.language.exceptions.TokenCarryingException;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.language.simulator.PatternSimulator;
+import dev.lumenlang.lumen.pipeline.language.simulator.result.Suggestion;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.language.tokenization.TokenKind;
 import dev.lumenlang.lumen.pipeline.placeholder.PlaceholderExpander;
@@ -202,7 +203,7 @@ public final class ConditionParser {
                     .at(env.blockContext().node().line(), env.blockContext().node().raw());
             if (sepToken != null) builder.highlight(sepToken.start(), sepToken.end());
             builder.label(label);
-            List<PatternSimulator.Suggestion> suggestions = PatternSimulator.suggestConditions(tokens, PatternRegistry.instance(), env);
+            List<Suggestion> suggestions = PatternSimulator.suggestConditions(tokens, PatternRegistry.instance(), env);
             if (!suggestions.isEmpty()) {
                 String top = suggestions.get(0).pattern().raw();
                 builder.help("did you mean to use a condition like: " + top);
@@ -257,7 +258,7 @@ public final class ConditionParser {
             return new ConditionAtom(slowM);
         }
 
-        List<PatternSimulator.Suggestion> suggestions = PatternSimulator.suggestConditions(tokens, PatternRegistry.instance(), env);
+        List<Suggestion> suggestions = PatternSimulator.suggestConditions(tokens, PatternRegistry.instance(), env);
         throw new TokenCarryingException("Unknown condition", tokens, suggestions);
     }
 }

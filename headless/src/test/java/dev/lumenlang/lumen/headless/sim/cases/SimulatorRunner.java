@@ -3,7 +3,7 @@ package dev.lumenlang.lumen.headless.sim.cases;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.language.simulator.PatternSimulator;
-import dev.lumenlang.lumen.pipeline.language.simulator.PatternSimulator.Suggestion;
+import dev.lumenlang.lumen.pipeline.language.simulator.result.Suggestion;
 import dev.lumenlang.lumen.pipeline.language.simulator.debug.SimulatorDebug;
 import dev.lumenlang.lumen.pipeline.language.simulator.options.SimulatorOptions;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
@@ -22,7 +22,7 @@ public enum SimulatorRunner {
     STATEMENT {
         @Override
         public @NotNull List<Suggestion> run(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnvImpl env, @NotNull SimulatorOptions opts, @NotNull SimulatorDebug debug) {
-            return PatternSimulator.suggestStatementsAndExpressions(tokens, reg, env, opts, debug);
+            return PatternSimulator.suggestStatements(tokens, reg, env, opts, debug);
         }
     },
 

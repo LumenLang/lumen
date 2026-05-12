@@ -20,6 +20,7 @@ import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.language.resolve.ExprResolver;
 import dev.lumenlang.lumen.pipeline.language.simulator.PatternSimulator;
+import dev.lumenlang.lumen.pipeline.language.simulator.result.Suggestion;
 import dev.lumenlang.lumen.pipeline.language.simulator.suggestions.SuggestionDiagnostics;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.language.tokenization.TokenKind;
@@ -450,7 +451,7 @@ public final class VarDeclarationForm {
     }
 
     private static @NotNull LumenDiagnostic buildExpressionDiagnostic(@NotNull List<Token> tokens, int line, @NotNull String raw, @NotNull TypeEnvImpl env) {
-        List<PatternSimulator.Suggestion> suggestions = PatternSimulator.suggestExpressions(tokens, PatternRegistry.instance(), env);
+        List<Suggestion> suggestions = PatternSimulator.suggestExpressions(tokens, PatternRegistry.instance(), env);
         if (!suggestions.isEmpty()) {
             return SuggestionDiagnostics.build("Cannot resolve expression", line, raw, tokens, suggestions, env);
         }

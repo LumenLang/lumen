@@ -1,9 +1,0 @@
-case: extra: leading word before broadcast
-input: please broadcast "hi"
-runner: STATEMENT
-env: <empty>
-suggestions: 1
-  [#0] (broadcast|announce) %text:STRING%
-    confidence: 0.920
-    issues:
-      - extra tokens: 'please' (col 0)

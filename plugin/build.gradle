@@ -1,7 +1,6 @@
 plugins {
     id "com.gradleup.shadow"
     id "xyz.jpenilla.run-paper"
-    id "dev.lumenlang.lumen-build"
     // Uncomment when you need to see internals
     //id "io.papermc.paperweight.userdev"
 }

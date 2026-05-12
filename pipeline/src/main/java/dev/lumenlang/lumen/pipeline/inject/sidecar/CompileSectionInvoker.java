@@ -1,8 +1,9 @@
 package dev.lumenlang.lumen.pipeline.inject.sidecar;
 
 import dev.lumenlang.lumen.api.codegen.HandlerContext;
+import dev.lumenlang.lumen.api.diagnostic.DiagnosticException;
+import dev.lumenlang.lumen.api.diagnostic.LumenDiagnostic;
 import dev.lumenlang.lumen.api.inject.index.IndexedHandler;
-import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,43 +16,74 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Resolves and invokes the trimmed bytecode of an annotated handler whose
- * first parameter is a {@link HandlerContext}. The build plugin removed the
- * runtime section from the original method, so calling it here runs only the
- * compile section's side effects on {@code ctx}. Inject parameters are passed
- * as defaults; the validator already forbids the compile section from reading
- * them.
+ * first parameter is a {@link HandlerContext}.
  */
 public final class CompileSectionInvoker {
 
-    private static final Map<String, MethodHandle> CACHE = new ConcurrentHashMap<>();
+    private static final Map<String, Object> CACHE = new ConcurrentHashMap<>();
 
     private CompileSectionInvoker() {
     }
 
     public static void invoke(@NotNull ClassLoader addonLoader, @NotNull IndexedHandler entry, @NotNull HandlerContext ctx) {
         String key = entry.owner() + "#" + entry.method() + entry.descriptor();
-        MethodHandle handle = CACHE.computeIfAbsent(key, k -> resolve(addonLoader, entry));
-        Object[] args = arguments(entry, ctx);
+        Object cached = CACHE.computeIfAbsent(key, k -> tryResolve(addonLoader, entry));
+        if (cached instanceof FailedResolution failed) {
+            throw new DiagnosticException(unresolvedDiagnostic(entry, ctx, failed.cause));
+        }
         try {
-            handle.invokeWithArguments(args);
+            ((MethodHandle) cached).invokeWithArguments(arguments(entry, ctx));
         } catch (Throwable t) {
-            LumenLogger.warning("Compile section of " + entry.owner() + "#" + entry.method() + " threw: " + t);
+            throw new DiagnosticException(invokeFailedDiagnostic(entry, ctx, t));
         }
     }
 
-    private static @NotNull MethodHandle resolve(@NotNull ClassLoader loader, @NotNull IndexedHandler entry) {
+    private static @NotNull Object tryResolve(@NotNull ClassLoader loader, @NotNull IndexedHandler entry) {
         String className = entry.owner().replace('/', '.');
         try {
             Class<?> owner = Class.forName(className, true, loader);
             List<String> argDescriptors = Descriptors.argumentDescriptors(entry.descriptor());
             Class<?>[] paramClasses = new Class<?>[argDescriptors.size()];
-            for (int i = 0; i < argDescriptors.size(); i++) paramClasses[i] = Descriptors.classOf(argDescriptors.get(i), loader);
+            for (int i = 0; i < argDescriptors.size(); i++)
+                paramClasses[i] = Descriptors.classOf(argDescriptors.get(i), loader);
             Method method = owner.getDeclaredMethod(entry.method(), paramClasses);
             method.setAccessible(true);
             return MethodHandles.lookup().unreflect(method);
         } catch (ReflectiveOperationException e) {
-            throw new IllegalStateException("Cannot resolve compile section for " + entry.owner() + "#" + entry.method() + entry.descriptor(), e);
+            return new FailedResolution(e);
         }
+    }
+
+    private static @NotNull LumenDiagnostic unresolvedDiagnostic(@NotNull IndexedHandler entry, @NotNull HandlerContext ctx, @NotNull ReflectiveOperationException cause) {
+        String simpleClass = simpleName(entry.owner());
+        String causeText = cause.getClass().getSimpleName() + (cause.getMessage() != null ? ": " + cause.getMessage() : "");
+        return LumenDiagnostic.error("This pattern points to a handler that no longer exists in the addon")
+                .at(ctx.source().currentLine(), ctx.source().currentRaw())
+                .label("handler missing at runtime")
+                .note("the addon advertises a pattern backed by " + simpleClass + "#" + entry.method() + ", but that method cannot be loaded")
+                .note("this is not a problem with your script; the addon shipped a stale handler index")
+                .note("internal cause: " + causeText)
+                .help("if you are the addon author: rebuild the addon from a clean state so the handler index matches the shipped classes")
+                .help("if you are using this addon: report the issue to its author, or update to a newer version that fixes the index")
+                .build();
+    }
+
+    private static @NotNull LumenDiagnostic invokeFailedDiagnostic(@NotNull IndexedHandler entry, @NotNull HandlerContext ctx, @NotNull Throwable cause) {
+        String simpleClass = simpleName(entry.owner());
+        String causeText = cause.getClass().getSimpleName() + (cause.getMessage() != null ? ": " + cause.getMessage() : "");
+        return LumenDiagnostic.error("This pattern's handler crashed while compiling your script")
+                .at(ctx.source().currentLine(), ctx.source().currentRaw())
+                .label("addon handler threw during compilation")
+                .note("the compile-time logic in " + simpleClass + "#" + entry.method() + " failed; this is a bug in the addon, not in your script")
+                .note("thrown: " + causeText)
+                .help("if you are the addon author: the compile section of this handler is throwing; fix it so it tolerates this input")
+                .help("if you are using this addon: report this to its author with the script line above")
+                .build();
+    }
+
+    private static @NotNull String simpleName(@NotNull String owner) {
+        int slash = owner.lastIndexOf('/');
+        return slash < 0 ? owner : owner.substring(slash + 1);
     }
 
     private static @NotNull Object @NotNull [] arguments(@NotNull IndexedHandler entry, @NotNull HandlerContext ctx) {
@@ -74,5 +106,8 @@ public final class CompileSectionInvoker {
             case "D" -> 0d;
             default -> null;
         };
+    }
+
+    private record FailedResolution(@NotNull ReflectiveOperationException cause) {
     }
 }

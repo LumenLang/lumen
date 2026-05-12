@@ -13,13 +13,6 @@ import org.jetbrains.annotations.NotNull;
 public enum SimulatorOption {
 
     /**
-     * Maximum number of input tokens BFS will try removing in one search.
-     *
-     * <p>Higher values catch sentences with more extra junk but cost combinatorial time.
-     */
-    MAX_REMOVAL_DEPTH(Kind.INT, 3, Range.atLeast(0)),
-
-    /**
      * Top-N pre-filter survivors that get the expensive analysis pass.
      *
      * <p>Lower is faster, higher catches near matches the pre-filter scored low.
@@ -30,19 +23,6 @@ public enum SimulatorOption {
      * Maximum suggestions returned to the caller.
      */
     MAX_SUGGESTIONS(Kind.INT, 2, Range.atLeast(0)),
-
-    /**
-     * Maximum input length for the reorder fallback. Inputs longer than this skip
-     * reorder analysis because shape matching is exponential.
-     */
-    SHAPE_MATCH_TOKEN_LIMIT(Kind.INT, 20, Range.atLeast(1)),
-
-    /**
-     * Hard cap on BFS combinations evaluated at each removal depth.
-     *
-     * <p>Stops pathological inputs from blowing up search time.
-     */
-    MAX_COMBINATIONS_PER_LEVEL(Kind.INT, 300, Range.atLeast(1)),
 
     /**
      * Minimum pre-filter confidence required to reach the analysis pass.
@@ -72,11 +52,6 @@ public enum SimulatorOption {
     WEIGHT_TOKEN_COVERAGE(Kind.DOUBLE, 0.15, Range.zeroToOne()),
 
     /**
-     * Confidence penalty applied per token removed by BFS.
-     */
-    REMOVAL_PENALTY(Kind.DOUBLE, 0.08, Range.zeroToOne()),
-
-    /**
      * Confidence penalty applied per typo correction.
      */
     TYPO_PENALTY(Kind.DOUBLE, 0.05, Range.zeroToOne()),
@@ -88,23 +63,9 @@ public enum SimulatorOption {
     FIRST_TOKEN_MISS_MULTIPLIER(Kind.DOUBLE, 0.5, Range.zeroToOne()),
 
     /**
-     * Minimum confidence floor for a reorder suggestion that validated against
-     * the real matcher.
-     */
-    VALIDATED_REORDER_FLOOR(Kind.DOUBLE, 0.75, Range.zeroToOne()),
-
-    /**
      * Confidence multiplier applied when a sandboxed handler invocation throws.
      */
     SANDBOX_REJECTED_PENALTY(Kind.DOUBLE, 0.75, Range.zeroToOne()),
-
-    /**
-     * Minimum pre-filter confidence required to attempt the reorder fallback. Patterns that
-     * scored below this threshold during the pre-filter pass skip reorder analysis entirely,
-     * which prevents catch-all patterns (where most parts are placeholders) from emitting
-     * spurious reorder suggestions on inputs they barely match.
-     */
-    REORDER_PREFILTER_FLOOR(Kind.DOUBLE, 0.50, Range.zeroToOne()),
 
     /**
      * Multiplier applied to a fallback suggestion's confidence when the only issue surfaced is a
@@ -130,6 +91,7 @@ public enum SimulatorOption {
     private final @NotNull Kind kind;
     private final double defaultValue;
     private final @NotNull Range range;
+
     SimulatorOption(@NotNull Kind kind, double defaultValue, @NotNull Range range) {
         this.kind = kind;
         this.defaultValue = defaultValue;

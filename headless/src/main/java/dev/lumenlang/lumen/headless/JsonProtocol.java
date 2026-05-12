@@ -117,25 +117,23 @@ public final class JsonProtocol {
             var env = TypeChecker.populatedEnv(vars);
 
             var patternRegistry = headless.patternRegistry();
-            var statementPatterns = patternRegistry.getStatements().stream().map(s -> s.pattern().raw()).collect(Collectors.toSet());
-            var expressionPatterns = patternRegistry.getExpressions().stream().map(e -> e.pattern().raw()).collect(Collectors.toSet());
 
             JsonArray statementsResults = new JsonArray();
             JsonArray expressionsResults = new JsonArray();
-            JsonArray statementsAndExpressionsResults = new JsonArray();
             JsonArray conditionsResults = new JsonArray();
             JsonArray blocksResults = new JsonArray();
 
-            for (var suggestion : PatternSimulator.suggestStatementsAndExpressions(tokens, patternRegistry, env, opts)) {
-                String raw = suggestion.pattern().raw();
+            for (var suggestion : PatternSimulator.suggestStatements(tokens, patternRegistry, env, opts)) {
                 JsonObject obj = new JsonObject();
-                obj.addProperty("pattern", raw);
+                obj.addProperty("pattern", suggestion.pattern().raw());
                 obj.addProperty("score", suggestion.confidence());
-                boolean isStatement = statementPatterns.contains(raw);
-                boolean isExpression = expressionPatterns.contains(raw);
-                if (isStatement && isExpression) statementsAndExpressionsResults.add(obj);
-                else if (isStatement) statementsResults.add(obj);
-                else if (isExpression) expressionsResults.add(obj);
+                statementsResults.add(obj);
+            }
+            for (var suggestion : PatternSimulator.suggestExpressions(tokens, patternRegistry, env, opts)) {
+                JsonObject obj = new JsonObject();
+                obj.addProperty("pattern", suggestion.pattern().raw());
+                obj.addProperty("score", suggestion.confidence());
+                expressionsResults.add(obj);
             }
             for (var suggestion : PatternSimulator.suggestConditions(tokens, patternRegistry, env, opts)) {
                 JsonObject obj = new JsonObject();
@@ -154,7 +152,6 @@ public final class JsonProtocol {
             response.addProperty("ok", true);
             response.add("statements", statementsResults);
             response.add("expressions", expressionsResults);
-            response.add("statementsAndExpressions", statementsAndExpressionsResults);
             response.add("conditions", conditionsResults);
             response.add("blocks", blocksResults);
             if (!varErrors.isEmpty()) {

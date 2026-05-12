@@ -19,6 +19,7 @@ import dev.lumenlang.lumen.pipeline.codegen.HandlerContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.language.simulator.PatternSimulator;
+import dev.lumenlang.lumen.pipeline.language.simulator.result.Suggestion;
 import dev.lumenlang.lumen.pipeline.language.simulator.suggestions.SuggestionDiagnostics;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.language.typed.Expr;
@@ -364,7 +365,7 @@ public final class GlobalBlock implements BlockFormHandler {
         if (resolved != null) return resolved.java();
 
         List<Token> rawTokens = ((Expr.RawExpr) expr).tokens();
-        List<PatternSimulator.Suggestion> suggestions = PatternSimulator.suggestExpressions(rawTokens, PatternRegistry.instance(), env);
+        List<Suggestion> suggestions = PatternSimulator.suggestExpressions(rawTokens, PatternRegistry.instance(), env);
         LumenDiagnostic diag = !suggestions.isEmpty()
                 ? SuggestionDiagnostics.build("Cannot resolve default expression", line, raw, rawTokens, suggestions, env)
                 : SuggestionDiagnostics.buildNoSuggestion("Cannot resolve default expression", line, raw, rawTokens, env);

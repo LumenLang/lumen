@@ -8,7 +8,8 @@ import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.language.match.BoundValue;
 import dev.lumenlang.lumen.pipeline.language.match.MatchProgress;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
-import dev.lumenlang.lumen.pipeline.language.simulator.PatternSimulator;
+import dev.lumenlang.lumen.pipeline.language.simulator.result.Suggestion;
+import dev.lumenlang.lumen.pipeline.language.simulator.result.SuggestionIssue;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.language.tokenization.TokenKind;
 import dev.lumenlang.lumen.pipeline.type.ParseResult;
@@ -21,7 +22,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Shared utility for building diagnostics from {@link PatternSimulator.Suggestion} results.
+ * Shared utility for building diagnostics from {@link Suggestion} results.
  */
 public final class SuggestionDiagnostics {
 
@@ -38,7 +39,7 @@ public final class SuggestionDiagnostics {
      * @param suggestions all ranked suggestions from the simulator (at least one)
      * @return a fully constructed diagnostic
      */
-    public static @NotNull LumenDiagnostic build(@NotNull String title, int line, @NotNull String raw, @NotNull List<Token> tokens, @NotNull List<PatternSimulator.Suggestion> suggestions) {
+    public static @NotNull LumenDiagnostic build(@NotNull String title, int line, @NotNull String raw, @NotNull List<Token> tokens, @NotNull List<Suggestion> suggestions) {
         return build(title, line, raw, tokens, suggestions.get(0), suggestions.size() > 1 ? suggestions.get(1) : null, null);
     }
 
@@ -53,7 +54,7 @@ public final class SuggestionDiagnostics {
      * @param env         the type environment for nullable variable detection
      * @return a fully constructed diagnostic with nullable hints if applicable
      */
-    public static @NotNull LumenDiagnostic build(@NotNull String title, int line, @NotNull String raw, @NotNull List<Token> tokens, @NotNull List<PatternSimulator.Suggestion> suggestions, @Nullable TypeEnvImpl env) {
+    public static @NotNull LumenDiagnostic build(@NotNull String title, int line, @NotNull String raw, @NotNull List<Token> tokens, @NotNull List<Suggestion> suggestions, @Nullable TypeEnvImpl env) {
         return build(title, line, raw, tokens, suggestions.get(0), suggestions.size() > 1 ? suggestions.get(1) : null, env);
     }
 
@@ -67,11 +68,11 @@ public final class SuggestionDiagnostics {
      * @param top    the best suggestion from the simulator
      * @return a fully constructed diagnostic
      */
-    public static @NotNull LumenDiagnostic build(@NotNull String title, int line, @NotNull String raw, @NotNull List<Token> tokens, @NotNull PatternSimulator.Suggestion top) {
+    public static @NotNull LumenDiagnostic build(@NotNull String title, int line, @NotNull String raw, @NotNull List<Token> tokens, @NotNull Suggestion top) {
         return build(title, line, raw, tokens, top, null, null);
     }
 
-    private static @NotNull LumenDiagnostic build(@NotNull String title, int line, @NotNull String raw, @NotNull List<Token> tokens, @NotNull PatternSimulator.Suggestion top, @Nullable PatternSimulator.Suggestion second, @Nullable TypeEnvImpl env) {
+    private static @NotNull LumenDiagnostic build(@NotNull String title, int line, @NotNull String raw, @NotNull List<Token> tokens, @NotNull Suggestion top, @Nullable Suggestion second, @Nullable TypeEnvImpl env) {
         LumenDiagnostic unsupported = detectUnsupportedSyntax(line, raw, tokens);
         if (unsupported != null) return unsupported;
         TypeRegistry types = PatternRegistry.instance().getTypeRegistry();
@@ -79,11 +80,11 @@ public final class SuggestionDiagnostics {
         if (!tokens.isEmpty()) {
             builder.highlight(tokens.get(0).start(), tokens.get(tokens.size() - 1).end());
         }
-        List<PatternSimulator.SuggestionIssue> issues = top.issues();
-        PatternSimulator.SuggestionIssue primary = findPrimary(issues);
+        List<SuggestionIssue> issues = top.issues();
+        SuggestionIssue primary = findPrimary(issues);
         if (primary != null) {
             applyPrimaryHighlight(builder, primary, top, types, raw);
-            for (PatternSimulator.SuggestionIssue issue : issues) {
+            for (SuggestionIssue issue : issues) {
                 if (issue == primary) continue;
                 applySubHighlight(builder, issue, types, raw);
             }
@@ -248,32 +249,18 @@ public final class SuggestionDiagnostics {
                 .at(line, raw)
                 .highlight(errorToken.start(), errorToken.end());
         String message = failure.errorMessage() != null ? failure.errorMessage() : "";
-        if (failure.errorSuggestion() != null) diag.label(message + ", did you mean '" + failure.errorSuggestion() + "'?");
+        if (failure.errorSuggestion() != null)
+            diag.label(message + ", did you mean '" + failure.errorSuggestion() + "'?");
         else diag.label(message);
         diag.help("see https://lumenlang.dev/types for available types");
         return diag.build();
     }
 
-    /**
-     * Formats reordered tokens into a human readable description for diagnostic labels.
-     *
-     * @param reordered the tokens that appear in the wrong order
-     * @return formatted description
-     */
-    public static @NotNull String reorderNote(@NotNull List<Token> reordered) {
-        if (reordered.size() == 2) return reordered.get(0).text() + "' and '" + reordered.get(1).text();
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < reordered.size(); i++) {
-            if (i > 0) sb.append(i == reordered.size() - 1 ? "' and '" : "', '");
-            sb.append(reordered.get(i).text());
-        }
-        return sb.toString();
-    }
 
-    private static @Nullable PatternSimulator.SuggestionIssue findPrimary(@NotNull List<PatternSimulator.SuggestionIssue> issues) {
-        PatternSimulator.SuggestionIssue best = null;
+    private static @Nullable SuggestionIssue findPrimary(@NotNull List<SuggestionIssue> issues) {
+        SuggestionIssue best = null;
         int bestPriority = -1;
-        for (PatternSimulator.SuggestionIssue issue : issues) {
+        for (SuggestionIssue issue : issues) {
             int priority = issuePriority(issue);
             if (priority > bestPriority) {
                 bestPriority = priority;
@@ -283,35 +270,25 @@ public final class SuggestionDiagnostics {
         return best;
     }
 
-    private static int issuePriority(@NotNull PatternSimulator.SuggestionIssue issue) {
-        if (issue instanceof PatternSimulator.SuggestionIssue.HandlerDiagnostic) return 5;
-        if (issue instanceof PatternSimulator.SuggestionIssue.Typo) return 4;
-        if (issue instanceof PatternSimulator.SuggestionIssue.ExtraTokens) return 3;
-        if (issue instanceof PatternSimulator.SuggestionIssue.TypeMismatch) return 2;
-        if (issue instanceof PatternSimulator.SuggestionIssue.IncompleteInput) return 2;
-        if (issue instanceof PatternSimulator.SuggestionIssue.MissingLiteral) return 2;
-        if (issue instanceof PatternSimulator.SuggestionIssue.MissingBinding) return 1;
-        if (issue instanceof PatternSimulator.SuggestionIssue.Reorder) return 1;
+    private static int issuePriority(@NotNull SuggestionIssue issue) {
+        if (issue instanceof SuggestionIssue.HandlerDiagnostic) return 5;
+        if (issue instanceof SuggestionIssue.Typo) return 4;
+        if (issue instanceof SuggestionIssue.TypeMismatch) return 2;
+        if (issue instanceof SuggestionIssue.IncompleteInput) return 2;
+        if (issue instanceof SuggestionIssue.MissingLiteral) return 2;
+        if (issue instanceof SuggestionIssue.MissingBinding) return 1;
         return 0;
     }
 
-    private static void applyPrimaryHighlight(@NotNull LumenDiagnostic.Builder builder, @NotNull PatternSimulator.SuggestionIssue issue, @NotNull PatternSimulator.Suggestion top, @NotNull TypeRegistry types, @NotNull String raw) {
-        if (issue instanceof PatternSimulator.SuggestionIssue.Typo typo) {
+    private static void applyPrimaryHighlight(@NotNull LumenDiagnostic.Builder builder, @NotNull SuggestionIssue issue, @NotNull Suggestion top, @NotNull TypeRegistry types, @NotNull String raw) {
+        if (issue instanceof SuggestionIssue.Typo typo) {
             boolean validated = top.progress() != null && top.progress().succeeded();
             builder.highlight(typo.token().start(), typo.token().end());
             builder.label(validated ? "replace with '" + typo.expected() + "'" : "did you mean '" + typo.expected() + "'?");
-        } else if (issue instanceof PatternSimulator.SuggestionIssue.ExtraTokens extra) {
-            Token first = extra.tokens().get(0);
-            if (extra.tokens().size() == 1) {
-                builder.highlight(first.start(), first.end()).label("remove '" + first.text() + "'");
-            } else {
-                Token last = extra.tokens().get(extra.tokens().size() - 1);
-                builder.highlight(first.start(), last.end()).label("remove " + extra.tokens().size() + " extra tokens");
-            }
-        } else if (issue instanceof PatternSimulator.SuggestionIssue.TypeMismatch mismatch) {
+        } else if (issue instanceof SuggestionIssue.TypeMismatch mismatch) {
             builder.highlight(mismatch.token().start(), mismatch.token().end());
             builder.label(mismatch.reason());
-        } else if (issue instanceof PatternSimulator.SuggestionIssue.MissingBinding missing) {
+        } else if (issue instanceof SuggestionIssue.MissingBinding missing) {
             int col = missing.atColumn();
             String label = "expected " + types.displayNameOf(missing.bindingId()) + " " + missingBindingWhere(col, raw);
             if (col >= 0) {
@@ -319,33 +296,25 @@ public final class SuggestionDiagnostics {
             } else {
                 builder.label(label);
             }
-        } else if (issue instanceof PatternSimulator.SuggestionIssue.Reorder reorder) {
-            int start = reorder.tokens().stream().mapToInt(Token::start).min().orElse(0);
-            int end = reorder.tokens().stream().mapToInt(Token::end).max().orElse(0);
-            builder.highlight(start, end).label("tokens '" + reorderNote(reorder.tokens()) + "' may be in the wrong order");
-        } else if (issue instanceof PatternSimulator.SuggestionIssue.MissingLiteral missing) {
-            Token anchor = anchorTokenAfter(top, missing.afterTokenIndex());
+        } else if (issue instanceof SuggestionIssue.MissingLiteral missing) {
+            Token anchor = anchorTokenAfter(top);
             int point = anchor != null ? anchor.end() : 0;
             builder.highlight(point, point + 1).label("missing keyword '" + missing.literal() + "' here");
-        } else if (issue instanceof PatternSimulator.SuggestionIssue.IncompleteInput incomplete) {
+        } else if (issue instanceof SuggestionIssue.IncompleteInput incomplete) {
             Token last = lastInputToken(top);
             if (last != null) builder.highlight(last.end(), last.end() + 1);
             builder.label("expected '" + incomplete.expectedNext() + "' next");
-        } else if (issue instanceof PatternSimulator.SuggestionIssue.HandlerDiagnostic handler) {
+        } else if (issue instanceof SuggestionIssue.HandlerDiagnostic handler) {
             builder.label(handler.title());
         }
     }
 
-    private static void applySubHighlight(@NotNull LumenDiagnostic.Builder builder, @NotNull PatternSimulator.SuggestionIssue issue, @NotNull TypeRegistry types, @NotNull String raw) {
-        if (issue instanceof PatternSimulator.SuggestionIssue.Typo typo) {
+    private static void applySubHighlight(@NotNull LumenDiagnostic.Builder builder, @NotNull SuggestionIssue issue, @NotNull TypeRegistry types, @NotNull String raw) {
+        if (issue instanceof SuggestionIssue.Typo typo) {
             builder.subHighlight(typo.token().start(), typo.token().end(), "did you mean '" + typo.expected() + "'?");
-        } else if (issue instanceof PatternSimulator.SuggestionIssue.ExtraTokens extra) {
-            for (Token t : extra.tokens()) {
-                builder.subHighlight(t.start(), t.end(), "extra token");
-            }
-        } else if (issue instanceof PatternSimulator.SuggestionIssue.TypeMismatch mismatch) {
+        } else if (issue instanceof SuggestionIssue.TypeMismatch mismatch) {
             builder.subHighlight(mismatch.token().start(), mismatch.token().end(), mismatch.reason());
-        } else if (issue instanceof PatternSimulator.SuggestionIssue.MissingBinding missing) {
+        } else if (issue instanceof SuggestionIssue.MissingBinding missing) {
             int col = missing.atColumn();
             String label = "expected " + types.displayNameOf(missing.bindingId()) + " " + missingBindingWhere(col, raw);
             if (col >= 0) {
@@ -353,15 +322,11 @@ public final class SuggestionDiagnostics {
             } else {
                 builder.note(label);
             }
-        } else if (issue instanceof PatternSimulator.SuggestionIssue.Reorder reorder) {
-            for (Token t : reorder.tokens()) {
-                builder.subHighlight(t.start(), t.end(), "out of order");
-            }
-        } else if (issue instanceof PatternSimulator.SuggestionIssue.MissingLiteral missing) {
+        } else if (issue instanceof SuggestionIssue.MissingLiteral missing) {
             builder.note("also missing keyword '" + missing.literal() + "'");
-        } else if (issue instanceof PatternSimulator.SuggestionIssue.IncompleteInput incomplete) {
+        } else if (issue instanceof SuggestionIssue.IncompleteInput incomplete) {
             builder.note("input ended while expecting '" + incomplete.expectedNext() + "'");
-        } else if (issue instanceof PatternSimulator.SuggestionIssue.HandlerDiagnostic handler) {
+        } else if (issue instanceof SuggestionIssue.HandlerDiagnostic handler) {
             builder.note(handler.title());
         }
     }
@@ -414,7 +379,7 @@ public final class SuggestionDiagnostics {
         while (beforeEnd > 0 && Character.isWhitespace(raw.charAt(beforeEnd - 1))) beforeEnd--;
         int beforeStart = beforeEnd;
         while (beforeStart > 0 && !Character.isWhitespace(raw.charAt(beforeStart - 1))) beforeStart--;
-        int afterStart = Math.max(0, col);
+        int afterStart = col;
         while (afterStart < raw.length() && Character.isWhitespace(raw.charAt(afterStart))) afterStart++;
         int afterEnd = afterStart;
         while (afterEnd < raw.length() && !Character.isWhitespace(raw.charAt(afterEnd))) afterEnd++;
@@ -426,7 +391,7 @@ public final class SuggestionDiagnostics {
         return "in between '" + raw.substring(beforeStart, beforeEnd) + "' and '" + raw.substring(afterStart, afterEnd) + "'";
     }
 
-    private static @Nullable Token anchorTokenAfter(@NotNull PatternSimulator.Suggestion top, int afterTokenIndex) {
+    private static @Nullable Token anchorTokenAfter(@NotNull Suggestion top) {
         if (top.progress() == null || top.progress().match() == null) return null;
         Collection<BoundValue> bound = top.progress().match().values().values();
         Token best = null;
@@ -438,7 +403,7 @@ public final class SuggestionDiagnostics {
         return best;
     }
 
-    private static @Nullable Token lastInputToken(@NotNull PatternSimulator.Suggestion top) {
+    private static @Nullable Token lastInputToken(@NotNull Suggestion top) {
         if (top.progress() == null || top.progress().match() == null) return null;
         Token last = null;
         for (BoundValue bv : top.progress().match().values().values()) {
