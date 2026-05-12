@@ -15,8 +15,10 @@ import dev.lumenlang.lumen.pipeline.language.simulator.options.SimulatorOption;
 import dev.lumenlang.lumen.pipeline.language.simulator.options.SimulatorOptions;
 import dev.lumenlang.lumen.pipeline.language.simulator.prefilter.PreFilter;
 import dev.lumenlang.lumen.pipeline.language.simulator.prefilter.result.PreFilterScore;
+import dev.lumenlang.lumen.pipeline.language.simulator.result.Position;
 import dev.lumenlang.lumen.pipeline.language.simulator.result.Suggestion;
 import dev.lumenlang.lumen.pipeline.language.simulator.walk.TryMatch;
+import dev.lumenlang.lumen.pipeline.language.simulator.walk.Walker;
 import dev.lumenlang.lumen.pipeline.language.tokenization.Token;
 import dev.lumenlang.lumen.pipeline.typebinding.TypeRegistry;
 import org.jetbrains.annotations.NotNull;
@@ -160,6 +162,99 @@ public final class PatternSimulator {
             if (pfs != null) scored.add(pfs);
         }
         return analyze(scored, tokens, reg.getTypeRegistry(), env, opts, debug);
+    }
+
+    /**
+     * Walks every candidate pattern of {@code scope} directionally against {@code tokens} and
+     * returns a {@link Position} per pre-filtered survivor.
+     *
+     * <p>Empty input returns every registered pattern of the scope with
+     * {@code consumedTokens = 0} and {@code atPart} set to the first part.
+     *
+     * @param scope which pattern set to walk
+     */
+    public static @NotNull List<Position> positions(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnvImpl env, @NotNull Scope scope) {
+        return positions(tokens, reg, env, scope, SimulatorOptions.defaults());
+    }
+
+    /**
+     * {@link #positions(List, PatternRegistry, TypeEnvImpl, Scope)} with custom options.
+     */
+    public static @NotNull List<Position> positions(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnvImpl env, @NotNull Scope scope, @NotNull SimulatorOptions opts) {
+        return positions(tokens, reg, env, scope, opts, SimulatorDebug.OFF);
+    }
+
+    /**
+     * {@link #positions(List, PatternRegistry, TypeEnvImpl, Scope)} with custom options and
+     * debug capture.
+     */
+    public static @NotNull List<Position> positions(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnvImpl env, @NotNull Scope scope, @NotNull SimulatorOptions opts, @NotNull SimulatorDebug debug) {
+        TypeRegistry types = reg.getTypeRegistry();
+        List<Pattern> candidates = patternsFor(reg, scope);
+        if (tokens.isEmpty()) {
+            List<Position> out = new ArrayList<>(candidates.size());
+            for (Pattern p : candidates) out.add(Walker.walk(tokens, p, 1.0, types, env));
+            return out;
+        }
+        List<PreFilterScore> scored = new ArrayList<>();
+        for (Pattern p : candidates) {
+            PreFilterScore pfs = PreFilter.run(tokens, p, null, opts, debug);
+            if (pfs != null) scored.add(pfs);
+        }
+        scored.sort(Comparator.comparingDouble(PreFilterScore::confidence).reversed());
+        int limit = Math.min(opts.intValue(SimulatorOption.MAX_CANDIDATES), scored.size());
+        List<Position> out = new ArrayList<>(limit);
+        for (int i = 0; i < limit; i++) {
+            PreFilterScore cs = scored.get(i);
+            out.add(Walker.walk(tokens, cs.pattern(), cs.confidence(), types, env));
+        }
+        return out;
+    }
+
+    private static @NotNull List<Pattern> patternsFor(@NotNull PatternRegistry reg, @NotNull Scope scope) {
+        List<Pattern> out = new ArrayList<>();
+        switch (scope) {
+            case STATEMENT -> {
+                for (RegisteredPattern rp : reg.getStatements()) out.add(rp.pattern());
+                for (RegisteredExpression re : reg.getExpressions()) out.add(re.pattern());
+            }
+            case EXPRESSION -> {
+                for (RegisteredExpression re : reg.getExpressions()) out.add(re.pattern());
+            }
+            case CONDITION -> {
+                for (RegisteredCondition rc : reg.getConditionRegistry().getConditions()) out.add(rc.pattern());
+            }
+            case BLOCK -> {
+                for (RegisteredBlock rb : reg.getBlocks()) out.add(rb.pattern());
+            }
+        }
+        return out;
+    }
+
+    /**
+     * Which set of registered patterns the editor-facing entry walks.
+     */
+    public enum Scope {
+
+        /**
+         * Statements plus standalone expressions used as statements.
+         */
+        STATEMENT,
+
+        /**
+         * Expression patterns only.
+         */
+        EXPRESSION,
+
+        /**
+         * Condition patterns.
+         */
+        CONDITION,
+
+        /**
+         * Block headers.
+         */
+        BLOCK
     }
 
     private static @NotNull List<Suggestion> analyze(@NotNull List<PreFilterScore> scored, @NotNull List<Token> tokens, @NotNull TypeRegistry types, @NotNull TypeEnvImpl env, @NotNull SimulatorOptions opts, @NotNull SimulatorDebug debug) {
