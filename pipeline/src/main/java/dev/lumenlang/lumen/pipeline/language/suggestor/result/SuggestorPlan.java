@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Full ranked suggestor output, with views tailored for completion popup, signature line, and
@@ -21,15 +22,19 @@ public record SuggestorPlan(@NotNull ActiveToken active, @NotNull List<PlanEntry
     private static final double MIN_GHOST_CONFIDENCE = 0.85;
 
     /**
-     * Merged completion list across the top-ranked entries within {@code 0.10} of the best
-     * score, deduplicated by insert text.
+     * Merged completion list across top-ranked entries that share the same active binding
+     * (or no binding, i.e. literal slots), within {@code 0.10} of the best score, deduplicated
+     * by insert text. Cross-binding entries do not pollute the list.
      */
     public @NotNull List<CompletionItem> completions() {
         if (entries.isEmpty()) return List.of();
         double topScore = entries.get(0).score();
+        String topBinding = entries.get(0).position().atBindingId();
         Map<String, CompletionItem> dedup = new LinkedHashMap<>();
         for (PlanEntry entry : entries) {
             if (entry.score() < topScore - 0.10) break;
+            String entryBinding = entry.position().atBindingId();
+            if (!Objects.equals(entryBinding, topBinding)) continue;
             for (CompletionItem c : entry.candidates()) {
                 CompletionItem prev = dedup.get(c.insertText());
                 if (prev == null || c.score() > prev.score()) dedup.put(c.insertText(), c);

@@ -2,6 +2,7 @@ package dev.lumenlang.lumen.pipeline.language.suggestor;
 
 import dev.lumenlang.lumen.api.language.SemanticKind;
 import dev.lumenlang.lumen.api.language.Suggestion;
+import dev.lumenlang.lumen.api.type.TypeBindingMeta;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.language.TypeBinding;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternPart;
@@ -91,9 +92,17 @@ public final class PatternSuggestor {
         try {
             raw = binding.suggestions(env, null);
         } catch (RuntimeException e) {
-            return List.of();
+            raw = List.of();
         }
-        return wrap(PrefixFilter.apply(raw, active.text()), active);
+        List<CompletionItem> wrapped = wrap(PrefixFilter.apply(raw, active.text()), active);
+        if (!wrapped.isEmpty()) return wrapped;
+        return List.of(placeholderHint(bindingId, reg, active));
+    }
+
+    private static @NotNull CompletionItem placeholderHint(@NotNull String bindingId, @NotNull PatternRegistry reg, @NotNull ActiveToken active) {
+        TypeBindingMeta meta = reg.getTypeRegistry().getMeta(bindingId);
+        String label = meta.displayName() != null ? meta.displayName() : "<" + bindingId.toLowerCase() + ">";
+        return new CompletionItem("", label, label, SemanticKind.PASSTHROUGH, active.rangeStart(), active.rangeEnd(), 0.0);
     }
 
     private static @NotNull List<CompletionItem> groupCandidates(@NotNull PatternPart.Group group, @NotNull ActiveToken active) {

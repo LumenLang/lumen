@@ -231,32 +231,6 @@ public final class PatternSimulator {
         return out;
     }
 
-    /**
-     * Which set of registered patterns the editor-facing entry walks.
-     */
-    public enum Scope {
-
-        /**
-         * Statements plus standalone expressions used as statements.
-         */
-        STATEMENT,
-
-        /**
-         * Expression patterns only.
-         */
-        EXPRESSION,
-
-        /**
-         * Condition patterns.
-         */
-        CONDITION,
-
-        /**
-         * Block headers.
-         */
-        BLOCK
-    }
-
     private static @NotNull List<Suggestion> analyze(@NotNull List<PreFilterScore> scored, @NotNull List<Token> tokens, @NotNull TypeRegistry types, @NotNull TypeEnvImpl env, @NotNull SimulatorOptions opts, @NotNull SimulatorDebug debug) {
         long start = debug.enabled(Verbosity.TIMING) ? System.nanoTime() : 0L;
         scored.sort(Comparator.comparingDouble(PreFilterScore::confidence).reversed());
@@ -301,5 +275,31 @@ public final class PatternSimulator {
             Trace.timing(debug, "analyze (total)", System.nanoTime() - start);
         }
         return ordered;
+    }
+
+    /**
+     * Which set of registered patterns the editor-facing entry walks.
+     */
+    public enum Scope {
+
+        /**
+         * Statements plus standalone expressions used as statements.
+         */
+        STATEMENT,
+
+        /**
+         * Expression patterns only.
+         */
+        EXPRESSION,
+
+        /**
+         * Condition patterns.
+         */
+        CONDITION,
+
+        /**
+         * Block headers.
+         */
+        BLOCK
     }
 }

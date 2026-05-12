@@ -119,6 +119,10 @@ public final class Walker {
     }
 
     private static void consumeGroup(@NotNull PatternPart part, @NotNull PatternPart.Group group, @NotNull State state, @NotNull List<PatternPart> siblings, int pi) {
+        if (state.ti >= state.tokens.size()) {
+            state.stop(part, null, siblings, pi);
+            return;
+        }
         for (List<PatternPart> alt : group.alternatives()) {
             int savedTi = state.ti;
             Map<String, List<Token>> savedBound = new LinkedHashMap<>(state.bound);
