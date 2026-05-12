@@ -133,32 +133,28 @@ public final class PatternSimulator {
     }
 
     /**
-     * Finds the closest matching patterns across both statements and expressions.
+     * Finds the closest matching statement patterns.
      */
-    public static @NotNull List<Suggestion> suggestStatementsAndExpressions(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnvImpl env) {
-        return suggestStatementsAndExpressions(tokens, reg, env, SimulatorOptions.defaults());
+    public static @NotNull List<Suggestion> suggestStatements(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnvImpl env) {
+        return suggestStatements(tokens, reg, env, SimulatorOptions.defaults());
     }
 
     /**
-     * Finds the closest matching statements/expressions with custom simulator options.
+     * Finds the closest matching statement patterns with custom options.
      */
-    public static @NotNull List<Suggestion> suggestStatementsAndExpressions(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnvImpl env, @NotNull SimulatorOptions opts) {
-        return suggestStatementsAndExpressions(tokens, reg, env, opts, SimulatorDebug.OFF);
+    public static @NotNull List<Suggestion> suggestStatements(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnvImpl env, @NotNull SimulatorOptions opts) {
+        return suggestStatements(tokens, reg, env, opts, SimulatorDebug.OFF);
     }
 
     /**
-     * Finds the closest matching statements/expressions with custom options and debug capture.
+     * Finds the closest matching statement patterns with custom options and debug capture.
      */
-    public static @NotNull List<Suggestion> suggestStatementsAndExpressions(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnvImpl env, @NotNull SimulatorOptions opts, @NotNull SimulatorDebug debug) {
+    public static @NotNull List<Suggestion> suggestStatements(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnvImpl env, @NotNull SimulatorOptions opts, @NotNull SimulatorDebug debug) {
         if (tokens.isEmpty()) return List.of();
-        debug.emit(Verbosity.RESULT, 0, () -> "suggestStatementsAndExpressions, " + tokens.size() + " input tokens");
+        debug.emit(Verbosity.RESULT, 0, () -> "suggestStatements, " + tokens.size() + " input tokens");
         List<PreFilterScore> scored = new ArrayList<>();
         for (RegisteredPattern rp : reg.getStatements()) {
             PreFilterScore pfs = PreFilter.run(tokens, rp.pattern(), rp, opts, debug);
-            if (pfs != null) scored.add(pfs);
-        }
-        for (RegisteredExpression re : reg.getExpressions()) {
-            PreFilterScore pfs = PreFilter.run(tokens, re.pattern(), re, opts, debug);
             if (pfs != null) scored.add(pfs);
         }
         return analyze(scored, tokens, reg.getTypeRegistry(), env, opts, debug);
@@ -211,12 +207,12 @@ public final class PatternSimulator {
         return out;
     }
 
-    private static @NotNull List<Pattern> patternsFor(@NotNull PatternRegistry reg, @NotNull Scope scope) {
+    public static @NotNull List<Pattern> patternsFor(@NotNull PatternRegistry reg, @NotNull Scope scope) {
         List<Pattern> out = new ArrayList<>();
         switch (scope) {
             case STATEMENT -> {
                 for (RegisteredPattern rp : reg.getStatements()) out.add(rp.pattern());
-                for (RegisteredExpression re : reg.getExpressions()) out.add(re.pattern());
+                for (RegisteredBlock rb : reg.getBlocks()) out.add(rb.pattern());
             }
             case EXPRESSION -> {
                 for (RegisteredExpression re : reg.getExpressions()) out.add(re.pattern());

@@ -14,6 +14,7 @@ import dev.lumenlang.lumen.pipeline.bus.LumenEventBus;
 import dev.lumenlang.lumen.pipeline.codegen.CodegenContextImpl;
 import dev.lumenlang.lumen.pipeline.codegen.TypeEnvImpl;
 import dev.lumenlang.lumen.pipeline.events.EventDefRegistry;
+import dev.lumenlang.lumen.pipeline.inject.loader.AnnotatedHandlerLoader;
 import dev.lumenlang.lumen.pipeline.java.JavaBuilder;
 import dev.lumenlang.lumen.pipeline.language.emit.CodeEmitter;
 import dev.lumenlang.lumen.pipeline.language.emit.EmitRegistry;
@@ -21,6 +22,8 @@ import dev.lumenlang.lumen.pipeline.language.emit.TransformerRegistry;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.logger.LumenLogger;
 import dev.lumenlang.lumen.pipeline.typebinding.TypeRegistry;
+import dev.lumenlang.lumen.plugin.Lumen;
+import dev.lumenlang.lumen.plugin.configuration.LumenConfiguration;
 import dev.lumenlang.lumen.plugin.defaults.type.BuiltinTypeBindings;
 import dev.lumenlang.lumen.plugin.scanner.RegistrationScannerBackend;
 import org.jetbrains.annotations.NotNull;
@@ -76,6 +79,9 @@ public final class HeadlessLumen {
 
         RegistrationScanner.init(new RegistrationScannerBackend(api));
         RegistrationScanner.scan("dev.lumenlang.lumen.plugin.defaults");
+        AnnotatedHandlerLoader.load(api, Lumen.class.getClassLoader(), "Lumen");
+
+        LumenConfiguration.EXTRA.FANCY_LOGGING = false;
 
         LOGGER.info("Bootstrap complete: " + patternCount() + " patterns, " + typeRegistry.allBindings().size() + " types, " + EventDefRegistry.defs().size() + " events");
     }

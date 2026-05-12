@@ -8,6 +8,7 @@ import dev.lumenlang.lumen.pipeline.language.TypeBinding;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternPart;
 import dev.lumenlang.lumen.pipeline.language.pattern.PatternRegistry;
 import dev.lumenlang.lumen.pipeline.language.simulator.PatternSimulator;
+import dev.lumenlang.lumen.pipeline.language.simulator.options.SimulatorOption;
 import dev.lumenlang.lumen.pipeline.language.simulator.options.SimulatorOptions;
 import dev.lumenlang.lumen.pipeline.language.simulator.result.Position;
 import dev.lumenlang.lumen.pipeline.language.suggestor.filter.PrefixFilter;
@@ -37,8 +38,10 @@ public final class PatternSuggestor {
     private PatternSuggestor() {
     }
 
+    private static final SimulatorOptions EDITOR_OPTIONS = SimulatorOptions.builder().set(SimulatorOption.MAX_CANDIDATES, 50).set(SimulatorOption.MAX_SUGGESTIONS, 50).set(SimulatorOption.MIN_REPORT_CONFIDENCE, 0.0).build();
+
     public static @NotNull SuggestorPlan suggest(@NotNull String rawLine, int cursorCol, @NotNull PatternRegistry reg, @NotNull TypeEnvImpl env, @NotNull PatternSimulator.Scope scope) {
-        return suggest(rawLine, cursorCol, reg, env, scope, SimulatorOptions.defaults());
+        return suggest(rawLine, cursorCol, reg, env, scope, EDITOR_OPTIONS);
     }
 
     public static @NotNull SuggestorPlan suggest(@NotNull String rawLine, int cursorCol, @NotNull PatternRegistry reg, @NotNull TypeEnvImpl env, @NotNull PatternSimulator.Scope scope, @NotNull SimulatorOptions opts) {

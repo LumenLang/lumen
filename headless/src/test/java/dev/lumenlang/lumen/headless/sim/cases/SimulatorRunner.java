@@ -22,7 +22,7 @@ public enum SimulatorRunner {
     STATEMENT {
         @Override
         public @NotNull List<Suggestion> run(@NotNull List<Token> tokens, @NotNull PatternRegistry reg, @NotNull TypeEnvImpl env, @NotNull SimulatorOptions opts, @NotNull SimulatorDebug debug) {
-            return PatternSimulator.suggestStatementsAndExpressions(tokens, reg, env, opts, debug);
+            return PatternSimulator.suggestStatements(tokens, reg, env, opts, debug);
         }
     },
 

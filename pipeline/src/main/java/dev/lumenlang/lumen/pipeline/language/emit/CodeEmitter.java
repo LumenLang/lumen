@@ -610,22 +610,6 @@ public final class CodeEmitter {
             return;
         }
 
-        if (ts instanceof TypedStatement.ExprStmt es) {
-            HandlerContextImpl hctx = new HandlerContextImpl(es.match().match(), env, ctx, blockCtx, out);
-            try {
-                ExpressionResult result = es.match().reg().handler().handle(hctx);
-                out.line(asStatement(result.java()));
-            } catch (LumenScriptException e) {
-                if (e.diagnostic() != null) stmtCache.putStatementDiagnostic(st, e.diagnostic());
-                throw e;
-            } catch (RuntimeException e) {
-                LumenScriptException wrapped = wrapRuntimeException(st.line(), st.raw(), e);
-                if (wrapped.diagnostic() != null) stmtCache.putStatementDiagnostic(st, wrapped.diagnostic());
-                throw wrapped;
-            }
-            return;
-        }
-
         if (ts instanceof TypedStatement.ErrorStmt err) {
             List<Token> errTokens = err.errorTokens() != null ? err.errorTokens() : List.of();
             if (!err.suggestions().isEmpty()) {
@@ -634,8 +618,7 @@ public final class CodeEmitter {
             throw new LumenScriptException(new DiagnosticException(SuggestionDiagnostics.buildNoSuggestion("Unknown statement", st.line(), st.raw(), errTokens)));
         }
 
-        throw new LumenScriptException(st.line(), st.raw(),
-                "Unhandled statement type: " + ts.getClass().getSimpleName());
+        throw new LumenScriptException(st.line(), st.raw(), "Unhandled statement type: " + ts.getClass().getSimpleName());
     }
 
     private static @NotNull String asStatement(@NotNull String java) {
